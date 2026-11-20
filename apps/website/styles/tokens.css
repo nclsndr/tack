@@ -48,6 +48,8 @@
 
   --tack-radius-xs: 2px;
   --tack-radius-sm: 4px;
+  /* Primary and secondary buttons share this radius. */
+  --tack-radius-button: 6px;
   --tack-radius-md: 8px;
   --tack-radius-lg: 12px;
   --tack-radius-pill: 999px;
