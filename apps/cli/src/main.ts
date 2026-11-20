@@ -2,6 +2,8 @@
 
 import { workerCommand } from "./release.ts";
 
+// Throwaway proof edit.
+
 // Coverage skip: the process entrypoint runs only in CLI subprocesses, invisible to parent coverage.
 /* v8 ignore start -- @preserve */
 // The hidden worker argument makes this entry point the script worker, so no worker file ships
