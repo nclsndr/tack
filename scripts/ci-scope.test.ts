@@ -3,38 +3,73 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { changedPaths, needsGates } from "./ci-scope.ts";
+import { changedPaths, needsGates, needsSuite } from "./ci-scope.ts";
+
+/** Changes made of guidance documents only: the suite and the gates both skip. */
+const guidanceOnly = [
+  { label: "an agent guide change", paths: ["AGENTS.md"] },
+  {
+    label: "a change to every root guide",
+    paths: ["README.md", "CONTRIBUTING.md", "CONTEXT.md", "SECURITY.md"],
+  },
+  { label: "a repository skill change", paths: [".ai/skills/tack-git/SKILL.md"] },
+  { label: "a pull request template change", paths: [".github/pull_request_template.md"] },
+];
+
+/** Changes that reach the CLI, its package, or CI itself: the suite and the gates both run. */
+const fullRun = [
+  { label: "a CLI change", paths: ["apps/cli/src/main.ts"] },
+  { label: "a guide change with a CLI change", paths: ["AGENTS.md", "apps/cli/src/main.ts"] },
+  { label: "a CLI readme change", paths: ["apps/cli/README.md"] },
+  { label: "a built-in skill change", paths: ["apps/cli/src/builtins/skills/use-tack/SKILL.md"] },
+  { label: "a harness change the website uses", paths: ["packages/harness/src/index.ts"] },
+  {
+    label: "a lockfile change beside the website",
+    paths: ["apps/website/package.json", "bun.lock"],
+  },
+  { label: "a license change, which the package ships", paths: ["LICENSE"] },
+  { label: "a source declaration change", paths: ["tack.yaml"] },
+  { label: "a workflow change", paths: [".github/workflows/ci.yml"] },
+  { label: "a script change", paths: ["scripts/ci-scope.ts"] },
+  {
+    label: "a sibling folder whose name starts like the website's",
+    paths: ["apps/website-x/a.ts"],
+  },
+  { label: "a root file whose name starts like the evals folder", paths: ["evals.md"] },
+  { label: "a root file whose name starts like a guide", paths: ["AGENTS.md.bak"] },
+  { label: "a folder whose name starts like the skills folder", paths: [".ai-tools/a.ts"] },
+  { label: "a guide name in a nested folder", paths: ["packages/core/AGENTS.md"] },
+  { label: "no changed file at all", paths: [] },
+];
+
+/** Changes to evals and the website, maybe with guides: the suite runs, the gates skip. */
+const gateFree = [
+  { label: "an evals-only change", paths: ["evals/src/main.ts", "evals/README.md"] },
+  { label: "a website-only change", paths: ["apps/website/docs/index.mdx"] },
+  {
+    label: "a change to evals and the website only",
+    paths: ["evals/tasks/a.ts", "apps/website/rspress.config.ts"],
+  },
+  { label: "a website change with a guide change", paths: ["apps/website/a.ts", "AGENTS.md"] },
+];
 
 describe("needsGates", () => {
-  it.each([
-    { label: "an evals-only change", paths: ["evals/src/main.ts", "evals/README.md"] },
-    { label: "a website-only change", paths: ["apps/website/docs/index.mdx"] },
-    {
-      label: "a change to evals and the website only",
-      paths: ["evals/tasks/a.ts", "apps/website/rspress.config.ts"],
-    },
-  ])("skips the gates for $label", ({ paths }) => {
+  it.each([...guidanceOnly, ...gateFree])("skips the gates for $label", ({ paths }) => {
     expect(needsGates(paths)).toBe(false);
   });
 
-  it.each([
-    { label: "a CLI change", paths: ["apps/cli/src/main.ts"] },
-    { label: "an evals change with a CLI change", paths: ["evals/src/main.ts", "apps/cli/x.ts"] },
-    { label: "a harness change the website uses", paths: ["packages/harness/src/index.ts"] },
-    {
-      label: "a lockfile change beside the website",
-      paths: ["apps/website/package.json", "bun.lock"],
-    },
-    { label: "a root doc change", paths: ["README.md"] },
-    { label: "a workflow change", paths: [".github/workflows/ci.yml"] },
-    {
-      label: "a sibling folder whose name starts like the website's",
-      paths: ["apps/website-x/a.ts"],
-    },
-    { label: "a root file whose name starts like the evals folder", paths: ["evals.md"] },
-    { label: "no changed file at all", paths: [] },
-  ])("runs the gates for $label", ({ paths }) => {
+  it.each(fullRun)("runs the gates for $label", ({ paths }) => {
     expect(needsGates(paths)).toBe(true);
+  });
+});
+
+describe("needsSuite", () => {
+  it.each(guidanceOnly)("skips the suite for $label", ({ paths }) => {
+    expect(needsSuite(paths)).toBe(false);
+  });
+
+  it.each([...fullRun, ...gateFree])("runs the suite for $label", ({ paths }) => {
+    expect(needsSuite(paths)).toBe(true);
   });
 });
 
