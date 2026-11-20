@@ -15,11 +15,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  static:
-    name: static
+  # Decides which jobs the change needs, so a pull request that changes only guidance documents
+  # skips the heavy work while every job, `coverage` included, still reports.
+  changes:
+    name: changes
     runs-on: ubuntu-latest
     outputs:
-      # `false` only for a pull request that changes nothing but `evals/` and `apps/website/`.
+      # `false` only for a pull request that changes nothing but guidance documents.
+      suite: ${{ steps.scope.outputs.suite }}
+      # `false` only for a pull request that changes nothing but `evals/`, `apps/website/` and
+      # guidance documents.
       gates: ${{ steps.scope.outputs.gates }}
     steps:
       - name: Check head branch follows conventional style
@@ -42,19 +47,44 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version-file: package.json
-      - run: bun install --frozen-lockfile
+      # The script uses only Node built-ins, so it needs no install.
       - name: Decide which jobs the change needs
         id: scope
         run: bun scripts/ci-scope.ts
+
+  # Without the suite, it runs only what reads guidance documents: the format check and the
+  # repository tests. README.md in this folder explains the jobs.
+  static:
+    name: static
+    needs: changes
+    runs-on: ubuntu-latest
+    env:
+      SUITE: ${{ needs.changes.outputs.suite }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
       - run: bun run format:check
-      - run: bun run lint
-      - run: bun run typecheck
-      - run: bun run deadcode
-      - run: bun run website:build
-      - run: bun run test:eval
+      - name: test (repo)
+        if: env.SUITE == 'false'
+        run: bun run test:repo
+      - if: env.SUITE != 'false'
+        run: bun run lint
+      - if: env.SUITE != 'false'
+        run: bun run typecheck
+      - if: env.SUITE != 'false'
+        run: bun run deadcode
+      - if: env.SUITE != 'false'
+        run: bun run website:build
+      - if: env.SUITE != 'false'
+        run: bun run test:eval
 
   test:
     name: test (${{ matrix.shard }}/4)
+    needs: changes
+    if: needs.changes.outputs.suite != 'false'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -76,12 +106,12 @@ jobs:
 
   # The release test, the runtime gates and the package gates, one after another on one runner.
   # Each lane takes 10-45s, so a job per lane billed about 7 minutes where this job bills about 3.
-  # It waits for `static` only to read its scope, and runs even when `static` fails, so every lane
-  # still reports. It is skipped only when `static` found the change cannot reach the CLI.
+  # It waits for `changes` only to read its scope. It is skipped when `changes` found the change
+  # cannot reach the CLI.
   gates:
     name: gates
-    needs: static
-    if: ${{ !cancelled() && needs.static.outputs.gates != 'false' }}
+    needs: changes
+    if: needs.changes.outputs.gates != 'false'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -138,28 +168,36 @@ jobs:
   # Merges the shards' coverage and fails when uncovered counts exceed the budget in `vitest.config.mts`.
   # It is also the one check that sums up the run: it waits for every other job, and fails when one
   # failed or was cancelled. A job skipped by its `if:` counts as passed. Require this check, not the
-  # others, if a ruleset ever requires one.
+  # others, if a ruleset ever requires one. Without the suite there are no shards to merge, so it
+  # passes once the other jobs did.
   coverage:
     name: coverage
-    needs: [static, test, gates]
+    needs: [changes, static, test, gates]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
+    env:
+      SUITE: ${{ needs.changes.outputs.suite }}
     steps:
       - name: Fail when another job failed
         if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
         env:
-          RESULTS: static=${{ needs.static.result }} test=${{ needs.test.result }} gates=${{ needs.gates.result }}
+          RESULTS: changes=${{ needs.changes.result }} static=${{ needs.static.result }} test=${{ needs.test.result }} gates=${{ needs.gates.result }}
         run: |
           echo "::error::A job this run needs did not pass: $RESULTS"
           exit 1
       - uses: actions/checkout@v4
+        if: env.SUITE != 'false'
       - uses: oven-sh/setup-bun@v2
+        if: env.SUITE != 'false'
         with:
           bun-version-file: package.json
-      - run: bun install --frozen-lockfile
+      - if: env.SUITE != 'false'
+        run: bun install --frozen-lockfile
       - uses: actions/download-artifact@v4
+        if: env.SUITE != 'false'
         with:
           pattern: coverage-blob-*
           path: .vitest-reports/
           merge-multiple: true
-      - run: bun run coverage:check
+      - if: env.SUITE != 'false'
+        run: bun run coverage:check

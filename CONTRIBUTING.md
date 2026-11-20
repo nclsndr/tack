@@ -95,7 +95,7 @@ else; a new commit needs no bump. `bun run check` fails when a manifest or the l
 
 ## Branches, commits and pull requests
 
-- Name a branch `<type>/<short-name>`, such as `fix/sync-preview`. CI's `static` job enforces
+- Name a branch `<type>/<short-name>`, such as `fix/sync-preview`. CI's `changes` job enforces
   `^(feat|fix|refactor|perf|test|docs|ci|build|chore|revert)/[a-z0-9._-]+$`.
 - Write commit messages and pull request titles as
   [Conventional Commits](https://www.conventionalcommits.org): `type(scope): summary`, such as
