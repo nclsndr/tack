@@ -1,7 +1,6 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import type { IncomingMessage } from "node:http";
 import { createServer } from "node:net";
-import { tmpdir } from "node:os";
 import { isAbsolute, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
@@ -63,13 +62,15 @@ const options = z
   .object({
     input: projectInput,
     port: z.number().int().min(0).max(65535),
+    /** The generated theme directory; the server creates it and removes it once this process exits. */
+    theme: z.string(),
     version: z.string().optional(),
   })
   .parse(JSON.parse(process.argv[2] ?? "{}"));
 const token = randomUUID();
 const checkout = () => readCheckout(options.input.project.root);
 const routes = readerRoutes({ token, load: () => loadProjectCorpus(options.input), checkout });
-const theme = await mkdtemp(join(tmpdir(), "tack-reader-theme-"));
+const theme = options.theme;
 let server: Awaited<ReturnType<typeof dev>> | undefined;
 let documents: ReaderDocument[] = [];
 let generation = randomUUID();
@@ -420,8 +421,9 @@ async function close(exitCode = 0) {
   stopping = true;
   watcher?.kill();
   if (debounce !== undefined) clearTimeout(debounce);
-  await server?.close();
-  await rm(theme, { recursive: true, force: true });
+  // The watcher writes its sentinel into the theme while it starts: it ends before the server
+  // removes the theme.
+  await Promise.all([watcher?.exited, server?.close()]);
   process.exit(exitCode);
 }
 process.on("SIGTERM", () => {

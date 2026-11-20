@@ -1,10 +1,12 @@
 import { realpathSync } from "node:fs";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { ReaderConfigurationError } from "./config.ts";
 import { loadProjectCorpus } from "./project-corpus.ts";
 import type { ReaderProjectInput } from "./types.ts";
 import { z } from "zod";
-import { readerProcesses } from "./host.ts";
+import { readerProcesses, type ReaderProcess } from "./host.ts";
 import { readerEntry } from "./reader-files.ts";
 import { ReaderPortInUseError } from "./startup-error.ts";
 
@@ -33,21 +35,20 @@ const readyMessage = z.discriminatedUnion("type", [
   }),
 ]);
 
-/** Starts one isolated Rspress process with logs separated from Tack's public stdout. */
-export async function startReader(options: ReaderOptions): Promise<ReaderServer> {
-  options.signal?.throwIfAborted();
-  await loadProjectCorpus(options.input);
-  options.signal?.throwIfAborted();
-  let stopping = false;
-  const ready = Promise.withResolvers<string>();
-  const diagnostic = options.diagnostic ?? ((message) => process.stderr.write(message));
-  const worker = readerProcesses.spawn({
+/** Spawns the engine that builds into `theme`; its IPC settles `ready` with the URL or a failure. */
+function spawnEngine(
+  options: ReaderOptions,
+  theme: string,
+  ready: PromiseWithResolvers<string>,
+): ReaderProcess {
+  return readerProcesses.spawn({
     cmd: [
       process.execPath,
       enginePath,
       JSON.stringify({
         input: options.input,
         port: options.port ?? 4173,
+        theme,
         ...(options.version === undefined ? {} : { version: options.version }),
       }),
     ],
@@ -71,6 +72,32 @@ export async function startReader(options: ReaderOptions): Promise<ReaderServer>
       }
     },
   });
+}
+
+/** Starts one isolated Rspress process with logs separated from Tack's public stdout. */
+export async function startReader(options: ReaderOptions): Promise<ReaderServer> {
+  options.signal?.throwIfAborted();
+  await loadProjectCorpus(options.input);
+  options.signal?.throwIfAborted();
+  let stopping = false;
+  const ready = Promise.withResolvers<string>();
+  const diagnostic = options.diagnostic ?? ((message) => process.stderr.write(message));
+  // The server owns the engine's generated theme: the engine can stop without its own cleanup (a
+  // crash, or Rsbuild's forced exit on a signal), so the theme goes once the engine has exited.
+  const theme = await mkdtemp(join(tmpdir(), "tack-reader-theme-"));
+  const removeTheme = () =>
+    rm(theme, { recursive: true, force: true }).catch((error: unknown) => {
+      diagnostic(
+        `Could not remove the reader theme ${theme}: ${error instanceof Error ? error.message : String(error)}\n`,
+      );
+    });
+  let worker: ReaderProcess;
+  try {
+    worker = spawnEngine(options, theme, ready);
+  } catch (error) {
+    await removeTheme();
+    throw error;
+  }
   const forward = async (stream: ReadableStream<Uint8Array>) => {
     const reader = stream.getReader();
     const decoder = new TextDecoder();
@@ -83,6 +110,7 @@ export async function startReader(options: ReaderOptions): Promise<ReaderServer>
   const outputs = Promise.all([forward(worker.stdout), forward(worker.stderr)]);
   const closed = worker.exited.then(async (code) => {
     await outputs;
+    await removeTheme();
     if (stopping === false) {
       const error = new Error(`Reader engine stopped (exit ${code}).`);
       ready.reject(error);

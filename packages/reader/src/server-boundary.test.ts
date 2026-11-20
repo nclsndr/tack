@@ -1,7 +1,8 @@
 import { stringify } from "yaml";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
-import { join } from "node:path";
+import { chmod, mkdtemp, mkdir, readdir, stat, writeFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { basename, dirname, join } from "node:path";
 import { readerProcesses, type ReaderProcess } from "./host.ts";
 import { startReader as startProjectReader } from "./server.ts";
 import type { ReaderProjectInput } from "./types.ts";
@@ -10,6 +11,7 @@ const fixtures: string[] = [];
 afterEach(async () => {
   vi.useRealTimers();
   vi.restoreAllMocks();
+  vi.unstubAllEnvs();
   await Promise.all(fixtures.splice(0).map((path) => rm(path, { recursive: true, force: true })));
 });
 async function fixture() {
@@ -317,4 +319,134 @@ describe("reader subprocess boundary", () => {
       }
     },
   );
+});
+
+describe("reader theme directory", () => {
+  /** Points `TMPDIR` at a fresh directory, so no test reads or removes another reader's theme. */
+  async function temporaryRoot() {
+    const root = await mkdtemp(join(tmpdir(), "tack-reader-theme-root-"));
+    fixtures.push(root);
+    vi.stubEnv("TMPDIR", root);
+    return root;
+  }
+  /** The theme directory the server handed the engine on its command line. */
+  function themeOf(commands: unknown[]) {
+    const [command] = commands;
+    if (Array.isArray(command) === false) throw new Error("Expected the engine command");
+    const argument: unknown = command[2];
+    if (typeof argument !== "string") throw new Error("Expected the engine options");
+    const parsed: unknown = JSON.parse(argument);
+    if (typeof parsed !== "object" || parsed === null || "theme" in parsed === false)
+      throw new Error("Expected a theme in the engine options");
+    if (typeof parsed.theme !== "string") throw new Error("Expected a theme path");
+    return parsed.theme;
+  }
+  const present = (path: string) =>
+    stat(path).then(
+      () => true,
+      () => false,
+    );
+
+  it("creates the theme in TMPDIR, hands it to the engine and removes it on close", async () => {
+    const root = await fixture();
+    const temporary = await temporaryRoot();
+    const mock = engine();
+    const server = await startReader({ worktree: root, open: false, diagnostic: () => undefined });
+    const theme = themeOf(mock.commands);
+    expect(dirname(theme)).toBe(temporary);
+    expect(basename(theme)).toMatch(/^tack-reader-theme-/);
+    expect(await present(theme)).toBe(true);
+    await server.close();
+    expect(await present(theme)).toBe(false);
+  });
+
+  it("removes the theme once the engine has exited, not before", async () => {
+    const root = await fixture();
+    await temporaryRoot();
+    const mock = engine({ waitForShutdown: true });
+    const server = await startReader({ worktree: root, open: false, diagnostic: () => undefined });
+    const theme = themeOf(mock.commands);
+    const closing = server.close();
+    await Promise.resolve();
+    expect(await present(theme)).toBe(true);
+    mock.exited.resolve(0);
+    await closing;
+    expect(await present(theme)).toBe(false);
+  });
+
+  it("removes the theme when the engine stops on its own after readiness", async () => {
+    const root = await fixture();
+    await temporaryRoot();
+    const mock = engine();
+    const server = await startReader({ worktree: root, open: false, diagnostic: () => undefined });
+    const theme = themeOf(mock.commands);
+    mock.exited.resolve(9);
+    await expect(server.closed).rejects.toThrow("Reader engine stopped (exit 9).");
+    expect(await present(theme)).toBe(false);
+  });
+
+  it("removes the theme when startup fails", async () => {
+    const root = await fixture();
+    await temporaryRoot();
+    const mock = engine({
+      messages: [{ type: "error", name: "Error", message: "Plugin initialization failed" }],
+      exitBeforeReady: 1,
+    });
+    await expect(
+      startReader({ worktree: root, open: false, diagnostic: () => undefined }),
+    ).rejects.toThrow("Plugin initialization failed");
+    expect(await present(themeOf(mock.commands))).toBe(false);
+  });
+
+  it("removes the theme when startup is aborted", async () => {
+    const root = await fixture();
+    await temporaryRoot();
+    const mock = engine({ messages: [] });
+    const controller = new AbortController();
+    const pending = startReader({
+      worktree: root,
+      open: false,
+      signal: controller.signal,
+      diagnostic: () => undefined,
+    });
+    await mock.spawned;
+    controller.abort();
+    await expect(pending).rejects.toMatchObject({ name: "AbortError" });
+    expect(await present(themeOf(mock.commands))).toBe(false);
+  });
+
+  it("removes the theme when the engine cannot be started", async () => {
+    const root = await fixture();
+    const temporary = await temporaryRoot();
+    const failure = new Error("spawn failed");
+    vi.spyOn(readerProcesses, "spawn").mockImplementation(() => {
+      throw failure;
+    });
+    await expect(
+      startReader({ worktree: root, open: false, diagnostic: () => undefined }),
+    ).rejects.toBe(failure);
+    expect(await readdir(temporary)).toEqual([]);
+  });
+
+  it("reports a theme it could not remove", async () => {
+    const root = await fixture();
+    await temporaryRoot();
+    const mock = engine();
+    const diagnostics: string[] = [];
+    const server = await startReader({
+      worktree: root,
+      open: false,
+      diagnostic: (message) => diagnostics.push(message),
+    });
+    const theme = themeOf(mock.commands);
+    // A read-only theme keeps the file the engine wrote, so its removal fails.
+    await writeFile(join(theme, "index.tsx"), "");
+    await chmod(theme, 0o500);
+    try {
+      await server.close();
+      expect(diagnostics.join("")).toContain(`Could not remove the reader theme ${theme}:`);
+    } finally {
+      await chmod(theme, 0o700);
+    }
+  });
 });

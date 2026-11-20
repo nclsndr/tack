@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, realpath, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, realpath, writeFile } from "node:fs/promises";
 import { createConnection, createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -37,7 +37,7 @@ function alive(pid: number) {
   }
 }
 
-function descendants(pid: number): number[] {
+function directChildren(pid: number): number[] {
   const result = Bun.spawnSync(["ps", "-axo", "pid=,ppid="]);
   expect(result.exitCode).toBe(0);
   const rows = result.stdout
@@ -45,10 +45,13 @@ function descendants(pid: number): number[] {
     .trim()
     .split("\n")
     .map((line) => line.trim().split(/\s+/).map(Number));
-  const children = rows
+  return rows
     .filter((row) => row[1] === pid)
     .flatMap((row) => (row[0] === undefined ? [] : [row[0]]));
-  return children.flatMap((child) => [child, ...descendants(child)]);
+}
+
+function descendants(pid: number): number[] {
+  return directChildren(pid).flatMap((child) => [child, ...descendants(child)]);
 }
 
 async function listening(port: number) {
@@ -65,9 +68,28 @@ async function listening(port: number) {
   });
 }
 
-it.each([false, true])(
-  "SIGINT releases the real reader without native leak diagnostics (saved edit: %s)",
-  async (edit) => {
+/** The temporary reader themes left in one `TMPDIR`. */
+async function themes(temporary: string) {
+  return (await readdir(temporary)).filter((name) => name.startsWith("tack-reader-theme-"));
+}
+
+/** How a scenario ends the reader: a signal to the CLI, or the engine dying under it. */
+type Stop = {
+  readonly signal: "SIGINT" | "SIGTERM" | "SIGKILL";
+  readonly target: "cli" | "engine";
+  readonly edit: boolean;
+  readonly exitCode: number;
+};
+
+it.each<Stop>([
+  { signal: "SIGINT", target: "cli", edit: false, exitCode: 130 },
+  { signal: "SIGINT", target: "cli", edit: true, exitCode: 130 },
+  { signal: "SIGTERM", target: "cli", edit: false, exitCode: 130 },
+  // A crashed engine runs none of its own cleanup.
+  { signal: "SIGKILL", target: "engine", edit: false, exitCode: 1 },
+])(
+  "$signal to the $target releases the real reader and its theme (saved edit: $edit)",
+  async ({ signal, target, edit, exitCode }) => {
     // Keep failures inspectable; every CLI and compiler write stays in this disposable fixture.
     const root = await realpath(await mkdtemp(join(tmpdir(), "tack-reader-shutdown-")));
     const home = join(root, "home");
@@ -171,15 +193,24 @@ it.each([false, true])(
         }, "saved-edit compilation");
         children = [...new Set([...children, ...descendants(child.pid)])];
       }
-      child.kill("SIGINT");
+      expect(await themes(temporary)).toHaveLength(1);
+      if (target === "cli") child.kill(signal);
+      else {
+        // The CLI opens no browser here, so its only direct child is the reader engine.
+        const [engine, ...others] = directChildren(child.pid);
+        expect(others).toEqual([]);
+        if (engine === undefined) throw new Error("Expected the reader engine process");
+        process.kill(engine, signal);
+      }
       await until(() => child.exitCode !== null, "CLI exit");
-      expect(await child.exited).toBe(130);
+      expect(await child.exited).toBe(exitCode);
       await streams;
       await until(() => children.every((pid) => alive(pid) === false), "reader children to exit");
       expect(alive(child.pid)).toBe(false);
       expect(await listening(port)).toBe(false);
       expect(await reservePort(port)).toBe(port);
       expect(stdout + stderr).not.toContain("ObjectRef is not unref");
+      expect(await themes(temporary)).toEqual([]);
     } finally {
       if (child.exitCode === null) child.kill("SIGINT");
       await until(() => child.exitCode !== null, "cleanup CLI exit");
