@@ -1,6 +1,6 @@
 # Tack
 
-Tack is a Bun and Effect monorepo for the `tack` project.
+Tack is a Bun and Effect monorepo for the `tack` project (throwaway proof edit).
 
 Tack manages explicitly declared, versioned sources of skills, commands, context, scripts and docs, and links the selected resources into supported coding-agent locations without copying them or hiding ownership.
 
