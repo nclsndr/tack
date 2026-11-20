@@ -6,7 +6,7 @@ export const frontmatter = {
   navbar: false,
   title: "Tack: One setup. Every coding agent.",
   description:
-    "Write a skill once, in a folder you own or share. Tack links it into Claude Code, Codex and Cursor, for you and for every project and worktree.",
+    "Write a skill once, in a folder you own or share. Tack links it wherever your agents look, for you and for every project and worktree.",
 };
 
 export default function Index() {
