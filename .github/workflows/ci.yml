@@ -2,7 +2,7 @@ name: CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, ci/proof-base]
   # No automatic run on main: each pull request already ran CI on its merge with main.
   # Run it on main, or on any branch, on demand from the Actions tab.
   workflow_dispatch:
