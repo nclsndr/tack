@@ -1,5 +1,5 @@
 import { agentPrompt } from "@tackup/harness/prompts/landing";
-import { useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { demoWalkthrough } from "../../demo/demo-walkthrough.ts";
 import { Terminal } from "../terminal.tsx";
 import { closing, demo, features, getStarted, hero, questions, story } from "./content.ts";
@@ -110,25 +110,59 @@ function Tabs({
   );
 }
 
-/** The header stays at the top of the screen as the page scrolls, as the docs navigation does. */
+/**
+ * Whether the page has scrolled past `marker`, a strip at its top: the header floats as a card from
+ * then on. An observer watches the strip, so nothing runs on each scrolled frame.
+ */
+function useScrolledPast(marker: { readonly current: HTMLElement | null }) {
+  const [past, setPast] = useState(false);
+  useEffect(() => {
+    const element = marker.current;
+    if (element === null) return undefined;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry !== undefined) setPast(entry.isIntersecting === false);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [marker]);
+  return past;
+}
+
+/** Without JavaScript nothing watches the scroll, so the card floats from the start. */
+const headerFallback =
+  ".landing-header-bar::before{opacity:1!important;transform:none!important;box-shadow:var(--landing-card-shadow-raised)!important}";
+
+/**
+ * The header stays at the top of the screen as the page scrolls, as the docs navigation does. At
+ * the top of the page it sits flush on the hero; once the page leaves the top, a card pops out
+ * behind it.
+ */
 function Header() {
+  const marker = useRef<HTMLSpanElement>(null);
+  const floating = useScrolledPast(marker);
   return (
-    <header className="landing-header">
-      <div className="landing-header-bar landing-shell">
-        <a href="/" className="landing-wordmark" aria-label="Tack home">
-          <Mark className="landing-mark" />
-          <span>tack</span>
-        </a>
-        <nav aria-label="Main" className="landing-nav">
-          <a href="#demo">Demo</a>
-          <a href="#features">Features</a>
-          <a href={docsHref}>Docs</a>
-        </nav>
-        <a href="#get-started" className="landing-button landing-button-primary">
-          Get started
-        </a>
-      </div>
-    </header>
+    <>
+      <span ref={marker} className="landing-header-marker" aria-hidden="true" />
+      <noscript>
+        <style>{headerFallback}</style>
+      </noscript>
+      <header className="landing-header" data-floating={floating === true ? "true" : "false"}>
+        <div className="landing-header-bar landing-shell">
+          <a href="/" className="landing-wordmark" aria-label="Tack home">
+            <Mark className="landing-mark" />
+            <span>tack</span>
+          </a>
+          <nav aria-label="Main" className="landing-nav">
+            <a href="#demo">Demo</a>
+            <a href="#features">Features</a>
+            <a href={docsHref}>Docs</a>
+          </nav>
+          <a href="#get-started" className="landing-button landing-button-primary">
+            Get started
+          </a>
+        </div>
+      </header>
+    </>
   );
 }
 

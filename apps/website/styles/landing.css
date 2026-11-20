@@ -96,19 +96,28 @@
    ground so text scrolling under it never reads through, with a soft shadow. Only the header's own
    links take clicks; the rest of its strip lets them through to the page. */
 .landing-header {
+  /* The card wraps the header button with one gap on the top, the right and the bottom, and its
+     corners run parallel to the button's: its radius is the button's plus that gap. */
+  --landing-header-button-height: 40px;
   --landing-card-inset: 8px;
-  --landing-card-bleed: 10px;
+  --landing-card-height: calc(var(--landing-header-button-height) + 2 * var(--landing-card-inset));
+  --landing-card-top: calc((var(--landing-header-height) - var(--landing-card-height)) / 2);
+  --landing-card-bleed: var(--landing-card-inset);
+  --landing-card-radius: calc(var(--tack-radius-button) + var(--landing-card-inset));
+  /* How the card pops out: from just above its place, resting flat on the page, it comes down and
+     lifts off, its shadow deepening as it lands. A gentle ease-out keeps it calm. */
+  --landing-card-rise: -4px;
+  --landing-card-ease: cubic-bezier(0.25, 0.8, 0.25, 1);
+  --landing-card-shadow-flat:
+    inset 0 1px 0 rgb(255 255 255 / 0), 0 0 0 -2px rgb(1 10 20 / 0), 0 0 0 -16px rgb(1 10 20 / 0);
+  --landing-card-shadow-raised:
+    inset 0 1px 0 rgb(255 255 255 / 0.05), 0 2px 6px -2px rgb(1 10 20 / 0.35),
+    0 16px 36px -16px rgb(1 10 20 / 0.7);
 
   position: sticky;
   top: 0;
   z-index: 60;
   pointer-events: none;
-}
-
-@media (min-width: 640px) {
-  .landing-header {
-    --landing-card-bleed: 16px;
-  }
 }
 
 .landing-header-bar {
@@ -121,57 +130,60 @@
 }
 
 /* The card: a layer behind the bar's content, so the content never moves as it pops out. It
-   reaches past the content by `--landing-card-bleed` on each side and stops `--landing-card-inset`
-   short of the header's top and bottom. */
+   reaches past the content by `--landing-card-bleed` on each side and is centred on the header. */
 .landing-header-bar::before {
   position: absolute;
   z-index: -1;
-  inset: var(--landing-card-inset) calc(-1 * var(--landing-card-bleed));
+  inset: var(--landing-card-top) calc(-1 * var(--landing-card-bleed));
   border: 1px solid color-mix(in srgb, var(--tack-border-strong) 70%, transparent);
-  border-radius: 20px;
+  border-radius: var(--landing-card-radius);
   background: color-mix(in srgb, var(--tack-surface) 78%, transparent);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.05),
-    0 2px 6px -2px rgb(1 10 20 / 0.35),
-    0 16px 36px -16px rgb(1 10 20 / 0.7);
+  box-shadow: var(--landing-card-shadow-flat);
   -webkit-backdrop-filter: blur(16px) saturate(1.4);
   backdrop-filter: blur(16px) saturate(1.4);
   content: "";
   pointer-events: none;
+  opacity: 0;
+  transform: translateY(var(--landing-card-rise));
+  transition:
+    opacity var(--tack-duration-fast) ease-in,
+    transform var(--tack-duration-fast) ease-in,
+    box-shadow var(--tack-duration-fast) ease-in;
 }
 
-/* Where scroll timelines run, the card pops out over the first stretch of scroll: it drops from
-   the top and settles into place. Elsewhere it simply floats from the start. */
-@supports (animation-timeline: scroll()) {
-  .landing-header-bar::before {
-    animation: landing-header-card linear both;
-    animation-timeline: scroll(root);
-    animation-range: 0 var(--landing-header-height);
-  }
-}
-
-@keyframes landing-header-card {
-  from {
-    opacity: 0;
-    transform: translateY(-12px) scale(0.98);
-  }
-
-  to {
-    opacity: 1;
-    transform: none;
-  }
+/* Once the page leaves the top, the card pops out: it fades in as it comes down the last few pixels
+   to its place, and its shadow deepens a beat longer, so it settles and then lifts. It leaves
+   faster than it came. Under reduced motion it only fades, and the durations drop to zero. */
+.landing-header[data-floating="true"] .landing-header-bar::before {
+  opacity: 1;
+  transform: none;
+  box-shadow: var(--landing-card-shadow-raised);
+  transition:
+    opacity 320ms ease-out,
+    transform 360ms var(--landing-card-ease),
+    box-shadow 480ms var(--landing-card-ease);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  @keyframes landing-header-card {
-    from {
-      opacity: 0;
-    }
-
-    to {
-      opacity: 1;
-    }
+  .landing-header {
+    --landing-card-rise: 0px;
   }
+
+  .landing-header[data-floating="true"] .landing-header-bar::before {
+    transition: opacity var(--tack-duration-fast) linear;
+  }
+}
+
+/* The strip at the top of the page that the header watches: once it scrolls out of view, the
+   header floats as a card. */
+.landing-header-marker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 16px;
+  pointer-events: none;
+  visibility: hidden;
 }
 
 /* In-page jumps, and the skip link, land below the header. */
@@ -207,8 +219,12 @@
   color: var(--tack-muted);
 }
 
+/* The header button sets the card's size and corners, so it holds exactly the height the card
+   wraps; it keeps the shared button radius. */
 .landing-header-bar > .landing-button {
+  height: var(--landing-header-button-height);
   margin-inline-start: auto;
+  border-radius: var(--tack-radius-button);
 }
 
 @media (min-width: 720px) {
