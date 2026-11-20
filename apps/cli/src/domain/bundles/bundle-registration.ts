@@ -4,8 +4,9 @@ import { bundleDigest } from "./bundle-codec.ts";
 import type { SourceRegistration } from "../sources/source-schema.ts";
 
 /** A stable, distinct local reference for one verified artifact projection. */
-export const bundleSourceLabel = (bundle: NonNullable<SourceRegistration["bundle"]>) =>
-  `bundle-${BigInt(`0x${bundleDigest(`${bundle.identity}:${bundle.sourceKey}`)}`).toString(36)}`;
+export const bundleSourceLabel = (
+  bundle: Pick<NonNullable<SourceRegistration["bundle"]>, "identity" | "sourceKey">,
+) => `bundle-${BigInt(`0x${bundleDigest(`${bundle.identity}:${bundle.sourceKey}`)}`).toString(36)}`;
 
 /** Creates recipient-local identities and explicit source bindings; sender state is never consulted. */
 export const bundleRegistrationsFor = (

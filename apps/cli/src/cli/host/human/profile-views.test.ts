@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { envelopeOf, plainStyle, styleOf, testHome } from "./human.test-support.ts";
+import { bundleSourceLabel } from "../../../domain/bundles/bundle-registration.ts";
+import { envelopeOf, flat, plainStyle, styleOf, testHome } from "./human.test-support.ts";
 import { renderBundleExport, renderBundleInspection } from "./profile-bundle.ts";
 import { renderProfileAdopt, renderProfileSave } from "./profile-copy.ts";
 import { profileCheckLines, renderProfileApply } from "./profile.ts";
@@ -70,16 +71,81 @@ describe("profile check lines", () => {
   });
 });
 
+const projectRoot = "/home/me/project";
+const projectTarget = { _tag: "project-root", projectName: "demo", canonicalPath: projectRoot };
+const linkCreate = (name: string, registrationId = sourceId) => ({
+  _tag: "link-create",
+  destinationPath: `${projectRoot}/.claude/skills/${name}`,
+  evidence: {
+    adapter: "claude",
+    address: { kind: "skill", name, owner: "shared", sourceRegistrationId: registrationId },
+    sourceDirectoryPath: `/home/me/source/skills/${name}`,
+    sourceRegistrationId: registrationId,
+    target: projectTarget,
+  },
+  relativeTarget: `../../../source/skills/${name}`,
+});
+const directoryCreate = {
+  _tag: "directory-create",
+  directoryPath: `${projectRoot}/.claude/skills`,
+};
+/**
+ * The sync plan a profile application carries, as its payload publishes it: one claude unit, and
+ * the project's docs plan, empty unless given.
+ */
+const syncOf = (
+  actions: ReadonlyArray<unknown>,
+  docs: ReadonlyArray<unknown> = [
+    { kind: "docs-reconciliation-plan", actions: [], complete: true, issues: [] },
+  ],
+) => ({
+  docs,
+  docsPending: [],
+  resources: {
+    causes: [],
+    projectNames: ["demo"],
+    selection: { selector: { _tag: "project", projectName: "demo" }, targets: [projectTarget] },
+    plan: {
+      kind: "skill-reconciliation-plan",
+      version: 1,
+      namespaceResolutions: [],
+      units: [
+        {
+          adapter: "claude",
+          target: projectTarget,
+          actions,
+          collisions: [],
+          conflicts: [],
+          delivery: { command: "unsupported", skill: "delivered" },
+          summary: {
+            blocked: 0,
+            collision: 0,
+            conflict: 0,
+            create: actions.length,
+            release: 0,
+            remove: 0,
+            retire: 0,
+          },
+        },
+      ],
+    },
+  },
+});
+
 const applyPlan = (overrides: Record<string, unknown> = {}) => ({
   kind: "profile-apply",
   reference: "personal-brain:daily",
   refused: false,
-  targets: ["/home/me/project"],
+  targets: [projectRoot],
   existing: [],
   direct: [skill("review")],
   required: [command("ship")],
   findings: [],
-  effects: ["link skill review"],
+  effects: [
+    `directory-create: ${projectRoot}/.claude/skills`,
+    `link-create: ${projectRoot}/.claude/skills/review`,
+  ],
+  sync: syncOf([directoryCreate, linkCreate("review")]),
   delivery: { notes: ["Claude reads commands from .claude/commands."], incomplete: false },
   ...overrides,
 });
@@ -117,7 +183,9 @@ describe("profile apply view", () => {
         "Claude reads commands from .claude/commands.",
         "skill review: claude → .claude/skills/review",
         "",
-        "link skill review",
+        "claude → demo · 2 to link",
+        "  create  .claude/skills/        directory",
+        "  create  .claude/skills/review  skill review",
         "",
         "Ambient user instructions and release-owned skills remain outside this target's profile control.",
         "",
@@ -131,7 +199,11 @@ describe("profile apply view", () => {
         command: "profile apply-bundle",
         plan: applyPlan({
           kind: "profile-apply-bundle",
-          bundle: { ...manifest, identity: digest("b") },
+          bundle: {
+            ...manifest,
+            identity: digest("b"),
+            sources: manifest.sources.map(({ name: _name, ...source }) => source),
+          },
           sources: [
             {
               sourceKey: "personal-brain",
@@ -149,7 +221,7 @@ describe("profile apply view", () => {
     expect(text).toContain("Fixed profile personal-brain:daily · intent retained\n");
     expect(text).toContain(`Verified bundle: ${digest("b")}\n`);
     expect(text).toContain(
-      `Retained source personal-brain → ${sourceId} · ~/.tack/personal-brain\n`,
+      `Retained source ${bundleSourceLabel({ identity: digest("b"), sourceKey: "personal-brain" })} · from personal-brain · ~/.tack/personal-brain\n`,
     );
     expect(text).toContain("Existing selection: skill review, skill audit\n");
     expect(text).toContain("profile-drift: Selection differs.\n");
@@ -172,6 +244,193 @@ describe("profile apply view", () => {
     expect(text).toContain("Fixed profile personal-brain:daily · refused before mutation\n");
     expect(text).toContain(`Verified bundle: ${digest("c")}\nTarget: ~/project\n`);
   });
+
+  it("shows each delivery action's outcome once applied, never the raw effects", () => {
+    const text = renderProfileApply(
+      envelopeOf({
+        command: "profile apply",
+        plan: applyPlan(),
+        applied: {
+          docs: [],
+          docsPending: [],
+          resources: {
+            kind: "skill-reconciliation-application",
+            version: 1,
+            units: [
+              {
+                adapter: "claude",
+                target: projectTarget,
+                status: "success",
+                actions: [
+                  { _tag: "applied", action: directoryCreate },
+                  { _tag: "applied", action: linkCreate("review") },
+                ],
+              },
+            ],
+          },
+        },
+      }),
+      labelled,
+    );
+    expect(text).toContain(
+      [
+        "claude → demo · 2 to link",
+        "  applied  create  .claude/skills/        directory",
+        "  applied  create  .claude/skills/review  skill review",
+      ].join("\n"),
+    );
+    expect(text).not.toContain("link-create:");
+    expect(text).not.toContain(projectRoot);
+  });
+
+  it.each([
+    { targets: [projectRoot], shown: ".claude/skills/review" },
+    { targets: [projectRoot, "/home/me/worktree"], shown: "~/project/.claude/skills/review" },
+  ])(
+    "shows a delivery note's destination relative to its one target: $targets",
+    ({ targets, shown }) => {
+      const text = renderProfileApply(
+        envelopeOf({
+          command: "profile apply",
+          plan: applyPlan({
+            targets,
+            delivery: {
+              notes: [
+                `skill ${sourceId}:review: claude → ${projectRoot}/.claude/skills/review`,
+                "Claude reads commands from .claude/commands.",
+              ],
+              incomplete: false,
+            },
+          }),
+        }),
+        labelled,
+      );
+      expect(text).toContain(
+        `skill review: claude → ${shown}\nClaude reads commands from .claude/commands.\n`,
+      );
+    },
+  );
+
+  const docsCreate = {
+    action: "create",
+    evidence: {
+      destinationPath: `${projectRoot}/docs/guide`,
+      projectName: "demo",
+      relativeTarget: "../../source/docs/guide",
+      resource: { name: "guide", sourceRegistrationId: sourceId },
+      root: projectRoot,
+      sourceDirectoryPath: "/home/me/source/docs/guide",
+    },
+  };
+  it.each([
+    { state: "planned", applied: null, row: "+ create ~/project/docs/guide" },
+    {
+      state: "applied",
+      applied: {
+        resources: { kind: "skill-reconciliation-application", version: 1, units: [] },
+        docs: [
+          {
+            kind: "docs-reconciliation-application",
+            actions: [{ _tag: "applied", action: docsCreate }],
+            complete: true,
+            issues: [],
+          },
+        ],
+        docsPending: [],
+      },
+      row: "✓ applied create ~/project/docs/guide",
+    },
+  ])(
+    "lists the docs links a profile delivers beside its agent links, $state",
+    ({ applied, row }) => {
+      const text = renderProfileApply(
+        envelopeOf({
+          command: "profile apply",
+          plan: applyPlan({
+            sync: syncOf(
+              [],
+              [
+                {
+                  kind: "docs-reconciliation-plan",
+                  actions: [docsCreate],
+                  complete: true,
+                  issues: [],
+                },
+              ],
+            ),
+          }),
+          applied,
+        }),
+        labelled,
+      );
+      expect(flat(text)).toContain(`Docs links ${row}`);
+      expect(text).not.toContain("docs create:");
+    },
+  );
+
+  const bundleId = "00000000-0000-4000-8000-0000000000b1";
+  const label = bundleSourceLabel({ identity: digest("b"), sourceKey: "personal-brain" });
+  it.each([
+    {
+      catalog: "does not hold the bundle yet",
+      style: plainStyle,
+      source: label,
+      member: `${label}:review`,
+    },
+    {
+      catalog: "already holds the bundle",
+      style: styleOf({
+        homeDirectory: testHome,
+        width: 100,
+        references: {
+          entries: [{ address: { kind: "skill", name: "review" }, sourceRegistrationId: bundleId }],
+          sources: [{ registration: { id: bundleId }, label: "kept" }],
+        },
+      }),
+      source: "kept",
+      member: "review",
+    },
+  ])(
+    "names a bundle's members and sources by label when the catalog $catalog",
+    ({ style, source, member }) => {
+      const text = renderProfileApply(
+        envelopeOf({
+          command: "profile apply-bundle",
+          plan: applyPlan({
+            kind: "profile-apply-bundle",
+            reference: `${label}:daily`,
+            bundle: {
+              ...manifest,
+              identity: digest("b"),
+              sources: manifest.sources.map((sent) => ({ ...sent, name: "brain" })),
+            },
+            sources: [
+              {
+                sourceKey: "personal-brain",
+                registrationId: bundleId,
+                path: "/home/me/.tack/bundles/b/sources/personal-brain",
+              },
+            ],
+            direct: [{ kind: "skill", name: "review", sourceRegistrationId: bundleId }],
+            required: [],
+            delivery: {
+              notes: [`skill ${bundleId}:review: claude → .claude/skills/review`],
+              incomplete: false,
+            },
+            sync: syncOf([linkCreate("review", bundleId)]),
+          }),
+        }),
+        style,
+      );
+      expect(text).not.toContain(bundleId);
+      expect(text).toContain(
+        `Retained source ${source} · from brain · ~/.tack/bundles/b/sources/personal-brain\n`,
+      );
+      expect(text).toContain(`  skill ${member}\n`);
+      expect(text).toContain(`skill ${member}: claude → .claude/skills/review\n`);
+      expect(flat(text)).toContain(`create .claude/skills/review skill ${member}`);
+    },
+  );
 });
 
 const savePlan = (overrides: Record<string, unknown> = {}) => ({
