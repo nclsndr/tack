@@ -32,3 +32,11 @@ the installed `tack`, from the root of the checkout:
 To test a change to Tack itself, run the checkout's build as `bun tack` with a throwaway `HOME` and
 `--state-dir`, as [CONTRIBUTING.md](CONTRIBUTING.md#run-your-changes) shows. Do not run `bun tack`
 against the real `~/.tack`: it would link your agents' built-in skills into this checkout.
+
+## Pull request screenshots
+
+A PR with a user-visible change (terminal output, reader, explorer, website) includes before and
+after screenshots. An internal-only change skips them. Add the media to the orphan branch
+`pr-assets` under `pr-<number>/`, as new commits: never rewrite, merge or delete that branch. Link
+each file from the PR body with a commit-pinned URL:
+`https://github.com/nclsndr/tack/blob/<commit-sha>/pr-<number>/<file>?raw=true`.
