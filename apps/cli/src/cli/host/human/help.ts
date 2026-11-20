@@ -45,12 +45,21 @@ const block = (
 ): ReadonlyArray<string> | undefined =>
   rows.length === 0 ? undefined : [style.bold(title), ...table(rows, { width: style.width })];
 
-/** The next command for a group's help page: the help of its first subcommand. The root has none. */
+/**
+ * Groups whose subcommands are equal alternatives, so the help page points at every one of them
+ * rather than only the first: `adapter disable` is not a step after `adapter enable`.
+ */
+const everySubcommandNextGroups: ReadonlyArray<string> = ["adapter"];
+
+/**
+ * The next commands for a group's help page: the help of its first subcommand, or of every
+ * subcommand for a group in {@link everySubcommandNextGroups}. The root has none.
+ */
 const nextCommands = (help: Help): ReadonlyArray<string> => {
-  const [first] = help.subcommands;
-  return help.commandPath.length === 0 || first === undefined
-    ? []
-    : [argvLine(["tack", ...help.commandPath, first.name, "--help"])];
+  if (help.commandPath.length === 0) return [];
+  const listsEvery = everySubcommandNextGroups.includes(help.commandPath.join(" "));
+  const shown = listsEvery ? help.subcommands : help.subcommands.slice(0, 1);
+  return shown.map(({ name }) => argvLine(["tack", ...help.commandPath, name, "--help"]));
 };
 
 /** The root help page body after the description: usage, the legend and the operation map. */
