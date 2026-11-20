@@ -99,7 +99,7 @@
   /* The card wraps the header button with one gap on the top, the right and the bottom, and its
      corners run parallel to the button's: its radius is the button's plus that gap. */
   --landing-header-button-height: 40px;
-  --landing-card-inset: 8px;
+  --landing-card-inset: 12px;
   --landing-card-height: calc(var(--landing-header-button-height) + 2 * var(--landing-card-inset));
   --landing-card-top: calc((var(--landing-header-height) - var(--landing-card-height)) / 2);
   --landing-card-bleed: var(--landing-card-inset);
