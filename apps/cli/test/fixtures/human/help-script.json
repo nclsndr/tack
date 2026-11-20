@@ -1,0 +1,40 @@
+{
+  "applied": null,
+  "classification": "success",
+  "command": "help",
+  "diagnostics": [],
+  "next": ["tack script run --help"],
+  "plan": null,
+  "result": {
+    "arguments": [],
+    "commandPath": ["script"],
+    "description": "Run trusted scripts declared by registered sources; `catalog --kind script` lists them",
+    "examples": [],
+    "executable": false,
+    "flags": [
+      {
+        "description": "Print the version 1 JSON envelope; only status, sync, doctor, upgrade and version have a stable payload",
+        "name": "json",
+        "required": false,
+        "type": "boolean"
+      },
+      {
+        "description": "Override the Tack state directory",
+        "name": "state-dir",
+        "required": false,
+        "type": "string"
+      }
+    ],
+    "kind": "help",
+    "subcommands": [
+      {
+        "description": "Run one declared script against exactly one target: --user, --project, --root, or the deepest registered root containing --cwd",
+        "executable": true,
+        "name": "run"
+      }
+    ],
+    "usage": "tack script <subcommand> [flags]"
+  },
+  "status": "success",
+  "version": 1
+}

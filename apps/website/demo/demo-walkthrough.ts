@@ -1,0 +1,58 @@
+/** One step of the tack CLI walkthrough: what it shows, and the command line it runs. */
+export type WalkthroughStep = {
+  readonly caption: string;
+  readonly command: string;
+};
+
+/**
+ * The tack CLI walkthrough, which the terminal suggests one step at a time once the visitor opens
+ * it. Every line runs through the real Tack CLI over the demo machine; a test runs the whole script
+ * and checks the links it leaves.
+ */
+export const demoWalkthrough: ReadonlyArray<WalkthroughStep> = [
+  {
+    caption: "A folder of skills in your home, and one of team docs. Neither knows Tack yet.",
+    command: "tree ~/skills",
+  },
+  {
+    caption: "Set up the machine once: Tack finds your agents and gives them its own skills.",
+    command: "tack init",
+  },
+  {
+    caption: "The folder holds skills directly: Tack previews the tack.yaml it would write.",
+    command: "tack source add ~/skills --skills .",
+  },
+  {
+    caption: "Apply: it writes tack.yaml and registers the source.",
+    command: "tack source add ~/skills --skills . --apply",
+  },
+  {
+    caption: "The team docs and their command, declared and registered in one go.",
+    command: "tack source add ~/team-docs --docs handbook --commands commands --apply",
+  },
+  {
+    caption: "Register two Git projects.",
+    command: "cd ~/code/app && tack project add app",
+  },
+  { caption: "", command: "cd ~/code/api && tack project add api" },
+  { caption: "Preview every link before anything is written.", command: "tack sync --all" },
+  { caption: "Apply the plan.", command: "tack sync --all --apply" },
+  {
+    caption: "Each agent folder holds links back to your files, never copies.",
+    command: "tree ~/code/app",
+  },
+  {
+    caption: "Attach the team handbook to app.",
+    command: "cd ~/code/app && tack docs attach handbook",
+  },
+  { caption: "Sync app to mount its docs.", command: "tack sync --project app --apply" },
+  {
+    caption: "A teammate pushes a new skill to the shared source.",
+    command: "cd ~/skills && git pull",
+  },
+  {
+    caption: "The next sync picks it up for every project and agent.",
+    command: "tack sync --all --apply",
+  },
+  { caption: "Both projects now link it.", command: "ls -l ~/code/api/.claude/skills" },
+];

@@ -1,0 +1,95 @@
+{
+  "applied": null,
+  "classification": "success",
+  "command": "help",
+  "diagnostics": [],
+  "next": [],
+  "plan": null,
+  "result": {
+    "arguments": [],
+    "commandPath": ["sync"],
+    "description": "Preview link changes that deliver the selected resources to enabled adapters; --apply writes them. Target: --project, --user, or bare from a registered worktree (all projects and the user target)",
+    "examples": [
+      {
+        "command": "tack sync --project demo"
+      },
+      {
+        "command": "tack sync --user --apply"
+      },
+      {
+        "command": "tack sync --adapter claude --adapter codex --apply"
+      }
+    ],
+    "executable": true,
+    "flags": [
+      {
+        "name": "json",
+        "required": false,
+        "type": "boolean",
+        "description": "Print the version 1 JSON envelope; only status, sync, doctor, upgrade and version have a stable payload"
+      },
+      {
+        "description": "Override the Tack state directory",
+        "name": "state-dir",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "choices": ["claude", "codex", "cursor"],
+        "description": "Limit planning to this enabled adapter; repeatable",
+        "name": "adapter",
+        "required": false,
+        "type": "choice"
+      },
+      {
+        "choices": ["skill-links", "command-links"],
+        "description": "Block the plan when a selected adapter lacks this capability",
+        "name": "require-capability",
+        "required": false,
+        "type": "choice"
+      },
+      {
+        "description": "Resolve the target from this directory",
+        "name": "cwd",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "description": "Include optional skill dependencies",
+        "name": "include-optional",
+        "required": false,
+        "type": "boolean"
+      },
+      {
+        "description": "Plan without any adapter; cannot combine with --adapter",
+        "name": "no-adapters",
+        "required": false,
+        "type": "boolean"
+      },
+      {
+        "description": "Select a registered project",
+        "name": "project",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "description": "Select the user namespace",
+        "name": "user",
+        "required": false,
+        "type": "boolean"
+      },
+      {
+        "description": "Apply the planned changes",
+        "name": "apply",
+        "required": false,
+        "type": "boolean"
+      }
+    ],
+    "kind": "help",
+    "mutation": "preview-apply",
+    "subcommands": [],
+    "usage": "tack sync [flags]"
+  },
+  "status": "success",
+  "version": 1
+}

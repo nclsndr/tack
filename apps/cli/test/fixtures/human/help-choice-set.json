@@ -1,0 +1,83 @@
+{
+  "applied": null,
+  "classification": "success",
+  "command": "help",
+  "diagnostics": [],
+  "next": [],
+  "plan": null,
+  "result": {
+    "arguments": [
+      {
+        "description": "include or exclude",
+        "name": "decision",
+        "required": true,
+        "type": "choice",
+        "variadic": false
+      },
+      {
+        "description": "Resource owner: shared or private",
+        "name": "owner",
+        "required": true,
+        "type": "string",
+        "variadic": false
+      },
+      {
+        "description": "Resource kind: skill, command or context",
+        "name": "kind",
+        "required": true,
+        "type": "string",
+        "variadic": false
+      },
+      {
+        "description": "Declared resource name",
+        "name": "name",
+        "required": true,
+        "type": "string",
+        "variadic": false
+      }
+    ],
+    "commandPath": ["pick", "include"],
+    "description": "Persist one include or exclude choice in exactly one namespace: --project or --user",
+    "examples": [
+      {
+        "command": "tack pick include shared skill review --project demo"
+      },
+      {
+        "command": "tack pick exclude shared skill review --user"
+      }
+    ],
+    "executable": true,
+    "flags": [
+      {
+        "name": "json",
+        "required": false,
+        "type": "boolean",
+        "description": "Print the version 1 JSON envelope; only status, sync, doctor, upgrade and version have a stable payload"
+      },
+      {
+        "description": "Override the Tack state directory",
+        "name": "state-dir",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "description": "Select a registered project",
+        "name": "project",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "description": "Select the user namespace",
+        "name": "user",
+        "required": false,
+        "type": "boolean"
+      }
+    ],
+    "kind": "help",
+    "mutation": "immediate",
+    "subcommands": [],
+    "usage": "tack pick include [flags] <decision> <owner> <kind> <name>"
+  },
+  "status": "success",
+  "version": 1
+}

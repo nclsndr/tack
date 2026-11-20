@@ -1,0 +1,330 @@
+{
+  "format": 1,
+  "data": {
+    "enabledAdapters": [
+      "claude",
+      "codex",
+      "cursor"
+    ],
+    "sources": [
+      {
+        "canonicalPath": "/sources/a",
+        "id": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+      },
+      {
+        "canonicalPath": "/sources/b",
+        "id": "7d3f1c2a-9b4e-4f6a-8c1d-2e5b6a7c8d9e"
+      }
+    ],
+    "projects": [
+      {
+        "name": "alpha",
+        "gitCommonDirectory": "/work/alpha/.git",
+        "roots": [
+          "/work/alpha",
+          "/work/alpha-wt"
+        ],
+        "removingRoots": [
+          "/work/alpha-old"
+        ],
+        "choices": [
+          {
+            "address": {
+              "kind": "command",
+              "name": "review",
+              "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+            },
+            "decision": "exclude"
+          },
+          {
+            "address": {
+              "kind": "skill",
+              "name": "writing",
+              "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+            },
+            "decision": "include"
+          }
+        ],
+        "docs": {
+          "attachments": [
+            {
+              "sourceRegistrationId": "7d3f1c2a-9b4e-4f6a-8c1d-2e5b6a7c8d9e",
+              "name": "guide"
+            },
+            {
+              "sourceRegistrationId": "7d3f1c2a-9b4e-4f6a-8c1d-2e5b6a7c8d9e",
+              "name": "handbook",
+              "writingDefault": true
+            }
+          ],
+          "destination": "manual/docs"
+        }
+      },
+      {
+        "name": "omega",
+        "gitCommonDirectory": "/work/omega/.git",
+        "roots": [],
+        "removingRoots": [
+          "/work/omega"
+        ],
+        "removalIntent": "project",
+        "choices": [
+          {
+            "address": {
+              "kind": "skill",
+              "name": "writing",
+              "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+            },
+            "decision": "exclude"
+          }
+        ],
+        "docs": {
+          "attachments": [
+            {
+              "sourceRegistrationId": "7d3f1c2a-9b4e-4f6a-8c1d-2e5b6a7c8d9e",
+              "name": "handbook"
+            }
+          ]
+        }
+      },
+      {
+        "name": "zeta",
+        "gitCommonDirectory": "/work/zeta/.git",
+        "roots": [],
+        "removingRoots": [
+          "/work/zeta"
+        ]
+      }
+    ],
+    "userChoices": [
+      {
+        "address": {
+          "kind": "skill",
+          "name": "tone",
+          "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+        },
+        "decision": "include"
+      }
+    ],
+    "links": [
+      {
+        "destinationPath": "/home/me/.claude/skills/tone",
+        "sourceDirectoryPath": "/sources/a/skills/tone",
+        "resource": {
+          "kind": "skill",
+          "name": "tone",
+          "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+        },
+        "target": {
+          "_tag": "user",
+          "canonicalPath": "/home/me"
+        },
+        "delivery": {
+          "_tag": "agent",
+          "adapter": "claude"
+        }
+      },
+      {
+        "destinationPath": "/home/me/.cursor/commands/review.md",
+        "sourceDirectoryPath": "/sources/a/commands/review.md",
+        "resource": {
+          "kind": "command",
+          "name": "review",
+          "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+        },
+        "target": {
+          "_tag": "user",
+          "canonicalPath": "/home/me"
+        },
+        "delivery": {
+          "_tag": "agent",
+          "adapter": "cursor"
+        }
+      },
+      {
+        "destinationPath": "/work/alpha/.agents/skills/retiring",
+        "sourceDirectoryPath": "/sources/a/skills/retiring",
+        "resource": {
+          "kind": "skill",
+          "name": "retiring",
+          "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/work/alpha",
+          "projectName": "alpha"
+        },
+        "delivery": {
+          "_tag": "agent",
+          "adapter": "codex"
+        },
+        "removal": {
+          "cause": "adapter-disable",
+          "lastResult": {
+            "_tag": "blocked",
+            "message": "Keep this reason."
+          }
+        }
+      },
+      {
+        "destinationPath": "/work/alpha/.agents/skills/writing",
+        "sourceDirectoryPath": "/sources/a/skills/writing",
+        "resource": {
+          "kind": "skill",
+          "name": "writing",
+          "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/work/alpha",
+          "projectName": "alpha"
+        },
+        "delivery": {
+          "_tag": "agent",
+          "adapter": "codex"
+        }
+      },
+      {
+        "destinationPath": "/work/alpha/.tack/docs/7d3f1c2a-9b4e-4f6a-8c1d-2e5b6a7c8d9e/shared/guide",
+        "sourceDirectoryPath": "/sources/b/docs/guide",
+        "resource": {
+          "kind": "docs",
+          "name": "guide",
+          "sourceRegistrationId": "7d3f1c2a-9b4e-4f6a-8c1d-2e5b6a7c8d9e"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/work/alpha",
+          "projectName": "alpha"
+        },
+        "delivery": {
+          "_tag": "docs"
+        }
+      },
+      {
+        "destinationPath": "/work/alpha/.tack/docs/7d3f1c2a-9b4e-4f6a-8c1d-2e5b6a7c8d9e/shared/handbook",
+        "sourceDirectoryPath": "/sources/b/docs/handbook",
+        "resource": {
+          "kind": "docs",
+          "name": "handbook",
+          "sourceRegistrationId": "7d3f1c2a-9b4e-4f6a-8c1d-2e5b6a7c8d9e"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/work/alpha",
+          "projectName": "alpha"
+        },
+        "delivery": {
+          "_tag": "docs"
+        }
+      },
+      {
+        "destinationPath": "/work/omega/.agents/skills/orphan",
+        "sourceDirectoryPath": "/sources/a/skills/orphan",
+        "resource": {
+          "kind": "skill",
+          "name": "orphan",
+          "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/work/omega",
+          "projectName": "omega"
+        },
+        "delivery": {
+          "_tag": "agent",
+          "adapter": "codex"
+        },
+        "removal": {
+          "cause": "project-removal",
+          "lastResult": {
+            "_tag": "interrupted",
+            "message": "Stopped."
+          }
+        },
+        "pendingOnly": true
+      },
+      {
+        "destinationPath": "C:\\Users\\ada\\.agents\\skills\\tone",
+        "sourceDirectoryPath": "/sources/a/skills/tone",
+        "resource": {
+          "kind": "skill",
+          "name": "tone",
+          "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+        },
+        "target": {
+          "_tag": "user",
+          "canonicalPath": "C:/Users/ada"
+        },
+        "delivery": {
+          "_tag": "agent",
+          "adapter": "codex"
+        },
+        "removal": {
+          "cause": "reset"
+        }
+      }
+    ],
+    "journal": [
+      {
+        "_tag": "replace",
+        "link": {
+          "destinationPath": "/work/alpha/.agents/skills/writing",
+          "sourceDirectoryPath": "/sources/a/next/writing",
+          "resource": {
+            "kind": "skill",
+            "name": "writing",
+            "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+          },
+          "target": {
+            "_tag": "project-root",
+            "canonicalPath": "/work/alpha",
+            "projectName": "alpha"
+          },
+          "delivery": {
+            "_tag": "agent",
+            "adapter": "codex"
+          }
+        },
+        "previous": {
+          "destinationPath": "/work/alpha/.agents/skills/writing",
+          "sourceDirectoryPath": "/sources/a/skills/writing",
+          "resource": {
+            "kind": "skill",
+            "name": "writing",
+            "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+          },
+          "target": {
+            "_tag": "project-root",
+            "canonicalPath": "/work/alpha",
+            "projectName": "alpha"
+          },
+          "delivery": {
+            "_tag": "agent",
+            "adapter": "codex"
+          }
+        }
+      },
+      {
+        "_tag": "remove",
+        "link": {
+          "destinationPath": "/work/omega/.tack/docs/7d3f1c2a-9b4e-4f6a-8c1d-2e5b6a7c8d9e/shared/handbook",
+          "sourceDirectoryPath": "/sources/b/docs/handbook",
+          "resource": {
+            "kind": "docs",
+            "name": "handbook",
+            "sourceRegistrationId": "7d3f1c2a-9b4e-4f6a-8c1d-2e5b6a7c8d9e"
+          },
+          "target": {
+            "_tag": "project-root",
+            "canonicalPath": "/work/omega",
+            "projectName": "omega"
+          },
+          "delivery": {
+            "_tag": "docs"
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "applied": null,
+  "classification": "success",
+  "command": "help",
+  "diagnostics": [],
+  "next": [],
+  "plan": null,
+  "result": {
+    "arguments": [],
+    "commandPath": ["status"],
+    "description": "Inspect source, project, selection, destination and pending-removal health. Target: --project, --user, or bare from a registered worktree (all projects and the user target)",
+    "examples": [
+      {
+        "command": "tack status"
+      },
+      {
+        "command": "tack status --project demo"
+      },
+      {
+        "command": "tack status --user"
+      }
+    ],
+    "executable": true,
+    "flags": [
+      {
+        "description": "Print the version 1 JSON envelope; only status, sync, doctor, upgrade and version have a stable payload",
+        "name": "json",
+        "required": false,
+        "type": "boolean"
+      },
+      {
+        "description": "Override the Tack state directory",
+        "name": "state-dir",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "description": "Resolve the target from this directory",
+        "name": "cwd",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "description": "Include optional dependencies, as reconcile --include-optional does",
+        "name": "include-optional",
+        "required": false,
+        "type": "boolean"
+      },
+      {
+        "description": "Select a registered project",
+        "name": "project",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "description": "Select the user namespace",
+        "name": "user",
+        "required": false,
+        "type": "boolean"
+      }
+    ],
+    "kind": "help",
+    "mutation": "read-only",
+    "notes": [
+      {
+        "rows": [
+          {
+            "term": "linked",
+            "text": "healthy: the link is where Tack recorded it"
+          },
+          {
+            "term": "missing, gone, drifted",
+            "text": "run `tack sync` to preview the repair, then `tack sync --apply`"
+          },
+          {
+            "term": "changed",
+            "text": "changed outside Tack and no longer selected; `tack sync --apply` forgets the record and leaves the link as it is"
+          },
+          {
+            "term": "hand-made",
+            "text": "a file or folder that was there before Tack linked; Tack keeps it and does not link its resource there. Run `tack pick exclude <source>:<name>` to keep yours on purpose, or move it, then sync"
+          },
+          {
+            "term": "foreign",
+            "text": "a file or folder Tack does not own replaced a link Tack recorded; Tack never overwrites it, so move it, then sync"
+          },
+          {
+            "term": "conflict",
+            "text": "two selected resources need the same path; run `tack pick exclude <source>:<name>` for the one you do not want, then sync"
+          },
+          {
+            "term": "no target, unreadable",
+            "text": "the target directory is missing or unreadable; run `tack doctor` for the cause"
+          }
+        ],
+        "title": "Link states"
+      },
+      {
+        "rows": [
+          {
+            "term": "0",
+            "text": "every link is linked and no problem was found"
+          },
+          {
+            "term": "1",
+            "text": "something needs attention: the classification is `partial`"
+          }
+        ],
+        "title": "Exit status"
+      }
+    ],
+    "subcommands": [],
+    "usage": "tack status [flags]"
+  },
+  "status": "success",
+  "version": 1
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "import", "oxc"],
+  "options": {
+    "typeAware": true
+  },
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error"
+  },
+  "rules": {
+    "typescript/no-unnecessary-boolean-literal-compare": "off",
+    "eslint/no-underscore-dangle": ["error", { "allow": ["_tag"] }]
+  }
+}

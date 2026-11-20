@@ -1,0 +1,157 @@
+import { realpathSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { ReaderConfigurationError } from "./config.ts";
+import { loadProjectCorpus } from "./project-corpus.ts";
+import type { ReaderProjectInput } from "./types.ts";
+import { z } from "zod";
+import { readerProcesses } from "./host.ts";
+import { readerEntry } from "./reader-files.ts";
+import { ReaderPortInUseError } from "./startup-error.ts";
+
+const compiledRelease = import.meta.url.includes("$bunfs");
+const enginePath = compiledRelease
+  ? join(dirname(dirname(realpathSync(process.execPath))), "packages/reader/src/engine.ts")
+  : readerEntry("engine");
+
+export type ReaderOptions = {
+  input: ReaderProjectInput;
+  /** The Tack release stamp the reader shows; the reader package cannot read the CLI's own. */
+  version?: string;
+  port?: number;
+  open?: boolean;
+  diagnostic?: (message: string) => void;
+  signal?: AbortSignal;
+};
+export type ReaderServer = { url: string; close: () => Promise<void>; closed: Promise<void> };
+const readyMessage = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("ready"), url: z.string() }),
+  z.object({
+    type: z.literal("error"),
+    name: z.string(),
+    message: z.string(),
+    port: z.number().int().min(0).max(65535).optional(),
+  }),
+]);
+
+/** Starts one isolated Rspress process with logs separated from Tack's public stdout. */
+export async function startReader(options: ReaderOptions): Promise<ReaderServer> {
+  options.signal?.throwIfAborted();
+  await loadProjectCorpus(options.input);
+  options.signal?.throwIfAborted();
+  let stopping = false;
+  const ready = Promise.withResolvers<string>();
+  const diagnostic = options.diagnostic ?? ((message) => process.stderr.write(message));
+  const worker = readerProcesses.spawn({
+    cmd: [
+      process.execPath,
+      enginePath,
+      JSON.stringify({
+        input: options.input,
+        port: options.port ?? 4173,
+        ...(options.version === undefined ? {} : { version: options.version }),
+      }),
+    ],
+    cwd: options.input.project.root,
+    env: compiledRelease ? { ...process.env, BUN_BE_BUN: "1" } : process.env,
+    stdin: "ignore",
+    stdout: "pipe",
+    stderr: "pipe",
+    ipc(message) {
+      const parsed = readyMessage.safeParse(message);
+      if (parsed.success === false) return;
+      if (parsed.data.type === "ready") ready.resolve(parsed.data.url);
+      else {
+        const error =
+          parsed.data.name === "ReaderConfigurationError"
+            ? new ReaderConfigurationError(parsed.data.message)
+            : parsed.data.name === "ReaderPortInUseError" && parsed.data.port !== undefined
+              ? new ReaderPortInUseError(parsed.data.port)
+              : new Error(parsed.data.message);
+        ready.reject(error);
+      }
+    },
+  });
+  const forward = async (stream: ReadableStream<Uint8Array>) => {
+    const reader = stream.getReader();
+    const decoder = new TextDecoder();
+    while (true) {
+      const next = await reader.read();
+      if (next.done === true) break;
+      diagnostic(decoder.decode(next.value, { stream: true }));
+    }
+  };
+  const outputs = Promise.all([forward(worker.stdout), forward(worker.stderr)]);
+  const closed = worker.exited.then(async (code) => {
+    await outputs;
+    if (stopping === false) {
+      const error = new Error(`Reader engine stopped (exit ${code}).`);
+      ready.reject(error);
+      throw error;
+    }
+  });
+  void closed.catch(() => undefined);
+  let closing: Promise<void> | undefined;
+  const close = () =>
+    (closing ??= (async () => {
+      stopping = true;
+      options.signal?.removeEventListener("abort", abort);
+      worker.kill("SIGTERM");
+      await worker.exited;
+      await outputs;
+      // The exit outcome is observed through closed; cleanup still waits for its settlement.
+      await closed.catch(() => undefined);
+    })());
+  const abort = () => {
+    void close();
+    ready.reject(
+      options.signal?.reason ?? new DOMException("Reader startup interrupted.", "AbortError"),
+    );
+  };
+  options.signal?.addEventListener("abort", abort, { once: true });
+  const timer = setTimeout(() => {
+    ready.reject(new Error("Reader engine did not become ready within 60 seconds."));
+    void close();
+  }, 60_000);
+  timer.unref();
+  try {
+    const url = await ready.promise;
+    if (options.open !== false) {
+      try {
+        const command =
+          process.platform === "darwin"
+            ? (["open", url] as const)
+            : process.platform === "win32"
+              ? (["cmd", "/c", "start", "", url] as const)
+              : (["xdg-open", url] as const);
+        const browser = readerProcesses.spawn({
+          cmd: command,
+          stdin: "ignore",
+          stdout: "ignore",
+          stderr: "ignore",
+        });
+        void browser.exited.then((code) => {
+          if (code !== 0) diagnostic(`Open ${url} in your browser.\n`);
+        });
+      } catch {
+        diagnostic(`Open ${url} in your browser.\n`);
+      }
+    }
+    return {
+      url,
+      close,
+      closed,
+    };
+  } catch (error) {
+    try {
+      await close();
+    } catch (cleanupError) {
+      // oxlint-disable-next-line eslint/preserve-caught-error -- AggregateError retains both failures; the startup failure remains the primary cause.
+      throw new AggregateError([error, cleanupError], "Reader startup and cleanup failed.", {
+        cause: error,
+      });
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}

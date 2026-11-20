@@ -1,0 +1,72 @@
+{
+  "name": "tack",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Manage cross-agent resources, including skills, commands, context, docs, and scripts.",
+  "license": "MIT",
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*",
+      "scripts",
+      "evals"
+    ],
+    "catalog": {
+      "@effect/platform-bun": "4.0.0-rc.115",
+      "@effect/vitest": "4.0.0-rc.115",
+      "@vitest/coverage-v8": "5.0.1",
+      "effect": "4.0.0-rc.115",
+      "vitest": "5.0.1"
+    }
+  },
+  "scripts": {
+    "ai:init": "bun scripts/init-ai-skills.ts",
+    "ai:reset": "bun scripts/reset-ai-skills.ts",
+    "figures:reference": "bun scripts/write-figure-reference.ts",
+    "script-api:types": "bun scripts/script-api-declarations.ts",
+    "icons:catalog": "bun scripts/write-icon-catalog.ts",
+    "reader:example": "bun packages/reader/examples/serve.ts",
+    "website:dev": "bun run --filter @tackup/website dev",
+    "website:build": "bun run --filter @tackup/website build",
+    "build": "bun run --filter '*' build",
+    "release:build": "bun scripts/build-release.ts",
+    "release:gate": "bun scripts/gate-release.ts",
+    "release:benchmark": "bun scripts/benchmark-release.ts",
+    "package:build": "bun scripts/build-package.ts",
+    "install:local": "bun run --cwd scripts install:local",
+    "package:gate": "bun scripts/gate-package.ts",
+    "check": "bun run format:check && bun run lint && bun run typecheck && bun run test",
+    "deadcode": "knip --include files,dependencies,unlisted,binaries,unresolved,exports,types",
+    "coverage:check": "bun --bun vitest --merge-reports=.vitest-reports --coverage",
+    "format": "oxfmt --write apps packages scripts evals package.json tsconfig.json tsconfig.base.json vitest.config.mts README.md CONTRIBUTING.md AGENTS.md .oxfmtrc.json .oxlintrc.json knip.json",
+    "format:check": "oxfmt --check apps packages scripts evals package.json tsconfig.json tsconfig.base.json vitest.config.mts README.md CONTRIBUTING.md AGENTS.md .oxfmtrc.json .oxlintrc.json knip.json",
+    "lint": "oxlint apps packages scripts evals",
+    "lint:fix": "oxlint --fix apps packages scripts evals",
+    "test": "bun run test:unit && bun run test:eval && bun run test:release",
+    "test:unit": "bun --bun vitest run --exclude apps/cli/src/release.system.test.ts",
+    "test:coverage": "bun run test:unit --coverage",
+    "test:release": "bun --bun vitest run --no-file-parallelism apps/cli/src/release.system.test.ts",
+    "tack": "bun run ./apps/cli/src/main.ts",
+    "typecheck": "bun run --filter '*' typecheck",
+    "version:set": "bun ./scripts/set-version.ts",
+    "evals": "bun evals/src/main.ts",
+    "test:eval": "bun test evals/container"
+  },
+  "devDependencies": {
+    "@effect/vitest": "catalog:",
+    "@types/bun": "1.4.2",
+    "@vitest/coverage-v8": "catalog:",
+    "ajv": "8.17.1",
+    "esbuild": "0.25.12",
+    "knip": "6.44.1",
+    "oxfmt": "0.68.0",
+    "oxlint": "1.83.0",
+    "oxlint-tsgolint": "7.0.2001",
+    "typescript": "7.0.2",
+    "vitest": "catalog:"
+  },
+  "packageManager": "bun@1.4.2",
+  "patchedDependencies": {
+    "@effect/platform-node-shared@4.0.0-rc.115": "patches/@effect%2Fplatform-node-shared@4.0.0-rc.115.patch"
+  }
+}

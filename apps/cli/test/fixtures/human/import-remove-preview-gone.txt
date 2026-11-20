@@ -1,0 +1,15 @@
+tack import remove · preview · ✓ success
+
+Remove team-notes:pdf github:anthropics/skills · 1a2c79d4e6c4
+  skills/pdf/  already gone, so only the record is removed
+  tack.yaml    imports record removed (rest of the file unchanged)
+
+Delivered now
+  project atlas, project demo, project tack — the next sync removes these links.
+
+Picks that name it
+  project demo  include pdf
+  They stay as unresolved picks until `tack pick remove` clears them.
+
+Next
+  tack import remove team-notes:pdf --apply

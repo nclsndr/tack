@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 100,
+  "tabWidth": 2,
+  "useTabs": false,
+  "singleQuote": false,
+  "ignorePatterns": [
+    "packages/reader/fixtures/figures/*.mdx",
+    "apps/cli/src/builtins/skills/write-reader-figures/references/figure-components.md",
+    "packages/reader/src/icons/catalog.generated.ts"
+  ]
+}

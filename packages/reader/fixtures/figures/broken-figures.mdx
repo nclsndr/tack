@@ -1,0 +1,93 @@
+---
+title: Figures with deliberate issues
+type: reference
+status: draft
+---
+
+# Figures with deliberate issues
+
+The figure check and the page list the same issues for the first map. The walkthrough is sound. The last map is computed when the page runs, so the check cannot read it.
+
+<ArchitectureMap
+  id="broken-map"
+  title="CLI architecture"
+  rule={{ title: "Calls point down", text: "A box calls the boxes below it." }}
+  tiers={[
+    { id: "web", label: "Web", nodes: [{ id: "app", label: "app" }] },
+    {
+      id: "api",
+      label: "API",
+      nodes: [
+        { id: "api", label: "api" },
+        { id: "app", label: "app again" },
+      ],
+    },
+  ]}
+  links={[
+    { from: "app", to: "api", label: "fetches" },
+    { from: "api", to: "cache", label: "reads" },
+  ]}
+/>
+
+<Walkthrough
+  id="sound-steps"
+  title="A request crosses the API before it reaches the store"
+  steps={[
+    { title: "Ask", body: "The app asks the API." },
+    { title: "Read", body: <em>The API reads the store.</em> },
+  ]}
+/>
+
+<ArchitectureMap
+  id="computed-map"
+  title="The tiers of this map are computed when the page runs"
+  rule={{ title: "Calls point down", text: "A box calls the boxes below it." }}
+  tiers={["web", "api"].map((id) => ({ id, label: id, nodes: [] }))}
+  links={[]}
+/>
+
+```tree id="broken-tree" title="A tree with one line indented by three spaces"
+root/
+  a/
+   b
+  c
+```
+
+<Figure id="broken-drawing" title="Two boxes overlap and one link crosses a box">
+  <Drawing height={160}>
+    <Box id="export" x={16} y={16} label="git archive" />
+    <Box id="gate" x={60} y={30} label="gate-release" />
+    <Box id="far" x={560} y={100} label="far" />
+    <Box id="mid" x={300} y={100} label="mid" />
+    <Box id="left" x={16} y={100} label="left" />
+    <Link from="left" to="far" label="skips" />
+    <path d="M 400 20 h 40 v 30 h -40 Z" className="fill-sheet stroke-muted" />
+  </Drawing>
+</Figure>
+
+<System
+  id="broken-system"
+  title="The API writes to Postgres and nobody reads the cache"
+  nodes={[
+    { id: "api", label: "api", kind: "service" },
+    { id: "cache", label: "cache", kind: "memcache" },
+    { id: "db", label: "Postgres", kind: "store" },
+  ]}
+  links={[{ from: "api", to: "db" }]}
+/>
+
+<Schema
+  id="broken-schema"
+  title="Parcels point at a dock table that is not drawn"
+  tables={[
+    { name: "public.depots", columns: [{ name: "code", type: "text", key: "pk" }] },
+    {
+      name: "public.parcels",
+      columns: [
+        { name: "id", type: "bigint", key: "pk" },
+        { name: "depot", type: "text", ref: "public.depots.code" },
+        { name: "dock_id", type: "bigint", ref: "public.docks.id" },
+      ],
+    },
+  ]}
+/>

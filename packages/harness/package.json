@@ -1,0 +1,14 @@
+{
+  "name": "@tackup/harness",
+  "private": true,
+  "description": "Agent harness shared by Tack's website and evals, starting with the agent prompts.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    "./prompts/evals": "./src/prompts/evals.ts",
+    "./prompts/landing": "./src/prompts/landing.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --project tsconfig.json"
+  }
+}

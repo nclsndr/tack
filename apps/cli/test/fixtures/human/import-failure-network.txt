@@ -1,0 +1,6 @@
+tack import add · ✗ domain
+
+Problems
+  ✗ Git could not reach the remote. Check the network connection and try again;
+    nothing was changed.
+    error import-network-failed

@@ -1,0 +1,11 @@
+tack import add · ✗ invalid-configuration
+
+Problems
+  ✗ Name the provider: github:anthropics/skills. Tack does not guess where
+    org/repo lives. Providers: github.
+    error import-location-invalid · reason location-provider-missing ·
+    suggestion github:anthropics/skills · next tack import add
+    github:anthropics/skills --skill pdf --into team-notes
+
+Next
+  tack import add github:anthropics/skills --skill pdf --into team-notes

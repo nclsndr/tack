@@ -1,0 +1,130 @@
+{
+  "applied": {
+    "kind": "init-application",
+    "state": "created",
+    "adaptersEnabled": [],
+    "user": {
+      "docs": [],
+      "kind": "sync-application",
+      "resources": {
+        "kind": "skill-reconciliation-application",
+        "units": [],
+        "version": 1
+      }
+    }
+  },
+  "classification": "partial",
+  "command": "init",
+  "diagnostics": [
+    {
+      "code": "agent-home-not-found",
+      "message": "No agent folder was found in /fx/home (it looks for .claude, .codex, .agents, .cursor), so Tack has no agent to link into. Name yours with --adapter claude, codex or cursor.",
+      "severity": "warning"
+    }
+  ],
+  "next": ["tack guide onboarding", "tack init --adapter claude"],
+  "plan": {
+    "adapters": {
+      "detection": [
+        {
+          "adapter": "claude",
+          "found": false,
+          "home": "/fx/home/.claude"
+        },
+        {
+          "adapter": "codex",
+          "found": false,
+          "home": "/fx/home/.codex"
+        },
+        {
+          "adapter": "cursor",
+          "found": false,
+          "home": "/fx/home/.cursor"
+        }
+      ],
+      "enabled": [],
+      "source": "detected",
+      "toEnable": []
+    },
+    "handMade": [],
+    "kind": "init-plan",
+    "state": "create",
+    "stateDirectory": "/fx/home/.tack",
+    "user": {
+      "docs": [],
+      "kind": "sync-plan",
+      "resources": {
+        "kind": "skill-reconciliation-plan",
+        "namespaceResolutions": [
+          {
+            "namespace": {
+              "_tag": "user"
+            },
+            "resolution": {
+              "groups": [
+                {
+                  "_tag": "selected",
+                  "members": [
+                    {
+                      "kind": "skill",
+                      "name": "author-tack-profiles",
+                      "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                    }
+                  ]
+                },
+                {
+                  "_tag": "selected",
+                  "members": [
+                    {
+                      "kind": "skill",
+                      "name": "manage-tack-sources",
+                      "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                    }
+                  ]
+                },
+                {
+                  "_tag": "selected",
+                  "members": [
+                    {
+                      "kind": "skill",
+                      "name": "use-tack",
+                      "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                    }
+                  ]
+                },
+                {
+                  "_tag": "selected",
+                  "members": [
+                    {
+                      "kind": "skill",
+                      "name": "write-reader-figures",
+                      "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                    }
+                  ]
+                }
+              ],
+              "optionalSkips": [],
+              "requestBlockers": []
+            }
+          }
+        ],
+        "selection": {
+          "selector": {
+            "_tag": "user"
+          },
+          "targets": [
+            {
+              "_tag": "user",
+              "canonicalPath": "/fx/home"
+            }
+          ]
+        },
+        "units": [],
+        "version": 1
+      }
+    }
+  },
+  "result": null,
+  "status": "partial",
+  "version": 1
+}

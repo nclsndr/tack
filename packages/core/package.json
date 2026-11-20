@@ -1,0 +1,19 @@
+{
+  "name": "@tackup/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Effect script contract for Tack's cross-agent resources.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./script-api": "./src/script-api.ts"
+  },
+  "scripts": {
+    "build": "bun build ./src/index.ts --outdir ./dist --target bun",
+    "typecheck": "tsc --project tsconfig.json"
+  },
+  "dependencies": {
+    "effect": "catalog:"
+  }
+}

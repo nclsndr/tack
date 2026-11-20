@@ -1,0 +1,7 @@
+tack import remove · ✗ domain
+
+Problems
+  ✗ skills/pdf has local changes (SKILL.md changed). Removing it deletes them
+    and Tack keeps no copy. Repeat with --force to see the full list and delete
+    it anyway.
+    error import-removal-blocked

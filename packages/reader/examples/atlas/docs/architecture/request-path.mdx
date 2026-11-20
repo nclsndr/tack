@@ -1,0 +1,76 @@
+---
+title: From a save to every laptop
+type: walkthrough
+status: active
+tags: [architecture, sync]
+---
+
+# From a save to every laptop
+
+One save travels from the client to the queue, through the upload worker to the store, and back out to the other clients as a change notice.
+
+<System
+  id="atlas-sync"
+  title="A save reaches other laptops only after the store confirms the upload"
+  rule={{
+    title: "Links follow the data",
+    text: "A call is solid, a queued job dashed, a reply dotted.",
+  }}
+  startWith={["client"]}
+  groups={[{ id: "server", label: "Atlas server" }]}
+  nodes={[
+    { id: "person", label: "teammate", kind: "actor" },
+    { id: "client", label: "desktop client", kind: "service", detail: "watches the folder" },
+    { id: "api", label: "api", kind: "service", group: "server" },
+    {
+      id: "jobs",
+      label: "upload queue",
+      kind: "queue",
+      detail: "one job per version",
+      group: "server",
+    },
+    { id: "worker", label: "upload worker", kind: "service", group: "server" },
+    { id: "db", label: "postgres", kind: "store", lines: ["files", "versions"], group: "server" },
+    { id: "blob", label: "file version", kind: "artifact", detail: "sha-256 keyed" },
+    { id: "store", label: "object store", kind: "external" },
+  ]}
+  links={[
+    { id: "save", from: "person", to: "client", label: "saves a file" },
+    { id: "post", from: "client", to: "api", label: "POST /files" },
+    { id: "record", from: "api", to: "db", label: "INSERT version" },
+    { id: "enqueue", from: "api", to: "jobs", label: "upload job", kind: "async" },
+    { id: "dequeue", from: "jobs", to: "worker", label: "next job", kind: "async" },
+    { id: "bytes", from: "worker", to: "blob", label: "streams" },
+    { id: "put", from: "blob", to: "store", label: "PUT object" },
+    { id: "confirm", from: "store", to: "worker", label: "200", kind: "reply" },
+  ]}
+  replays={[
+    {
+      label: "A save",
+      steps: [
+        {
+          at: ["person", "save", "client"],
+          note: "The watcher sees the change and hashes the file.",
+        },
+        { at: ["post", "api", "record", "db"], note: "The API records the new version." },
+        { at: ["enqueue", "jobs", "dequeue", "worker"], note: "The upload waits in the queue." },
+        {
+          at: ["bytes", "blob", "put", "store", "confirm"],
+          note: "The worker uploads and the store confirms.",
+        },
+      ],
+    },
+  ]}
+  lenses={[
+    {
+      label: "Store down",
+      note: "The job fails and stays queued; the version is kept for the retry.",
+      focus: ["jobs", "worker"],
+      broken: ["store", "put"],
+    },
+  ]}
+/>
+
+## Why the queue
+
+A slow store must never slow a save. The API answers as soon as the version is recorded.

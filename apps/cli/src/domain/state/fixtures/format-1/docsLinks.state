@@ -1,0 +1,96 @@
+{
+  "format": 1,
+  "data": {
+    "enabledAdapters": [],
+    "sources": [],
+    "projects": [
+      {
+        "name": "alpha",
+        "gitCommonDirectory": "/work/alpha/.git",
+        "roots": [
+          "/work/alpha",
+          "/work/alpha-wt"
+        ],
+        "removingRoots": [
+          "/work/alpha-old"
+        ]
+      },
+      {
+        "name": "omega",
+        "gitCommonDirectory": "/work/omega/.git",
+        "roots": [],
+        "removingRoots": [
+          "/work/omega"
+        ],
+        "removalIntent": "project"
+      },
+      {
+        "name": "zeta",
+        "gitCommonDirectory": "/work/zeta/.git",
+        "roots": [],
+        "removingRoots": [
+          "/work/zeta"
+        ]
+      }
+    ],
+    "userChoices": [],
+    "links": [
+      {
+        "destinationPath": "/work/alpha/.tack/docs/7d3f1c2a-9b4e-4f6a-8c1d-2e5b6a7c8d9e/shared/guide",
+        "sourceDirectoryPath": "/sources/b/docs/guide",
+        "resource": {
+          "kind": "docs",
+          "name": "guide",
+          "sourceRegistrationId": "7d3f1c2a-9b4e-4f6a-8c1d-2e5b6a7c8d9e"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/work/alpha",
+          "projectName": "alpha"
+        },
+        "delivery": {
+          "_tag": "docs"
+        }
+      },
+      {
+        "destinationPath": "/work/alpha/.tack/docs/7d3f1c2a-9b4e-4f6a-8c1d-2e5b6a7c8d9e/shared/handbook",
+        "sourceDirectoryPath": "/sources/b/docs/handbook",
+        "resource": {
+          "kind": "docs",
+          "name": "handbook",
+          "sourceRegistrationId": "7d3f1c2a-9b4e-4f6a-8c1d-2e5b6a7c8d9e"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/work/alpha",
+          "projectName": "alpha"
+        },
+        "delivery": {
+          "_tag": "docs"
+        }
+      }
+    ],
+    "journal": [
+      {
+        "_tag": "remove",
+        "link": {
+          "destinationPath": "/work/omega/.tack/docs/7d3f1c2a-9b4e-4f6a-8c1d-2e5b6a7c8d9e/shared/handbook",
+          "sourceDirectoryPath": "/sources/b/docs/handbook",
+          "resource": {
+            "kind": "docs",
+            "name": "handbook",
+            "sourceRegistrationId": "7d3f1c2a-9b4e-4f6a-8c1d-2e5b6a7c8d9e"
+          },
+          "target": {
+            "_tag": "project-root",
+            "canonicalPath": "/work/omega",
+            "projectName": "omega"
+          },
+          "delivery": {
+            "_tag": "docs"
+          }
+        }
+      }
+    ]
+  }
+}

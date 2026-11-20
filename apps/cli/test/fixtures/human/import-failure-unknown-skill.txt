@@ -1,0 +1,5 @@
+tack import add · ✗ invalid-configuration
+
+Problems
+  ✗ The location has no skill named "pdff". Skills found: docx, pdf.
+    error import-selection-unknown

@@ -1,0 +1,216 @@
+{
+  "applied": null,
+  "classification": "partial",
+  "command": "catalog",
+  "diagnostics": [
+    {
+      "code": "catalog-partial",
+      "details": {
+        "issues": 2
+      },
+      "message": "Some candidates or sources are missing from the catalog; see the result issues.",
+      "severity": "warning"
+    }
+  ],
+  "next": [],
+  "plan": null,
+  "result": {
+    "complete": false,
+    "issues": [
+      {
+        "code": "skill-frontmatter-schema-invalid",
+        "message": "Missing key\n  at [\"description\"]",
+        "subject": {
+          "_tag": "resource",
+          "address": {
+            "kind": "skill",
+            "name": "broken",
+            "owner": "shared",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          "candidateKind": "skill",
+          "candidatePath": "/fx/source/skills/broken/SKILL.md",
+          "sourcePath": "/fx/source",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        }
+      },
+      {
+        "code": "skill-frontmatter-schema-invalid",
+        "message": "Expected a string matching the RegExp ^[a-z0-9]+(?:-[a-z0-9]+)*$\n  at [\"name\"]",
+        "subject": {
+          "_tag": "resource",
+          "candidateKind": "skill",
+          "candidatePath": "/fx/source/skills/日本語スキル/SKILL.md",
+          "sourcePath": "/fx/source",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        }
+      }
+    ],
+    "kind": "catalog",
+    "resources": [
+      {
+        "activation": "opt-in",
+        "address": {
+          "kind": "skill",
+          "name": "use-tack",
+          "owner": "shared",
+          "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+        },
+        "dependencies": [],
+        "description": "Use Tack to manage cross-agent resources, including skills, commands, context, docs, and scripts. Discover resources, select agent installations, search attached docs, and run declared scripts.",
+        "directoryPath": "/app/apps/cli/src/builtins/skills/use-tack",
+        "filePath": "/app/apps/cli/src/builtins/skills/use-tack/SKILL.md",
+        "kind": "skill",
+        "origin": "builtin",
+        "projects": [],
+        "sourcePath": "/app/apps/cli/src/builtins",
+        "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6",
+        "userActivation": "default"
+      },
+      {
+        "activation": "default",
+        "address": {
+          "kind": "command",
+          "name": "ship",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "dependencies": [],
+        "description": "Ship it",
+        "directoryPath": "/fx/source/commands",
+        "filePath": "/fx/source/commands/ship.md",
+        "kind": "command",
+        "origin": "registered",
+        "projects": [],
+        "sourcePath": "/fx/source",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+      },
+      {
+        "address": {
+          "kind": "script",
+          "name": "run",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "declaredPath": "run.ts",
+        "description": "Run fixture",
+        "directoryPath": "/fx/source/scripts",
+        "filePath": "/fx/source/scripts/run.ts",
+        "kind": "script",
+        "origin": "registered",
+        "sourcePath": "/fx/source",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+      },
+      {
+        "activation": "default",
+        "address": {
+          "kind": "skill",
+          "name": "localized",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "dependencies": [],
+        "description": "日本語の説明がここにあります。とても長い説明で、端末の幅を超えても折り返されることを確認します",
+        "directoryPath": "/fx/source/skills/localized",
+        "filePath": "/fx/source/skills/localized/SKILL.md",
+        "kind": "skill",
+        "origin": "registered",
+        "projects": [],
+        "sourcePath": "/fx/source",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+      },
+      {
+        "activation": "default",
+        "address": {
+          "kind": "skill",
+          "name": "planner",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "dependencies": [],
+        "description": "Plan work",
+        "directoryPath": "/fx/source/skills/planner",
+        "filePath": "/fx/source/skills/planner/SKILL.md",
+        "kind": "skill",
+        "origin": "registered",
+        "projects": [],
+        "sourcePath": "/fx/source",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+      },
+      {
+        "activation": "default",
+        "address": {
+          "kind": "skill",
+          "name": "review",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "dependencies": [],
+        "description": "Review a change set before it merges, checking tests, naming and public surface for regressions in behavior",
+        "directoryPath": "/fx/source/skills/review",
+        "filePath": "/fx/source/skills/review/SKILL.md",
+        "kind": "skill",
+        "origin": "registered",
+        "projects": [],
+        "sourcePath": "/fx/source",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+      },
+      {
+        "activation": "default",
+        "address": {
+          "kind": "skill",
+          "name": "reviewer-with-a-very-long-skill-name-that-stretches-columns",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "dependencies": [],
+        "description": "Long named skill",
+        "directoryPath": "/fx/source/skills/reviewer-with-a-very-long-skill-name-that-stretches-columns",
+        "filePath": "/fx/source/skills/reviewer-with-a-very-long-skill-name-that-stretches-columns/SKILL.md",
+        "kind": "skill",
+        "origin": "registered",
+        "projects": [],
+        "sourcePath": "/fx/source",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+      },
+      {
+        "activation": "default",
+        "address": {
+          "kind": "skill",
+          "name": "tester",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "dependencies": [],
+        "description": "Write and run tests",
+        "directoryPath": "/fx/source/skills/tester",
+        "filePath": "/fx/source/skills/tester/SKILL.md",
+        "kind": "skill",
+        "origin": "registered",
+        "projects": [],
+        "sourcePath": "/fx/source",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+      },
+      {
+        "activation": "default",
+        "address": {
+          "kind": "skill",
+          "name": "writer",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "dependencies": [],
+        "description": "Draft documentation and release notes",
+        "directoryPath": "/fx/source/skills/writer",
+        "filePath": "/fx/source/skills/writer/SKILL.md",
+        "kind": "skill",
+        "origin": "registered",
+        "projects": [],
+        "sourcePath": "/fx/source",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+      }
+    ]
+  },
+  "status": "partial",
+  "version": 1
+}

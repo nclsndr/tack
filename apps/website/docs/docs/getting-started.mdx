@@ -1,0 +1,129 @@
+---
+title: Get started
+description: Install Tack, set up this machine, register a folder of skills and link it into a project for Claude Code, Codex and Cursor.
+---
+
+import { Agent, Human } from "../../components/audience.tsx";
+import { Terminal } from "../../components/terminal.tsx";
+
+export const sourceAddOutput = [
+  "Would create ~/agent-setup/tack.yaml and register source agent-setup.",
+  "No files or state changed.",
+  "",
+  "  version: 1",
+  "  skills:",
+  "    - path: skills",
+  "  commands:",
+  "    - path: commands",
+  "",
+  "skills skills · 3 skills",
+  "  debug-flaky-test, pr-review, write-changelog",
+  "",
+  "commands commands · 1 command",
+  "  ship",
+].join("\n");
+
+export const linksOutput = [
+  "debug-flaky-test -> ../../../../agent-setup/skills/debug-flaky-test",
+  "pr-review -> ../../../../agent-setup/skills/pr-review",
+  "write-changelog -> ../../../../agent-setup/skills/write-changelog",
+].join("\n");
+
+# Get started
+
+Tack needs Node 22.12 or later, or Bun. It links your files into each agent; it never moves or
+copies them.
+
+<Human>
+  The quickest start is one prompt. Paste it into your coding agent:
+
+> Install Tack with `npm install --global @tackup/cli`, then run `tack guide onboarding` and follow
+> it to set up my machine: ask me which folders hold my skills, commands or docs and which projects
+> to link, explain each step, show me its preview, and wait for my yes before you apply it or run
+> any other command that writes without a preview.
+
+</Human>
+
+<Agent>
+  If a person asked you to set up Tack, run `tack guide onboarding` and follow it. It prints the
+  onboarding guide of the installed version. Show the person each step's preview, and add `--apply`
+  only after they agree.
+</Agent>
+
+## 1. Install and set up this machine
+
+`tack init` sets up Tack at once and prints what it did: its state in `~/.tack`, the agents it found
+(Claude Code, Codex, Cursor) and Tack's own skills linked into each. Running it again changes
+nothing.
+
+<Terminal commands={["npm install --global @tackup/cli", "tack init"]} />
+
+Skills you made by hand in `~/.claude/skills` and similar folders are listed and left alone.
+
+## 2. Register your skills
+
+Tell Tack what your folder holds. Name each folder inside it with `--skills`, `--commands`,
+`--context` or `--docs`. Tack previews the `tack.yaml` it would write and what each folder holds,
+and writes it only when you add `--apply`. Check that the list matches every skill you expect.
+
+<Terminal
+  commands={["tack source add ~/agent-setup --skills skills --commands commands"]}
+  output={sourceAddOutput}
+/>
+
+When the preview looks right, apply it to write the `tack.yaml` and register the source:
+
+<Terminal
+  commands={["tack source add ~/agent-setup --skills skills --commands commands --apply"]}
+/>
+
+When your skill folders sit directly in the folder, such as `~/skills/review/SKILL.md`, write
+`--skills .` instead: `tack source add ~/skills --skills .` previews a skills collection, a
+`tack.yaml` that holds `kind: skills`. A folder of commands or docs beside them is then a source
+of its own, such as `tack source add ~/skills/commands --commands .` or
+`tack source add ~/skills/handbook --docs .`. When you run `tack source add` on a folder without
+any flag, Tack reads the top of the folder and names the commands that fit what it finds there.
+
+A folder that already has a `tack.yaml` registers at once, such as a team repository you cloned:
+`tack source add ~/code/acme-agent-skills`. Without one, name its folders as above. In a
+repository you share, commit the `tack.yaml` that Tack writes, so others get the same source.
+Repeat this section for each folder of skills. Scripts and anything else the flags cannot say go
+into `tack.yaml` by hand; your agent's `manage-tack-sources` skill knows how.
+
+Every agent gets your skills. Commands reach Cursor only: Tack links commands only into Cursor's
+folder, and the `tack sync` preview names each command that an agent will not get. Context is not
+selected unless you pick it, and even then reaches no agent, because no agent has a folder Tack can
+link it into.
+
+## 3. Link them into a project
+
+From inside the project's repository, register it, preview the plan, then apply it. `project add`
+registers the project at once and writes no link; `tack project remove app` undoes it.
+
+```sh
+cd ~/code/app
+tack project add app
+tack sync --project app
+tack sync --project app --apply
+```
+
+Each link points back to your file:
+
+<Terminal commands={["ls -l .claude/skills"]} output={linksOutput} />
+
+Repeat this section for each project. After you register another folder of skills, run
+`tack sync --all` and then `tack sync --all --apply`, so every project gets its skills.
+
+The links point to paths on your machine. Decide whether this repository ignores them or commits
+them; Tack does not edit `.gitignore`. To ignore them, `tack status --project app --details` prints
+the lines to add under "For .gitignore", one per link; create `.gitignore` if the repository has
+none. A link is a file to Git, so a line has no trailing `/`, and each skill you link later needs
+its own line.
+
+## 4. Check
+
+```sh
+tack doctor
+```
+
+After every Tack upgrade, run `tack init` to relink Tack's own skills.

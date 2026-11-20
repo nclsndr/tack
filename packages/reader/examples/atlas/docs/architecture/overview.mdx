@@ -1,0 +1,94 @@
+---
+title: Where code belongs in Atlas
+type: reference
+status: review
+tags: [architecture]
+---
+
+# Where code belongs in Atlas
+
+The server is four tiers. A route handler never touches the object store itself: it enqueues a job, and a worker does the slow part.
+
+<ArchitectureMap
+  id="atlas-architecture"
+  title="A route never writes to the object store: it enqueues, and a worker uploads"
+  summary="Each box is one folder of server/src. API and workers share nothing but the queue and the database."
+  rule={{
+    title: "Imports point down",
+    text: "An import points down the map or stays inside its tier.",
+  }}
+  tiers={[
+    {
+      id: "api",
+      label: "API",
+      path: "api/",
+      note: "route handlers",
+      nodes: [
+        { id: "api-files", label: "api/files", about: "Accepts uploads and lists folders." },
+        { id: "api-auth", label: "api/auth", detail: "sessions" },
+      ],
+    },
+    [
+      {
+        id: "queue",
+        label: "Queue",
+        path: "queue/",
+        note: "jobs in Postgres",
+        nodes: [{ id: "queue-jobs", label: "queue/jobs" }],
+      },
+      {
+        id: "workers",
+        label: "Workers",
+        path: "workers/",
+        note: "slow work",
+        nodes: [
+          { id: "workers-upload", label: "workers/upload", about: "The only writer of objects." },
+          { id: "workers-thumbs", label: "workers/thumbnails" },
+        ],
+      },
+    ],
+    {
+      id: "data",
+      label: "Data",
+      path: "db/",
+      note: "queries and schema",
+      nodes: [
+        { id: "db-files", label: "db/files" },
+        { id: "db-store", label: "db/object-store" },
+      ],
+    },
+  ]}
+  barriers={[{ between: ["queue", "workers"], label: "jobs only" }]}
+  links={[
+    { from: "api-files", to: "queue-jobs", label: "enqueue" },
+    { from: "api-files", to: "db-files", label: "SELECT" },
+    { from: "api-auth", to: "db-files" },
+    { from: "workers-upload", to: "db-store", label: "PUT" },
+    { from: "workers-upload", to: "db-files", label: "UPDATE" },
+    { from: "workers-thumbs", to: "db-store", label: "GET" },
+  ]}
+  startWith={["api-files", "workers-upload"]}
+  replays={[
+    {
+      id: "upload",
+      label: "Upload a file",
+      steps: [
+        { at: "api-files", note: "The route checks the session and stores the metadata." },
+        { at: "queue-jobs", note: "One job per file version." },
+        { at: "workers-upload", note: "The worker streams the bytes to the store." },
+        { at: "db-store", note: "The object is written once, keyed by digest." },
+      ],
+    },
+  ]}
+  lenses={[
+    {
+      id: "store-down",
+      label: "Object store down",
+      note: "Uploads wait in the queue; reads still work.",
+      focus: ["workers-upload"],
+      blocked: ["db-store"],
+    },
+  ]}
+/>
+
+Expand the figure to read it with its panel beside it. Escape or Close puts it back.

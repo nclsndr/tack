@@ -1,0 +1,124 @@
+@import "@fontsource-variable/manrope";
+@import "@fontsource-variable/jetbrains-mono";
+@import "./tokens.css";
+@import "./landing.css";
+@import "./landing-features.css";
+
+/* The Rspress default theme, drawn with the brand tokens. */
+:root,
+html.rp-dark {
+  --rp-c-bg: var(--tack-bg);
+  --rp-c-bg-soft: var(--tack-surface);
+  --rp-c-bg-mute: var(--tack-subtle);
+  --rp-c-bg-alt: var(--tack-bg-deep);
+  --rp-c-divider: var(--tack-border-strong);
+  --rp-c-divider-light: var(--tack-border);
+  --rp-c-text-0: var(--tack-heading);
+  --rp-c-text-1: var(--tack-text);
+  --rp-c-text-2: var(--tack-muted);
+  --rp-c-text-3: var(--tack-faint);
+  --rp-c-brand: var(--tack-accent);
+  --rp-c-brand-light: var(--tack-accent);
+  --rp-c-brand-dark: var(--tack-accent);
+  --rp-c-brand-darker: var(--tack-accent-strong);
+  --rp-c-brand-tint: var(--tack-selected);
+  --rp-c-link: var(--tack-accent);
+  --rp-radius: var(--tack-radius-lg);
+  --rp-radius-small: var(--tack-radius-sm);
+  --rp-radius-large: var(--tack-radius-lg);
+  --rp-font-family-base: var(--tack-font-sans);
+  --rp-font-family-mono: var(--tack-font-mono);
+}
+
+body {
+  background: var(--tack-bg);
+  color: var(--tack-text);
+  font-family: var(--tack-font-sans);
+}
+
+:focus-visible {
+  outline: 2px solid var(--tack-focus);
+  outline-offset: 3px;
+}
+
+/* Audience blocks: <Human> in the HTML page. <Agent> never reaches the HTML. */
+.tack-audience {
+  margin: 1.25rem 0;
+  padding: 0.875rem 1rem;
+  border-inline-start: 3px solid var(--tack-accent);
+  border-radius: var(--tack-radius-sm);
+  background: var(--tack-human-wash);
+}
+
+.tack-audience-label {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--tack-accent);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tack-audience > :last-child {
+  margin-bottom: 0;
+}
+
+/* Terminal frame: a command and its output, dark in both themes. */
+.tack-terminal {
+  margin: 1.25rem 0;
+  overflow: hidden;
+  border: 1px solid var(--tack-border-strong);
+  border-radius: var(--tack-radius-md);
+  background: var(--tack-terminal-bg);
+  color: var(--tack-terminal-text);
+  font-family: var(--tack-font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  font-variant-ligatures: none;
+}
+
+.tack-terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  border-bottom: 1px solid #1b3b54;
+  color: var(--tack-terminal-muted);
+  font-size: 12px;
+}
+
+.tack-terminal-dots {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.tack-terminal-dots span {
+  width: 9px;
+  height: 9px;
+  border: 1px solid #2a536f;
+  border-radius: 50%;
+}
+
+.tack-terminal pre {
+  margin: 0;
+  padding: 0.875rem 1rem;
+  overflow-x: auto;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  white-space: pre;
+}
+
+.tack-terminal-prompt {
+  color: var(--tack-terminal-muted);
+  user-select: none;
+}
+
+.tack-terminal-command {
+  color: #f2efe8;
+}
+
+.tack-terminal-output {
+  color: var(--tack-terminal-text);
+}

@@ -1,0 +1,34 @@
+{
+  "applied": null,
+  "classification": "success",
+  "command": "catalog",
+  "diagnostics": [],
+  "next": [],
+  "plan": null,
+  "result": {
+    "complete": true,
+    "issues": [],
+    "kind": "catalog",
+    "resources": [
+      {
+        "address": {
+          "kind": "script",
+          "name": "run",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "declaredPath": "run.ts",
+        "description": "Run fixture",
+        "directoryPath": "/fx/source/scripts",
+        "filePath": "/fx/source/scripts/run.ts",
+        "kind": "script",
+        "origin": "registered",
+        "sourcePath": "/fx/source",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+      }
+    ],
+    "scope": "script"
+  },
+  "status": "success",
+  "version": 1
+}

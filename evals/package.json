@@ -1,0 +1,13 @@
+{
+  "name": "@tackup/evals",
+  "private": true,
+  "description": "Internal Docker-only agent evals for Tack.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --project tsconfig.json"
+  },
+  "dependencies": {
+    "@tackup/harness": "workspace:*"
+  }
+}

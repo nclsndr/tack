@@ -1,0 +1,25 @@
+node_modules/
+/.effect-source/
+dist/
+build/
+coverage/
+.vitest-reports/
+.turbo/
+.nx/
+.cache/
+*.tsbuildinfo
+
+.env
+.env.*
+!.env.example
+
+.claude/skills
+.cursor/skills/
+.cursor/commands
+.agents/
+.opencode/skills/
+.DS_Store
+Thumbs.db
+
+# Project documentation lives in its registered source; docs may be a local compatibility link.
+/docs

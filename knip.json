@@ -1,0 +1,56 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreBinaries": ["mkfifo"],
+  "workspaces": {
+    "evals": {
+      "entry": ["src/**/*.test.ts", "container/**/*.test.ts", "tasks/**/*.ts", "test/**/*.ts"],
+      "project": ["**/*.ts"]
+    },
+    "apps/cli": {
+      "entry": [
+        "src/platform/execution/worker.ts",
+        "src/**/*.test.ts",
+        "test/**/*.test.ts",
+        "test/fixtures/*.ts"
+      ],
+      "project": ["src/**/*.ts", "test/**/*.ts"]
+    },
+    "packages/harness": {
+      "entry": ["src/**/*.test.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/core": {
+      "entry": ["test/**/*.ts"],
+      "project": ["src/**/*.ts", "test/**/*.ts"]
+    },
+    "scripts": {
+      "entry": ["*.ts"],
+      "project": ["*.ts"]
+    },
+    "packages/reader": {
+      "entry": [
+        "src/engine.ts",
+        "src/**/*.test.{ts,tsx}",
+        "examples/**/*.{ts,tsx}",
+        "fixtures/**/*.ts"
+      ],
+      "project": ["src/**/*.{ts,tsx}", "examples/**/*.{ts,tsx}", "fixtures/**/*.{ts,tsx}"]
+    },
+    "apps/website": {
+      "entry": [
+        "rspress.config.ts",
+        "docs/**/*.tsx",
+        "components/audience.tsx",
+        "functions/**/*.ts"
+      ],
+      "project": [
+        "*.ts",
+        "components/**/*.{ts,tsx}",
+        "demo/**/*.ts",
+        "docs/**/*.tsx",
+        "functions/**/*.ts"
+      ],
+      "ignoreDependencies": ["@fontsource-variable/jetbrains-mono", "@fontsource-variable/manrope"]
+    }
+  }
+}

@@ -1,0 +1,95 @@
+/*
+ * Brand tokens for the landing page and the docs.
+ *
+ * Navy blueprint and brass, Manrope and JetBrains Mono, drafting corners with a pill only on the
+ * primary button, and the warm paper as the light theme. The names reuse the reader's semantic
+ * layer (`packages/reader/src/reader.css`), so a later palette, type or corner change only replaces
+ * the values in this file.
+ *
+ * `:root` holds the light paper set. `html.rp-dark` is the Rspress dark mode, the site default,
+ * and `.tack-theme-dark` pins the dark set on a subtree, such as the landing page.
+ */
+
+:root {
+  color-scheme: light;
+  --tack-bg: #f5f3ee;
+  --tack-bg-deep: #ebe7de;
+  --tack-surface: #fcfbf8;
+  --tack-subtle: #ebe7de;
+  --tack-border: #dcd6ca;
+  --tack-border-strong: #b9b1a2;
+  --tack-control-border: #8a8275;
+  --tack-heading: #031b31;
+  --tack-text: #1f2f3e;
+  --tack-muted: #4f5e6b;
+  --tack-faint: #5e6b76;
+  --tack-accent: #8a4a2c;
+  --tack-accent-strong: #6e3820;
+  --tack-selected: #f1e6da;
+  --tack-selected-text: #8a4a2c;
+  --tack-action-bg: #031b31;
+  --tack-action-bg-hover: #0c2d47;
+  --tack-action-text: #f2efe8;
+  --tack-agent: #1d5a85;
+  --tack-agent-wash: #e1eaf2;
+  --tack-human-wash: #f1e6da;
+  --tack-line: #5c91ad;
+  --tack-line-faint: #c9d6de;
+  --tack-leather: #a75f40;
+  --tack-success: #2f6b44;
+  --tack-danger: #a83a24;
+  --tack-terminal-bg: #011422;
+  --tack-terminal-text: #d3d8dc;
+  --tack-terminal-muted: #839bae;
+  --tack-focus: var(--tack-accent);
+
+  --tack-font-sans: "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
+  --tack-font-mono: "JetBrains Mono Variable", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --tack-radius-xs: 2px;
+  --tack-radius-sm: 4px;
+  --tack-radius-md: 8px;
+  --tack-radius-lg: 12px;
+  --tack-radius-pill: 999px;
+
+  --tack-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --tack-duration-fast: 180ms;
+  --tack-duration-base: 400ms;
+}
+
+html.rp-dark,
+.tack-theme-dark {
+  color-scheme: dark;
+  --tack-bg: #031b31;
+  --tack-bg-deep: #011422;
+  --tack-surface: #072339;
+  --tack-subtle: #0c2d47;
+  --tack-border: #1b3b54;
+  --tack-border-strong: #2a536f;
+  --tack-control-border: #5a84a0;
+  --tack-heading: #f2efe8;
+  --tack-text: #d3d8dc;
+  --tack-muted: #96a6b3;
+  --tack-faint: #839bae;
+  --tack-accent: #e2c1a0;
+  --tack-accent-strong: #f3cda3;
+  --tack-selected: #10304a;
+  --tack-selected-text: #f3cda3;
+  --tack-action-bg: #e2c1a0;
+  --tack-action-bg-hover: #f3cda3;
+  --tack-action-text: #031b31;
+  --tack-agent: #90c2da;
+  --tack-agent-wash: #0e3350;
+  --tack-human-wash: #2e2419;
+  --tack-line: #5c91ad;
+  --tack-line-faint: #1b3b54;
+  --tack-success: #9fcba8;
+  --tack-danger: #f2937f;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --tack-duration-fast: 0ms;
+    --tack-duration-base: 0ms;
+  }
+}

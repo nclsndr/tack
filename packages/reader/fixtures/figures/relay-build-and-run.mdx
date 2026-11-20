@@ -1,0 +1,179 @@
+---
+title: How relay is built and run
+type: reference
+status: draft
+tags: [reference, cli, release]
+---
+
+# How relay is built and run
+
+`relay` is a command-line tool that ships as a release directory, not a single file. This page follows one release from a commit to an active install, shows what lands on disk, and names the process that runs each command. Paths in `code font` are relative to the relay repository unless they start with `~`.
+
+## The short version
+
+**What happens when you build.** `relay release --apply` takes a commit, exports it to a scratch directory, runs the test suite there, builds a *release directory*, runs a second gate against that directory, and only then points `current` at it.
+
+**Why it is not one file.** The executable (`bin/relay`) is a runtime with relay's code compiled into it. It cannot carry everything:
+
+- Plugins are run by *a second process*, started from the same executable, that loads files from disk.
+- The preview server needs its own sources and `node_modules`, including native addons.
+- The bundled templates must sit at one stable path that other tools can point at.
+
+**What runs what.**
+
+| Thing you ask for | Who runs it | Where its code comes from |
+| --- | --- | --- |
+| Any `relay` command | The compiled executable, in process | Bundled inside the executable |
+| `relay plugin run` | A fresh child: the same executable acting as a plain runtime, running `worker.js` | The worker is in the release. The plugin and its `node_modules` come from the project. |
+| `relay preview` | A child: the same executable acting as a plain runtime, running `engine.ts` | `engine.ts` and `node_modules` are in the release. Pages come from the project. |
+
+## 1. From source to a release
+
+### The pipeline
+
+<Figure
+  id="release-pipeline"
+  kind="system"
+  title="Nothing outside staging/ changes until the gate passes, so a failed build leaves the active release alone"
+  summary="relay release --apply, from a commit to an active release. Every step in the middle band runs inside one scratch directory, ~/.local/share/relay/staging/<uuid>."
+  rule={{ title: "Top to bottom", text: "Each step runs only when the one before it passed. The bands are where each step writes." }}
+  startWith={["gate", "activate"]}
+  legend={{ dashed: "only when the checkout is clean and behind", "tint-2": "writes outside staging/" }}
+  replays={[
+    { id: "good-release", label: "A good release", steps: [
+      { at: "fetch", note: "git fetch origin main, then git merge --ff-only, only when the checkout is clean and behind." },
+      { at: "export", note: "git archive of the commit, extracted into staging/<uuid>/export: a clean tree with no .git." },
+      { at: "install", note: "A full dev install in the export, from the lockfile." },
+      { at: "check", note: "The whole check suite: format, lint, typecheck and every test. 20 minute cap." },
+      { at: "build", note: "scripts/build-release.ts builds the release directory. 5 minute cap." },
+      { at: "gate", note: "scripts/gate-release.ts runs the built release for real. 5 minute cap." },
+      { at: "rename", note: "Writes release.json, then renames staging/<uuid>/release to releases/<stamp>/." },
+      { at: "activate", note: "Syncs templates/, swaps current, then previous, and links ~/.local/bin/relay." },
+      { at: "prune", note: "Keeps the three newest releases." },
+    ] },
+  ]}
+  lenses={[
+    { id: "gate-fails", label: "The gate fails", note: "Nothing outside staging/ has changed, so the active release stays. The commit is held until HEAD changes or you pass --force.", focus: ["fetch", "export", "install", "check", "build"], broken: ["gate"], blocked: ["rename", "activate", "prune"] },
+  ]}
+>
+  <Drawing height={468}>
+    <Band x={16} y={12} w={696} h={84} label="your checkout" />
+    <Band x={16} y={112} w={696} h={208} label="staging/<uuid>" />
+    <Band x={16} y={336} w={696} h={116} label="~/.local/share/relay" />
+    <Box id="fetch" x={32} y={40} label="git fetch, merge --ff-only" detail="origin main" about="Runs only when the checkout is clean and behind origin/main." />
+    <Box id="export" x={32} y={148} label="git archive | tar -x" detail="export/, no .git" />
+    <Box id="install" x={280} y={148} label="install" detail="--frozen-lockfile" about="A full dev install from the lockfile." />
+    <Box id="check" x={524} y={148} label="run check" detail="20 min cap" about="Format, lint, typecheck and every test of the repository." />
+    <Box id="build" x={524} y={248} label="build-release.ts" detail="5 min cap" about="Compiles bin/relay and worker.js, copies sources, then runs a production install." />
+    <Box id="gate" x={280} y={248} label="gate-release.ts" detail="runs it for real" about="Checks against the built directory: version, init, plugin-run, preview-http." />
+    <Box id="rename" x={32} y={384} label="rename to releases/" detail="release.json first" tint={2} />
+    <Box id="activate" x={280} y={384} label="activate" detail="templates/, current, previous, bin" tint={2} about="Syncs the stable templates/ file by file, swaps current, then previous, and links ~/.local/bin/relay." />
+    <Box id="prune" x={588} y={384} label="prune" detail="keep 3 releases" tint={2} />
+    <Link from="fetch" to="export" label="commit" style="dashed" />
+    <Link from="export" to="install" label="export/" />
+    <Link from="install" to="check" label="dev install" />
+    <Link from="check" to="build" label="passes" />
+    <Link from="build" to="gate" label="release/" />
+    <Link from="gate" to="rename" label="passes" />
+    <Link from="rename" to="activate" label="releases/" />
+    <Link from="activate" to="prune" label="then" />
+    <Note x={40} y={292} text="fails: the commit is held" to="gate" />
+  </Drawing>
+</Figure>
+
+Nothing outside `staging/` changes until the gate passes, so a failed build leaves the active release alone. A commit that fails the gate is *held*: relay will not retry it until HEAD changes or you pass `--force`.
+
+### What lands where
+
+Point at `bin/relay` to follow the link chain to the binary.
+
+<FileTree
+  id="release-on-disk"
+  title="A release swaps one symlink, current; the binary link and the releases themselves never change"
+  summary="The layout of one install. Pick a moment to see which of the dashed entries exist."
+  rule={{ title: "Arrows are symlinks", text: "An arrow ends where the link resolves on disk. Dashed entries exist only at some moments." }}
+  startWith={["~/.local/bin/relay", "~/.local/share/relay/current"]}
+  lenses={[
+    { id: "at-rest", label: "At rest, after a second release", note: "current points at the new release and previous at the one before. Nothing else is temporary.", present: ["~/.local/share/relay/previous"] },
+    { id: "during-release", label: "During a release", note: "staging/ and release.lock exist until the gate passes. current still points at the old release.", present: ["~/.local/share/relay/previous", "~/.local/share/relay/staging/", "~/.local/share/relay/release.lock"], focus: ["~/.local/share/relay/staging/", "~/.local/share/relay/release.lock", "~/.local/share/relay/current"] },
+    { id: "after-failure", label: "After a gate failure or a rollback", note: "hold records the commit relay will not retry. After a rollback, current points at the older release.", present: ["~/.local/share/relay/previous", "~/.local/share/relay/hold"], focus: ["~/.local/share/relay/hold", "~/.local/share/relay/current"] },
+  ]}
+>
+
+```tree
+~/.local/
+  bin/
+    relay -> ../share/relay/current/bin/relay  # created once, never rewritten
+  share/relay/
+    current -> releases/1.4.0                  # the atomic pointer a release swaps [key]
+    previous -> releases/<older>               # what a rollback activates [temp]
+    releases/                                  # at most 3 kept, older ones pruned
+      <older>/                                 # the release before
+      1.4.0/                                   # one immutable release [key] [180 MB]
+        bin/relay                              # the runtime plus the CLI [60 MB]
+        worker.js                              # the plugin worker, bundled [200 KB]
+        packages/preview/src/                  # the preview engine, as source
+        templates/                             # the bundled templates [24 KB]
+        node_modules/                          # production deps, mostly the preview [120 MB]
+        package.json                           # with the lockfile
+        release.json                           # stamp, commit, builtAt; written last
+    templates/                                 # stable copy; other tools point here [key]
+    last-release                               # JSON record of the last attempt
+    hold                                       # after a gate failure or rollback [temp]
+    release.lock                               # only during a release [temp]
+    staging/                                   # only during a release [temp]
+```
+
+</FileTree>
+
+## 2. What runs at runtime
+
+`bin/relay` is a normal runtime with relay's code appended. An environment flag makes it behave as the plain runtime, and relay uses that to start its own children, so **a release does not need a separate runtime on `PATH`**.
+
+<Figure
+  id="who-runs-what"
+  kind="system"
+  title="Every child process is the same executable acting as a plain runtime, so a release needs nothing else on PATH"
+  summary="relay runs commands in process. relay plugin run and relay preview each spawn bin/relay again as a plain runtime."
+  rule={{ title: "Left to right", text: "Each arrow starts a process or loads code. The top band is a plugin run, the bottom band the preview." }}
+  startWith={["relay", "worker", "engine"]}
+  legend={{ "tint-3": "the same executable, acting as a plain runtime", "tint-5": "code from the project", store: "installed packages" }}
+  replays={[
+    { id: "plugin-run", label: "relay plugin run", steps: [
+      { at: "you", note: "You run relay plugin run." },
+      { at: "relay", note: "The supervisor spawns bin/relay worker.js with a minimal environment." },
+      { at: "worker", note: "The worker talks to the supervisor over length-framed messages on fds 3 and 4." },
+      { at: "plugin", note: "It import()s the plugin by file:// URL. The runtime runs TypeScript directly: no compile step." },
+      { at: "project-modules", note: "The plugin resolves its dependencies from the project's own node_modules." },
+    ] },
+    { id: "preview", label: "relay preview", steps: [
+      { at: "you", note: "You run relay preview." },
+      { at: "relay", note: "relay scans the pages of the project first." },
+      { at: "engine", note: "bin/relay runs packages/preview/src/engine.ts as a separate process and waits for its ready message." },
+      { at: "server", note: "A dev server compiles the pages in memory." },
+      { at: "release-modules", note: "The server's packages and its native binding come from the release's node_modules." },
+    ] },
+  ]}
+>
+  <Drawing height={324}>
+    <Band x={340} y={12} w={372} h={140} label="relay plugin run" />
+    <Band x={340} y={168} w={372} h={144} label="relay preview" />
+    <Box id="you" x={16} y={140} label="you" shape="actor" />
+    <Box id="relay" x={88} y={134} label="relay" detail="compiled, in process" about="Parsing, state and every command other than plugin run and preview run in the main process." />
+    <Box id="worker" x={356} y={44} label="worker.js" detail="plain runtime" tint={3} />
+    <Box id="plugin" x={560} y={44} label="plugins/x.ts" detail="from the project" tint={5} />
+    <Box id="project-modules" x={560} y={104} label="node_modules" detail="of the project" shape="store" tint={5} />
+    <Box id="engine" x={356} y={208} label="engine.ts" detail="plain runtime" tint={3} />
+    <Box id="server" x={560} y={208} label="dev server" detail="in memory" tint={3} />
+    <Box id="release-modules" x={560} y={264} label="node_modules" detail="of the release" shape="store" tint={3} />
+    <Link from="you" to="relay" label="runs" />
+    <Link from="relay" to="worker" label="spawns" />
+    <Link from="worker" to="plugin" label="import()" />
+    <Link from="plugin" to="project-modules" label="resolves" />
+    <Link from="relay" to="engine" label="spawns" />
+    <Link from="engine" to="server" label="starts" />
+    <Link from="server" to="release-modules" label="resolves" />
+  </Drawing>
+</Figure>
+
+The preview server compiles native code, so the release must carry `node_modules` with the binding for its OS and CPU. That is the main reason there is no single-file build.

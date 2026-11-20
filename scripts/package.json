@@ -1,0 +1,11 @@
+{
+  "name": "@tackup/scripts",
+  "private": true,
+  "description": "Repository maintenance scripts: release build, gate and benchmark, versioning and agent skill links.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "install:local": "bun install-local.ts",
+    "typecheck": "tsc --project tsconfig.json"
+  }
+}

@@ -1,0 +1,12 @@
+tack import add · applied · ✓ success
+
+Imported pdf into team-notes github:anthropics/skills · tracking the default
+branch · 1a2c79d4e6c4
+  skills/pdf/  12 files
+  tack.yaml    imports: 1 record added
+
+  Nothing is delivered until sync; the new skills follow their source's
+  activation.
+
+Next
+  tack sync --all

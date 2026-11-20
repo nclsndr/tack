@@ -1,0 +1,22 @@
+version: 1
+name: personal-brain
+skills:
+  - path: skills
+
+# Written by tack import. Edit the skill folders freely; do not edit this section by hand.
+imports:
+  - path: skills/pdf
+    location: github:anthropics/skills
+    transport: https
+    ref-kind: default
+    revision: 7d1dc0209f8a7cd61eecd2af0d2fff6310c410de
+    upstream-path: skills/pdf
+    upstream-tree: ab7a529f22ab58892ba26f2ac69be7532cc5be31
+    imported-at: 2026-11-11T23:27:06Z
+    digest: sha256:515d673e211f9631da16505af25f1b006027c914c649b23ba3aa9703bbe2eaee
+    files:
+      - {
+          path: SKILL.md,
+          sha256: e8f58118fc5f5dc7c0e6a8081da263d68c3e2780323151e254f04f5969479cc3,
+          executable: false,
+        }

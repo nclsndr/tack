@@ -1,0 +1,1176 @@
+{
+  "catalog": {
+    "complete": false,
+    "issues": [
+      {
+        "code": "skill-frontmatter-schema-invalid",
+        "message": "Missing key\n  at [\"description\"]",
+        "subject": {
+          "_tag": "resource",
+          "address": {
+            "kind": "skill",
+            "name": "broken",
+            "owner": "shared",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          "candidateKind": "skill",
+          "candidatePath": "/fx/source/skills/broken/SKILL.md",
+          "sourcePath": "/fx/source",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        }
+      },
+      {
+        "code": "skill-frontmatter-schema-invalid",
+        "message": "Expected a string matching the RegExp ^[a-z0-9]+(?:-[a-z0-9]+)*$\n  at [\"name\"]",
+        "subject": {
+          "_tag": "resource",
+          "candidateKind": "skill",
+          "candidatePath": "/fx/source/skills/\u65e5\u672c\u8a9e\u30b9\u30ad\u30eb/SKILL.md",
+          "sourcePath": "/fx/source",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        }
+      }
+    ],
+    "kind": "catalog",
+    "resources": [
+      {
+        "activation": "opt-in",
+        "address": {
+          "kind": "skill",
+          "name": "use-tack",
+          "owner": "shared",
+          "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+        },
+        "dependencies": [],
+        "description": "Use Tack to discover available skills and project documentation, search attached docs, locate a verified writing target, select skills, and manage sources, projects, and agent installations. Applies when operating Tack or locating resources managed by Tack.",
+        "directoryPath": "/app/apps/cli/src/builtins/skills/use-tack",
+        "filePath": "/app/apps/cli/src/builtins/skills/use-tack/SKILL.md",
+        "kind": "skill",
+        "origin": "builtin",
+        "projects": [],
+        "sourcePath": "/app/apps/cli/src/builtins",
+        "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6",
+        "userActivation": "default"
+      },
+      {
+        "activation": "default",
+        "address": {
+          "kind": "command",
+          "name": "ship",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "dependencies": [],
+        "description": "Ship it",
+        "directoryPath": "/fx/source/commands",
+        "filePath": "/fx/source/commands/ship.md",
+        "kind": "command",
+        "origin": "registered",
+        "projects": [],
+        "sourcePath": "/fx/source",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+      },
+      {
+        "address": {
+          "kind": "script",
+          "name": "run",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "declaredPath": "run.ts",
+        "description": "Run fixture",
+        "directoryPath": "/fx/source/scripts",
+        "filePath": "/fx/source/scripts/run.ts",
+        "kind": "script",
+        "origin": "registered",
+        "sourcePath": "/fx/source",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+      },
+      {
+        "activation": "default",
+        "address": {
+          "kind": "skill",
+          "name": "localized",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "dependencies": [],
+        "description": "\u65e5\u672c\u8a9e\u306e\u8aac\u660e\u304c\u3053\u3053\u306b\u3042\u308a\u307e\u3059\u3002\u3068\u3066\u3082\u9577\u3044\u8aac\u660e\u3067\u3001\u7aef\u672b\u306e\u5e45\u3092\u8d85\u3048\u3066\u3082\u6298\u308a\u8fd4\u3055\u308c\u308b\u3053\u3068\u3092\u78ba\u8a8d\u3057\u307e\u3059",
+        "directoryPath": "/fx/source/skills/localized",
+        "filePath": "/fx/source/skills/localized/SKILL.md",
+        "kind": "skill",
+        "origin": "registered",
+        "projects": [],
+        "sourcePath": "/fx/source",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+      },
+      {
+        "activation": "default",
+        "address": {
+          "kind": "skill",
+          "name": "planner",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "dependencies": [],
+        "description": "Plan work",
+        "directoryPath": "/fx/source/skills/planner",
+        "filePath": "/fx/source/skills/planner/SKILL.md",
+        "kind": "skill",
+        "origin": "registered",
+        "projects": [],
+        "sourcePath": "/fx/source",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+      },
+      {
+        "activation": "default",
+        "address": {
+          "kind": "skill",
+          "name": "review",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "dependencies": [],
+        "description": "Review a change set before it merges, checking tests, naming and public surface for regressions in behavior",
+        "directoryPath": "/fx/source/skills/review",
+        "filePath": "/fx/source/skills/review/SKILL.md",
+        "kind": "skill",
+        "origin": "registered",
+        "projects": [],
+        "sourcePath": "/fx/source",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+      },
+      {
+        "activation": "default",
+        "address": {
+          "kind": "skill",
+          "name": "reviewer-with-a-very-long-skill-name-that-stretches-columns",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "dependencies": [],
+        "description": "Long named skill",
+        "directoryPath": "/fx/source/skills/reviewer-with-a-very-long-skill-name-that-stretches-columns",
+        "filePath": "/fx/source/skills/reviewer-with-a-very-long-skill-name-that-stretches-columns/SKILL.md",
+        "kind": "skill",
+        "origin": "registered",
+        "projects": [],
+        "sourcePath": "/fx/source",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+      },
+      {
+        "activation": "default",
+        "address": {
+          "kind": "skill",
+          "name": "tester",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "dependencies": [],
+        "description": "Write and run tests",
+        "directoryPath": "/fx/source/skills/tester",
+        "filePath": "/fx/source/skills/tester/SKILL.md",
+        "kind": "skill",
+        "origin": "registered",
+        "projects": [],
+        "sourcePath": "/fx/source",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+      },
+      {
+        "activation": "default",
+        "address": {
+          "kind": "skill",
+          "name": "writer",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "dependencies": [],
+        "description": "Draft documentation and release notes",
+        "directoryPath": "/fx/source/skills/writer",
+        "filePath": "/fx/source/skills/writer/SKILL.md",
+        "kind": "skill",
+        "origin": "registered",
+        "projects": [],
+        "sourcePath": "/fx/source",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+      }
+    ]
+  },
+  "destinations": [
+    {
+      "_tag": "matching",
+      "adapter": "codex",
+      "desired": [
+        {
+          "adapter": "codex",
+          "address": {
+            "kind": "skill",
+            "name": "localized",
+            "owner": "shared",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          "sourceDirectoryPath": "/fx/source/skills/localized",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+          "target": {
+            "_tag": "project-root",
+            "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+            "projectName": "demo"
+          }
+        }
+      ],
+      "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.agents/skills/localized",
+      "evidence": {
+        "adapter": "codex",
+        "address": {
+          "kind": "skill",
+          "name": "localized",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "sourceDirectoryPath": "/fx/source/skills/localized",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+          "projectName": "demo"
+        }
+      },
+      "observation": {
+        "_tag": "relative-link",
+        "canonicalTarget": "/fx/source/skills/localized",
+        "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.agents/skills/localized",
+        "rawTarget": "../../../source/skills/localized"
+      },
+      "target": {
+        "_tag": "project-root",
+        "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+        "projectName": "demo"
+      },
+      "targetHealth": "healthy"
+    },
+    {
+      "_tag": "matching",
+      "adapter": "codex",
+      "desired": [
+        {
+          "adapter": "codex",
+          "address": {
+            "kind": "skill",
+            "name": "planner",
+            "owner": "shared",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          "sourceDirectoryPath": "/fx/source/skills/planner",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+          "target": {
+            "_tag": "project-root",
+            "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+            "projectName": "demo"
+          }
+        }
+      ],
+      "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.agents/skills/planner",
+      "evidence": {
+        "adapter": "codex",
+        "address": {
+          "kind": "skill",
+          "name": "planner",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "sourceDirectoryPath": "/fx/source/skills/planner",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+          "projectName": "demo"
+        }
+      },
+      "observation": {
+        "_tag": "relative-link",
+        "canonicalTarget": "/fx/source/skills/planner",
+        "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.agents/skills/planner",
+        "rawTarget": "../../../source/skills/planner"
+      },
+      "target": {
+        "_tag": "project-root",
+        "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+        "projectName": "demo"
+      },
+      "targetHealth": "healthy"
+    },
+    {
+      "_tag": "matching",
+      "adapter": "codex",
+      "desired": [
+        {
+          "adapter": "codex",
+          "address": {
+            "kind": "skill",
+            "name": "review",
+            "owner": "shared",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          "sourceDirectoryPath": "/fx/source/skills/review",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+          "target": {
+            "_tag": "project-root",
+            "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+            "projectName": "demo"
+          }
+        }
+      ],
+      "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.agents/skills/review",
+      "evidence": {
+        "adapter": "codex",
+        "address": {
+          "kind": "skill",
+          "name": "review",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "sourceDirectoryPath": "/fx/source/skills/review",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+          "projectName": "demo"
+        }
+      },
+      "observation": {
+        "_tag": "relative-link",
+        "canonicalTarget": "/fx/source/skills/review",
+        "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.agents/skills/review",
+        "rawTarget": "../../../source/skills/review"
+      },
+      "target": {
+        "_tag": "project-root",
+        "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+        "projectName": "demo"
+      },
+      "targetHealth": "healthy"
+    },
+    {
+      "_tag": "matching",
+      "adapter": "codex",
+      "desired": [
+        {
+          "adapter": "codex",
+          "address": {
+            "kind": "skill",
+            "name": "reviewer-with-a-very-long-skill-name-that-stretches-columns",
+            "owner": "shared",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          "sourceDirectoryPath": "/fx/source/skills/reviewer-with-a-very-long-skill-name-that-stretches-columns",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+          "target": {
+            "_tag": "project-root",
+            "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+            "projectName": "demo"
+          }
+        }
+      ],
+      "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.agents/skills/reviewer-with-a-very-long-skill-name-that-stretches-columns",
+      "evidence": {
+        "adapter": "codex",
+        "address": {
+          "kind": "skill",
+          "name": "reviewer-with-a-very-long-skill-name-that-stretches-columns",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "sourceDirectoryPath": "/fx/source/skills/reviewer-with-a-very-long-skill-name-that-stretches-columns",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+          "projectName": "demo"
+        }
+      },
+      "observation": {
+        "_tag": "relative-link",
+        "canonicalTarget": "/fx/source/skills/reviewer-with-a-very-long-skill-name-that-stretches-columns",
+        "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.agents/skills/reviewer-with-a-very-long-skill-name-that-stretches-columns",
+        "rawTarget": "../../../source/skills/reviewer-with-a-very-long-skill-name-that-stretches-columns"
+      },
+      "target": {
+        "_tag": "project-root",
+        "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+        "projectName": "demo"
+      },
+      "targetHealth": "healthy"
+    },
+    {
+      "_tag": "matching",
+      "adapter": "codex",
+      "desired": [
+        {
+          "adapter": "codex",
+          "address": {
+            "kind": "skill",
+            "name": "tester",
+            "owner": "shared",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          "sourceDirectoryPath": "/fx/source/skills/tester",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+          "target": {
+            "_tag": "project-root",
+            "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+            "projectName": "demo"
+          }
+        }
+      ],
+      "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.agents/skills/tester",
+      "evidence": {
+        "adapter": "codex",
+        "address": {
+          "kind": "skill",
+          "name": "tester",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "sourceDirectoryPath": "/fx/source/skills/tester",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+          "projectName": "demo"
+        }
+      },
+      "observation": {
+        "_tag": "relative-link",
+        "canonicalTarget": "/fx/source/skills/tester",
+        "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.agents/skills/tester",
+        "rawTarget": "../../../source/skills/tester"
+      },
+      "target": {
+        "_tag": "project-root",
+        "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+        "projectName": "demo"
+      },
+      "targetHealth": "healthy"
+    },
+    {
+      "_tag": "matching",
+      "adapter": "codex",
+      "desired": [
+        {
+          "adapter": "codex",
+          "address": {
+            "kind": "skill",
+            "name": "writer",
+            "owner": "shared",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          "sourceDirectoryPath": "/fx/source/skills/writer",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+          "target": {
+            "_tag": "project-root",
+            "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+            "projectName": "demo"
+          }
+        }
+      ],
+      "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.agents/skills/writer",
+      "evidence": {
+        "adapter": "codex",
+        "address": {
+          "kind": "skill",
+          "name": "writer",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "sourceDirectoryPath": "/fx/source/skills/writer",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+          "projectName": "demo"
+        }
+      },
+      "observation": {
+        "_tag": "relative-link",
+        "canonicalTarget": "/fx/source/skills/writer",
+        "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.agents/skills/writer",
+        "rawTarget": "../../../source/skills/writer"
+      },
+      "target": {
+        "_tag": "project-root",
+        "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+        "projectName": "demo"
+      },
+      "targetHealth": "healthy"
+    },
+    {
+      "_tag": "matching",
+      "adapter": "claude",
+      "desired": [
+        {
+          "adapter": "claude",
+          "address": {
+            "kind": "skill",
+            "name": "localized",
+            "owner": "shared",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          "sourceDirectoryPath": "/fx/source/skills/localized",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+          "target": {
+            "_tag": "project-root",
+            "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+            "projectName": "demo"
+          }
+        }
+      ],
+      "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.claude/skills/localized",
+      "evidence": {
+        "adapter": "claude",
+        "address": {
+          "kind": "skill",
+          "name": "localized",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "sourceDirectoryPath": "/fx/source/skills/localized",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+          "projectName": "demo"
+        }
+      },
+      "observation": {
+        "_tag": "relative-link",
+        "canonicalTarget": "/fx/source/skills/localized",
+        "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.claude/skills/localized",
+        "rawTarget": "../../../source/skills/localized"
+      },
+      "target": {
+        "_tag": "project-root",
+        "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+        "projectName": "demo"
+      },
+      "targetHealth": "healthy"
+    },
+    {
+      "_tag": "matching",
+      "adapter": "claude",
+      "desired": [
+        {
+          "adapter": "claude",
+          "address": {
+            "kind": "skill",
+            "name": "planner",
+            "owner": "shared",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          "sourceDirectoryPath": "/fx/source/skills/planner",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+          "target": {
+            "_tag": "project-root",
+            "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+            "projectName": "demo"
+          }
+        }
+      ],
+      "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.claude/skills/planner",
+      "evidence": {
+        "adapter": "claude",
+        "address": {
+          "kind": "skill",
+          "name": "planner",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "sourceDirectoryPath": "/fx/source/skills/planner",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+          "projectName": "demo"
+        }
+      },
+      "observation": {
+        "_tag": "relative-link",
+        "canonicalTarget": "/fx/source/skills/planner",
+        "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.claude/skills/planner",
+        "rawTarget": "../../../source/skills/planner"
+      },
+      "target": {
+        "_tag": "project-root",
+        "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+        "projectName": "demo"
+      },
+      "targetHealth": "healthy"
+    },
+    {
+      "_tag": "matching",
+      "adapter": "claude",
+      "desired": [
+        {
+          "adapter": "claude",
+          "address": {
+            "kind": "skill",
+            "name": "review",
+            "owner": "shared",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          "sourceDirectoryPath": "/fx/source/skills/review",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+          "target": {
+            "_tag": "project-root",
+            "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+            "projectName": "demo"
+          }
+        }
+      ],
+      "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.claude/skills/review",
+      "evidence": {
+        "adapter": "claude",
+        "address": {
+          "kind": "skill",
+          "name": "review",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "sourceDirectoryPath": "/fx/source/skills/review",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+          "projectName": "demo"
+        }
+      },
+      "observation": {
+        "_tag": "relative-link",
+        "canonicalTarget": "/fx/source/skills/review",
+        "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.claude/skills/review",
+        "rawTarget": "../../../source/skills/review"
+      },
+      "target": {
+        "_tag": "project-root",
+        "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+        "projectName": "demo"
+      },
+      "targetHealth": "healthy"
+    },
+    {
+      "_tag": "matching",
+      "adapter": "claude",
+      "desired": [
+        {
+          "adapter": "claude",
+          "address": {
+            "kind": "skill",
+            "name": "reviewer-with-a-very-long-skill-name-that-stretches-columns",
+            "owner": "shared",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          "sourceDirectoryPath": "/fx/source/skills/reviewer-with-a-very-long-skill-name-that-stretches-columns",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+          "target": {
+            "_tag": "project-root",
+            "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+            "projectName": "demo"
+          }
+        }
+      ],
+      "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.claude/skills/reviewer-with-a-very-long-skill-name-that-stretches-columns",
+      "evidence": {
+        "adapter": "claude",
+        "address": {
+          "kind": "skill",
+          "name": "reviewer-with-a-very-long-skill-name-that-stretches-columns",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "sourceDirectoryPath": "/fx/source/skills/reviewer-with-a-very-long-skill-name-that-stretches-columns",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+          "projectName": "demo"
+        }
+      },
+      "observation": {
+        "_tag": "relative-link",
+        "canonicalTarget": "/fx/source/skills/reviewer-with-a-very-long-skill-name-that-stretches-columns",
+        "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.claude/skills/reviewer-with-a-very-long-skill-name-that-stretches-columns",
+        "rawTarget": "../../../source/skills/reviewer-with-a-very-long-skill-name-that-stretches-columns"
+      },
+      "target": {
+        "_tag": "project-root",
+        "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+        "projectName": "demo"
+      },
+      "targetHealth": "healthy"
+    },
+    {
+      "_tag": "matching",
+      "adapter": "claude",
+      "desired": [
+        {
+          "adapter": "claude",
+          "address": {
+            "kind": "skill",
+            "name": "tester",
+            "owner": "shared",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          "sourceDirectoryPath": "/fx/source/skills/tester",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+          "target": {
+            "_tag": "project-root",
+            "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+            "projectName": "demo"
+          }
+        }
+      ],
+      "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.claude/skills/tester",
+      "evidence": {
+        "adapter": "claude",
+        "address": {
+          "kind": "skill",
+          "name": "tester",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "sourceDirectoryPath": "/fx/source/skills/tester",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+          "projectName": "demo"
+        }
+      },
+      "observation": {
+        "_tag": "relative-link",
+        "canonicalTarget": "/fx/source/skills/tester",
+        "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.claude/skills/tester",
+        "rawTarget": "../../../source/skills/tester"
+      },
+      "target": {
+        "_tag": "project-root",
+        "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+        "projectName": "demo"
+      },
+      "targetHealth": "healthy"
+    },
+    {
+      "_tag": "matching",
+      "adapter": "claude",
+      "desired": [
+        {
+          "adapter": "claude",
+          "address": {
+            "kind": "skill",
+            "name": "writer",
+            "owner": "shared",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          "sourceDirectoryPath": "/fx/source/skills/writer",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+          "target": {
+            "_tag": "project-root",
+            "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+            "projectName": "demo"
+          }
+        }
+      ],
+      "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.claude/skills/writer",
+      "evidence": {
+        "adapter": "claude",
+        "address": {
+          "kind": "skill",
+          "name": "writer",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "sourceDirectoryPath": "/fx/source/skills/writer",
+        "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+          "projectName": "demo"
+        }
+      },
+      "observation": {
+        "_tag": "relative-link",
+        "canonicalTarget": "/fx/source/skills/writer",
+        "destinationPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.claude/skills/writer",
+        "rawTarget": "../../../source/skills/writer"
+      },
+      "target": {
+        "_tag": "project-root",
+        "canonicalPath": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea",
+        "projectName": "demo"
+      },
+      "targetHealth": "healthy"
+    }
+  ],
+  "enabledAdapters": ["claude", "codex"],
+  "imports": {
+    "locallyChanged": 0,
+    "problems": [],
+    "total": 0
+  },
+  "kind": "skill-status",
+  "namespaces": [
+    {
+      "choices": [
+        {
+          "address": {
+            "kind": "skill",
+            "name": "localized",
+            "owner": "shared",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          "decision": "include",
+          "namespace": {
+            "_tag": "project",
+            "projectName": "demo"
+          }
+        },
+        {
+          "address": {
+            "kind": "skill",
+            "name": "planner",
+            "owner": "shared",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          "decision": "include",
+          "namespace": {
+            "_tag": "project",
+            "projectName": "demo"
+          }
+        },
+        {
+          "address": {
+            "kind": "skill",
+            "name": "review",
+            "owner": "shared",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          "decision": "include",
+          "namespace": {
+            "_tag": "project",
+            "projectName": "demo"
+          }
+        },
+        {
+          "address": {
+            "kind": "skill",
+            "name": "writer",
+            "owner": "shared",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          "decision": "include",
+          "namespace": {
+            "_tag": "project",
+            "projectName": "demo"
+          }
+        }
+      ],
+      "desired": [
+        {
+          "kind": "command",
+          "name": "ship",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        {
+          "kind": "skill",
+          "name": "localized",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        {
+          "kind": "skill",
+          "name": "planner",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        {
+          "kind": "skill",
+          "name": "review",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        {
+          "kind": "skill",
+          "name": "reviewer-with-a-very-long-skill-name-that-stretches-columns",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        {
+          "kind": "skill",
+          "name": "tester",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        {
+          "kind": "skill",
+          "name": "writer",
+          "owner": "shared",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        }
+      ],
+      "lifecycle": "active",
+      "namespace": {
+        "_tag": "project",
+        "projectName": "demo"
+      },
+      "resolution": {
+        "groups": [
+          {
+            "_tag": "selected",
+            "members": [
+              {
+                "kind": "command",
+                "name": "ship",
+                "owner": "shared",
+                "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+              }
+            ]
+          },
+          {
+            "_tag": "selected",
+            "members": [
+              {
+                "kind": "skill",
+                "name": "localized",
+                "owner": "shared",
+                "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+              }
+            ]
+          },
+          {
+            "_tag": "selected",
+            "members": [
+              {
+                "kind": "skill",
+                "name": "planner",
+                "owner": "shared",
+                "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+              }
+            ]
+          },
+          {
+            "_tag": "selected",
+            "members": [
+              {
+                "kind": "skill",
+                "name": "review",
+                "owner": "shared",
+                "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+              }
+            ]
+          },
+          {
+            "_tag": "selected",
+            "members": [
+              {
+                "kind": "skill",
+                "name": "reviewer-with-a-very-long-skill-name-that-stretches-columns",
+                "owner": "shared",
+                "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+              }
+            ]
+          },
+          {
+            "_tag": "selected",
+            "members": [
+              {
+                "kind": "skill",
+                "name": "tester",
+                "owner": "shared",
+                "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+              }
+            ]
+          },
+          {
+            "_tag": "selected",
+            "members": [
+              {
+                "kind": "skill",
+                "name": "writer",
+                "owner": "shared",
+                "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+              }
+            ]
+          }
+        ],
+        "optionalSkips": [],
+        "requestBlockers": []
+      },
+      "selection": {
+        "decisions": [
+          {
+            "_tag": "selected",
+            "address": {
+              "kind": "command",
+              "name": "ship",
+              "owner": "shared",
+              "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+            },
+            "compatibility": "compatible",
+            "reason": "default"
+          },
+          {
+            "_tag": "selected",
+            "address": {
+              "kind": "skill",
+              "name": "localized",
+              "owner": "shared",
+              "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+            },
+            "compatibility": "compatible",
+            "reason": "include"
+          },
+          {
+            "_tag": "selected",
+            "address": {
+              "kind": "skill",
+              "name": "planner",
+              "owner": "shared",
+              "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+            },
+            "compatibility": "compatible",
+            "reason": "include"
+          },
+          {
+            "_tag": "selected",
+            "address": {
+              "kind": "skill",
+              "name": "review",
+              "owner": "shared",
+              "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+            },
+            "compatibility": "compatible",
+            "reason": "include"
+          },
+          {
+            "_tag": "selected",
+            "address": {
+              "kind": "skill",
+              "name": "reviewer-with-a-very-long-skill-name-that-stretches-columns",
+              "owner": "shared",
+              "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+            },
+            "compatibility": "compatible",
+            "reason": "default"
+          },
+          {
+            "_tag": "selected",
+            "address": {
+              "kind": "skill",
+              "name": "tester",
+              "owner": "shared",
+              "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+            },
+            "compatibility": "compatible",
+            "reason": "default"
+          },
+          {
+            "_tag": "not-selected",
+            "address": {
+              "kind": "skill",
+              "name": "use-tack",
+              "owner": "shared",
+              "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+            },
+            "compatibility": "compatible",
+            "reason": "opt-in"
+          },
+          {
+            "_tag": "selected",
+            "address": {
+              "kind": "skill",
+              "name": "writer",
+              "owner": "shared",
+              "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+            },
+            "compatibility": "compatible",
+            "reason": "include"
+          }
+        ],
+        "namespace": {
+          "_tag": "project",
+          "projectName": "demo"
+        },
+        "unresolvedChoices": []
+      },
+      "undelivered": [
+        {
+          "adapter": "claude",
+          "address": {
+            "kind": "command",
+            "name": "ship",
+            "owner": "shared",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          "reason": "capability-unsupported"
+        },
+        {
+          "adapter": "codex",
+          "address": {
+            "kind": "command",
+            "name": "ship",
+            "owner": "shared",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          "reason": "capability-unsupported"
+        }
+      ]
+    }
+  ],
+  "pendingRemovals": [],
+  "projects": [
+    {
+      "anchor": {
+        "path": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea/.git",
+        "status": "healthy"
+      },
+      "lifecycle": "active",
+      "name": "demo",
+      "roots": [
+        {
+          "health": "healthy",
+          "lifecycle": "active",
+          "path": "/fx/\u30ea\u30dd\u30b8\u30c8\u30ea"
+        }
+      ]
+    }
+  ],
+  "scope": {
+    "_tag": "project",
+    "projectName": "demo"
+  },
+  "selection": {
+    "selector": {
+      "_tag": "project",
+      "projectName": "demo"
+    },
+    "targets": []
+  },
+  "sources": [
+    {
+      "registration": {
+        "canonicalPath": "/app/apps/cli/src/builtins",
+        "id": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+      },
+      "status": "healthy"
+    },
+    {
+      "registration": {
+        "canonicalPath": "/fx/source",
+        "id": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+      },
+      "status": "healthy"
+    }
+  ],
+  "stateDirectory": "/fx/state",
+  "version": 1
+}

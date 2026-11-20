@@ -1,0 +1,42 @@
+---
+title: Your first day on Atlas
+type: walkthrough
+status: draft
+tags: [onboarding]
+---
+
+# Your first day on Atlas
+
+Four steps get a working client against a local server.
+
+<Walkthrough
+  id="first-day"
+  title="From a fresh clone to a synced folder"
+  steps={[
+    { title: "Clone and install", body: "Clone the repository and run the install script once." },
+    { title: "Start the server", body: "Start Postgres and the API with the dev compose file." },
+    { title: "Sign in the client", body: "Point the desktop client at localhost and sign in." },
+    {
+      title: "Save a file",
+      body: "Save any file in the shared folder and watch it appear on the second client.",
+    },
+  ]}
+/>
+
+## How long a sync takes
+
+<Chart
+  id="sync-latency"
+  title="Median seconds from save to every laptop"
+  unit="s"
+  data={[
+    { label: "1 KB", value: 0.4 },
+    { label: "1 MB", value: 0.9 },
+    { label: "50 MB", value: 6.5 },
+    { label: "500 MB", value: 48 },
+  ]}
+  scenarios={[
+    { id: "baseline", label: "Office network", multiplier: 1 },
+    { id: "hotel", label: "Hotel wifi", multiplier: 3.5 },
+  ]}
+/>

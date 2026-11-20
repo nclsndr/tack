@@ -1,0 +1,17 @@
+# Cloudflare Pages response headers. See apps/website/README.md.
+
+# Pages and their Markdown twins share URLs, chosen by the Accept header.
+/*
+  Vary: Accept
+
+/*.md
+  Content-Type: text/markdown; charset=utf-8
+
+/llms.txt
+  Content-Type: text/plain; charset=utf-8
+
+/llms-full.txt
+  Content-Type: text/plain; charset=utf-8
+
+/illustrations/*
+  Cache-Control: public, max-age=86400

@@ -1,0 +1,104 @@
+---
+title: Tables, relations and roles in parcel-hub
+type: reference
+status: draft
+---
+
+# Tables, relations and roles in parcel-hub
+
+One Postgres database, `parcel_hub`, holds three schemas: `public` for application data, `auth` for Better Auth and `ops` for control-plane records. Pick a role in Fig. 1 to see what it may read or write; tables it may not touch are hatched.
+
+<Schema
+  id="depot-schema"
+  title="Every public table chains back to depots, and one key leaves its schema"
+  summary="Nine tables in three schemas. Each role is granted a different slice, and the collector may only insert parcels and their events."
+  rule={{ title: "A line ends on the column it references", text: "A crow's foot marks the many end of a foreign key; a dashed line is a relation with no key." }}
+  startWith={["public.parcels", "ops.audit_events"]}
+  groups={[
+    { id: "public", label: "public", note: "application data" },
+    { id: "auth", label: "auth", note: "Better Auth tables" },
+    { id: "ops", label: "ops", note: "control-plane records" },
+  ]}
+  tables={[
+    { name: "public.depots", columns: [
+      { name: "code", type: "text", key: "pk", note: "e.g. LYS1" },
+      { name: "name", type: "text" },
+      { name: "timezone", type: "text" },
+    ] },
+    { name: "public.docks", columns: [
+      { name: "id", type: "bigserial", key: "pk" },
+      { name: "depot", type: "text", ref: "public.depots.code" },
+      { name: "designator", type: "text", note: "e.g. D4" },
+      { name: "door_count", type: "smallint" },
+    ] },
+    { name: "public.parcels", columns: [
+      { name: "id", type: "bigserial", key: "pk" },
+      { name: "depot", type: "text", ref: "public.depots.code" },
+      { name: "tracking_code", type: "text" },
+      { name: "carrier", type: "text", nullable: true },
+      { name: "dock_id", type: "bigint", ref: "public.docks.id", nullable: true, note: "filled by enrichment" },
+      { name: "first_seen_at", type: "timestamptz" },
+      { name: "last_seen_at", type: "timestamptz" },
+    ] },
+    { name: "public.parcel_events", columns: [
+      { name: "id", type: "bigserial", key: "pk" },
+      { name: "parcel_id", type: "bigint", ref: "public.parcels.id", note: "on delete cascade" },
+      { name: "kind", type: "text", note: "scanned, weighed, loaded, delivered" },
+      { name: "observed_at", type: "timestamptz" },
+      { name: "weight_kg", type: "numeric(5,1)", nullable: true, note: "filled by enrichment" },
+      { name: "payload", type: "jsonb" },
+    ] },
+    { name: "public.temperature_readings", unique: [["depot", "observed_at"]], columns: [
+      { name: "id", type: "bigserial", key: "pk" },
+      { name: "depot", type: "text", ref: "public.depots.code" },
+      { name: "observed_at", type: "timestamptz" },
+      { name: "humidity_pct", type: "smallint", nullable: true },
+      { name: "temp_c", type: "smallint", nullable: true },
+      { name: "raw", type: "text" },
+    ] },
+    { name: "auth.users", columns: [
+      { name: "id", type: "text", key: "pk" },
+      { name: "email", type: "text", key: "unique" },
+      { name: "role", type: "text", note: "admin or viewer" },
+    ] },
+    { name: "auth.sessions", columns: [
+      { name: "id", type: "text", key: "pk" },
+      { name: "user_id", type: "text", ref: "auth.users.id", note: "on delete cascade" },
+      { name: "expires_at", type: "timestamptz" },
+    ] },
+    { name: "ops.audit_events", columns: [
+      { name: "id", type: "bigserial", key: "pk" },
+      { name: "actor_id", type: "text", ref: "auth.users.id" },
+      { name: "action", type: "text", note: "start, stop, pause, truncate" },
+      { name: "workflow_id", type: "text" },
+      { name: "outcome", type: "text", nullable: true, note: "written after Temporal returns" },
+      { name: "created_at", type: "timestamptz" },
+    ] },
+    { name: "ops.job_logs", columns: [
+      { name: "id", type: "bigserial", key: "pk" },
+      { name: "workflow_id", type: "text" },
+      { name: "line", type: "text" },
+      { name: "logged_at", type: "timestamptz" },
+    ] },
+  ]}
+  links={[
+    { from: "ops.job_logs.workflow_id", to: "ops.audit_events.workflow_id", label: "same Temporal workflow, no FK" },
+  ]}
+  lenses={[
+    { label: "web", note: "The web app reads public, and reads and writes auth and ops.", access: { "public.*": "read", "auth.*": "read-write", "ops.*": "read-write" } },
+    { label: "worker-core", note: "Reads and writes public, and writes ops.job_logs. Nothing in auth.", access: { "public.*": "read-write", "ops.job_logs": "write" } },
+    { label: "collector", note: "The worker-browser collector child inserts parcels and their events, nothing else.", access: { "public.parcels": "write", "public.parcel_events": "write" } },
+    { label: "Enrichment", note: "Fills parcels.dock_id from docks and parcel_events.weight_kg.", focus: ["public.parcels", "public.parcel_events", "public.docks"] },
+  ]}
+  replays={[
+    { label: "Audit a stop", steps: [
+      { at: ["auth.sessions", "auth.sessions.user_id"], note: "The web app finds the session's user." },
+      { at: ["ops.audit_events", "ops.audit_events.actor_id"], note: "It writes the audit row before calling Temporal." },
+      { at: ["ops.job_logs", "ops.job_logs.workflow_id"], note: "The worker's logs land under the same workflow ID." },
+    ] },
+  ]}
+/>
+
+`public` holds application data. Everything hangs off `depots.code`: docks, parcels and temperature readings each reference it. `dock_id` and `weight_kg` start empty and are filled by enrichment.
+
+`ops.audit_events.actor_id` is the only key that leaves its schema: an audit row names a user in `auth`. `ops.job_logs` and `ops.audit_events` share a Temporal workflow ID with no foreign key between them.

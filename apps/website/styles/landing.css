@@ -1,0 +1,1710 @@
+/* The landing page, always on the dark token set (see `.tack-theme-dark` in tokens.css). */
+
+.landing {
+  min-height: 100vh;
+  background: var(--tack-bg);
+  color: var(--tack-text);
+  font-family: var(--tack-font-sans);
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+.landing h1,
+.landing h2,
+.landing h3 {
+  margin: 0;
+  color: var(--tack-heading);
+  font-weight: 600;
+}
+
+.landing h2 {
+  max-width: 22ch;
+  font-size: clamp(36px, 4vw, 52px);
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+}
+
+.landing h3 {
+  font-size: 20px;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.landing p {
+  margin: 0;
+}
+
+.landing a {
+  color: var(--tack-accent);
+  text-decoration: none;
+  transition: color var(--tack-duration-fast) var(--tack-ease);
+}
+
+.landing a:hover {
+  color: var(--tack-accent-strong);
+}
+
+.landing-shell {
+  width: min(1200px, 100% - 2 * 20px);
+  margin-inline: auto;
+}
+
+@media (min-width: 640px) {
+  .landing-shell {
+    width: min(1200px, 100% - 2 * 32px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .landing-shell {
+    width: min(1200px, 100% - 2 * 48px);
+  }
+}
+
+.landing-skip {
+  position: absolute;
+  left: -9999px;
+}
+
+.landing-skip:focus {
+  left: 16px;
+  top: 16px;
+  z-index: 10;
+  padding: 8px 12px;
+  background: var(--tack-surface);
+}
+
+.landing-label {
+  margin-bottom: 12px !important;
+  color: var(--tack-agent);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Header */
+
+.landing-header {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding-block: 20px;
+}
+
+.landing-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--tack-heading) !important;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.landing-mark {
+  width: 28px;
+  height: 28px;
+  color: var(--tack-accent);
+}
+
+.landing-nav {
+  display: none;
+  gap: 24px;
+  margin-inline-start: auto;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.landing-nav a {
+  color: var(--tack-muted);
+}
+
+.landing-header > .landing-button {
+  margin-inline-start: auto;
+}
+
+@media (min-width: 720px) {
+  .landing-nav {
+    display: flex;
+  }
+
+  .landing-header > .landing-button {
+    margin-inline-start: 0;
+  }
+}
+
+/* Buttons and links */
+
+.landing-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 18px;
+  border: 1px solid var(--tack-control-border);
+  border-radius: var(--tack-radius-sm);
+  background: transparent;
+  color: var(--tack-heading);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--tack-duration-fast) var(--tack-ease),
+    color var(--tack-duration-fast) var(--tack-ease);
+}
+
+.landing-button:hover {
+  background: var(--tack-subtle);
+}
+
+.landing a.landing-button-primary,
+.landing-button-primary {
+  border-color: transparent;
+  border-radius: var(--tack-radius-pill);
+  background: var(--tack-action-bg);
+  color: var(--tack-action-text);
+}
+
+.landing a.landing-button-primary:hover,
+.landing-button-primary:hover {
+  background: var(--tack-action-bg-hover);
+  color: var(--tack-action-text);
+}
+
+.landing-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.landing-copy-status {
+  color: var(--tack-faint);
+  font-size: 14px;
+}
+
+/* Hero */
+
+.landing-lead {
+  margin-top: 24px !important;
+  max-width: 34em;
+  color: var(--tack-text);
+  font-size: 20px;
+  line-height: 1.5;
+}
+
+.landing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+/* Sections */
+
+.landing-section {
+  padding-block: clamp(64px, 10vw, 112px);
+  border-top: 1px solid var(--tack-border);
+}
+
+.landing-tablist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.landing-tab {
+  padding: 14px 16px;
+  border: 1px solid var(--tack-border);
+  border-radius: var(--tack-radius-sm);
+  background: transparent;
+  color: var(--tack-muted);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background var(--tack-duration-fast) var(--tack-ease),
+    color var(--tack-duration-fast) var(--tack-ease);
+}
+
+.landing-tab:hover {
+  color: var(--tack-heading);
+}
+
+.landing-tab[aria-selected="true"] {
+  border-color: var(--tack-border-strong);
+  background: var(--tack-selected);
+  color: var(--tack-selected-text);
+}
+
+.landing-tabpanel > p {
+  color: var(--tack-text);
+}
+
+.landing-tabpanel .tack-terminal {
+  margin-top: 16px;
+}
+
+/* Get started */
+
+.landing-start {
+  display: grid;
+  gap: 40px;
+}
+
+@media (min-width: 900px) {
+  .landing-start {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+    gap: 56px;
+  }
+}
+
+.landing-note {
+  margin-top: 20px !important;
+  color: var(--tack-muted);
+  font-size: 16px;
+}
+
+.landing-start-tabs .landing-tablist {
+  flex-direction: row;
+  margin-bottom: 20px;
+}
+
+.landing-prompt {
+  margin: 0 0 16px;
+  padding: 20px;
+  border-inline-start: 3px solid var(--tack-agent);
+  border-radius: var(--tack-radius-sm);
+  background: var(--tack-agent-wash);
+  color: var(--tack-heading);
+  font-size: 16px;
+}
+
+/* Questions */
+
+.landing-questions {
+  display: grid;
+  gap: 32px;
+}
+
+@media (min-width: 900px) {
+  .landing-questions {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  }
+}
+
+.landing-questions details {
+  padding-block: 16px;
+  border-bottom: 1px solid var(--tack-border);
+}
+
+.landing-questions summary {
+  color: var(--tack-heading);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.landing-questions details p {
+  margin-top: 8px !important;
+  color: var(--tack-muted);
+  font-size: 16px;
+}
+
+/* Closing and footer */
+
+.landing-closing {
+  text-align: center;
+}
+
+.landing-closing h2 {
+  max-width: none;
+}
+
+.landing-closing p {
+  margin-block: 16px 32px !important;
+  color: var(--tack-muted);
+}
+
+.landing-footer {
+  padding-block: 32px;
+  border-top: 1px solid var(--tack-border);
+  background: var(--tack-bg-deep);
+  font-size: 14px;
+}
+
+.landing-footer-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 24px;
+}
+
+.landing-footer-row p {
+  color: var(--tack-muted);
+}
+
+.landing-footer-row > a:last-child {
+  margin-inline-start: auto;
+}
+
+.landing-prompt code {
+  font-family: var(--tack-font-mono);
+  font-size: 0.875em;
+  color: var(--tack-agent);
+}
+
+/* Live demo */
+
+/* The hero, on a blueprint sheet: copy, then the demo window as the step into the rest of the page.
+   The intro that brings each part in lives in `components/landing/hero-intro.tsx`. */
+/* The hero holds the screen for `--hero-travel` of scroll, then lets go. At rest, the copy and the
+   window sit at the top with `--hero-gap` above and between them; the page opens with both lower,
+   from transforms the hero sets (`components/landing/hero-intro.tsx`). The hero starts under the
+   80px header, so it holds from the first scrolled pixel while the header scrolls away. */
+.landing-hero {
+  --hero-gap: clamp(32px, 5svh, 56px);
+  --hero-travel: 480px;
+
+  position: relative;
+  /* `clip`, not `hidden`: a hidden overflow makes the hero a scroll container, and the pin's view
+     timeline would then measure the hero instead of the viewport. */
+  overflow: clip;
+  margin-top: -80px;
+  padding-bottom: clamp(48px, 7vw, 96px);
+}
+
+.landing-header {
+  position: relative;
+  z-index: 2;
+}
+
+/* The docs keep room at the top for their fixed navbar; the landing has none. Without this, every
+   view timeline on the page would measure 64px short of the top. */
+html:has(.landing) {
+  scroll-padding-top: 0;
+}
+
+/* The track is the pin's run; it leaves room after it for the part of the window that reaches
+   below the screen at rest, which the hero measures. */
+.hero-track {
+  height: calc(100vh + var(--hero-travel));
+  height: calc(100svh + var(--hero-travel));
+  margin-bottom: var(--hero-overflow, 0px);
+}
+
+.hero-pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  padding-top: var(--hero-gap);
+}
+
+.hero-pin .demo {
+  margin-top: var(--hero-gap);
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 1;
+}
+
+.landing-hero h1 {
+  font-size: clamp(44px, 5.6vw, 80px);
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+
+.landing-hero-line {
+  display: block;
+}
+
+/* Each word rises out of a mask; the padding keeps the descenders of g, p and y inside it. */
+.hero-word {
+  display: inline-block;
+  overflow: hidden;
+  padding: 0 0.04em 0.14em;
+  margin: 0 -0.04em -0.14em;
+  vertical-align: top;
+}
+
+.hero-word-ink {
+  display: inline-block;
+}
+
+.landing-hero-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 24px 56px;
+}
+
+@media (min-width: 1024px) {
+  .landing-hero-grid {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    align-items: end;
+  }
+}
+
+.landing-hero-aside .landing-lead {
+  margin-top: 0 !important;
+}
+
+.landing-hero-aside .landing-actions {
+  margin-top: 24px;
+}
+
+/* The blueprint sheet: a drafting grid, a major line every five minor ones, brightest where the
+   window stands and fading out toward the edges. */
+.hero-sheet {
+  position: absolute;
+  inset: 0 0 calc(-1 * var(--hero-overflow, 0px));
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgb(92 145 173 / 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(92 145 173 / 0.1) 1px, transparent 1px),
+    linear-gradient(rgb(92 145 173 / 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(92 145 173 / 0.045) 1px, transparent 1px);
+  background-position: center -1px;
+  background-size:
+    120px 120px,
+    120px 120px,
+    24px 24px,
+    24px 24px;
+  mask-image: radial-gradient(ellipse 75% 70% at 50% 55%, black 20%, transparent 80%);
+}
+
+/* The window leans back on its top edge and comes upright, so the stage gives it depth. */
+.hero-stage {
+  position: relative;
+  z-index: 1;
+  perspective: 1800px;
+}
+
+.hero-window {
+  position: relative;
+  transform-origin: 50% 0;
+}
+
+/* The drafting lamp: a pool of brass light on the sheet, centred on the window's top edge, with
+   blue light further out. It ends inside the hero, so the section's edge never cuts it. */
+.hero-lamp {
+  position: absolute;
+  top: -280px;
+  left: 50%;
+  width: min(1400px, 130%);
+  height: 560px;
+  translate: -50% 0;
+  pointer-events: none;
+}
+
+.hero-lamp-light {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(closest-side, rgb(243 205 163 / 0.24), rgb(167 95 64 / 0.1) 50%, transparent),
+    radial-gradient(closest-side, rgb(92 145 173 / 0.2), transparent);
+}
+
+/* The demo's links behind the copy: an arc per real file fanned over one origin, a mark per link.
+   The layer rides with the copy and spans the page; its mask (set inline from the copy's measured
+   text) fades it at the edges and under the text. */
+.hero-field {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+}
+
+.field-mark {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  margin: -4px 0 0 -4px;
+  background:
+    linear-gradient(rgb(92 145 173 / 0.62), rgb(92 145 173 / 0.62)) center / 100% 1px no-repeat,
+    linear-gradient(rgb(92 145 173 / 0.62), rgb(92 145 173 / 0.62)) center / 1px 100% no-repeat;
+}
+
+.field-mark[data-lit="true"] {
+  background:
+    linear-gradient(rgb(226 193 160 / 0.9), rgb(226 193 160 / 0.9)) center / 100% 1px no-repeat,
+    linear-gradient(rgb(226 193 160 / 0.9), rgb(226 193 160 / 0.9)) center / 1px 100% no-repeat;
+}
+
+.field-origin {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: rgb(92 145 173 / 0.6);
+}
+
+.field-origin[data-lit="true"] {
+  background: var(--tack-accent-strong);
+  box-shadow: 0 0 12px 3px rgb(243 205 163 / 0.4);
+}
+
+.field-arc-holder {
+  position: absolute;
+  inset: 0;
+}
+
+.field-arc {
+  position: absolute;
+  overflow: visible;
+  fill: none;
+  stroke: rgb(92 145 173 / 0.22);
+  stroke-width: 1;
+}
+
+.field-arc[data-lit="true"] {
+  stroke: rgb(150 196 220 / 0.35);
+}
+
+.field-traveller {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  margin: -2px 0 0 -2px;
+  border-radius: 50%;
+  background: var(--tack-accent-strong);
+  box-shadow: 0 0 10px 2px rgb(243 205 163 / 0.45);
+}
+
+/* The lamp catches the window's top edge. */
+.hero-window-rim {
+  position: absolute;
+  top: 0;
+  right: 8%;
+  left: 8%;
+  z-index: 2;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgb(243 205 163 / 0.6), transparent);
+}
+
+/* Drafting marks at the window's corners: where the window lands on the sheet. */
+.hero-mark {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  border-color: rgb(226 193 160 / 0.55);
+  border-style: solid;
+  border-width: 0;
+}
+
+.hero-mark[data-corner="top-left"] {
+  top: -14px;
+  left: -14px;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+
+.hero-mark[data-corner="top-right"] {
+  top: -14px;
+  right: -14px;
+  border-top-width: 1px;
+  border-right-width: 1px;
+}
+
+.hero-mark[data-corner="bottom-left"] {
+  bottom: -14px;
+  left: -14px;
+  border-bottom-width: 1px;
+  border-left-width: 1px;
+}
+
+.hero-mark[data-corner="bottom-right"] {
+  right: -14px;
+  bottom: -14px;
+  border-right-width: 1px;
+  border-bottom-width: 1px;
+}
+
+@media (max-width: 639px) {
+  .hero-mark {
+    display: none;
+  }
+}
+
+/* A light that runs once along the window's top edge as it lands. */
+.hero-window-edge {
+  position: absolute;
+  top: 0;
+  right: 24px;
+  left: 24px;
+  z-index: 2;
+  height: 1px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hero-window-edge > span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--tack-accent-strong), transparent);
+}
+
+/* Reduced motion draws every part of the intro at rest. The same rules apply without JavaScript,
+   from `IntroFallback`. */
+@media (prefers-reduced-motion: reduce) {
+  [data-intro] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  [data-intro-accent] {
+    display: none !important;
+  }
+
+  /* The hero does not hold: it lays out at rest, below the header, and scrolls with the page. */
+  .hero-track {
+    height: auto;
+    margin-bottom: 0;
+  }
+
+  .hero-pin {
+    position: relative;
+    height: auto;
+    padding-top: calc(80px + var(--hero-gap));
+  }
+}
+
+.demo-line + .demo-command-line {
+  margin-top: 1.1em;
+}
+
+.demo {
+  position: relative;
+}
+
+/* The run's buttons sit in the window bar, on the right. */
+.demo-window-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-inline-start: auto;
+  padding-inline-start: 12px;
+}
+
+/* Where the walkthrough is, as "N/X", beside its play controls. */
+.demo-step-count {
+  color: var(--tack-terminal-muted);
+  font-family: var(--tack-font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.demo-window-button {
+  padding: 3px 12px;
+  border: 1px solid var(--tack-border-strong);
+  border-radius: var(--tack-radius-pill);
+  background: transparent;
+  color: var(--tack-terminal-text);
+  font: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.demo-window-button:hover {
+  border-color: var(--tack-accent);
+}
+
+.demo-window-button:focus-visible {
+  outline: 2px solid var(--tack-accent);
+  outline-offset: 2px;
+}
+
+.demo-window-button[disabled] {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+.demo-screen {
+  position: relative;
+  height: clamp(360px, 56vh, 560px);
+  padding: 0.875rem 1rem 1.25rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-color: #2a536f transparent;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.demo-line {
+  min-height: 1.6em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.demo-probe {
+  position: absolute;
+  visibility: hidden;
+  white-space: pre;
+  pointer-events: none;
+}
+
+.demo-prompt {
+  color: var(--tack-accent);
+  user-select: none;
+}
+
+.demo-command {
+  color: #f2efe8;
+}
+
+.demo-note {
+  color: var(--tack-terminal-muted);
+  font-style: italic;
+}
+
+.demo-cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  margin-inline-start: 1px;
+  vertical-align: text-bottom;
+  background: var(--tack-accent);
+  animation: demo-blink 1s steps(2, start) infinite;
+}
+
+@keyframes demo-blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+.demo-input-line {
+  display: flex;
+  margin: 0;
+}
+
+.demo-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #f2efe8;
+  font: inherit;
+  caret-color: var(--tack-accent);
+}
+
+.demo-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18ch, 1fr));
+  gap: 0 2ch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--tack-terminal-muted);
+}
+
+.demo-choices li {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The lit terminal frame already shows where the keyboard is. */
+.demo-input:focus-visible {
+  outline: none;
+}
+
+.demo-bold {
+  color: #f2efe8;
+  font-weight: 700;
+}
+
+.demo-dim {
+  color: var(--tack-terminal-muted);
+}
+
+.demo-red {
+  color: #f2937f;
+}
+
+.demo-green {
+  color: #9fcba8;
+}
+
+.demo-yellow {
+  color: #f3cda3;
+}
+
+.demo-blue {
+  color: #90c2da;
+}
+
+.demo-cyan {
+  color: #7fd0d8;
+}
+
+@keyframes demo-arrive {
+  from {
+    background: rgb(226 193 160 / 0.28);
+    transform: translateY(-2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-cursor {
+    animation: none;
+  }
+}
+
+/* The demo workspace: one app window, a file explorer beside the terminal. */
+
+.demo-window {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--tack-border-strong);
+  border-radius: var(--tack-radius-lg);
+  background: var(--tack-terminal-bg);
+  box-shadow:
+    0 0 0 1px rgb(226 193 160 / 0.06),
+    0 40px 120px -40px rgb(0 0 0 / 0.9);
+}
+
+/* The window is an IDE layout: the sidebar spans both rows on the left, the tab strip sits over
+   the main pane only. */
+.demo-window-body {
+  display: grid;
+  grid-template-areas: "bar" "pane";
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+}
+
+.demo-sidebar {
+  display: flex;
+  flex-direction: column;
+  grid-area: pane;
+  min-width: 0;
+  background: #021a2c;
+}
+
+.demo-sidebar-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 40px;
+  padding-inline: 14px;
+  border-bottom: 1px solid var(--tack-border);
+  background: linear-gradient(var(--tack-surface), var(--tack-bg-deep));
+}
+
+.demo-sidebar-label {
+  color: var(--tack-faint);
+  font-family: var(--tack-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.demo-window-bar {
+  display: flex;
+  grid-area: bar;
+  align-items: stretch;
+  gap: 2px;
+  min-width: 0;
+  min-height: 40px;
+  padding-inline: 10px 14px;
+  border-bottom: 1px solid var(--tack-border);
+  background: linear-gradient(var(--tack-surface), var(--tack-bg-deep));
+  font-family: var(--tack-font-mono);
+  font-size: 12px;
+}
+
+.demo-window-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.demo-window-dots span {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #2a536f;
+}
+
+.demo-window-dots span:first-child {
+  background: var(--tack-accent);
+}
+
+.demo-window-tabs {
+  display: flex;
+  min-width: 0;
+  gap: 2px;
+}
+
+.demo-window-tab {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: var(--tack-radius-sm) var(--tack-radius-sm) 0 0;
+  background: transparent;
+  color: var(--tack-terminal-muted);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.demo-window-tab[aria-selected="true"] {
+  border-color: var(--tack-border);
+  background: var(--tack-terminal-bg);
+  color: #f2efe8;
+  box-shadow: inset 0 2px 0 var(--tack-accent);
+}
+
+.demo-window-tab-badge {
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: var(--tack-radius-pill);
+  background: var(--tack-accent);
+  color: var(--tack-action-text);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+
+.demo-window-tab:focus-visible {
+  outline: 2px solid var(--tack-accent);
+  outline-offset: -2px;
+}
+
+.demo-pane-main {
+  grid-area: pane;
+  min-width: 0;
+}
+
+/* Phones and narrow windows show one pane at a time, picked with the tabs. */
+@media (max-width: 899px) {
+  .demo-window-body:not([data-pane="files"]) .demo-sidebar,
+  .demo-window-body[data-pane="files"] .demo-pane-main {
+    display: none;
+  }
+
+  .demo-sidebar-top {
+    display: none;
+  }
+}
+
+/* Wide windows show the sidebar beside the main pane, from the window's top edge. */
+@media (min-width: 900px) {
+  .demo-window-body {
+    grid-template-areas:
+      "side bar"
+      "side pane";
+    grid-template-columns: minmax(270px, 330px) minmax(0, 1fr);
+  }
+
+  .demo-sidebar {
+    grid-area: side;
+    border-right: 1px solid var(--tack-border);
+  }
+
+  .demo-window-tab-files {
+    display: none;
+  }
+}
+
+.demo-pane-terminal {
+  min-width: 0;
+  color: var(--tack-terminal-text);
+  font-family: var(--tack-font-mono);
+  font-variant-ligatures: none;
+}
+
+.demo-window .demo-screen,
+.demo-window .demo-explorer,
+.demo-window .demo-entry {
+  height: clamp(420px, 62vh, 620px);
+}
+
+.demo-statusbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  padding: 6px 14px;
+  border-top: 1px solid var(--tack-border);
+  background: var(--tack-bg-deep);
+  color: var(--tack-terminal-muted);
+  font-family: var(--tack-font-mono);
+  font-size: 11.5px;
+}
+
+.demo-statusbar-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--tack-accent);
+}
+
+.demo-statusbar-light-live {
+  background: #9fcba8;
+  box-shadow: 0 0 8px #9fcba8;
+}
+
+.demo-statusbar-light {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--tack-accent);
+  box-shadow: 0 0 8px var(--tack-accent);
+}
+
+.demo-statusbar-fresh {
+  color: var(--tack-accent-strong);
+}
+
+/* The explorer */
+
+.demo-icon {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.demo-explorer {
+  position: relative;
+  overflow-y: auto;
+  padding: 10px 0 16px;
+  font-family: var(--tack-font-mono);
+  font-size: 12.5px;
+  scrollbar-color: #2a536f transparent;
+}
+
+.landing .demo-explorer-title {
+  margin: 14px 0 4px !important;
+  padding-inline: 16px;
+  color: var(--tack-faint);
+  font-family: var(--tack-font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.demo-explorer section:first-child .demo-explorer-title {
+  margin-top: 4px !important;
+}
+
+.demo-explorer-empty {
+  padding: 2px 16px;
+  color: var(--tack-faint);
+  font-size: 12px;
+}
+
+.demo-explorer ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.demo-tree-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 25px;
+  padding-block: 1px;
+  padding-inline-end: 10px;
+  border: 0;
+  border-inline-start: 2px solid transparent;
+  background: transparent;
+  color: var(--tack-terminal-text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background var(--tack-duration-fast) var(--tack-ease);
+}
+
+.demo-tree-row:hover {
+  background: rgb(144 194 218 / 0.07);
+}
+
+.demo-tree-row:focus-visible {
+  outline: 2px solid var(--tack-accent);
+  outline-offset: -2px;
+}
+
+.demo-tree-folder {
+  color: #f2efe8;
+}
+
+.demo-tree-folder .demo-icon-folder,
+.demo-tree-folder .demo-icon-open {
+  color: var(--tack-agent);
+}
+
+.demo-tree-row .demo-icon-file {
+  color: var(--tack-terminal-muted);
+}
+
+.demo-tree-link {
+  color: #7fd0d8;
+}
+
+.demo-tree-spacer,
+.demo-tree-chevron {
+  display: inline-flex;
+  flex: none;
+  width: 12px;
+}
+
+.demo-tree-chevron .demo-icon {
+  width: 12px;
+  height: 12px;
+  color: var(--tack-terminal-muted);
+  transition: transform var(--tack-duration-fast) var(--tack-ease);
+}
+
+.demo-tree-chevron-open .demo-icon {
+  transform: rotate(90deg);
+}
+
+.demo-tree-name {
+  flex: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.demo-tree-reach {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--tack-terminal-muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.demo-tree-reach::before {
+  content: "→ ";
+}
+
+.demo-tree-dangling {
+  color: #f2937f;
+  font-size: 11px;
+}
+
+.demo-tree-count {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 3px;
+  margin-inline-start: auto;
+  color: var(--tack-terminal-muted);
+  font-size: 11px;
+}
+
+.demo-tree-count .demo-icon {
+  width: 12px;
+  height: 12px;
+}
+
+.demo-tree-badge {
+  flex: none;
+  margin-inline-start: auto;
+  padding: 0 5px;
+  border-radius: var(--tack-radius-xs);
+  background: var(--tack-accent);
+  color: var(--tack-action-text);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.demo-tree-fresh {
+  border-inline-start-color: var(--tack-accent);
+  background: rgb(226 193 160 / 0.12);
+  animation: demo-arrive 1.6s var(--tack-ease);
+}
+
+.demo-tree-target {
+  border-inline-start-color: var(--tack-agent);
+  background: rgb(144 194 218 / 0.13);
+}
+
+.demo-tree-selected {
+  border-inline-start-color: var(--tack-accent-strong);
+  background: rgb(226 193 160 / 0.2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-tree-fresh {
+    animation: none;
+  }
+}
+
+/* The terminal hands over the keyboard from inside: a click on it, or this button at its foot. */
+.demo-terminal-area {
+  position: relative;
+}
+
+.demo-terminal-area:has(.demo-takeover) {
+  cursor: pointer;
+}
+
+.demo-takeover {
+  position: absolute;
+  right: 16px;
+  bottom: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border: 1px solid var(--tack-accent);
+  border-radius: var(--tack-radius-pill);
+  background: rgb(4 22 38 / 0.92);
+  color: var(--tack-accent-strong);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 10px 30px -12px rgb(0 0 0 / 0.8);
+  animation: demo-takeover-glow 2.4s var(--tack-ease) infinite;
+}
+
+.demo-takeover:hover,
+.demo-takeover:focus-visible {
+  background: var(--tack-accent);
+  color: var(--tack-action-text);
+  outline: none;
+}
+
+.demo-takeover-key {
+  font-size: 15px;
+}
+
+@keyframes demo-takeover-glow {
+  50% {
+    box-shadow:
+      0 0 0 4px rgb(226 193 160 / 0.14),
+      0 10px 30px -12px rgb(0 0 0 / 0.8);
+  }
+}
+
+/* The completion menu: Tab moves the selection, as in zsh. */
+.demo-choices li {
+  padding: 0 4px;
+  border-radius: var(--tack-radius-xs);
+  cursor: pointer;
+}
+
+.demo-choices li:hover {
+  color: var(--tack-terminal-text);
+}
+
+.demo-choices li[aria-selected="true"] {
+  background: var(--tack-accent);
+  color: var(--tack-action-text);
+}
+
+/* A file or link opened read-only in its own tab. */
+.demo-window-tab-entry {
+  gap: 2px;
+  padding-inline: 10px 4px;
+}
+
+.demo-window-tab-entry[data-active="true"] {
+  border-color: var(--tack-border);
+  background: var(--tack-terminal-bg);
+  color: #f2efe8;
+  box-shadow: inset 0 2px 0 var(--tack-accent);
+}
+
+.demo-window-tab-open,
+.demo-window-tab-close {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.demo-window-tab-close {
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--tack-radius-xs);
+  color: var(--tack-terminal-muted);
+}
+
+.demo-window-tab-close:hover {
+  background: rgb(144 194 218 / 0.12);
+  color: #f2efe8;
+}
+
+.demo-window-tab-open:focus-visible,
+.demo-window-tab-close:focus-visible {
+  outline: 2px solid var(--tack-accent);
+  outline-offset: 1px;
+}
+
+.demo-window-tabs {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.demo-entry {
+  overflow-y: auto;
+  padding: 0 0 1.25rem;
+  color: var(--tack-terminal-text);
+  font-family: var(--tack-font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  scrollbar-color: #2a536f transparent;
+}
+
+.demo-entry-header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--tack-border);
+  background: var(--tack-terminal-bg);
+  color: #f2efe8;
+}
+
+.demo-entry-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.demo-entry-badge {
+  margin-inline-start: auto;
+  padding: 0 6px;
+  border: 1px solid var(--tack-border-strong);
+  border-radius: var(--tack-radius-xs);
+  color: var(--tack-terminal-muted);
+  font-size: 11px;
+}
+
+.demo-entry-text {
+  margin: 0;
+  padding: 12px 16px 0 0;
+  overflow-x: auto;
+  font: inherit;
+  white-space: pre;
+}
+
+.demo-entry-line {
+  display: block;
+}
+
+.demo-entry-number {
+  display: inline-block;
+  width: 4ch;
+  margin-inline-end: 2ch;
+  color: #3d6680;
+  text-align: right;
+  user-select: none;
+}
+
+.demo-entry-facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 6px 18px;
+  margin: 0;
+  padding: 16px;
+}
+
+.demo-entry-facts dt {
+  color: var(--tack-terminal-muted);
+}
+
+.demo-entry-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.demo-entry-facts code {
+  color: #7fd0d8;
+  font: inherit;
+}
+
+.demo-entry-path {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--tack-accent-strong);
+  font: inherit;
+  text-align: start;
+  text-decoration: underline;
+  text-decoration-color: rgb(226 193 160 / 0.4);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.demo-entry-path:hover,
+.demo-entry-path:focus-visible {
+  text-decoration-color: currentColor;
+  outline: none;
+}
+
+.demo-entry-dangling {
+  color: #f2937f;
+}
+
+.demo-entry-note {
+  padding: 4px 16px;
+  color: var(--tack-terminal-muted);
+}
+
+.demo-entry-listing {
+  display: grid;
+  gap: 2px;
+  margin: 4px 0 0;
+  padding: 0 16px;
+  list-style: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-takeover {
+    animation: none;
+  }
+}
+
+/* The agent mode: a simplified coding agent's terminal over the same machine. */
+
+.demo-window .demo-agent {
+  display: flex;
+  flex-direction: column;
+  height: clamp(420px, 62vh, 620px);
+}
+
+.demo-window .demo-agent .demo-agent-log {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.75em;
+  height: auto;
+  min-height: 0;
+  padding-bottom: 0.75rem;
+}
+
+.demo-agent-header {
+  margin: 0;
+  color: var(--tack-terminal-muted);
+  font-size: 12px;
+}
+
+/* Each row rises into place as the session reaches it. */
+.demo-agent-log > * {
+  animation: demo-agent-row var(--tack-duration-fast) var(--tack-ease);
+}
+
+@keyframes demo-agent-row {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+.demo-agent-user {
+  display: flex;
+  gap: 1ch;
+  margin-inline: -1rem;
+  padding: 0.15em 1rem;
+  background: rgb(255 255 255 / 0.06);
+  color: #f2efe8;
+  white-space: pre-wrap;
+}
+
+.demo-agent-marker {
+  flex: none;
+  color: var(--tack-terminal-muted);
+}
+
+.demo-agent-reply {
+  display: flex;
+  gap: 1ch;
+}
+
+.demo-agent-bullet {
+  flex: none;
+  color: #f2efe8;
+  font-size: 0.8em;
+  line-height: 2;
+}
+
+.demo-agent-reply-body {
+  min-width: 0;
+}
+
+.demo-agent-gap {
+  height: 0.6em;
+}
+
+.demo-agent-code {
+  color: #b9b4f2;
+  font-family: inherit;
+}
+
+.demo-agent-bold,
+.demo-agent-count {
+  color: #f2efe8;
+  font-weight: 700;
+}
+
+.demo-agent-tools {
+  padding-inline-start: 2ch;
+}
+
+.demo-agent-summary {
+  color: var(--tack-terminal-muted);
+}
+
+.demo-agent-tools[data-running="true"] .demo-agent-summary {
+  color: var(--tack-terminal-text);
+}
+
+.demo-agent-detail {
+  display: flex;
+  gap: 1.2ch;
+  padding-inline-start: 0.5ch;
+  color: #cfd8df;
+  overflow-wrap: anywhere;
+}
+
+.demo-agent-elbow {
+  flex: none;
+  color: var(--tack-terminal-muted);
+}
+
+.demo-agent-output {
+  margin: 0.15em 0 0.2em 3ch;
+  padding-inline-start: 1.2ch;
+  border-inline-start: 1px solid var(--tack-border-strong);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.demo-agent-status {
+  color: var(--tack-terminal-muted);
+}
+
+.demo-agent-live {
+  color: #e8956b;
+}
+
+.demo-agent-spark {
+  display: inline-block;
+  animation: demo-agent-spin 1.6s linear infinite;
+}
+
+@keyframes demo-agent-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.demo-agent-input {
+  display: flex;
+  gap: 1ch;
+  align-items: center;
+  min-height: 2.4em;
+  margin: 0 1rem;
+  border-block: 1px solid var(--tack-border-strong);
+  font-size: 13px;
+}
+
+.demo-agent-footer {
+  padding: 0.4rem 1rem 0.6rem 2.2rem;
+  font-size: 11.5px;
+}
+
+/* The input box and the mode line, with the unseen-messages hint just above the separator. */
+.demo-agent-bottom {
+  position: relative;
+}
+
+.demo-agent-unseen {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  padding: 1px 10px;
+  border: 0;
+  background: rgb(255 255 255 / 0.09);
+  color: var(--tack-terminal-text);
+  font: inherit;
+  font-size: 12.5px;
+  white-space: nowrap;
+  cursor: pointer;
+  transform: translateX(-50%);
+  animation: demo-agent-fade var(--tack-duration-fast) var(--tack-ease);
+}
+
+.demo-agent-unseen:focus-visible {
+  outline: 2px solid var(--tack-accent);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .demo-agent-unseen:hover {
+    background: rgb(255 255 255 / 0.15);
+  }
+}
+
+/* In agent mode the keyboard button sits on the empty input box, where a person would type. */
+.demo-terminal-area:has(.demo-agent) .demo-takeover {
+  bottom: 31px;
+}
+
+@media (max-width: 640px) {
+  .demo-agent-hint {
+    display: none;
+  }
+}
+
+.demo-agent-mode {
+  color: var(--tack-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-agent-log > * {
+    animation-name: demo-agent-fade;
+  }
+
+  .demo-agent-spark {
+    animation: none;
+  }
+}
+
+@keyframes demo-agent-fade {
+  from {
+    opacity: 0;
+  }
+}

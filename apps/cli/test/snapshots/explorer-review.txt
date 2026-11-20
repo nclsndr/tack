@@ -1,0 +1,14 @@
+ Tack explorer  ·  editing user  ·  1 staged
+───────────────────────────────────────────────────────────────────────────────
+Review: user
+Staged changes in user
+  include  shared skill fixture-review
+
+Nothing has been written. This is the plan tack sync would apply:
+claude → user: 1 to link
+  link       .claude/skills/fixture-review  shared skill fixture-review
+  final review line
+
+
+───────────────────────────────────────────────────────────────────────────────
+ y apply these changes  n back (nothing was written)  ↑↓ scroll

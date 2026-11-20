@@ -1,0 +1,753 @@
+/*
+ * Tack reader: an engineer's computation pad.
+ * Printed structure (rules, labels, margin) is pad green; the reader's own hand
+ * (actions, selection, position, copied state) is ballpoint blue; attention is
+ * correction red. Text stays achromatic graphite.
+ *
+ * Reader chrome and the visual kit style themselves with Tailwind utilities. This file keeps the
+ * design tokens, element defaults, and the styles for authored MDX, which carries no classes.
+ */
+
+/*
+ * Rspress ships its preflight in `rp-base`. Declaring it first keeps it below every Tack layer
+ * whatever order the bundle emits the stylesheets in. Tailwind's own preflight is not imported:
+ * the Rspress one is the same reset.
+ */
+@layer rp-base, theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+/* Figures: plain CSS for the frame and the kit; their look choices live in figures/look.ts. */
+@import "./figures/figures.css" layer(components);
+@source "./*.{ts,tsx}";
+@source not "./*.test.ts";
+/* Token classes for sources: their components and MDX are not scanned. Keep equal to figures/tokens.ts. */
+@source inline("bg-paper bg-sheet bg-rule bg-rule-strong bg-ink bg-body bg-muted bg-faint bg-pen bg-pen-wash bg-red bg-red-wash text-paper text-sheet text-rule text-rule-strong text-ink text-body text-muted text-faint text-pen text-pen-wash text-red text-red-wash border-paper border-sheet border-rule border-rule-strong border-ink border-body border-muted border-faint border-pen border-pen-wash border-red border-red-wash fill-paper fill-sheet fill-rule fill-rule-strong fill-ink fill-body fill-muted fill-faint fill-pen fill-pen-wash fill-red fill-red-wash stroke-paper stroke-sheet stroke-rule stroke-rule-strong stroke-ink stroke-body stroke-muted stroke-faint stroke-pen stroke-pen-wash stroke-red stroke-red-wash font-mono font-sans");
+
+/* Rspress toggles `.dark` on <html>; the default `prefers-color-scheme` variant would ignore it. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Tailwind's default scale, with Tack's palette in place of the default colors. */
+@theme {
+  --color-*: initial;
+
+  --animate-notice-in: notice-in 260ms var(--tack-ease) both;
+  --animate-drawer-in: drawer-in 280ms var(--tack-ease) both;
+  --animate-flow-traverse: flow-traverse 700ms var(--tack-ease) both;
+
+  @keyframes notice-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+  @keyframes drawer-in {
+    from {
+      transform: translateX(-24px);
+      opacity: 0;
+    }
+  }
+  @keyframes flow-traverse {
+    from {
+      stroke-dashoffset: 1;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+}
+
+@theme inline {
+  --color-paper: var(--tack-paper);
+  --color-index: var(--tack-index);
+  --color-sheet: var(--tack-sheet);
+  --color-plate: var(--tack-plate);
+  --color-rule: var(--tack-rule);
+  --color-rule-strong: var(--tack-rule-strong);
+  --color-control: var(--tack-control);
+  --color-print: var(--tack-print);
+  --color-ink: var(--tack-ink);
+  --color-body: var(--tack-text);
+  --color-muted: var(--tack-muted);
+  --color-faint: var(--tack-faint);
+  --color-pen: var(--tack-pen);
+  --color-pen-strong: var(--tack-pen-strong);
+  --color-pen-wash: var(--tack-pen-wash);
+  --color-red: var(--tack-red);
+  --color-red-wash: var(--tack-red-wash);
+  --color-hover: var(--tack-hover);
+  --color-backdrop: #0c120e80;
+
+  --font-sans: var(--tack-font-ui);
+  --font-serif: var(--tack-font-text);
+  --font-mono: var(--tack-font-mono);
+}
+
+/* The drawn chevron of disclosure controls; utilities rotate it for each state. */
+@utility chevron {
+  flex-shrink: 0;
+  width: 5px;
+  height: 5px;
+  border-right: 1.3px solid currentColor;
+  border-bottom: 1.3px solid currentColor;
+  transition:
+    rotate 200ms var(--tack-ease),
+    translate 200ms var(--tack-ease);
+}
+
+/* Quad-ruled drawing paper behind diagrams. */
+@utility bg-quad-ruled {
+  background-color: var(--tack-paper);
+  background-image:
+    linear-gradient(var(--tack-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--tack-grid) 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-position: -1px -1px;
+}
+
+/* A red diagonal stroke through a status mark. */
+@utility bg-struck {
+  background: linear-gradient(
+    to top right,
+    transparent 44%,
+    var(--tack-red) 44% 56%,
+    transparent 56%
+  );
+}
+
+@layer theme {
+  :root {
+    color-scheme: light;
+    --tack-paper: #f4f6f1;
+    --tack-index: #e9eee4;
+    --tack-sheet: #fbfcf9;
+    --tack-plate: #e7ece2;
+    --tack-rule: #d0dbc9;
+    --tack-rule-strong: #a9bea0;
+    --tack-control: #7f977a;
+    --tack-print: #4c6a45;
+    --tack-ink: #18201b;
+    --tack-text: #2a312c;
+    --tack-muted: #5b675e;
+    --tack-faint: #68746b;
+    --tack-pen: #2444b4;
+    --tack-pen-strong: #193395;
+    --tack-pen-wash: #e1e7fa;
+    --tack-red: #b0301f;
+    --tack-red-wash: #f8e3dd;
+    --tack-hover: #e2e8dc;
+    --tack-grid: #dfe7d9;
+
+    --tack-font-ui:
+      -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+    --tack-font-text: Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
+    --tack-font-mono: "SF Mono", ui-monospace, Menlo, "Cascadia Mono", Consolas, monospace;
+    --tack-gutter: 76px;
+    --tack-ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+    /* Names supported for repository customizations and the shared visual kit. */
+    --tack-bg: var(--tack-paper);
+    --tack-surface: var(--tack-sheet);
+    --tack-subtle: var(--tack-plate);
+    --tack-border: var(--tack-rule);
+    --tack-control-border: var(--tack-control);
+    --tack-heading: var(--tack-ink);
+    --tack-accent: var(--tack-pen);
+    --tack-selected: var(--tack-pen-wash);
+    --tack-selected-text: var(--tack-pen-strong);
+    --tack-visual-accent: var(--tack-pen);
+    --tack-visual-fill: #8fa985;
+    --tack-visual-active: var(--tack-pen);
+    --tack-visual-negative: var(--tack-red);
+    --tack-visual-selected: var(--tack-pen-wash);
+
+    @variant max-md {
+      --tack-gutter: 44px;
+    }
+  }
+  html.dark {
+    color-scheme: dark;
+    --tack-paper: #121714;
+    --tack-index: #0e120f;
+    --tack-sheet: #18201b;
+    --tack-plate: #1c241f;
+    --tack-rule: #27332b;
+    --tack-rule-strong: #3b4d40;
+    --tack-control: #5f7865;
+    --tack-print: #8fae86;
+    --tack-ink: #eef2ec;
+    --tack-text: #d4dbd2;
+    --tack-muted: #99a59b;
+    --tack-faint: #85918a;
+    --tack-pen: #93abff;
+    --tack-pen-strong: #bccbff;
+    --tack-pen-wash: #1e2a4b;
+    --tack-red: #ff907e;
+    --tack-red-wash: #3b1f1a;
+    --tack-hover: #1c2520;
+    --tack-grid: #1d2721;
+    --tack-visual-fill: #5c7b56;
+  }
+}
+
+/*
+ * Element defaults inside the reader, including repository customizations and authored MDX.
+ * Utilities override any of these without specificity tricks because they sit in a later layer.
+ */
+@layer base {
+  .tack-reader :is(button, select, summary) {
+    cursor: pointer;
+  }
+  .tack-reader a {
+    color: var(--tack-pen);
+    text-decoration: none;
+  }
+
+  /* Shared controls: square-cornered, printed outline, blue when it is the reader's hand. */
+  .tack-reader button {
+    display: inline-flex;
+    align-items: center;
+    gap: --spacing(1.5);
+    min-height: --spacing(8);
+    padding: --spacing(1) --spacing(2.5);
+    border: 1px solid var(--tack-rule-strong);
+    border-radius: var(--radius-sm);
+    background: var(--tack-sheet);
+    color: var(--tack-text);
+    font-size: var(--text-sm);
+    line-height: var(--leading-tight);
+    transition-property: background-color, border-color, color;
+    transition-duration: var(--default-transition-duration);
+    transition-timing-function: var(--default-transition-timing-function);
+  }
+  .tack-reader button:hover {
+    background: var(--tack-hover);
+    border-color: var(--tack-control);
+  }
+  .tack-reader button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .tack-reader button:disabled:hover {
+    background: var(--tack-sheet);
+    border-color: var(--tack-rule-strong);
+  }
+  .tack-reader :is(input, select, textarea) {
+    border: 1px solid var(--tack-control);
+    border-radius: var(--radius-sm);
+    background-color: var(--tack-sheet);
+    color: var(--tack-text);
+  }
+  .tack-reader select {
+    min-height: --spacing(8);
+    padding: --spacing(1) --spacing(2);
+    font-size: var(--text-sm);
+  }
+  .tack-reader :is(input, select, textarea)::placeholder {
+    color: var(--tack-muted);
+    opacity: 1;
+  }
+  .tack-reader input {
+    caret-color: var(--tack-pen);
+    accent-color: var(--tack-pen);
+  }
+  .tack-reader :is(button, input, select, textarea, a, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--tack-pen);
+    outline-offset: 2px;
+  }
+  .tack-reader ::selection {
+    color: var(--tack-ink);
+    background: var(--tack-pen-wash);
+  }
+  .tack-reader * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--tack-rule-strong) transparent;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  input[type="search"]::-webkit-search-cancel-button {
+    cursor: pointer;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tack-reader *,
+    .tack-reader *::before,
+    .tack-reader *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+}
+
+/* Authored MDX: the reading column, and the source blocks that wrap each authored block. */
+@layer components {
+  /* A docs Icon sits on the text's baseline at its size and color; a missing one is a red frame. */
+  .tack-icon,
+  .tack-icon-missing {
+    display: inline-block;
+    flex-shrink: 0;
+    vertical-align: -0.125em;
+  }
+  .tack-icon-missing {
+    width: 1em;
+    height: 1em;
+    border: 1px dashed var(--tack-red);
+    border-radius: 2px;
+  }
+
+  /* Author components: a callout set off by a rule, tabs on a printed rule, a dotted defined term. */
+  .tack-callout {
+    margin: 1.25em 0;
+    padding: 0.6em 0.9em 0.7em;
+    border-left: 2px solid var(--tack-print);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    background: var(--tack-sheet);
+  }
+  .tack-callout[data-kind="warning"] {
+    border-left-color: var(--tack-red);
+  }
+  .tack-callout-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45em;
+    margin: 0 0 0.25em;
+    color: var(--tack-ink);
+    font: 600 var(--text-sm) / 1.4 var(--tack-font-ui);
+  }
+  .tack-callout-kind {
+    color: var(--tack-print);
+    font-size: var(--text-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .tack-callout[data-kind="warning"] :is(.tack-callout-kind, .tack-icon) {
+    color: var(--tack-red);
+  }
+  .tack-callout-body > :first-child {
+    margin-top: 0;
+  }
+  .tack-callout-body > :last-child {
+    margin-bottom: 0;
+  }
+  .tack-tabs {
+    margin: 1.25em 0;
+  }
+  .tack-tabs-list {
+    display: flex;
+    gap: 0.25em;
+    border-bottom: 1px solid var(--tack-rule-strong);
+  }
+  .tack-reader .tack-tabs-tab {
+    min-height: 0;
+    margin-bottom: -1px;
+    padding: 0.35em 0.75em;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: var(--tack-muted);
+    font: 500 var(--text-sm) / 1.4 var(--tack-font-ui);
+  }
+  .tack-reader .tack-tabs-tab:hover {
+    background: transparent;
+    color: var(--tack-ink);
+  }
+  .tack-reader .tack-tabs-tab[data-active] {
+    border-bottom-color: var(--tack-pen);
+    color: var(--tack-ink);
+  }
+  .tack-tabs-panel {
+    padding-top: 0.75em;
+  }
+  .tack-tabs-panel > :first-child {
+    margin-top: 0;
+  }
+  /* Blocks nested in a tab, a callout or a fold keep the gap the article puts between blocks. */
+  :is(.tack-tabs-panel, .tack-callout-body, details) > * + * {
+    margin-top: 16px;
+  }
+  .tack-term {
+    font-style: normal;
+    text-decoration: underline dotted var(--tack-muted);
+    text-underline-offset: 0.2em;
+    cursor: help;
+  }
+
+  .tack-article {
+    counter-reset: tack-figure;
+    font-family: var(--tack-font-text);
+    font-size: 17px;
+    line-height: 1.62;
+    color: var(--tack-text);
+  }
+
+  /* The sheet: a calm column with a ruled margin of source lines. */
+  .tack-sheet {
+    position: relative;
+    padding-left: var(--tack-gutter);
+  }
+  .tack-sheet::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--tack-gutter) - 20px);
+    width: 1px;
+    background: var(--tack-rule-strong);
+  }
+
+  /* Source blocks own their vertical rhythm so margin citations align with the first line. */
+  .tack-source {
+    position: relative;
+    --tack-cite-height: 27px;
+  }
+  .tack-sheet .tack-source > * {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+  /* Ordered from general to specific: later rules intentionally win equal-specificity ties. */
+  .tack-sheet .tack-source {
+    margin-top: 16px;
+  }
+  .tack-sheet .tack-source:first-child {
+    margin-top: 0;
+  }
+  .tack-sheet .tack-source:has(> :is(pre, figure, table, aside, blockquote)),
+  .tack-sheet .tack-source:has(> :is(pre, figure, table, aside, blockquote)) + .tack-source {
+    margin-top: 26px;
+  }
+  .tack-sheet .tack-source:has(> :is(h1, h2, h3, h4, h5, h6)) + .tack-source {
+    margin-top: 12px;
+  }
+  .tack-sheet .tack-source:has(> h1) {
+    --tack-cite-height: 42px;
+  }
+  .tack-sheet .tack-source.tack-source:has(> h4, > h5, > h6) {
+    margin-top: 28px;
+  }
+  .tack-sheet .tack-source.tack-source:has(> h3) {
+    --tack-cite-height: 27px;
+    margin-top: 36px;
+  }
+  .tack-sheet .tack-source.tack-source:has(> h2) {
+    --tack-cite-height: 32px;
+    margin-top: 50px;
+  }
+  .tack-sheet .tack-source:has(> h2)::before {
+    content: "";
+    position: absolute;
+    top: -25px;
+    left: calc(-1 * var(--tack-gutter) + 20px);
+    right: 0;
+    height: 1px;
+    background: var(--tack-rule);
+  }
+  .tack-sheet .tack-source:has(> pre) {
+    --tack-cite-height: 48px;
+  }
+  /* A figure's first line is its caption, as text on the page. */
+  .tack-sheet .tack-source:has(> figure) {
+    --tack-cite-height: 22px;
+  }
+  .tack-sheet .tack-source:has(> table) {
+    --tack-cite-height: 34px;
+  }
+
+  /* Margin citations: the line number is the copy handle. Blocks nest, so states use `>`. */
+  .tack-block-tools {
+    position: absolute;
+    top: 0;
+    right: calc(100% + 26px);
+    z-index: 2;
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: flex-start;
+    gap: 1px;
+    user-select: none;
+    font-family: var(--tack-font-ui);
+  }
+  .tack-block-tools button {
+    min-height: 0;
+    height: var(--tack-cite-height);
+    padding: 0 4px;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    color: var(--tack-faint);
+    font: 11px/1 var(--tack-font-mono);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .tack-block-tools button:is(:hover, :focus-visible) {
+    background: var(--tack-pen-wash);
+    color: var(--tack-pen-strong);
+  }
+  .tack-cite-end {
+    display: none;
+  }
+  .tack-source:is(:hover, :focus-within) > .tack-block-tools .tack-cite {
+    color: var(--tack-pen);
+  }
+  .tack-block-tools .tack-cite:is(:hover, :focus-visible) .tack-cite-end {
+    display: inline;
+  }
+  .tack-block-tools .tack-cite-section {
+    font: 15px/1 var(--tack-font-text);
+    opacity: 0;
+  }
+  .tack-source:is(:hover, :focus-within) > .tack-block-tools .tack-cite-section {
+    opacity: 1;
+  }
+  .tack-source[data-copied="true"] > .tack-block-tools .tack-cite {
+    color: var(--tack-pen);
+  }
+  .tack-source:is([data-preview="true"], [data-copied="true"])::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    left: -12px;
+    width: 5px;
+    border: 1.5px solid var(--tack-pen);
+    border-right: 0;
+    pointer-events: none;
+  }
+  .tack-source[data-copied="true"]::after {
+    animation: tack-cited 1600ms var(--tack-ease) both;
+  }
+  @keyframes tack-cited {
+    0% {
+      opacity: 0;
+      transform: translateX(4px);
+    }
+    12%,
+    70% {
+      opacity: 1;
+      transform: none;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  /* Reading column */
+  .tack-article :is(h1, h2, h3, h4, h5, h6) {
+    scroll-margin-top: 84px;
+    font-family: var(--tack-font-ui);
+    color: var(--tack-ink);
+    text-wrap: balance;
+  }
+  .tack-article h1 {
+    font-size: 34px;
+    line-height: 42px;
+    font-weight: 650;
+    letter-spacing: -0.024em;
+  }
+  .tack-article h2 {
+    font-size: 23px;
+    line-height: 32px;
+    font-weight: 640;
+    letter-spacing: -0.018em;
+  }
+  .tack-article h3 {
+    font-size: 18px;
+    line-height: 27px;
+    font-weight: 620;
+    letter-spacing: -0.01em;
+  }
+  .tack-article h4 {
+    font-size: 16px;
+    font-weight: 620;
+  }
+  .tack-article :is(h1, h2, h3, h4, h5, h6) > a.rp-header-anchor {
+    display: none;
+  }
+  .tack-sheet .tack-source > :is(p, ul, ol, blockquote, dl),
+  .tack-sheet .tack-source :is(.tack-tabs-panel, details) > :is(p, ul, ol, blockquote, dl) {
+    max-width: 68ch;
+  }
+  /* A callout keeps the prose measure, plus its own padding and rule. */
+  .tack-sheet .tack-source > .tack-callout {
+    max-width: calc(68ch + 1.8em + 2px);
+  }
+  .tack-article p {
+    text-wrap: pretty;
+  }
+  .tack-article strong {
+    font-weight: 650;
+    color: var(--tack-ink);
+  }
+  .tack-article a {
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--tack-pen) 40%, transparent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+  .tack-article a:hover {
+    text-decoration-color: var(--tack-pen);
+  }
+  .tack-article :is(ul, ol) {
+    padding-left: 1.4em;
+  }
+  .tack-article ul {
+    list-style: disc;
+  }
+  .tack-article ol {
+    list-style: decimal;
+  }
+  .tack-article li + li {
+    margin-top: 6px;
+  }
+  .tack-article li::marker {
+    color: var(--tack-print);
+  }
+  .tack-article li:has(> input[type="checkbox"]) {
+    list-style: none;
+    margin-left: -1.4em;
+  }
+  .tack-article li > input[type="checkbox"] {
+    appearance: none;
+    display: inline-grid;
+    place-content: center;
+    width: 14px;
+    height: 14px;
+    margin: 0 10px 0 0;
+    border: 1.3px solid var(--tack-ink);
+    border-radius: 2px;
+    background: transparent;
+    vertical-align: -1px;
+    opacity: 1;
+  }
+  .tack-article li > input[type="checkbox"]:checked::after {
+    content: "";
+    width: 8px;
+    height: 4px;
+    margin-top: -2px;
+    border-left: 1.6px solid var(--tack-ink);
+    border-bottom: 1.6px solid var(--tack-ink);
+    transform: rotate(-45deg);
+  }
+  .tack-article code {
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: var(--tack-plate);
+    color: var(--tack-ink);
+    font: 0.8em/1 var(--tack-font-mono);
+    overflow-wrap: anywhere;
+  }
+  .tack-article pre {
+    overflow: auto;
+    margin: 0;
+    padding: 14px 18px;
+    border: 1px solid var(--tack-rule);
+    border-radius: 4px;
+    background: var(--tack-plate);
+    font: 13px/1.62 var(--tack-font-mono);
+    tab-size: 2;
+  }
+  .tack-article pre code {
+    padding: 0;
+    background: none;
+    font: inherit;
+    overflow-wrap: normal;
+  }
+  .tack-article blockquote {
+    margin: 0;
+    padding: 2px 0 2px 18px;
+    border-left: 1px solid var(--tack-rule-strong);
+    color: var(--tack-muted);
+    font-style: italic;
+  }
+  .tack-article table {
+    width: 100%;
+    border-collapse: collapse;
+    font: 13.5px/1.5 var(--tack-font-ui);
+    font-variant-numeric: tabular-nums;
+  }
+  .tack-article th {
+    padding: 8px 12px 7px 0;
+    border-top: 1px solid var(--tack-rule-strong);
+    border-bottom: 1px solid var(--tack-rule-strong);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-align: left;
+    text-transform: uppercase;
+    color: var(--tack-print);
+    background: none;
+  }
+  .tack-article td {
+    padding: 10px 14px 10px 0;
+    border-bottom: 1px solid var(--tack-rule);
+    vertical-align: top;
+    text-align: left;
+  }
+  .tack-article :is(th, td):last-child {
+    padding-right: 0;
+  }
+  .tack-article hr {
+    border: 0;
+    border-top: 1px solid var(--tack-rule);
+  }
+
+  @variant max-md {
+    .tack-article {
+      font-size: 16.5px;
+    }
+    .tack-article h1 {
+      font-size: 28px;
+      line-height: 34px;
+    }
+    .tack-sheet .tack-source:has(> h1) {
+      --tack-cite-height: 34px;
+    }
+    .tack-sheet::before {
+      left: calc(var(--tack-gutter) - 10px);
+    }
+    .tack-block-tools {
+      right: calc(100% + 13px);
+    }
+    .tack-block-tools button {
+      min-width: 26px;
+      padding: 0 2px;
+      font-size: 10px;
+    }
+    .tack-block-tools .tack-cite-section {
+      display: none;
+    }
+    .tack-source:is([data-preview="true"], [data-copied="true"])::after {
+      left: -8px;
+      width: 4px;
+    }
+  }
+}
+
+/*
+ * Rspress declares these unlayered, and unlayered rules beat every layer, so the overrides stay
+ * unlayered too.
+ */
+:root {
+  --shiki-background: var(--tack-plate);
+  --shiki-foreground: var(--tack-text);
+  --shiki-token-comment: var(--tack-faint);
+  --shiki-token-keyword: var(--tack-pen);
+  --shiki-token-constant: #8a4b14;
+  --shiki-token-string: #3d6b2f;
+  --shiki-token-string-expression: #3d6b2f;
+  --shiki-token-function: #6a3d9a;
+  --shiki-token-parameter: var(--tack-text);
+  --shiki-token-punctuation: var(--tack-muted);
+  --shiki-token-link: var(--tack-pen);
+}
+html.dark {
+  --shiki-token-constant: #e6b37c;
+  --shiki-token-string: #a6cf8f;
+  --shiki-token-string-expression: #a6cf8f;
+  --shiki-token-function: #d1b3ff;
+}
+body {
+  background: var(--tack-paper);
+}
+.tack-article pre .line {
+  padding: 0;
+}

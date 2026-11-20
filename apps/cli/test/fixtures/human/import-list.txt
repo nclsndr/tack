@@ -1,0 +1,28 @@
+tack import · 3 imported skills · ✓ success
+
+team-notes:pdf  skills/pdf
+    github:anthropics/skills · tracking the default branch · 1a2c79d4e6c4 ·
+    imported 2026-11-11 · unchanged
+
+team-notes:docx  skills/docx
+    github:anthropics/skills · tracking main · 1a2c79d4e6c4 · imported
+    2026-11-11 · locally changed (3 files)
+      SKILL.md changed
+      notes.md added
+      scripts/old.py removed
+
+acme:web  vendor/skills/web
+    github:anthropics/skills · pinned to commit 1a2c79d4e6c4 · imported
+    2026-11-11 · folder missing
+    ! vendor/skills/web is gone. Move it back, or run `tack import remove
+      acme:web --apply` to drop the record.
+    ! vendor/skills/web is not in the catalog.
+
+Problems (2)
+  ! acme: /home/me/acme/.tack-import-staging holds an interrupted import write.
+    The next `tack import add --into acme --apply` finishes or rolls it back.
+  ! bare: The imports section of /home/me/bare/tack.yaml (line 12): flow style
+    is not supported.
+
+Next
+  tack import remove acme:web --apply

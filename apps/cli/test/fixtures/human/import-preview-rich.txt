@@ -1,0 +1,52 @@
+tack import add · preview · ✓ success
+
+  Location   github:anthropics/skills · tracking main
+  Revision   1a2c79d4e6c4 (resolved now)
+  Ref split  main · explicit form github:anthropics/skills/skills#main
+  Into       team-notes:vendor/skills/anthropic ·
+             ~/notes/vendor/skills/anthropic
+
+Skills found (3)
+  ✓  creator  skills/creator
+      Scaffold skills and their templates for coding agents
+      12 files, 82 KB, 2 executable, 1 not text, 1 symlink not imported, 1
+      submodule not imported
+      nested SKILL.md in templates/example: content of this skill, not a
+      separate one
+      upstream metadata.tack: activation default · user activation default
+      (reaches the user namespace) · projects demo · 1 dependency
+  ✓  pdf      skills/pdf
+      Read, merge and fill in PDF files
+      12 files, 82 KB
+  ✗  x-deck   skills/x-deck
+      name must use lowercase letters, digits and single hyphens
+      (skill-frontmatter-schema-invalid)
+  2 internal skills hidden; name one with --skill to import it.
+
+Will write
+  vendor/skills/anthropic/          new group folder
+  vendor/skills/anthropic/creator/  7 files, 5.1 MB (upstream
+                                    skills/creator-kit)
+  vendor/skills/anthropic/pdf/      12 files, 800 B
+  tack.yaml                         imports: 2 records added (rest of the file
+                                    unchanged)
+
+Delivery at the next sync
+  On by default, like every skill in team-notes.
+  creator
+    Projects      atlas, demo, tack · 3 of 4 registered projects
+    Not           blog · pick exclude
+    User          yes · selected by default
+    Clashes       project demo: acme:creator has the same name, so sync delivers
+                  neither
+    Dependencies  acme:helper not declared in depends-on of team-notes, which
+                  blocks the skill
+
+  pdf
+    Projects  none registered
+    User      no · user activation is opt-in
+    Clashes   none
+
+Next
+  tack import add github:anthropics/skills --skill creator --skill pdf --into \
+    team-notes:vendor/skills/anthropic --apply

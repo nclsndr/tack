@@ -1,0 +1,9 @@
+tack import remove · ✗ invalid-configuration
+
+Problems
+  ✗ No imported skill matches "nope". Nothing has been imported; `tack import`
+    lists imported skills.
+    error import-not-found
+
+Next
+  tack import

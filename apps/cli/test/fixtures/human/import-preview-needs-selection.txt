@@ -1,0 +1,27 @@
+tack import add · preview · ✓ success
+
+  Location  github:anthropics/skills · tracking the default branch
+  Revision  1a2c79d4e6c4 (resolved now)
+
+Skills found (3)
+  ·  docx    skills/docx
+      Create and edit Word documents
+      9 files, 60 KB, 1 executable
+  ·  pdf     skills/pdf
+      Read, merge and fill in PDF files
+      12 files, 82 KB
+  ✗  x-deck  skills/x-deck
+      name must use lowercase letters, digits and single hyphens
+      (skill-frontmatter-schema-invalid)
+
+  Nothing is selected. Choose with --skill NAME (repeatable) or --all.
+
+Into
+  --apply needs --into SOURCE[:FOLDER], the source that receives the skills.
+  team-notes  team-notes:skills
+  acme        acme:skills, acme:vendor/skills
+  bare        declares no skills folder: add skills: [{ path: skills }] to its
+              tack.yaml
+
+Next
+  tack import add github:anthropics/skills --skill docx --into team-notes

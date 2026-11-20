@@ -1,0 +1,133 @@
+{
+  "format": 1,
+  "data": {
+    "enabledAdapters": [],
+    "sources": [],
+    "projects": [],
+    "userChoices": [],
+    "links": [
+      {
+        "destinationPath": "/work/alpha/.agents/skills/adapter-disable",
+        "sourceDirectoryPath": "/sources/a/skills/adapter-disable",
+        "resource": {
+          "kind": "skill",
+          "name": "adapter-disable",
+          "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/work/alpha",
+          "projectName": "alpha"
+        },
+        "delivery": {
+          "_tag": "agent",
+          "adapter": "codex"
+        },
+        "removal": {
+          "cause": "adapter-disable"
+        },
+        "pendingOnly": true
+      },
+      {
+        "destinationPath": "/work/alpha/.agents/skills/clean",
+        "sourceDirectoryPath": "/sources/a/skills/clean",
+        "resource": {
+          "kind": "skill",
+          "name": "clean",
+          "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/work/alpha",
+          "projectName": "alpha"
+        },
+        "delivery": {
+          "_tag": "agent",
+          "adapter": "codex"
+        },
+        "removal": {
+          "cause": "clean"
+        },
+        "pendingOnly": true
+      },
+      {
+        "destinationPath": "/work/alpha/.agents/skills/project-removal",
+        "sourceDirectoryPath": "/sources/a/skills/project-removal",
+        "resource": {
+          "kind": "skill",
+          "name": "project-removal",
+          "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/work/alpha",
+          "projectName": "alpha"
+        },
+        "delivery": {
+          "_tag": "agent",
+          "adapter": "codex"
+        },
+        "removal": {
+          "cause": "project-removal",
+          "lastResult": {
+            "_tag": "interrupted",
+            "message": "Stopped."
+          }
+        },
+        "pendingOnly": true
+      },
+      {
+        "destinationPath": "/work/alpha/.agents/skills/reset",
+        "sourceDirectoryPath": "/sources/a/skills/reset",
+        "resource": {
+          "kind": "skill",
+          "name": "reset",
+          "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/work/alpha",
+          "projectName": "alpha"
+        },
+        "delivery": {
+          "_tag": "agent",
+          "adapter": "codex"
+        },
+        "removal": {
+          "cause": "reset",
+          "lastResult": {
+            "_tag": "filesystem-failure",
+            "message": "EACCES"
+          }
+        },
+        "pendingOnly": true
+      },
+      {
+        "destinationPath": "/work/alpha/.agents/skills/root-removal",
+        "sourceDirectoryPath": "/sources/a/skills/root-removal",
+        "resource": {
+          "kind": "skill",
+          "name": "root-removal",
+          "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/work/alpha",
+          "projectName": "alpha"
+        },
+        "delivery": {
+          "_tag": "agent",
+          "adapter": "codex"
+        },
+        "removal": {
+          "cause": "root-removal",
+          "lastResult": {
+            "_tag": "blocked",
+            "message": "Retained."
+          }
+        },
+        "pendingOnly": true
+      }
+    ]
+  }
+}

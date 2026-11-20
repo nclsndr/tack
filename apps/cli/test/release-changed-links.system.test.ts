@@ -1,0 +1,135 @@
+import { managedLinksOf } from "../src/domain/links/link-record-schema.ts";
+import { expect, it } from "@effect/vitest";
+import { Effect, FileSystem, Path, Schema } from "effect";
+import { ChildProcessSpawner } from "effect/unstable/process";
+import { readState } from "../src/services/state-store.ts";
+import { ReconciliationPlanSchema } from "../src/domain/reconciliation/reconciliation-schema.ts";
+import { ReconciliationApplyResultSchema } from "../src/domain/reconciliation/reconciliation-application-schema.ts";
+import { SyncApplicationSchema, SyncPlanSchema } from "../src/domain/reconciliation/sync-schema.ts";
+import { StatusPayloadSchema } from "../src/domain/status/status-schema.ts";
+import {
+  runTack,
+  successfulEnvelope,
+  withTackWorld,
+  type TackWorld,
+} from "./fixtures/tack-world.ts";
+import { LiveTestLayer } from "./support/live-test-layer.ts";
+import { tackProcess } from "./support/tack-process.ts";
+
+const resourcePlan = (payload: unknown) => {
+  const combined = Schema.decodeUnknownSync(SyncPlanSchema)(payload);
+  if (combined.resources === null) throw new Error("Expected a resource plan.");
+  return Schema.decodeUnknownSync(ReconciliationPlanSchema)(combined.resources);
+};
+
+const resourceApplication = (payload: unknown) => {
+  const combined = Schema.decodeUnknownSync(SyncApplicationSchema)(payload);
+  if (combined.resources === null) throw new Error("Expected a resource application.");
+  return Schema.decodeUnknownSync(ReconciliationApplyResultSchema)(combined.resources);
+};
+
+/** Runs Tack's text view, as an operator reads it, against the fixture's isolated state. */
+const runTackText = (fixture: TackWorld, arguments_: ReadonlyArray<string>) =>
+  tackProcess(arguments_, {
+    cwd: fixture.primaryRoot,
+    env: { NO_COLOR: "1" },
+    home: fixture.homeDirectory,
+    state: fixture.stateDirectory,
+  });
+
+it.layer(LiveTestLayer)("releasing links changed outside Tack", (releaseIt) => {
+  releaseIt.effect(
+    "forgets the records of a skill moved into the repository and keeps its three links",
+    () =>
+      withTackWorld((fixture) =>
+        Effect.gen(function* () {
+          const fileSystem = yield* FileSystem.FileSystem;
+          const path = yield* Path.Path;
+          const project = ["--project", "workspace"];
+          const links = [".claude", ".agents", ".cursor"].map((directory) =>
+            path.join(fixture.primaryRoot, directory, "skills", "valid"),
+          );
+          const moved = path.join(fixture.primaryRoot, ".ai", "skills", "valid");
+          const validRecords = Effect.map(readState(fixture.options), (state) =>
+            managedLinksOf(state.data.links).filter(
+              (evidence) =>
+                evidence.address.name === "valid" && evidence.target._tag === "project-root",
+            ),
+          );
+
+          successfulEnvelope(yield* runTack(fixture, ["adapter", "enable", "claude", "codex"]));
+          successfulEnvelope(yield* runTack(fixture, ["adapter", "enable", "cursor"]));
+          successfulEnvelope(yield* runTack(fixture, ["sync", ...project, "--apply"]));
+          expect(yield* validRecords).toHaveLength(3);
+
+          // The operator moves the skill into the repository and points every agent link at it.
+          yield* fileSystem.makeDirectory(moved, { recursive: true });
+          yield* fileSystem.writeFileString(
+            path.join(moved, "SKILL.md"),
+            "---\nname: valid\ndescription: Valid skill\n---\n",
+          );
+          for (const link of links) {
+            yield* fileSystem.remove(link);
+            yield* fileSystem.symlink("../../.ai/skills/valid", link);
+          }
+          successfulEnvelope(yield* runTack(fixture, ["pick", "exclude", "valid", ...project]));
+
+          const preview = successfulEnvelope(yield* runTack(fixture, ["sync", ...project]));
+          const planned = resourcePlan(preview.plan).units.filter(
+            (unit) => unit.actions.length > 0 || unit.conflicts.length > 0,
+          );
+          expect(
+            planned.map((unit) => [unit.adapter, unit.actions, unit.conflicts, unit.summary]),
+          ).toEqual(
+            ["claude", "codex", "cursor"].map((adapter, index) => [
+              adapter,
+              [
+                expect.objectContaining({
+                  _tag: "evidence-retire",
+                  destinationPath: links[index],
+                  reason: "released",
+                }),
+              ],
+              [],
+              expect.objectContaining({ conflict: 0, release: 1, remove: 0, retire: 0 }),
+            ]),
+          );
+          expect(yield* validRecords).toHaveLength(3);
+
+          const text = yield* runTackText(fixture, ["sync", ...project]);
+          expect(text.exitCode).toBe(ChildProcessSpawner.ExitCode(0));
+          const flat = text.stdout.replaceAll(/\s+/g, " ");
+          expect(flat.match(/changed outside Tack, no longer managed/g)).toHaveLength(3);
+          for (const directory of [".claude", ".agents", ".cursor"])
+            expect(flat).toContain(
+              `release ${directory}/skills/valid skill valid · changed outside Tack, no longer managed`,
+            );
+
+          const applied = successfulEnvelope(
+            yield* runTack(fixture, ["sync", ...project, "--apply"]),
+          );
+          expect(
+            resourceApplication(applied.applied)
+              .units.flatMap((unit) => unit.actions)
+              .map((outcome) => [outcome._tag, outcome.action._tag]),
+          ).toEqual(links.map(() => ["applied", "evidence-retire"]));
+          expect(yield* validRecords).toEqual([]);
+          for (const link of links) {
+            expect(yield* fileSystem.readLink(link)).toBe("../../.ai/skills/valid");
+            expect(yield* fileSystem.realPath(link)).toBe(moved);
+          }
+
+          const second = successfulEnvelope(yield* runTack(fixture, ["sync", ...project]));
+          expect(
+            resourcePlan(second.plan).units.flatMap((unit) => [...unit.actions, ...unit.conflicts]),
+          ).toEqual([]);
+          const status = successfulEnvelope(yield* runTack(fixture, ["status", ...project]));
+          expect(
+            Schema.decodeUnknownSync(StatusPayloadSchema)(status.result).destinations.filter(
+              (destination) => links.includes(destination.destinationPath),
+            ),
+          ).toEqual([]);
+        }),
+      ),
+  );
+});

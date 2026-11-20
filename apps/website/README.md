@@ -1,0 +1,51 @@
+# @tackup/website
+
+The Tack landing page and public docs, in one [Rspress](https://rspress.rs) 2.1 site. It is a
+private workspace package: nothing here is published or deployed yet.
+
+```sh
+bun run website:dev     # local dev server
+bun run website:build   # static site in apps/website/dist
+```
+
+## Layout
+
+| Path                       | Content                                                                       |
+| -------------------------- | ----------------------------------------------------------------------------- |
+| `docs/index.tsx`           | The landing page, a custom TSX route without the docs chrome                  |
+| `docs/docs/*.mdx`          | The docs pages                                                                |
+| `docs/public/`             | Static files: illustrations, favicon and the Cloudflare Pages `_headers` file |
+| `components/landing/`      | Landing sections, copy (`content.ts`) and the mark                            |
+| `components/audience.tsx`  | `<Agent>` and `<Human>`                                                       |
+| `components/terminal.tsx`  | `<Terminal>`, a command and its output in a terminal frame                    |
+| `styles/tokens.css`        | Brand tokens: the only file to change for a new palette, type or corners      |
+| `functions/_middleware.ts` | The Cloudflare Pages Function for `Accept: text/markdown`                     |
+
+## Writing docs for people and agents
+
+Every build writes `llms.txt`, `llms-full.txt` and a Markdown twin beside each HTML page, such as
+`docs/getting-started.md` beside `docs/getting-started.html`.
+
+- `<Human>` content appears only in the HTML page.
+- `<Agent>` content appears only in the Markdown twin and the `llms` files.
+- `<Terminal commands={[...]} output="...">` draws a terminal window in HTML and a `text` fence in
+  Markdown. Keep multi-line output with leading spaces in an `export const` at the top of the MDX
+  file: MDX strips indentation inside JSX attribute expressions.
+
+## Illustrations
+
+Only optimised web assets are committed: AVIF and WebP at 768, 1280 and 1916 px for the hero, and
+640 and 1024 px for the feature horses. The source PNGs stay outside the repository, and no
+illustration has baked-in text. The one screenshot, `docs-reader` at 640 and 1280 px, is the real
+docs reader serving the Atlas example (`bun run reader:example`).
+
+## Hosting on Cloudflare Pages
+
+The build is a static site ready for Cloudflare Pages. It is not deployed, and no Cloudflare project
+exists yet. When one is created, use `bun install --frozen-lockfile && bun run build` as the build command, `apps/website`
+as the root directory and `dist` as the output directory, so Pages also picks up `functions/`.
+
+- `docs/public/_headers` serves `.md` files as `text/markdown` and sets `Vary: Accept`.
+- `functions/_middleware.ts` answers a request whose `Accept` header names `text/markdown` with the
+  page's Markdown twin, so `curl -H 'Accept: text/markdown' https://<site>/docs/getting-started`
+  returns Markdown while browsers keep getting HTML.

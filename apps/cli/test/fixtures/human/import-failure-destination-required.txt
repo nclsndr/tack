@@ -1,0 +1,9 @@
+tack import add · ✗ invalid-configuration
+
+Problems
+  ✗ --apply needs --into SOURCE[:FOLDER], the source that receives the skills.
+    Run `tack source` to list registered sources.
+    error import-destination-required
+
+Next
+  tack source

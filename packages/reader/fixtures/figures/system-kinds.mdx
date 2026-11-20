@@ -1,0 +1,48 @@
+---
+title: A System with every kind of node and link
+type: reference
+status: draft
+---
+
+# A System with every kind of node and link
+
+Every node kind has its shape, and every link kind its line: a call is solid, a task queue dashed, a reply dotted. The lens strikes what is down.
+
+<System
+  id="release-publish"
+  title="A tag reaches npm only through the publish queue, so a failed upload never loses the tarball"
+  rule={{ title: "Links follow the data", text: "A link points the way the code, the job or the file moves." }}
+  startWith={["ci"]}
+  groups={[{ id: "github", label: "GitHub Actions" }]}
+  nodes={[
+    { id: "maintainer", label: "maintainer", kind: "actor" },
+    { id: "ci", label: "ci runner", kind: "service", detail: "ubuntu-latest", group: "github" },
+    { id: "cache", label: "build cache", kind: "store", lines: ["node_modules", "bun install cache"], group: "github" },
+    { id: "tarball", label: "tack-0.1.0.tgz", kind: "artifact", detail: "bun pm pack" },
+    { id: "jobs", label: "publish queue", kind: "queue", detail: "one job per tag", group: "github" },
+    { id: "publisher", label: "publisher", kind: "service", group: "github" },
+    { id: "registry", label: "npm registry", kind: "external" },
+  ]}
+  links={[
+    { id: "push", from: "maintainer", to: "ci", label: "pushes a tag" },
+    { id: "restore", from: "ci", to: "cache", label: "restore" },
+    { id: "deps", from: "cache", to: "ci", label: "node_modules", kind: "reply" },
+    { id: "pack", from: "ci", to: "tarball", label: "packs" },
+    { id: "enqueue", from: "ci", to: "jobs", label: "publish job", kind: "async" },
+    { id: "dequeue", from: "jobs", to: "publisher", label: "next job", kind: "async" },
+    { id: "upload", from: "tarball", to: "publisher", label: "uploads" },
+    { id: "publish", from: "publisher", to: "registry", label: "npm publish" },
+  ]}
+  replays={[
+    { label: "A release", steps: [
+      { at: ["maintainer", "push", "ci"], note: "A pushed tag starts the runner." },
+      { at: ["restore", "cache", "deps"], note: "Dependencies come from the cache." },
+      { at: ["pack", "tarball"], note: "The tarball is packed once and kept." },
+      { at: ["enqueue", "jobs", "dequeue", "publisher"], note: "The publish job waits in the queue." },
+      { at: ["upload", "publish", "registry"], note: "The publisher uploads the tarball to npm." },
+    ] },
+  ]}
+  lenses={[
+    { label: "npm down", note: "The job fails and stays in the queue; the tarball is kept for the retry.", focus: ["tarball", "jobs", "publisher"], broken: ["registry", "publish"] },
+  ]}
+/>

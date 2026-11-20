@@ -1,0 +1,897 @@
+/*
+ * Figures: the frame, the kit's drawing parts, the grounds and the tints. Plain CSS on the reader's
+ * tokens. The look choices (card fill, box radius and stroke, ground per kind) are set in
+ * `look.ts`, which writes them on each figure as `data-card`, `data-ground` and custom properties.
+ * Blue stays the viewer's hand (focus, pin, replay); red stays for warnings. Tints use neither.
+ */
+
+/* ------------------------------------------------------------------ frame */
+.tack-figure {
+  --tint-0: #b8892b; /* amber */
+  --tint-1: #2f8f83; /* teal */
+  --tint-2: #8d62a6; /* purple */
+  --tint-3: #6e8f3c; /* olive */
+  --tint-4: #b06a48; /* rust */
+  --tint-5: #7d8590; /* grey */
+  counter-increment: tack-figure;
+  margin: 28px 0;
+  color: var(--tack-text);
+  font: 14px/1.5 var(--tack-font-ui);
+}
+.tack-figure[data-card="filled"] {
+  padding: 4px 16px 12px;
+  border: 1px solid var(--tack-rule-strong);
+  border-radius: var(--figure-box-radius);
+  background: var(--tack-sheet);
+}
+.tack-figure .tack-figure-caption {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 4px;
+  color: var(--tack-ink);
+  font: 600 16px/1.375 var(--tack-font-ui);
+  text-wrap: balance;
+}
+.tack-figure .tack-figure-caption::before {
+  content: "Fig. " counter(tack-figure);
+  flex-shrink: 0;
+  color: var(--tack-print);
+  font: 500 12px/1 var(--tack-font-mono);
+  letter-spacing: 0.025em;
+}
+.tack-figure .tack-figure-summary {
+  margin: 0 0 10px;
+  max-width: none;
+  color: var(--tack-muted);
+  font: 14px/1.5 var(--tack-font-ui);
+}
+.tack-figure-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin: 10px 0 8px;
+}
+.tack-figure-controls:empty {
+  display: none;
+}
+.tack-figure-cases,
+.tack-figure-steps,
+.tack-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.tack-chips {
+  margin: 6px 0 12px;
+}
+.tack-figure-count {
+  margin-right: 2px;
+  color: var(--tack-muted);
+  font: 500 12px/1 var(--tack-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.tack-figure-expand {
+  margin-left: auto;
+}
+.tack-figure .tack-figure-key {
+  margin: 0;
+  color: var(--tack-faint);
+  font: 600 11px/1.4 var(--tack-font-ui);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.tack-figure .tack-chip {
+  min-height: 0;
+  padding: 3px 10px;
+  border: 1px solid var(--tack-rule-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--tack-text);
+  font: 500 12.5px/1.35 var(--tack-font-ui);
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+.tack-figure .tack-chip small {
+  margin-left: 6px;
+  color: var(--tack-faint);
+  font: 11px var(--tack-font-mono);
+}
+.tack-figure .tack-chip:hover:not(:disabled) {
+  border-color: var(--tack-muted);
+  background: transparent;
+  color: var(--tack-ink);
+}
+.tack-figure .tack-chip[aria-pressed="true"] {
+  border-color: var(--tack-pen);
+  background: var(--tack-pen-wash);
+  color: var(--tack-pen);
+}
+.tack-figure .tack-chip:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.tack-figure :is(.tack-chip, button):focus-visible,
+.tack-figure-overlay:focus-visible {
+  outline: 2px solid var(--tack-pen);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------ grounds */
+.tack-figure-ground {
+  overflow-x: auto;
+  border: 1px solid var(--tack-rule);
+  border-radius: var(--figure-box-radius);
+}
+.tack-figure[data-ground="quad-ruled"] .tack-figure-ground,
+.tack-ground-quad-ruled {
+  background-color: var(--tack-paper);
+  background-image:
+    linear-gradient(var(--tack-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--tack-grid) 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-position: -1px -1px;
+}
+.tack-figure[data-ground="ruled-lines"] .tack-figure-ground,
+.tack-ground-ruled-lines {
+  background-color: var(--tack-paper);
+  background-image: linear-gradient(
+    transparent calc(var(--figure-ruled-pitch, 24px) - 1px),
+    var(--tack-grid) calc(var(--figure-ruled-pitch, 24px) - 1px)
+  );
+  background-size: 100% var(--figure-ruled-pitch, 24px);
+}
+.tack-figure[data-ground="dot-grid"] .tack-figure-ground,
+.tack-ground-dot-grid {
+  background-color: var(--tack-paper);
+  background-image: radial-gradient(var(--tack-rule-strong) 1px, transparent 1.2px);
+  background-size: 16px 16px;
+}
+.tack-figure[data-ground="none"] .tack-figure-ground {
+  background: transparent;
+}
+/* A figure without a drawing (steps, quantities): its body is ruled, never filled. */
+.tack-figure-body {
+  border: 1px solid var(--tack-rule);
+  border-radius: var(--figure-box-radius);
+}
+
+/* ------------------------------------------------------------------ panel, legend, issues */
+.tack-figure-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0 24px;
+  margin-top: 12px;
+}
+.tack-figure-panel > section {
+  min-width: 0;
+}
+.tack-figure-panel h4 {
+  margin-bottom: 6px;
+}
+.tack-figure .tack-figure-panel p {
+  margin: 0 0 10px;
+  max-width: none;
+  color: var(--tack-text);
+  font: 13.5px/1.5 var(--tack-font-ui);
+}
+.tack-figure .tack-figure-panel strong {
+  color: var(--tack-ink);
+  font-weight: 600;
+}
+.tack-figure .tack-figure-panel .tack-figure-who {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+.tack-figure .tack-figure-panel code {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--tack-muted);
+  font: 11.5px var(--tack-font-mono);
+}
+.tack-figure .tack-figure-panel .tack-figure-hint {
+  color: var(--tack-muted);
+}
+.tack-figure .tack-figure-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 8px 0 0;
+  padding: 8px 0 0;
+  border-top: 1px solid var(--tack-rule);
+  list-style: none;
+  color: var(--tack-muted);
+  font: 12px/1.4 var(--tack-font-ui);
+}
+.tack-figure .tack-figure-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+.tack-legend-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--edge);
+  border-radius: 2px;
+  background: var(--fill);
+}
+.tack-legend-swatch[data-blocked] {
+  --fill: repeating-linear-gradient(45deg, var(--tack-muted) 0 1px, transparent 1px 4px);
+  --edge: var(--tack-muted);
+}
+.tack-figure-issues {
+  margin-top: 10px;
+  padding: 8px 14px 9px 12px;
+  border-left: 3px solid var(--tack-red);
+  background: var(--tack-red-wash);
+  font-size: 12.5px;
+}
+.tack-figure-issues strong {
+  color: var(--tack-red);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.tack-figure .tack-figure-issues ul {
+  margin: 3px 0 0;
+  padding-left: 1.3em;
+  list-style: square;
+  color: var(--tack-text);
+  font: 12px/1.5 var(--tack-font-mono);
+}
+.tack-figure .tack-figure-issues li {
+  margin: 0;
+}
+
+/* ------------------------------------------------------------------ Expand overlay */
+.tack-figure-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow: auto;
+  padding: 20px 28px 28px;
+  background: var(--tack-sheet);
+}
+.tack-figure-overlay-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+.tack-figure-overlay-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+  align-items: start;
+}
+.tack-figure-overlay-body .tack-figure-panel {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin: 0;
+}
+
+/* ------------------------------------------------------------------ kit: tints */
+.tack-figure [data-tint="0"] {
+  --tint: var(--tint-0);
+}
+.tack-figure [data-tint="1"] {
+  --tint: var(--tint-1);
+}
+.tack-figure [data-tint="2"] {
+  --tint: var(--tint-2);
+}
+.tack-figure [data-tint="3"] {
+  --tint: var(--tint-3);
+}
+.tack-figure [data-tint="4"] {
+  --tint: var(--tint-4);
+}
+.tack-figure [data-tint="5"] {
+  --tint: var(--tint-5);
+}
+.tack-figure [data-tint] {
+  /* Quiet in both appearances: the tint at 15% over the sheet, its edge mixed with muted ink. */
+  --fill: color-mix(in oklab, var(--tint) 15%, var(--tack-sheet));
+  --edge: color-mix(in oklab, var(--tint) 62%, var(--tack-muted));
+}
+/* Tints for raw SVG in an authored figure: `tack-tint-N` picks one, `tack-tint-fill` and
+   `tack-tint-edge` paint with it. */
+.tack-figure .tack-tint-1 {
+  --tint: var(--tint-0);
+}
+.tack-figure .tack-tint-2 {
+  --tint: var(--tint-1);
+}
+.tack-figure .tack-tint-3 {
+  --tint: var(--tint-2);
+}
+.tack-figure .tack-tint-4 {
+  --tint: var(--tint-3);
+}
+.tack-figure .tack-tint-5 {
+  --tint: var(--tint-4);
+}
+.tack-figure .tack-tint-6 {
+  --tint: var(--tint-5);
+}
+.tack-figure
+  :is(.tack-tint-1, .tack-tint-2, .tack-tint-3, .tack-tint-4, .tack-tint-5, .tack-tint-6) {
+  --fill: color-mix(in oklab, var(--tint) 15%, var(--tack-sheet));
+  --edge: color-mix(in oklab, var(--tint) 62%, var(--tack-muted));
+}
+.tack-tint-fill {
+  fill: var(--fill);
+}
+.tack-tint-edge {
+  stroke: var(--edge);
+}
+/* A dark sheet swallows a 15% tint; the same hue needs a little more to stay distinct. */
+.dark .tack-figure [data-tint] {
+  --fill: color-mix(in oklab, var(--tint) 24%, var(--tack-sheet));
+  --edge: color-mix(in oklab, var(--tint) 72%, var(--tack-muted));
+}
+
+/* ------------------------------------------------------------------ kit: the map */
+.tack-map {
+  display: block;
+  width: 100%;
+  min-width: 100%;
+  height: auto;
+  user-select: none;
+}
+.tack-figure-overlay .tack-map {
+  max-width: none;
+}
+.tack-map-rule {
+  stroke: var(--tack-rule-strong);
+  stroke-dasharray: 2 4;
+}
+.tack-map-wall line {
+  stroke: var(--tack-rule-strong);
+  stroke-dasharray: 2 4;
+}
+.tack-map-wall[data-barrier] line {
+  stroke: var(--tack-muted);
+  stroke-width: 2;
+  stroke-dasharray: none;
+}
+.tack-map-wall text {
+  fill: var(--tack-muted);
+  stroke: var(--tack-paper);
+  stroke-width: 5px;
+  stroke-linejoin: round;
+  paint-order: stroke;
+  font: 500 11px var(--tack-font-ui);
+}
+.tack-map-swatch {
+  fill: var(--fill);
+  stroke: var(--edge);
+}
+.tack-map-label,
+.tack-map-tier .tack-map-label {
+  fill: var(--tack-ink);
+}
+.tack-map-tier .tack-map-label {
+  font: 600 11px var(--tack-font-ui);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.tack-map-path {
+  fill: var(--tack-muted);
+  font: 11px var(--tack-font-mono);
+}
+.tack-map-note {
+  fill: var(--tack-faint);
+  font: 11px var(--tack-font-ui);
+}
+.tack-map-uses {
+  fill: var(--tack-faint);
+  font: italic 11px var(--tack-font-ui);
+}
+.tack-map-box {
+  outline: none;
+  cursor: pointer;
+  transition: opacity 200ms ease;
+}
+.tack-map-shape {
+  fill: var(--fill);
+  stroke: var(--edge);
+  stroke-width: var(--figure-box-stroke);
+  transition:
+    fill 200ms ease,
+    stroke 200ms ease,
+    stroke-width 200ms ease;
+}
+.tack-map-box .tack-map-label {
+  font: 600 12.5px var(--tack-font-ui);
+  pointer-events: none;
+}
+.tack-map-detail {
+  fill: var(--tack-muted);
+  font: 11px var(--tack-font-mono);
+  pointer-events: none;
+}
+.tack-map-hatch {
+  stroke: var(--tack-muted);
+  stroke-width: 1.2;
+}
+.tack-map-blocked {
+  pointer-events: none;
+}
+/* The keyboard focus ring: a second outline 3 px outside the box, visible on every ground. */
+.tack-map-ring {
+  fill: none;
+  stroke: var(--tack-pen);
+  stroke-width: 2;
+  opacity: 0;
+}
+.tack-map-box:focus-visible .tack-map-ring {
+  opacity: 1;
+}
+.tack-map-box[data-ink="near"] .tack-map-shape,
+.tack-map-box[data-ink="visited"] .tack-map-shape {
+  stroke: color-mix(in oklab, var(--edge) 55%, var(--tack-ink));
+  stroke-width: calc(var(--figure-box-stroke) + 0.5px);
+}
+.tack-map-box[data-ink="focus"] .tack-map-shape {
+  fill: var(--tack-pen-wash);
+  stroke: var(--tack-pen);
+  stroke-width: calc(var(--figure-box-stroke) + 0.5px);
+}
+.tack-map-box[data-pinned] .tack-map-shape {
+  stroke-width: calc(var(--figure-box-stroke) + 1px);
+}
+.tack-map-box[data-ink="far"] {
+  opacity: 0.62;
+}
+.tack-map-box[data-ink="dim"] {
+  opacity: 0.35;
+}
+.tack-map-box[data-ink="off"] {
+  opacity: 0.18;
+}
+
+/* ------------------------------------------------------------------ kit: links, labels, badges */
+.tack-map-link {
+  fill: none;
+  stroke: var(--tack-pen);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+  animation: tack-figure-in 200ms ease-out both;
+}
+.tack-map-link[data-kind="in"] {
+  stroke-dasharray: 5 4;
+}
+.tack-map-link[data-kind="onward"] {
+  stroke: var(--tack-muted);
+  opacity: 0.7;
+}
+.tack-map-link[data-kind="bundle"] {
+  stroke-width: 3;
+}
+.tack-map-link[data-warning],
+.tack-map-link[data-kind="warning"] {
+  stroke: var(--tack-red);
+}
+/* `pathLength="1"` makes one dash the whole curve, so the offset draws it once, start to end. */
+.tack-map-link[data-kind="step"] {
+  stroke-dasharray: 1;
+  opacity: 0.6;
+  animation: tack-figure-draw 480ms cubic-bezier(0.3, 0.7, 0.2, 1) both;
+}
+.tack-legend-mark .tack-map-link[data-kind="step"] {
+  stroke-dasharray: none;
+  animation: none;
+}
+.tack-map-link[data-kind="step"][data-last] {
+  opacity: 1;
+}
+.tack-map-marks {
+  pointer-events: none;
+}
+/* Halos: the stroke paints first, in the ground colour, so text stays clear of the lines. */
+.tack-map-link-label {
+  fill: var(--tack-pen);
+  stroke: var(--tack-paper);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+  paint-order: stroke;
+  font: 500 11px var(--tack-font-mono);
+  animation: tack-figure-in 200ms ease-out both;
+}
+.tack-map-badge {
+  animation: tack-figure-in 200ms ease-out both;
+}
+.tack-map-badge circle {
+  fill: var(--tack-pen);
+  stroke: var(--tack-paper);
+  stroke-width: 3px;
+  paint-order: stroke;
+}
+.tack-map-badge text {
+  fill: var(--tack-sheet);
+  font: 700 11px var(--tack-font-mono);
+}
+@keyframes tack-figure-in {
+  from {
+    opacity: 0;
+  }
+}
+/* The arrowhead waits for the line. */
+@keyframes tack-figure-draw {
+  from {
+    stroke-dashoffset: 1;
+    marker-end: none;
+  }
+  80% {
+    marker-end: none;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ------------------------------------------------------------------ kit: shapes and states */
+.tack-map-rim {
+  fill: none;
+  stroke: var(--edge, var(--tack-muted));
+  stroke-width: var(--figure-box-stroke);
+}
+.tack-map-box[data-shape="external"] .tack-map-shape {
+  stroke-dasharray: 4 3;
+}
+.tack-map-box:not([data-tint]) .tack-map-shape {
+  fill: var(--tack-sheet);
+  stroke: var(--tack-rule-strong);
+}
+.tack-map-box[data-ink="broken"] .tack-map-shape {
+  stroke: var(--tack-red);
+}
+.tack-map-strike {
+  stroke: var(--tack-red);
+  stroke-width: 1.5;
+}
+.tack-map-box[data-ink="broken"] .tack-map-label {
+  fill: var(--tack-red);
+}
+.tack-legend-swatch[data-broken] {
+  --fill: transparent;
+  --edge: var(--tack-red);
+  background: linear-gradient(var(--tack-red), var(--tack-red)) center / 100% 1.5px no-repeat;
+}
+.tack-legend-swatch[data-shape] {
+  --fill: var(--tack-sheet);
+  --edge: var(--tack-muted);
+}
+.tack-legend-swatch[data-shape="external"] {
+  border-style: dashed;
+}
+.tack-legend-swatch[data-shape="actor"] {
+  border-radius: 999px;
+}
+
+/* ------------------------------------------------------------------ kit: authored figures */
+.tack-kit-band rect {
+  fill: color-mix(in oklab, var(--fill, var(--tack-sheet)) 55%, transparent);
+  stroke: var(--edge, var(--tack-rule-strong));
+  stroke-dasharray: 3 3;
+}
+.tack-kit-band text {
+  fill: var(--tack-muted);
+  stroke: var(--tack-paper);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+  paint-order: stroke;
+  font: 600 11px var(--tack-font-ui);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.tack-kit-note line {
+  stroke: var(--tack-muted);
+  stroke-dasharray: 1 3;
+  stroke-linecap: round;
+}
+.tack-kit-note text,
+.tack-kit-label[data-size="small"] {
+  fill: var(--tack-muted);
+  font: 11px var(--tack-font-ui);
+}
+.tack-kit-label {
+  fill: var(--tack-ink);
+  font: 600 12.5px var(--tack-font-ui);
+}
+.tack-kit-raw {
+  transition: opacity 200ms ease;
+}
+.tack-kit-raw[data-dim] {
+  opacity: 0.35;
+}
+.tack-map-link[data-kind="rest"] {
+  stroke: var(--tack-muted);
+  animation: none;
+}
+.tack-map-link[data-kind="fade"] {
+  stroke: var(--tack-muted);
+  opacity: 0.18;
+  animation: none;
+}
+.tack-map-link[data-style="dashed"] {
+  stroke-dasharray: 5 4;
+}
+.tack-map-link[data-style="muted"] {
+  stroke-dasharray: 1.5 3.5;
+}
+.tack-map-link-label[data-kind="rest"] {
+  fill: var(--tack-muted);
+}
+
+/* ------------------------------------------------------------------ System */
+/* A System is laid out at its own size and centred; one that does not fit keeps its size and the
+   ground scrolls, so its text is never scaled below 11 px. */
+.tack-system-drawing[data-overflow] {
+  width: auto;
+  min-width: 0;
+  max-width: none;
+}
+/* Style means kind: a solid link stays solid when focus inks it as "used by". */
+.tack-system .tack-map-link[data-style="solid"] {
+  stroke-dasharray: none;
+}
+.tack-system .tack-map-link[data-kind="rest"] {
+  stroke: color-mix(in oklab, var(--tack-muted) 70%, var(--tack-ink));
+}
+.tack-system .tack-map-link-label[data-kind="rest"] {
+  fill: var(--tack-text);
+}
+.tack-map-link[data-kind="trace"] {
+  opacity: 0.55;
+  animation: none;
+}
+.tack-map-link[data-kind="trace"][data-last] {
+  opacity: 1;
+  stroke-width: 2;
+}
+.tack-map-link[data-kind="broken"] {
+  stroke: var(--tack-red);
+  animation: none;
+}
+.tack-map-link-label[data-kind="broken"] {
+  fill: var(--tack-red);
+}
+.tack-map-line {
+  fill: var(--tack-text);
+}
+.tack-system-group text {
+  font-size: 11px;
+}
+.tack-figure .tack-figure-pending {
+  margin: 0;
+  padding: 56px 16px;
+  color: var(--tack-muted);
+  font: 13px/1.4 var(--tack-font-ui);
+  text-align: center;
+}
+.tack-legend-mark.tack-map-box {
+  cursor: default;
+  vertical-align: -3px;
+}
+.tack-figure .tack-figure-panel .tack-figure-who code + code {
+  margin-left: 4px;
+}
+/* ------------------------------------------------------------------ Schema */
+.tack-schema-drawing[data-overflow] {
+  width: auto;
+  min-width: 0;
+  max-width: none;
+}
+.tack-schema .tack-map-link[data-style="solid"] {
+  stroke-dasharray: none;
+}
+.tack-schema .tack-map-link[data-kind="rest"] {
+  stroke: color-mix(in oklab, var(--tack-muted) 70%, var(--tack-ink));
+}
+.tack-schema .tack-map-link-label[data-kind="rest"] {
+  fill: var(--tack-text);
+}
+.tack-schema-marks {
+  stroke-dasharray: none;
+  stroke-linecap: round;
+}
+.tack-schema-card .tack-schema-name {
+  font: 600 12.5px var(--tack-font-ui);
+}
+.tack-schema-rule {
+  stroke: var(--edge, var(--tack-rule-strong));
+  stroke-width: 1;
+}
+.tack-schema-column {
+  fill: var(--tack-ink);
+  font: 11px var(--tack-font-mono);
+  pointer-events: none;
+}
+.tack-schema-type {
+  fill: var(--tack-muted);
+  font: 11px var(--tack-font-mono);
+  pointer-events: none;
+}
+.tack-schema-note,
+.tack-schema-group-note {
+  fill: var(--tack-muted);
+  font: 11px var(--tack-font-ui);
+  pointer-events: none;
+}
+.tack-schema-group .tack-schema-group-note {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+.tack-schema-key {
+  fill: var(--tack-muted);
+  font: 700 11px var(--tack-font-mono);
+  letter-spacing: 0.02em;
+  pointer-events: none;
+}
+.tack-schema-key[data-key="pk"] {
+  fill: var(--tack-ink);
+}
+.tack-schema-row-wash {
+  fill: transparent;
+  transition: fill 150ms ease;
+}
+.tack-schema-row[data-lit] .tack-schema-row-wash {
+  fill: var(--tack-pen-wash);
+}
+.tack-schema-row[data-lit] .tack-schema-column {
+  fill: var(--tack-pen);
+  font-weight: 700;
+}
+.tack-schema-stamp-mark rect {
+  fill: var(--tack-pen-wash);
+  stroke: var(--tack-pen);
+}
+.tack-schema-stamp {
+  fill: var(--tack-pen);
+  font: 700 11px var(--tack-font-mono);
+}
+/* An entity card is lighter: the sheet, a quiet edge, no type column. */
+.tack-schema-drawing[data-entities] .tack-map-shape {
+  fill: var(--tack-sheet);
+}
+.tack-legend-tag {
+  display: inline-block;
+  padding: 0 3px;
+  border: 1px solid var(--tack-rule-strong);
+  border-radius: 2px;
+  color: var(--tack-text);
+  font: 700 11px/1.3 var(--tack-font-mono);
+}
+
+/* ------------------------------------------------------------------ kit: the tree */
+.tack-tree-guides line {
+  stroke: var(--tack-rule-strong);
+}
+.tack-tree-row {
+  outline: none;
+  cursor: pointer;
+  transition: opacity 200ms ease;
+}
+.tack-tree-row[aria-hidden="true"] {
+  cursor: default;
+}
+.tack-tree-hit {
+  fill: transparent;
+  transition: fill 150ms ease;
+}
+.tack-tree-row:hover .tack-tree-hit {
+  fill: var(--tack-hover);
+}
+.tack-tree-row[aria-hidden="true"] .tack-tree-hit {
+  fill: transparent;
+}
+.tack-tree-row:focus-visible .tack-map-ring {
+  opacity: 1;
+}
+.tack-tree-name {
+  fill: var(--tack-ink);
+  font: 12.5px var(--tack-font-mono);
+}
+.tack-tree-row[data-directory] .tack-tree-name {
+  font-weight: 600;
+}
+.tack-tree-target {
+  fill: var(--tack-muted);
+  font-weight: 400;
+}
+.tack-tree-note {
+  fill: var(--tack-muted);
+  font: 11px var(--tack-font-ui);
+}
+.tack-tree-size {
+  fill: var(--tack-text);
+  font: 11px var(--tack-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.tack-tree-bar {
+  fill: var(--tack-muted);
+  opacity: 0.55;
+}
+.tack-tree-mark {
+  fill: none;
+  stroke: var(--tack-ink);
+  stroke-width: 1;
+}
+.tack-tree-row[data-temp] .tack-tree-mark {
+  stroke: var(--tack-muted);
+  stroke-dasharray: 3 2;
+}
+.tack-tree-row[data-temp="sometimes"] .tack-tree-name,
+.tack-tree-row[data-temp="absent"] .tack-tree-name {
+  fill: var(--tack-muted);
+  font-style: italic;
+}
+.tack-tree-row[data-temp="present"] .tack-tree-mark {
+  stroke: var(--tack-ink);
+  stroke-dasharray: none;
+}
+.tack-tree-row[data-temp="absent"] {
+  opacity: 0.55;
+}
+.tack-tree-stamp {
+  fill: var(--tack-muted);
+  font: 600 11px var(--tack-font-ui);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.tack-tree-row[data-ink="focus"] .tack-tree-hit {
+  fill: var(--tack-pen-wash);
+}
+.tack-tree-row[data-ink="focus"] .tack-tree-name {
+  fill: var(--tack-pen);
+}
+.tack-tree-row[data-ink="near"] .tack-tree-hit {
+  fill: color-mix(in oklab, var(--tack-pen-wash) 50%, transparent);
+}
+.tack-tree-row[data-ink="far"] {
+  opacity: 0.62;
+}
+.tack-tree-row[data-ink="dim"] {
+  opacity: 0.35;
+}
+.tack-tree-row[data-pinned] .tack-tree-name {
+  text-decoration: underline;
+  text-decoration-color: var(--tack-pen);
+}
+.tack-tree .tack-map-link {
+  animation: none;
+}
+
+@media (max-width: 720px) {
+  .tack-figure-panel,
+  .tack-figure-overlay-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tack-figure *,
+  .tack-figure *::before,
+  .tack-figure *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

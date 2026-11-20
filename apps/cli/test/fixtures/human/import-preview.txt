@@ -1,0 +1,31 @@
+tack import add · preview · ✓ success
+
+  Location  github:anthropics/skills · tracking the default branch
+  Revision  1a2c79d4e6c4 (resolved now)
+  Into      team-notes:skills · ~/notes/skills
+
+Skills found (3)
+  ·  docx    skills/docx
+      Create and edit Word documents
+      9 files, 60 KB, 1 executable
+  ✓  pdf     skills/pdf
+      Read, merge and fill in PDF files
+      12 files, 82 KB
+  ✗  x-deck  skills/x-deck
+      name must use lowercase letters, digits and single hyphens
+      (skill-frontmatter-schema-invalid)
+
+Will write
+  skills/pdf/  12 files, 82 KB
+  tack.yaml    imports: 1 record added (rest of the file unchanged)
+
+Delivery at the next sync
+  On by default, like every skill in team-notes.
+  Projects  atlas, demo, tack · 3 of 4 registered projects
+  Not       blog · pick exclude
+  User      no · user activation is opt-in
+  Clashes   none
+
+Next
+  tack import add github:anthropics/skills --skill pdf --into \
+    team-notes:skills --apply

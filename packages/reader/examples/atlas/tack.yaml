@@ -1,0 +1,13 @@
+# A fake source for the reader's example docs set. Nothing here is a real project.
+version: 1
+docs:
+  - name: specs
+    path: docs
+    reader:
+      navigation:
+        preset: folders
+        archive: [docs/archive]
+      components:
+        module: docs/reader-components.tsx
+  - name: handbook
+    path: handbook

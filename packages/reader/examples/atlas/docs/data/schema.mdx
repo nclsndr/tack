@@ -1,0 +1,66 @@
+---
+title: Tables and roles in the Atlas database
+type: reference
+status: accepted
+tags: [data]
+---
+
+# Tables and roles in the Atlas database
+
+Five tables in two schemas. The API may write files and versions; only the worker may mark a version uploaded.
+
+<Schema
+  id="atlas-schema"
+  title="Every version chains back to one file, and only the worker writes uploads"
+  rule={{
+    title: "A line ends on the column it references",
+    text: "A crow's foot marks the many end of a foreign key.",
+  }}
+  startWith={["public.versions"]}
+  groups={[
+    { id: "public", label: "public", note: "synced data" },
+    { id: "auth", label: "auth", note: "accounts" },
+  ]}
+  tables={[
+    {
+      name: "public.files",
+      columns: [
+        { name: "id", type: "uuid", key: "pk" },
+        { name: "path", type: "text", key: "unique" },
+        { name: "owner_id", type: "uuid", ref: "auth.users.id" },
+      ],
+    },
+    {
+      name: "public.versions",
+      columns: [
+        { name: "id", type: "bigserial", key: "pk" },
+        { name: "file_id", type: "uuid", ref: "public.files.id", note: "on delete cascade" },
+        { name: "digest", type: "text", note: "sha-256" },
+        { name: "uploaded_at", type: "timestamptz", nullable: true, note: "set by the worker" },
+      ],
+    },
+    {
+      name: "public.jobs",
+      columns: [
+        { name: "id", type: "bigserial", key: "pk" },
+        { name: "version_id", type: "bigint", ref: "public.versions.id" },
+        { name: "attempt", type: "smallint" },
+      ],
+    },
+    {
+      name: "auth.users",
+      columns: [
+        { name: "id", type: "uuid", key: "pk" },
+        { name: "email", type: "text", key: "unique" },
+      ],
+    },
+    {
+      name: "auth.sessions",
+      columns: [
+        { name: "id", type: "text", key: "pk" },
+        { name: "user_id", type: "uuid", ref: "auth.users.id" },
+        { name: "expires_at", type: "timestamptz" },
+      ],
+    },
+  ]}
+/>

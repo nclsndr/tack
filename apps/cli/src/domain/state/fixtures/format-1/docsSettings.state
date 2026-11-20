@@ -1,0 +1,61 @@
+{
+  "format": 1,
+  "data": {
+    "enabledAdapters": [],
+    "sources": [],
+    "projects": [
+      {
+        "name": "alpha",
+        "gitCommonDirectory": "/work/alpha/.git",
+        "roots": [
+          "/work/alpha",
+          "/work/alpha-wt"
+        ],
+        "removingRoots": [
+          "/work/alpha-old"
+        ],
+        "docs": {
+          "attachments": [
+            {
+              "sourceRegistrationId": "7d3f1c2a-9b4e-4f6a-8c1d-2e5b6a7c8d9e",
+              "name": "guide"
+            },
+            {
+              "sourceRegistrationId": "7d3f1c2a-9b4e-4f6a-8c1d-2e5b6a7c8d9e",
+              "name": "handbook",
+              "writingDefault": true
+            }
+          ],
+          "destination": "manual/docs"
+        }
+      },
+      {
+        "name": "omega",
+        "gitCommonDirectory": "/work/omega/.git",
+        "roots": [],
+        "removingRoots": [
+          "/work/omega"
+        ],
+        "removalIntent": "project",
+        "docs": {
+          "attachments": [
+            {
+              "sourceRegistrationId": "7d3f1c2a-9b4e-4f6a-8c1d-2e5b6a7c8d9e",
+              "name": "handbook"
+            }
+          ]
+        }
+      },
+      {
+        "name": "zeta",
+        "gitCommonDirectory": "/work/zeta/.git",
+        "roots": [],
+        "removingRoots": [
+          "/work/zeta"
+        ]
+      }
+    ],
+    "userChoices": [],
+    "links": []
+  }
+}

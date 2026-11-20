@@ -1,0 +1,45 @@
+---
+title: Tack's core terms as a domain model
+type: explanation
+status: draft
+---
+
+# Tack's core terms as a domain model
+
+The terms of `CONTEXT.md` that decide what an agent ends up with, as entities and the verbs between them. Point at an entity to see what it relates to.
+
+<Schema
+  id="tack-domain"
+  title="A resource reaches an agent only through a declaration, a selection and a managed link"
+  summary="A source contributes nothing it does not declare; a namespace's choices resolve into a selection; a managed link puts what is selected into a root."
+  rule={{ title: "Read the verbs along the lines", text: "A crow's foot marks the many end of a relation; a bar marks the one end." }}
+  startWith={["Resource", "Selection"]}
+  tables={[
+    { name: "Source", columns: [{ name: "label" }, { name: "maintainers" }] },
+    { name: "Resource declaration", columns: [{ name: "kind" }, { name: "declared path" }, { name: "patterns" }] },
+    { name: "Resource", note: "identity: registration, kind, name", columns: [{ name: "kind" }, { name: "name" }] },
+    { name: "Project", columns: [{ name: "name", key: "unique" }] },
+    { name: "Root", columns: [{ name: "worktree path" }] },
+    { name: "Namespace", columns: [{ name: "project or user" }] },
+    { name: "Choice", columns: [{ name: "include or exclude" }] },
+    { name: "Selection", columns: [{ name: "dependency closure" }] },
+    { name: "Managed link", columns: [{ name: "destination" }, { name: "ownership evidence" }] },
+  ]}
+  links={[
+    { from: "Source", to: "Resource declaration", label: "declares", cardinality: "one-to-many" },
+    { from: "Resource declaration", to: "Resource", label: "covers", cardinality: "one-to-many" },
+    { from: "Project", to: "Namespace", label: "is a", cardinality: "one-to-one" },
+    { from: "Project", to: "Root", label: "registers", cardinality: "one-to-many" },
+    { from: "Namespace", to: "Choice", label: "records", cardinality: "one-to-many" },
+    { from: "Choice", to: "Resource", label: "names", cardinality: "many-to-one" },
+    { from: "Namespace", to: "Selection", label: "resolves to", cardinality: "one-to-one" },
+    { from: "Selection", to: "Resource", label: "holds", cardinality: "many-to-many" },
+    { from: "Managed link", to: "Resource", label: "points at", cardinality: "many-to-one" },
+    { from: "Managed link", to: "Root", label: "sits in", cardinality: "many-to-one" },
+  ]}
+  lenses={[
+    { label: "What the operator owns", note: "Projects, roots and choices are the operator's; sources and their declarations belong to their authors.", focus: ["Project", "Root", "Namespace", "Choice"] },
+  ]}
+/>
+
+A source's authors decide what exists. The operator decides what is chosen, and Tack derives the selection and the links from those choices.

@@ -1,0 +1,284 @@
+import { Schema } from "effect";
+import { describe, expect, it } from "vitest";
+import { HelpPayloadSchema } from "../../commands/index.ts";
+import { renderCheck } from "./check.ts";
+import { renderDoctor } from "./doctor.ts";
+import { renderHelp } from "./help.ts";
+import { envelopeOf, flat, hintRecorder, humanFixture, plainStyle } from "./human.test-support.ts";
+import { listViews } from "./inspection-lists.ts";
+import { mutationViews } from "./mutation-views.ts";
+import { diagnosticLines } from "./view.ts";
+import { docsIconsView } from "./run-icons.ts";
+import { period } from "./run-text.ts";
+import { withReferences } from "./style.ts";
+import { renderSync } from "./sync.ts";
+import { displayWidth, truncate } from "./text.ts";
+
+const sourceId = "00000000-0000-4000-8000-000000000001";
+
+describe("check view", () => {
+  it("declines a result it cannot decode", () => {
+    expect(
+      renderCheck(envelopeOf({ command: "check", result: { kind: "other" } }), plainStyle),
+    ).toBe(undefined);
+  });
+});
+
+describe("doctor view", () => {
+  const report = (
+    checks: ReadonlyArray<{ readonly outcome: string } & Record<string, unknown>>,
+  ) => {
+    const count = (outcome: string) => checks.filter((check) => check.outcome === outcome).length;
+    return {
+      kind: "doctor-report",
+      release: { stamp: "0.2.0+gaaaaaaa", sourceRun: false },
+      stateDirectory: "/home/me/.tack",
+      summary: {
+        ok: count("ok"),
+        warning: count("warning"),
+        failed: count("failed"),
+        skipped: count("skipped"),
+        total: checks.length,
+      },
+      checks,
+    };
+  };
+
+  it("says no problems were found and counts what was skipped", () => {
+    const text = renderDoctor(
+      envelopeOf({
+        command: "doctor",
+        result: report([
+          { id: "release", outcome: "ok", message: "The release is active." },
+          { id: "state", outcome: "skipped", message: "No state yet." },
+        ]),
+      }),
+      plainStyle,
+    );
+    expect(text?.split("\n")[0]).toBe(
+      "tack doctor · 0.2.0+gaaaaaaa · 1 ok · 1 skipped · ✓ success",
+    );
+    expect(text).toContain("\nNo problems found.\n");
+    expect(text).toContain("Checked");
+  });
+
+  it("lists a warning without a command and no checked section when every check needs a look", () => {
+    const { hints, style } = hintRecorder();
+    const text = renderDoctor(
+      envelopeOf({
+        command: "doctor",
+        result: report([{ id: "links", outcome: "warning", message: "A link drifted." }]),
+      }),
+      style,
+    );
+    expect(text?.split("\n")[0]).toBe(
+      "tack doctor · 0.2.0+gaaaaaaa · 1 warning · 0 ok · ✓ success",
+    );
+    expect(text).toContain("Problems");
+    expect(text).not.toContain("Checked");
+    expect(hints).toEqual([]);
+  });
+
+  it("declines a result it cannot decode", () => {
+    expect(
+      renderDoctor(envelopeOf({ command: "doctor", result: { kind: "other" } }), plainStyle),
+    ).toBe(undefined);
+  });
+});
+
+describe("diagnostic lines", () => {
+  it("names a subject by its unresolved address, its destinations, or nothing", () => {
+    const lines = diagnosticLines(
+      [
+        {
+          code: "dependency-missing",
+          message: "A dependency is missing.",
+          severity: "error",
+          details: { subject: { address: { kind: "skill", name: "helper" } } },
+        },
+        {
+          code: "destination-drift",
+          message: "One link drifted.",
+          severity: "warning",
+          details: { subject: { destinationPaths: ["/home/me/a"] } },
+        },
+        {
+          code: "destination-drift",
+          message: "Links drifted.",
+          severity: "warning",
+          details: { subject: { destinationPaths: ["/home/me/a", "/home/me/b", "/home/me/c"] } },
+        },
+        {
+          code: "pending-removals-outside-scope",
+          message: "Other projects still owe removals.",
+          severity: "info",
+        },
+      ],
+      plainStyle,
+    );
+    expect(lines).toEqual([
+      "Problems",
+      "  ✗ A dependency is missing.",
+      "    error dependency-missing · skill helper",
+      "  ! One link drifted.",
+      "    warning destination-drift · ~/a",
+      "  ! Links drifted.",
+      "    warning destination-drift · ~/a and 2 more",
+      "  Other projects still owe removals.",
+    ]);
+  });
+});
+
+describe("help view", () => {
+  it("marks required flags, lists flag choices, optional variadic arguments and example notes", () => {
+    const result = Schema.decodeUnknownSync(HelpPayloadSchema)(
+      humanFixture("help-choice-set").result,
+    );
+    const text = renderHelp(
+      envelopeOf({
+        command: "help",
+        result: {
+          ...result,
+          flags: [
+            {
+              name: "mode",
+              required: true,
+              type: "choice",
+              choices: ["fast", "slow"],
+              description: "How",
+            },
+          ],
+          arguments: [{ name: "names", required: false, type: "string", variadic: true }],
+          examples: [
+            { command: "tack pick include review --user", description: "Include it for you." },
+          ],
+        },
+      }),
+      plainStyle,
+    );
+    expect(flat(text)).toContain("--mode <fast|slow> (required) How");
+    expect(flat(text)).toContain("<names>... (optional)");
+    expect(flat(text)).toContain("tack pick include review --user Include it for you.");
+  });
+});
+
+describe("docs icons view", () => {
+  it("shows a failure without a payload", () => {
+    const failure = docsIconsView(
+      envelopeOf({
+        command: "docs icons",
+        classification: "invalid-invocation",
+        diagnostics: [{ code: "docs-icons-query", message: "Name one icon.", severity: "error" }],
+      }),
+      plainStyle,
+    );
+    expect(failure).toContain("Name one icon.");
+  });
+});
+
+describe("docs icons lookup", () => {
+  it("lists an icon that was never renamed by its name alone", () => {
+    const text = docsIconsView(
+      envelopeOf({
+        command: "docs icons",
+        result: {
+          kind: "docs-icons",
+          lucideVersion: "0.500.0",
+          count: 1,
+          categories: [{ category: "Objects and places", icons: [{ name: "house" }] }],
+        },
+      }),
+      plainStyle,
+    );
+    expect(text).toContain("Objects and places\n  house\n");
+  });
+});
+
+describe("run text", () => {
+  it("shows a period whose ends are not ISO timestamps as given, and repeats a changed date", () => {
+    expect(period("yesterday", "today")).toBe("yesterday → today");
+    expect(period("2026-11-07T23:59:00Z", "2026-11-08T00:01:00Z")).toBe(
+      "2026-11-07 23:59:00 → 2026-11-08 00:01:00 UTC",
+    );
+  });
+});
+
+describe("text truncation", () => {
+  it("keeps only an ellipsis in one column and nothing in none", () => {
+    expect(truncate("review", 1)).toBe("…");
+    expect(truncate("review", 0)).toBe("");
+  });
+});
+
+describe("display width", () => {
+  it("gives control characters and lone format marks no columns", () => {
+    expect(displayWidth("\u0007")).toBe(0);
+    expect(displayWidth("a\u200bb")).toBe(2);
+  });
+});
+
+describe("adapter list view", () => {
+  it("lists no disabled adapters when all are on", () => {
+    const view = listViews["adapter"];
+    if (view === undefined) throw new Error("No adapter view.");
+    const { hints, style } = hintRecorder();
+    const text = view(
+      envelopeOf({
+        command: "adapter",
+        result: { kind: "adapters", enabledAdapters: ["claude", "codex", "cursor"] },
+      }),
+      style,
+    );
+    expect(flat(text)).toContain("Enabled claude, codex, cursor");
+    expect(text).not.toContain("Not enabled");
+    expect(hints).toEqual(["tack status"]);
+  });
+});
+
+describe("mutation failure hints", () => {
+  it("offers no command when a failure's details cannot be read", () => {
+    const view = mutationViews["adapter enable"];
+    if (view === undefined) throw new Error("No adapter enable view.");
+    const { hints, style } = hintRecorder();
+    const text = view(
+      envelopeOf({
+        command: "adapter enable",
+        classification: "domain",
+        diagnostics: [
+          {
+            code: "project-registration-conflict",
+            message: "The project is registered elsewhere.",
+            severity: "error",
+            details: { unexpected: true },
+          },
+        ],
+      }),
+      style,
+    );
+    expect(text).toContain("The project is registered elsewhere.");
+    expect(hints).toEqual([]);
+  });
+});
+
+describe("references", () => {
+  it("names a source by the label the given catalog holds", () => {
+    const style = withReferences(plainStyle, {
+      entries: [],
+      sources: [
+        { registration: { id: sourceId }, label: "personal-brain", labelOrigin: "declared" },
+      ],
+    });
+    expect(style.source(sourceId)).toBe("personal-brain");
+  });
+});
+
+describe("sync view", () => {
+  it("says no docs mounts are attached when a docs-only sync has nothing to plan", () => {
+    expect(
+      renderSync(
+        envelopeOf({ command: "sync", plan: { kind: "sync-plan", resources: null, docs: [] } }),
+        plainStyle,
+      ),
+    ).toBe("tack sync · docs only · ✓ success\n\nNo docs mounts are attached.\n");
+  });
+});

@@ -1,0 +1,645 @@
+{
+  "applied": null,
+  "classification": "partial",
+  "command": "status",
+  "diagnostics": [
+    {
+      "code": "catalog-quarantined",
+      "details": {
+        "subject": {
+          "address": {
+            "kind": "skill",
+            "name": "broken",
+            "owner": "shared"
+          },
+          "candidateKind": "skill",
+          "candidatePath": "/fx/source/skills/broken/SKILL.md",
+          "issue": {
+            "code": "skill-frontmatter-schema-invalid",
+            "message": "Missing key\n  at [\"description\"]"
+          },
+          "sourcePath": "/fx/source",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        }
+      },
+      "message": "A catalog candidate is quarantined and cannot be selected.",
+      "severity": "warning"
+    },
+    {
+      "code": "catalog-quarantined",
+      "details": {
+        "subject": {
+          "candidateKind": "skill",
+          "candidatePath": "/fx/source/skills/日本語スキル/SKILL.md",
+          "issue": {
+            "code": "skill-frontmatter-schema-invalid",
+            "message": "Expected a string matching the RegExp ^[a-z0-9]+(?:-[a-z0-9]+)*$\n  at [\"name\"]"
+          },
+          "sourcePath": "/fx/source",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        }
+      },
+      "message": "A catalog candidate is quarantined and cannot be selected.",
+      "severity": "warning"
+    },
+    {
+      "code": "destination-expected-absent",
+      "details": {
+        "subject": {
+          "destinationPaths": [
+            "/fx/リポジトリ/.agents/skills/localized",
+            "/fx/リポジトリ/.agents/skills/planner",
+            "/fx/リポジトリ/.agents/skills/review",
+            "/fx/リポジトリ/.agents/skills/reviewer-with-a-very-long-skill-name-that-stretches-columns",
+            "/fx/リポジトリ/.agents/skills/tester",
+            "/fx/リポジトリ/.agents/skills/writer",
+            "/fx/リポジトリ/.claude/skills/localized",
+            "/fx/リポジトリ/.claude/skills/planner",
+            "/fx/リポジトリ/.claude/skills/review",
+            "/fx/リポジトリ/.claude/skills/reviewer-with-a-very-long-skill-name-that-stretches-columns",
+            "/fx/リポジトリ/.claude/skills/tester",
+            "/fx/リポジトリ/.claude/skills/writer"
+          ]
+        }
+      },
+      "message": "A desired link is not delivered.",
+      "severity": "warning"
+    }
+  ],
+  "next": ["tack sync --project demo", "tack sync --project demo --apply", "tack catalog"],
+  "plan": null,
+  "result": {
+    "catalog": {
+      "quarantined": 2,
+      "resources": 9,
+      "unavailable": 0
+    },
+    "destinations": [
+      {
+        "_tag": "expected-absent",
+        "adapter": "codex",
+        "address": {
+          "kind": "skill",
+          "name": "localized",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "destinationPath": "/fx/リポジトリ/.agents/skills/localized",
+        "observed": {
+          "_tag": "absent"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/リポジトリ",
+          "projectName": "demo"
+        },
+        "targetHealth": "healthy"
+      },
+      {
+        "_tag": "expected-absent",
+        "adapter": "codex",
+        "address": {
+          "kind": "skill",
+          "name": "planner",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "destinationPath": "/fx/リポジトリ/.agents/skills/planner",
+        "observed": {
+          "_tag": "absent"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/リポジトリ",
+          "projectName": "demo"
+        },
+        "targetHealth": "healthy"
+      },
+      {
+        "_tag": "expected-absent",
+        "adapter": "codex",
+        "address": {
+          "kind": "skill",
+          "name": "review",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "destinationPath": "/fx/リポジトリ/.agents/skills/review",
+        "observed": {
+          "_tag": "absent"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/リポジトリ",
+          "projectName": "demo"
+        },
+        "targetHealth": "healthy"
+      },
+      {
+        "_tag": "expected-absent",
+        "adapter": "codex",
+        "address": {
+          "kind": "skill",
+          "name": "reviewer-with-a-very-long-skill-name-that-stretches-columns",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "destinationPath": "/fx/リポジトリ/.agents/skills/reviewer-with-a-very-long-skill-name-that-stretches-columns",
+        "observed": {
+          "_tag": "absent"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/リポジトリ",
+          "projectName": "demo"
+        },
+        "targetHealth": "healthy"
+      },
+      {
+        "_tag": "expected-absent",
+        "adapter": "codex",
+        "address": {
+          "kind": "skill",
+          "name": "tester",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "destinationPath": "/fx/リポジトリ/.agents/skills/tester",
+        "observed": {
+          "_tag": "absent"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/リポジトリ",
+          "projectName": "demo"
+        },
+        "targetHealth": "healthy"
+      },
+      {
+        "_tag": "expected-absent",
+        "adapter": "codex",
+        "address": {
+          "kind": "skill",
+          "name": "writer",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "destinationPath": "/fx/リポジトリ/.agents/skills/writer",
+        "observed": {
+          "_tag": "absent"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/リポジトリ",
+          "projectName": "demo"
+        },
+        "targetHealth": "healthy"
+      },
+      {
+        "_tag": "expected-absent",
+        "adapter": "claude",
+        "address": {
+          "kind": "skill",
+          "name": "localized",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "destinationPath": "/fx/リポジトリ/.claude/skills/localized",
+        "observed": {
+          "_tag": "absent"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/リポジトリ",
+          "projectName": "demo"
+        },
+        "targetHealth": "healthy"
+      },
+      {
+        "_tag": "expected-absent",
+        "adapter": "claude",
+        "address": {
+          "kind": "skill",
+          "name": "planner",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "destinationPath": "/fx/リポジトリ/.claude/skills/planner",
+        "observed": {
+          "_tag": "absent"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/リポジトリ",
+          "projectName": "demo"
+        },
+        "targetHealth": "healthy"
+      },
+      {
+        "_tag": "expected-absent",
+        "adapter": "claude",
+        "address": {
+          "kind": "skill",
+          "name": "review",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "destinationPath": "/fx/リポジトリ/.claude/skills/review",
+        "observed": {
+          "_tag": "absent"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/リポジトリ",
+          "projectName": "demo"
+        },
+        "targetHealth": "healthy"
+      },
+      {
+        "_tag": "expected-absent",
+        "adapter": "claude",
+        "address": {
+          "kind": "skill",
+          "name": "reviewer-with-a-very-long-skill-name-that-stretches-columns",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "destinationPath": "/fx/リポジトリ/.claude/skills/reviewer-with-a-very-long-skill-name-that-stretches-columns",
+        "observed": {
+          "_tag": "absent"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/リポジトリ",
+          "projectName": "demo"
+        },
+        "targetHealth": "healthy"
+      },
+      {
+        "_tag": "expected-absent",
+        "adapter": "claude",
+        "address": {
+          "kind": "skill",
+          "name": "tester",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "destinationPath": "/fx/リポジトリ/.claude/skills/tester",
+        "observed": {
+          "_tag": "absent"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/リポジトリ",
+          "projectName": "demo"
+        },
+        "targetHealth": "healthy"
+      },
+      {
+        "_tag": "expected-absent",
+        "adapter": "claude",
+        "address": {
+          "kind": "skill",
+          "name": "writer",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "destinationPath": "/fx/リポジトリ/.claude/skills/writer",
+        "observed": {
+          "_tag": "absent"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/リポジトリ",
+          "projectName": "demo"
+        },
+        "targetHealth": "healthy"
+      }
+    ],
+    "enabledAdapters": ["claude", "codex"],
+    "imports": {
+      "total": 0,
+      "locallyChanged": 0,
+      "problems": []
+    },
+    "kind": "skill-status",
+    "namespaces": [
+      {
+        "choices": [
+          {
+            "address": {
+              "kind": "skill",
+              "name": "localized",
+              "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+            },
+            "decision": "include",
+            "namespace": {
+              "_tag": "project",
+              "projectName": "demo"
+            }
+          },
+          {
+            "address": {
+              "kind": "skill",
+              "name": "planner",
+              "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+            },
+            "decision": "include",
+            "namespace": {
+              "_tag": "project",
+              "projectName": "demo"
+            }
+          },
+          {
+            "address": {
+              "kind": "skill",
+              "name": "review",
+              "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+            },
+            "decision": "include",
+            "namespace": {
+              "_tag": "project",
+              "projectName": "demo"
+            }
+          },
+          {
+            "address": {
+              "kind": "skill",
+              "name": "writer",
+              "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+            },
+            "decision": "include",
+            "namespace": {
+              "_tag": "project",
+              "projectName": "demo"
+            }
+          }
+        ],
+        "desired": [
+          {
+            "kind": "command",
+            "name": "ship",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          {
+            "kind": "skill",
+            "name": "localized",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          {
+            "kind": "skill",
+            "name": "planner",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          {
+            "kind": "skill",
+            "name": "review",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          {
+            "kind": "skill",
+            "name": "reviewer-with-a-very-long-skill-name-that-stretches-columns",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          {
+            "kind": "skill",
+            "name": "tester",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          },
+          {
+            "kind": "skill",
+            "name": "writer",
+            "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+          }
+        ],
+        "undelivered": [
+          {
+            "address": {
+              "kind": "command",
+              "name": "ship",
+              "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+            },
+            "adapter": "claude",
+            "reason": "capability-unsupported"
+          },
+          {
+            "address": {
+              "kind": "command",
+              "name": "ship",
+              "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+            },
+            "adapter": "codex",
+            "reason": "capability-unsupported"
+          }
+        ],
+        "lifecycle": "active",
+        "namespace": {
+          "_tag": "project",
+          "projectName": "demo"
+        },
+        "resolution": {
+          "groups": [
+            {
+              "_tag": "selected",
+              "members": [
+                {
+                  "kind": "command",
+                  "name": "ship",
+                  "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+                }
+              ]
+            },
+            {
+              "_tag": "selected",
+              "members": [
+                {
+                  "kind": "skill",
+                  "name": "localized",
+                  "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+                }
+              ]
+            },
+            {
+              "_tag": "selected",
+              "members": [
+                {
+                  "kind": "skill",
+                  "name": "planner",
+                  "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+                }
+              ]
+            },
+            {
+              "_tag": "selected",
+              "members": [
+                {
+                  "kind": "skill",
+                  "name": "review",
+                  "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+                }
+              ]
+            },
+            {
+              "_tag": "selected",
+              "members": [
+                {
+                  "kind": "skill",
+                  "name": "reviewer-with-a-very-long-skill-name-that-stretches-columns",
+                  "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+                }
+              ]
+            },
+            {
+              "_tag": "selected",
+              "members": [
+                {
+                  "kind": "skill",
+                  "name": "tester",
+                  "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+                }
+              ]
+            },
+            {
+              "_tag": "selected",
+              "members": [
+                {
+                  "kind": "skill",
+                  "name": "writer",
+                  "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+                }
+              ]
+            }
+          ],
+          "optionalSkips": [],
+          "requestBlockers": []
+        },
+        "selection": {
+          "decisions": [
+            {
+              "_tag": "selected",
+              "address": {
+                "kind": "command",
+                "name": "ship",
+                "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+              },
+              "compatibility": "compatible",
+              "reason": "default"
+            },
+            {
+              "_tag": "selected",
+              "address": {
+                "kind": "skill",
+                "name": "localized",
+                "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+              },
+              "compatibility": "compatible",
+              "reason": "include"
+            },
+            {
+              "_tag": "selected",
+              "address": {
+                "kind": "skill",
+                "name": "planner",
+                "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+              },
+              "compatibility": "compatible",
+              "reason": "include"
+            },
+            {
+              "_tag": "selected",
+              "address": {
+                "kind": "skill",
+                "name": "review",
+                "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+              },
+              "compatibility": "compatible",
+              "reason": "include"
+            },
+            {
+              "_tag": "selected",
+              "address": {
+                "kind": "skill",
+                "name": "reviewer-with-a-very-long-skill-name-that-stretches-columns",
+                "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+              },
+              "compatibility": "compatible",
+              "reason": "default"
+            },
+            {
+              "_tag": "selected",
+              "address": {
+                "kind": "skill",
+                "name": "tester",
+                "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+              },
+              "compatibility": "compatible",
+              "reason": "default"
+            },
+            {
+              "_tag": "not-selected",
+              "address": {
+                "kind": "skill",
+                "name": "use-tack",
+                "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+              },
+              "compatibility": "compatible",
+              "reason": "opt-in"
+            },
+            {
+              "_tag": "selected",
+              "address": {
+                "kind": "skill",
+                "name": "writer",
+                "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+              },
+              "compatibility": "compatible",
+              "reason": "include"
+            }
+          ],
+          "namespace": {
+            "_tag": "project",
+            "projectName": "demo"
+          },
+          "unresolvedChoices": []
+        }
+      }
+    ],
+    "pendingRemovals": [],
+    "projects": [
+      {
+        "anchor": {
+          "path": "/fx/リポジトリ/.git",
+          "status": "healthy"
+        },
+        "lifecycle": "active",
+        "name": "demo",
+        "roots": [
+          {
+            "health": "healthy",
+            "lifecycle": "active",
+            "path": "/fx/リポジトリ"
+          }
+        ]
+      }
+    ],
+    "selection": {
+      "selector": {
+        "_tag": "project",
+        "projectName": "demo"
+      },
+      "targets": []
+    },
+    "scope": {
+      "_tag": "project",
+      "projectName": "demo"
+    },
+    "sources": [
+      {
+        "registration": {
+          "canonicalPath": "/app/apps/cli/src/builtins",
+          "id": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+        },
+        "status": "healthy"
+      },
+      {
+        "registration": {
+          "canonicalPath": "/fx/source",
+          "id": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        },
+        "status": "healthy"
+      }
+    ],
+    "stateDirectory": "/fx/state",
+    "version": 1
+  },
+  "status": "partial",
+  "version": 1
+}

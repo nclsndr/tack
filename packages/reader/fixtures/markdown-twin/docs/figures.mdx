@@ -1,0 +1,37 @@
+---
+title: Figures
+description: A page with a walkthrough, a system and a tree.
+---
+
+import { FileTree, System, Walkthrough } from "../../../src/visuals.tsx";
+
+# Figures
+
+Before the figures.
+
+<Walkthrough
+  id="release"
+  title="A release takes two steps"
+  steps={[
+    { title: "Tag", body: "Tag the commit." },
+    { title: "Publish", body: "Publish the package." },
+  ]}
+/>
+
+<System
+  id="capture"
+  title="The worker writes events to the store"
+  nodes={[
+    { id: "worker", label: "worker", kind: "service" },
+    { id: "store", label: "Postgres", kind: "store" },
+  ]}
+  links={[{ id: "insert", from: "worker", to: "store", label: "INSERT" }]}
+/>
+
+```tree id="layout" title="The source keeps its skills in one folder"
+skills/
+  release/
+    SKILL.md
+```
+
+After the figures.

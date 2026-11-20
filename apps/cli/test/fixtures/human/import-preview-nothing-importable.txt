@@ -1,0 +1,13 @@
+tack import add · preview · ✓ success
+
+  Location  github:anthropics/skills · tracking the default branch
+  Revision  1a2c79d4e6c4 (resolved now)
+  Into      team-notes:skills · ~/notes/skills
+
+Skills found (1)
+  ✗  x-deck  skills/x-deck
+      name must use lowercase letters, digits and single hyphens
+      (skill-frontmatter-schema-invalid)
+
+  Nothing in this location can be imported. Scope it to a folder, or search
+  deeper with --full-depth.

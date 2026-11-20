@@ -1,0 +1,141 @@
+{
+  "applied": null,
+  "classification": "success",
+  "command": "help",
+  "diagnostics": [],
+  "next": [],
+  "plan": null,
+  "result": {
+    "arguments": [],
+    "commandPath": [],
+    "description": "Manage source-owned resources, including skills, commands, context, docs, and scripts. Register sources, select resources for coding agents, attach docs to projects, and run declared scripts. Human output is the default; pass --json for the version 1 machine envelope. Append --help to any command path for its flags and examples.",
+    "examples": [],
+    "executable": false,
+    "flags": [
+      {
+        "description": "Print the version 1 JSON envelope; only status, sync, doctor, upgrade and version have a stable payload",
+        "name": "json",
+        "required": false,
+        "type": "boolean"
+      },
+      {
+        "description": "Override the Tack state directory",
+        "name": "state-dir",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "description": "Print the running Tack version; combines only with --json and --state-dir",
+        "name": "version",
+        "required": false,
+        "type": "boolean"
+      }
+    ],
+    "kind": "help",
+    "subcommands": [
+      {
+        "description": "Check the health of this machine's Tack: the release, state, built-in skill delivery, adapters, sources, projects, managed links and attached docs. Read-only, machine-wide, works before init and never fetches; each problem names the exact next command, and any failed check exits 1",
+        "executable": true,
+        "name": "doctor"
+      },
+      {
+        "description": "List a project's attached docs resources and settings; attach source-owned docs, mount them in worktrees, search and serve them, and resolve writing targets. Bare `docs`, `docs list` and `docs ls` list. The project is --project, or the registered project containing --cwd or the current directory.",
+        "executable": true,
+        "name": "docs"
+      },
+      {
+        "description": "Run trusted scripts declared by registered sources; `catalog --kind script` lists them",
+        "executable": false,
+        "name": "script"
+      },
+      {
+        "description": "Inspect and clear retained script run history",
+        "executable": false,
+        "name": "history"
+      },
+      {
+        "description": "Initialize Tack state; safe to repeat",
+        "executable": true,
+        "name": "init"
+      },
+      {
+        "description": "Inspect registered sources and their health; register and relocate them. Bare `source`, `source list` and `source ls` inspect",
+        "executable": true,
+        "name": "source"
+      },
+      {
+        "description": "Resolve the resources declared by every registered source, with the issues that kept candidates or sources out; --kind narrows it to one resource kind",
+        "executable": true,
+        "name": "catalog"
+      },
+      {
+        "description": "Browse the catalog and edit one destination in an interactive terminal; refuses unless stdin and stdout are interactive",
+        "executable": true,
+        "name": "explore"
+      },
+      {
+        "description": "Inspect every registered project, its roots and its health, whatever the current directory; register and refresh Git projects. Bare `project`, `project list` and `project ls` inspect",
+        "executable": true,
+        "name": "project"
+      },
+      {
+        "description": "Change exact include and exclude choices per project or user; `pick` lists them",
+        "executable": false,
+        "name": "choice"
+      },
+      {
+        "description": "List persisted choices in every namespace, or only in --project or --user. Bare `pick`, `pick list` and `pick ls` list; choices are still changed with `pick include` and `pick remove`",
+        "executable": true,
+        "name": "pick"
+      },
+      {
+        "description": "List the enabled coding-agent adapters, whatever the current directory; enable and disable the adapters that receive links. Bare `adapter`, `adapter list` and `adapter ls` list",
+        "executable": true,
+        "name": "adapter"
+      },
+      {
+        "description": "Preview link changes that deliver the selected resources to enabled adapters; --apply writes them. Bare selects the containing project; --all selects every project and the user target.",
+        "executable": true,
+        "name": "reconcile"
+      },
+      {
+        "description": "Preview reconciliation; the read-only alias of reconcile without --apply, with the same target rules",
+        "executable": true,
+        "name": "plan"
+      },
+      {
+        "description": "Inspect source, project, selection, destination and pending-removal health. Bare selects the containing project; --all selects every project and the user target.",
+        "executable": true,
+        "name": "status"
+      },
+      {
+        "description": "Preview removing the managed links of the selected target; --apply removes them. Bare selects the containing project; --all selects every project and the user target.",
+        "executable": true,
+        "name": "clean"
+      },
+      {
+        "description": "Preview retrying pending removals; --apply retries them. Bare selects the containing project; --all selects every project and the user target.",
+        "executable": true,
+        "name": "retry"
+      },
+      {
+        "description": "Preview removing every managed link and all Tack state; --apply deletes state only after cleanup settles",
+        "executable": true,
+        "name": "reset"
+      },
+      {
+        "description": "Update and roll back the installed Tack release, and optionally schedule the update; `upgrade status` reads it. Updating is a deterministic command with no agent or model involved",
+        "executable": false,
+        "name": "self"
+      },
+      {
+        "description": "Read the installed Tack release without fetching or writing anything. Release changes are still `upgrade`, `upgrade rollback` and `upgrade schedule`",
+        "executable": false,
+        "name": "upgrade"
+      }
+    ],
+    "usage": "tack <subcommand> [flags]"
+  },
+  "status": "success",
+  "version": 1
+}

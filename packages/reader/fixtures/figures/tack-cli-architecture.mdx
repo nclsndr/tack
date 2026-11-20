@@ -1,0 +1,96 @@
+---
+title: Tack CLI architecture map
+type: explanation
+status: draft
+tags: [architecture, cli]
+---
+
+import { links } from "./cli-imports.ts";
+
+# Tack CLI architecture map
+
+The Tack CLI lives in `apps/cli/src`, in six tiers of folders. Look at the two middle tiers first: `features` and `platform` never import each other. Then replay `tack status` to see the ports where they meet.
+
+<ArchitectureMap
+  id="cli-architecture-map"
+  title="A feature and a platform adapter never import each other: they meet at a port in services, and only bootstrap wires the two together"
+  summary="Each box is one folder of apps/cli/src: 48 folders in six tiers. Outside the platform tier, bootstrap is the only importer of an adapter."
+  rule={{
+    title: "Imports point down",
+    text: "An import points down the map or stays inside its own tier. A feature imports a port from services, a platform adapter implements that port, and bootstrap is the only place that wires the adapter to the port.",
+  }}
+  tiers={[
+    { id: "process", label: "Process", path: "main.ts → bootstrap/", note: "composition root", nodes: [
+      { id: "bootstrap", label: "bootstrap", detail: "main, application-layer", about: "bootstrap/main is where main.ts hands over. bootstrap/application-layer is the composition root: the only place that wires platform adapters to services, and the only place that imports the Bun runtime." },
+    ] },
+    { id: "cli", label: "CLI", path: "cli/", note: "argv in, envelope out", nodes: [
+      { id: "cli-commands", label: "cli/commands", detail: "argv to request", about: "Turns argv into a transport-free request. A test enforces that it never imports a platform adapter." },
+      { id: "cli-host", label: "cli/host", detail: "dispatch and output", about: "Dispatch, routes, the public JSON envelope and the human text views." },
+    ] },
+    [
+      { id: "features", label: "Features", path: "features/", note: "use cases", nodes: [
+        { id: "features-choices", label: "features/choices" }, { id: "features-docs", label: "features/docs" },
+        { id: "features-doctor", label: "features/doctor" }, { id: "features-execution", label: "features/execution" },
+        { id: "features-imports", label: "features/imports" }, { id: "features-links", label: "features/links" },
+        { id: "features-maintenance", label: "features/maintenance" }, { id: "features-projects", label: "features/projects" },
+        { id: "features-reader", label: "features/reader" }, { id: "features-reconciliation", label: "features/reconciliation" },
+        { id: "features-refresh", label: "features/refresh" }, { id: "features-removal", label: "features/removal" },
+        { id: "features-self", label: "features/self" },
+        { id: "features-snapshot", label: "features/snapshot", detail: "only reader of state", about: "The state document is read only through features/snapshot/command-snapshot.ts. A test enforces it." },
+        { id: "features-sources", label: "features/sources" },
+        { id: "features-status", label: "features/status", detail: "tack status", about: "The use case that tack status runs." },
+        { id: "features-writer", label: "features/writer" },
+      ] },
+      { id: "platform", label: "Platform", path: "platform/", note: "adapters", nodes: [
+        { id: "platform-execution", label: "platform/execution", detail: "execution-platform", about: "Adapter. Implements the port services/execution-platform." },
+        { id: "platform-filesystem", label: "platform/filesystem", detail: "destination", about: "Adapter. Implements the port services/destination." },
+        { id: "platform-git", label: "platform/git", detail: "git, import-remote", about: "Adapter. Implements the ports services/git and services/import-remote." },
+        { id: "platform-reader", label: "platform/reader", detail: "reader, reader-corpus", about: "Adapter. Implements the ports services/reader and services/reader-corpus." },
+        { id: "platform-state", label: "platform/state", detail: "state-store, lock", about: "Adapter. Implements services/state-store and services/exclusive-lock. It also imports platform/execution, the only import between two adapters." },
+      ] },
+    ],
+    { id: "services", label: "Services", path: "services/", note: "ports: tag and interface only", nodes: [
+      { id: "services-destination", label: "destination" }, { id: "services-exclusive-lock", label: "exclusive-lock" },
+      { id: "services-execution-platform", label: "execution-platform" }, { id: "services-git", label: "git" },
+      { id: "services-import-remote", label: "import-remote" },
+      { id: "services-process", label: "process", about: "Port. Only features/self imports it." },
+      { id: "services-reader", label: "reader" }, { id: "services-reader-corpus", label: "reader-corpus" },
+      { id: "services-state-store", label: "state-store", about: "Port. platform/state implements it. 16 of the 17 feature folders import it." },
+    ] },
+    { id: "domain", label: "Domain", path: "domain/", note: "pure, no I/O; imports inside domain are not drawn", nodes: [
+      { id: "domain-agents", label: "domain/agents" }, { id: "domain-choices", label: "domain/choices" },
+      { id: "domain-docs", label: "domain/docs" }, { id: "domain-doctor", label: "domain/doctor" },
+      { id: "domain-execution", label: "domain/execution" }, { id: "domain-identity", label: "domain/identity" },
+      { id: "domain-imports", label: "domain/imports" }, { id: "domain-links", label: "domain/links" },
+      { id: "domain-projects", label: "domain/projects" }, { id: "domain-reconciliation", label: "domain/reconciliation" },
+      { id: "domain-self", label: "domain/self" }, { id: "domain-sources", label: "domain/sources" },
+      { id: "domain-state", label: "domain/state" },
+      { id: "domain-status", label: "domain/status", about: "Pure. Combines the observations of tack status into a health report." },
+    ] },
+  ]}
+  barriers={[{ between: ["features", "platform"], label: "never import each other" }]}
+  links={links}
+  startWith={["bootstrap", "cli-host", "features-status", "platform-state"]}
+  replays={[
+    { id: "tack-status", label: "tack status", steps: [
+      { at: "bootstrap", note: "bootstrap/application-layer builds the live services: platform/state behind services/state-store, platform/filesystem behind services/destination." },
+      { at: "cli-commands", note: "Parses status and its flags into a request. It touches no adapter." },
+      { at: "cli-host", note: "Routes the request to the status use case." },
+      { at: "features-status", note: "Asks features/snapshot for the state." },
+      { at: "features-snapshot", note: "The only reader of the state document. It reads through the port services/state-store." },
+      { at: "services-state-store", note: "The port. The adapter wired to it at step 1 is platform/state." },
+      { at: "services-destination", note: "features/status observes the link destinations through this port; platform/filesystem answers." },
+      { at: "domain-status", note: "Pure. Combines the observations into a health report." },
+      { at: "cli-host", note: "Wraps the report in the public envelope and prints it." },
+    ] },
+    { id: "start-up", label: "Start-up wiring", steps: [
+      { at: "bootstrap", note: "The composition root. Outside the platform tier, it is the only importer of an adapter." },
+      { at: "platform-state", note: "Implements two ports: services/state-store and services/exclusive-lock." },
+      { at: "services-state-store", note: "A tag and an interface only. Features import the port, never the adapter behind it." },
+      { at: "platform-filesystem", note: "Implements one port: services/destination." },
+      { at: "services-destination", note: "During tack status, features/status observes the link destinations through this port." },
+    ] },
+  ]}
+/>
+
+The links come from `cli-imports.ts`, generated from the code by `cli-import-graph.ts` next to this page. Run the script again after a refactor, then `tack check` on this page.

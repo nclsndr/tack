@@ -1,0 +1,21 @@
+tack import add · applied · ✓ success
+
+Imported pdf, docx into team-notes github:anthropics/skills · pinned to tag
+v1.4.0 · 1a2c79d4e6c4
+  vendor/skills/anthropic/       new group folder
+  vendor/skills/anthropic/pdf/   12 files
+  vendor/skills/anthropic/docx/  1 file
+  tack.yaml                      imports: 2 records added
+
+Recovered first
+  Rolled back the interrupted import of skills/old.
+
+Skipped (1)
+  ✗ x-deck: name must use lowercase letters, digits and single hyphens
+    (skill-frontmatter-schema-invalid)
+
+  Nothing is delivered until sync; the new skills follow their source's
+  activation.
+
+Next
+  tack sync --all

@@ -1,0 +1,134 @@
+{
+  "format": 1,
+  "data": {
+    "enabledAdapters": [],
+    "sources": [],
+    "projects": [],
+    "userChoices": [],
+    "links": [
+      {
+        "destinationPath": "/home/me/.claude/skills/tone",
+        "sourceDirectoryPath": "/sources/a/skills/tone",
+        "resource": {
+          "kind": "skill",
+          "name": "tone",
+          "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+        },
+        "target": {
+          "_tag": "user",
+          "canonicalPath": "/home/me"
+        },
+        "delivery": {
+          "_tag": "agent",
+          "adapter": "claude"
+        }
+      },
+      {
+        "destinationPath": "/home/me/.cursor/commands/review.md",
+        "sourceDirectoryPath": "/sources/a/commands/review.md",
+        "resource": {
+          "kind": "command",
+          "name": "review",
+          "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+        },
+        "target": {
+          "_tag": "user",
+          "canonicalPath": "/home/me"
+        },
+        "delivery": {
+          "_tag": "agent",
+          "adapter": "cursor"
+        }
+      },
+      {
+        "destinationPath": "/work/alpha/.agents/skills/retiring",
+        "sourceDirectoryPath": "/sources/a/skills/retiring",
+        "resource": {
+          "kind": "skill",
+          "name": "retiring",
+          "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/work/alpha",
+          "projectName": "alpha"
+        },
+        "delivery": {
+          "_tag": "agent",
+          "adapter": "codex"
+        },
+        "removal": {
+          "cause": "adapter-disable",
+          "lastResult": {
+            "_tag": "blocked",
+            "message": "Keep this reason."
+          }
+        }
+      },
+      {
+        "destinationPath": "/work/alpha/.agents/skills/writing",
+        "sourceDirectoryPath": "/sources/a/skills/writing",
+        "resource": {
+          "kind": "skill",
+          "name": "writing",
+          "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/work/alpha",
+          "projectName": "alpha"
+        },
+        "delivery": {
+          "_tag": "agent",
+          "adapter": "codex"
+        }
+      },
+      {
+        "destinationPath": "/work/omega/.agents/skills/orphan",
+        "sourceDirectoryPath": "/sources/a/skills/orphan",
+        "resource": {
+          "kind": "skill",
+          "name": "orphan",
+          "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/work/omega",
+          "projectName": "omega"
+        },
+        "delivery": {
+          "_tag": "agent",
+          "adapter": "codex"
+        },
+        "removal": {
+          "cause": "project-removal",
+          "lastResult": {
+            "_tag": "interrupted",
+            "message": "Stopped."
+          }
+        },
+        "pendingOnly": true
+      },
+      {
+        "destinationPath": "C:\\Users\\ada\\.agents\\skills\\tone",
+        "sourceDirectoryPath": "/sources/a/skills/tone",
+        "resource": {
+          "kind": "skill",
+          "name": "tone",
+          "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+        },
+        "target": {
+          "_tag": "user",
+          "canonicalPath": "C:/Users/ada"
+        },
+        "delivery": {
+          "_tag": "agent",
+          "adapter": "codex"
+        },
+        "removal": {
+          "cause": "reset"
+        }
+      }
+    ]
+  }
+}

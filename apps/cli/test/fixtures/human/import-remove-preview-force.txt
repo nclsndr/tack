@@ -1,0 +1,16 @@
+tack import remove · preview · ✓ success
+
+Remove team-notes:pdf github:anthropics/skills · 1a2c79d4e6c4
+  skills/pdf/  12 files, deleted
+  tack.yaml    imports record removed (rest of the file unchanged)
+
+  Delivered nowhere now.
+
+Local changes that will be lost (3)
+  ✗ SKILL.md changed
+  ✗ notes.md added
+  ✗ scripts/old.py removed
+  Tack keeps no copy of what it deletes.
+
+Next
+  tack import remove team-notes:pdf --force --apply

@@ -1,0 +1,165 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  # No automatic run on main: each pull request already ran CI on its merge with main.
+  # Run it on main, or on any branch, on demand from the Actions tab.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static:
+    name: static
+    runs-on: ubuntu-latest
+    outputs:
+      # `false` only for a pull request that changes nothing but `evals/` and `apps/website/`.
+      gates: ${{ steps.scope.outputs.gates }}
+    steps:
+      - name: Check head branch follows conventional style
+        if: github.event_name == 'pull_request'
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          pattern='^(feat|fix|refactor|perf|test|docs|ci|build|chore|revert)/[a-z0-9._-]+$'
+          if ! printf '%s' "$HEAD_REF" | grep -Eq "$pattern"; then
+            echo "::error::Branch name '$HEAD_REF' does not match the expected pattern."
+            echo "Expected pattern: $pattern"
+            echo "Offending branch: $HEAD_REF"
+            exit 1
+          fi
+          echo "Branch name '$HEAD_REF' matches $pattern"
+      # Depth 2 fetches the merge commit's parents, so the scope step can diff it against the base.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      - name: Decide which jobs the change needs
+        id: scope
+        run: bun scripts/ci-scope.ts
+      - run: bun run format:check
+      - run: bun run lint
+      - run: bun run typecheck
+      - run: bun run deadcode
+      - run: bun run website:build
+      - run: bun run test:eval
+
+  test:
+    name: test (${{ matrix.shard }}/4)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      - run: bun run test:unit --shard=${{ matrix.shard }}/4 --coverage --reporter=default --reporter=blob --outputFile.blob=.vitest-reports/blob-${{ matrix.shard }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-blob-${{ matrix.shard }}
+          path: .vitest-reports/
+          retention-days: 1
+          include-hidden-files: true
+
+  # The release test, the runtime gates and the package gates, one after another on one runner.
+  # Each lane takes 10-45s, so a job per lane billed about 7 minutes where this job bills about 3.
+  # It waits for `static` only to read its scope, and runs even when `static` fails, so every lane
+  # still reports. It is skipped only when `static` found the change cannot reach the CLI.
+  gates:
+    name: gates
+    needs: static
+    if: ${{ !cancelled() && needs.static.outputs.gates != 'false' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: bun install --frozen-lockfile
+      - name: test (release)
+        run: bun run test:release
+      # Runs the CLI from source with no Bun on PATH under Node, and under Bun. Each lane gets its own
+      # tools directory, so the Node lane still has no Bun on PATH.
+      - name: runtime gate (node)
+        env:
+          GATE_RUNTIME: node
+        run: |
+          tools="$RUNNER_TEMP/tools-node"
+          mkdir -p "$tools"
+          ln -s "$(command -v git)" "$tools/git"
+          ln -s "$(command -v node)" "$tools/node"
+          export GATE_PATH="$tools:/usr/bin:/bin"
+          bun scripts/gate-runtime.ts node -- "$tools/node" "$PWD/apps/cli/src/main.ts"
+      - name: runtime gate (bun)
+        env:
+          GATE_RUNTIME: bun
+        run: |
+          tools="$RUNNER_TEMP/tools-bun"
+          mkdir -p "$tools"
+          ln -s "$(command -v git)" "$tools/git"
+          ln -s "$(command -v bun)" "$tools/bun"
+          export GATE_PATH="$tools:/usr/bin:/bin"
+          : > "$RUNNER_TEMP/empty-bunfig.toml"
+          bun scripts/gate-runtime.ts bun -- "$tools/bun" --no-env-file --config="$RUNNER_TEMP/empty-bunfig.toml" "$PWD/apps/cli/src/main.ts"
+      # Builds and packs the npm package, installs the tarball into a throwaway prefix, and gates it.
+      # `GATE_ROOT` is set per step: the `runner` context is not available in a job-level `env`.
+      - name: package gate (node-24)
+        env:
+          GATE_ROOT: ${{ runner.temp }}
+        run: bun scripts/gate-package.ts node "$(command -v node)"
+      - name: package gate (bun)
+        env:
+          GATE_ROOT: ${{ runner.temp }}
+        run: bun scripts/gate-package.ts bun "$(command -v bun)"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.13.0"
+      - name: package gate (node-22.13)
+        env:
+          GATE_ROOT: ${{ runner.temp }}
+        run: bun scripts/gate-package.ts node "$(command -v node)"
+
+  # Merges the shards' coverage and fails when uncovered counts exceed the budget in `vitest.config.mts`.
+  # It is also the one check that sums up the run: it waits for every other job, and fails when one
+  # failed or was cancelled. A job skipped by its `if:` counts as passed. Require this check, not the
+  # others, if a ruleset ever requires one.
+  coverage:
+    name: coverage
+    needs: [static, test, gates]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail when another job failed
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        env:
+          RESULTS: static=${{ needs.static.result }} test=${{ needs.test.result }} gates=${{ needs.gates.result }}
+        run: |
+          echo "::error::A job this run needs did not pass: $RESULTS"
+          exit 1
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-blob-*
+          path: .vitest-reports/
+          merge-multiple: true
+      - run: bun run coverage:check

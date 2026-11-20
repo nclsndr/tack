@@ -1,0 +1,14 @@
+tack import remove · applied · ✓ success
+
+Removed team-notes:pdf
+  skills/pdf/  deleted
+  tack.yaml    imports record removed
+
+Recovered first
+  Finished the interrupted removal of skills/old.
+
+  The next sync removes its links with reason source-missing; picks that name it
+  stay until `tack pick remove`.
+
+Next
+  tack sync --all

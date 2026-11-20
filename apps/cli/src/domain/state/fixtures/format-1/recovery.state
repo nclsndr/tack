@@ -1,0 +1,59 @@
+{
+  "format": 1,
+  "data": {
+    "enabledAdapters": [],
+    "sources": [],
+    "projects": [],
+    "userChoices": [],
+    "links": [
+      {
+        "destinationPath": "/work/omega/.agents/skills/orphan",
+        "sourceDirectoryPath": "/sources/a/skills/orphan",
+        "resource": {
+          "kind": "skill",
+          "name": "orphan",
+          "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/work/omega",
+          "projectName": "omega"
+        },
+        "delivery": {
+          "_tag": "agent",
+          "adapter": "codex"
+        },
+        "removal": {
+          "cause": "reset",
+          "lastResult": {
+            "_tag": "filesystem-failure",
+            "message": "EACCES"
+          }
+        },
+        "pendingOnly": true
+      }
+    ],
+    "journal": [
+      {
+        "_tag": "create",
+        "link": {
+          "destinationPath": "/work/alpha/.tack/docs/7d3f1c2a-9b4e-4f6a-8c1d-2e5b6a7c8d9e/shared/guide",
+          "sourceDirectoryPath": "/sources/b/docs/guide",
+          "resource": {
+            "kind": "docs",
+            "name": "guide",
+            "sourceRegistrationId": "7d3f1c2a-9b4e-4f6a-8c1d-2e5b6a7c8d9e"
+          },
+          "target": {
+            "_tag": "project-root",
+            "canonicalPath": "/work/alpha",
+            "projectName": "alpha"
+          },
+          "delivery": {
+            "_tag": "docs"
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+ Tack explorer  ·  editing user  ·  1 staged
+───────────────────────────────────────────────────────────────────────────────
+ Skills                             │ fixture-review
+ › fixture-review    →include sour… │ Review a fixed change.
+                                    │
+                                    │ address   shared skill fixture-review
+                                    │
+                                    │ Staged: include
+                                    │ i again: unstage · x: exclude instead
+                                    │ u: unstage
+                                    │
+                                    │
+───────────────────────────────────────────────────────────────────────────────
+ d destination  i unstage  x exclude  c review/save  / filter  q quit

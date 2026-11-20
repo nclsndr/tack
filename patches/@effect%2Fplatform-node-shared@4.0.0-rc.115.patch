@@ -1,0 +1,70 @@
+diff --git a/dist/NodeChildProcessSpawner.js b/dist/NodeChildProcessSpawner.js
+index 95d97c58cd42c5f10c445c289f792df668b1d153..b64895af5e650697090f91f847a54594261a0172 100644
+--- a/dist/NodeChildProcessSpawner.js
++++ b/dist/NodeChildProcessSpawner.js
+@@ -27,6 +27,17 @@ const toPlatformError = (method, error, command) => {
+   }, "");
+   return handleErrnoException("ChildProcess", method)(error, [commandStr]);
+ };
++/**
++ * Keeps an error listener on a child's input for as long as the stream lives. The input sink drops
++ * its own listener once the stream finishes, but Bun can still report a broken pipe while
++ * destroying it after that; the child's exit status already carries the failure.
++ * Backport of the upstream `handleInputErrors` guard (effect 4.1).
++ */
++const handleInputErrors = writable => {
++  const onError = () => {};
++  writable.on("error", onError);
++  writable.once("close", () => writable.off("error", onError));
++};
+ const processGroupGraceMillis = 1_000;
+ const processGroupPollIntervalMillis = 10;
+ /** The leader has not exited, or a member of its process group still exists. */
+@@ -214,6 +225,7 @@ const make = /*#__PURE__*/Effect.gen(function* () {
+     // sink that will attached to the process handle
+     let sink = Sink.drain;
+     if (Predicate.isNotNull(childProcess.stdin)) {
++      handleInputErrors(childProcess.stdin);
+       sink = NodeSink.fromWritable({
+         evaluate: () => childProcess.stdin,
+         onError: error => toPlatformError("fromWritable(stdin)", toError(error), command),
+diff --git a/src/NodeChildProcessSpawner.ts b/src/NodeChildProcessSpawner.ts
+index 2077379773283926b715e29d6b6431bf7ba20ff9..d016a04e1bd03ebee2d4c606a33b15ed60da4f3f 100644
+--- a/src/NodeChildProcessSpawner.ts
++++ b/src/NodeChildProcessSpawner.ts
+@@ -46,7 +46,7 @@ import {
+   ProcessId
+ } from "effect/unstable/process/ChildProcessSpawner"
+ import * as NodeChildProcess from "node:child_process"
+-import { PassThrough } from "node:stream"
++import { PassThrough, type Writable } from "node:stream"
+ import { buildSpawnOptions } from "./internal/nodeChildProcessSpawner.ts"
+ import { handleErrnoException } from "./internal/utils.ts"
+ import * as NodeSink from "./NodeSink.ts"
+@@ -73,6 +73,18 @@ const toPlatformError = (
+ type ExitCodeWithSignal = readonly [code: number | null, signal: NodeJS.Signals | null]
+ type ExitSignal = Deferred.Deferred<ExitCodeWithSignal>
+ 
++/**
++ * Keeps an error listener on a child's input for as long as the stream lives. The input sink drops
++ * its own listener once the stream finishes, but Bun can still report a broken pipe while
++ * destroying it after that; the child's exit status already carries the failure.
++ * Backport of the upstream `handleInputErrors` guard (effect 4.1).
++ */
++const handleInputErrors = (writable: Writable): void => {
++  const onError = () => {}
++  writable.on("error", onError)
++  writable.once("close", () => writable.off("error", onError))
++}
++
+ const processGroupGraceMillis = 1_000
+ const processGroupPollIntervalMillis = 10
+ 
+@@ -296,6 +308,7 @@ const make = Effect.gen(function*() {
+       // sink that will attached to the process handle
+       let sink: Sink.Sink<void, unknown, never, PlatformError.PlatformError> = Sink.drain
+       if (Predicate.isNotNull(childProcess.stdin)) {
++        handleInputErrors(childProcess.stdin)
+         sink = NodeSink.fromWritable({
+           evaluate: () => childProcess.stdin!,
+           onError: (error) => toPlatformError("fromWritable(stdin)", toError(error), command),

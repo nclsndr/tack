@@ -1,0 +1,14 @@
+ Tack explorer  ·  editing user  ·  0 staged
+───────────────────────────────────────────────────────────────────────────────
+Applied: user
+saved   include shared skill fixture-review
+skills  2 applied, 0 failed, 0 skipped
+  final result line
+
+
+
+
+
+
+───────────────────────────────────────────────────────────────────────────────
+ ↑↓ scroll  q back

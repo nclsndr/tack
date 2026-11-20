@@ -1,0 +1,630 @@
+/* The sections after the hero: the story plate and the features, on one blueprint sheet that
+   carries on from the hero's (`components/landing/drafting-sheet.tsx`). */
+
+/* The sheet: the hero's drafting grid, its columns laid from the content edge, fading in where
+   the hero's sheet fades out and toward the page's sides. */
+/* `clip`, not `hidden`: the parallax and the corner marks may reach past the page's sides, and a
+   hidden overflow would make the sheet a scroll container that the sticky frames pin to. */
+.sheet-run {
+  position: relative;
+  overflow-x: clip;
+}
+
+.sheet-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgb(92 145 173 / 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(92 145 173 / 0.1) 1px, transparent 1px),
+    linear-gradient(rgb(92 145 173 / 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(92 145 173 / 0.045) 1px, transparent 1px);
+  background-size:
+    120px 120px,
+    120px 120px,
+    24px 24px,
+    24px 24px;
+  mask-image:
+    linear-gradient(transparent, #000 360px, #000 calc(100% - 240px), transparent),
+    linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+  mask-composite: intersect;
+}
+
+.sheet-anchor {
+  height: 0;
+}
+
+.sheet-run > section {
+  position: relative;
+}
+
+/* Drafting marks: the hero window's corner marks, on any frame. */
+.drafting-mark {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  border: 0 solid rgb(226 193 160 / 0.6);
+}
+
+.drafting-mark[data-corner="top-left"] {
+  top: -14px;
+  left: -14px;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+
+.drafting-mark[data-corner="top-right"] {
+  top: -14px;
+  right: -14px;
+  border-top-width: 1px;
+  border-right-width: 1px;
+}
+
+.drafting-mark[data-corner="bottom-left"] {
+  bottom: -14px;
+  left: -14px;
+  border-bottom-width: 1px;
+  border-left-width: 1px;
+}
+
+.drafting-mark[data-corner="bottom-right"] {
+  right: -14px;
+  bottom: -14px;
+  border-right-width: 1px;
+  border-bottom-width: 1px;
+}
+
+/* A proof point: one command or fact, in monospace, on a dark slip of the sheet. */
+.proof {
+  display: inline-block;
+  max-width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--tack-border);
+  border-radius: var(--tack-radius-sm);
+  background: rgb(1 20 34 / 0.7);
+  color: var(--tack-accent);
+  font-family: var(--tack-font-mono);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.proof-prompt {
+  color: var(--tack-faint);
+}
+
+/* The horses in the sheet's blue line work. A filter, not a blend: the pinned frames are stacking
+   contexts of their own, so a blend would see no sheet behind them. */
+.story-plate > picture img,
+.agents-art img,
+.team-art img {
+  filter: grayscale(1) sepia(0.6) hue-rotate(170deg) saturate(2.2) brightness(0.85) contrast(1.2);
+}
+
+/* The story: a tall section whose sticky frame keeps the heading and the plate in view while the
+   scroll lights one part of the plate per beat. */
+
+.story-stage {
+  height: 340vh;
+}
+
+.story-sticky {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-height: 640px;
+  padding-top: clamp(32px, 6vh, 64px);
+  overflow: hidden;
+}
+
+.story-figure {
+  position: relative;
+  flex: none;
+  width: min(100%, calc((100vh - 280px) * 2.334));
+  min-width: min(100%, 720px);
+  margin: auto;
+  aspect-ratio: 1916 / 821;
+}
+
+/* The plate's edges melt into the sheet, and its dark ground lightens to the sheet's navy, so the
+   drawing reads as part of the sheet. */
+.story-plate {
+  position: absolute;
+  inset: 0;
+  background: var(--tack-bg);
+  mask-image:
+    linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent),
+    linear-gradient(transparent, #000 6%, #000 90%, transparent);
+  mask-composite: intersect;
+}
+
+.story-plate picture {
+  display: block;
+  height: 100%;
+}
+
+.story-plate img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  mix-blend-mode: lighten;
+}
+
+.story-colour {
+  position: absolute;
+  inset: 0;
+}
+
+.story-region {
+  position: absolute;
+  pointer-events: none;
+}
+
+.story-region .drafting-mark {
+  opacity: 0;
+  border-color: rgb(226 193 160 / 0.85);
+}
+
+.story-captions {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.story-caption {
+  position: absolute;
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  max-width: 32ch;
+  padding: 16px 20px 18px;
+  border: 1px solid var(--tack-border-strong);
+  border-radius: var(--tack-radius-xs);
+  background: rgb(3 27 49 / 0.92);
+  font-size: 16px;
+  line-height: 1.45;
+  opacity: 0;
+}
+
+.story-caption strong {
+  color: var(--tack-heading);
+  font-size: clamp(20px, 1.7vw, 24px);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+/* Every part stays inside the caption: the title and the proof wrap at its edge, the proof at its
+   spaces, instead of running past the frame. */
+.story-caption > * {
+  max-width: 100%;
+}
+
+.story-caption .proof {
+  margin-top: 4px;
+  font-size: 13px;
+  overflow-wrap: break-word;
+}
+
+.story-intro {
+  max-width: 36em;
+  margin-top: 12px !important;
+  color: var(--tack-text);
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.story-caption-step {
+  color: var(--tack-accent);
+  font-family: var(--tack-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+}
+
+/* Narrow screens and reduced motion: no pinned story; the beats read as a list under the plate. */
+@media (max-width: 759px), (prefers-reduced-motion: reduce) {
+  .story-stage {
+    height: auto;
+  }
+
+  .story-sticky {
+    position: static;
+    height: auto;
+    min-height: 0;
+  }
+
+  .story-figure {
+    width: 100%;
+    min-width: 0;
+    margin-top: 32px;
+    aspect-ratio: auto;
+  }
+
+  .story-plate {
+    position: relative;
+    aspect-ratio: 1916 / 821;
+    mask-image: linear-gradient(transparent, #000 8%, #000 88%, transparent);
+  }
+
+  .story-region,
+  .story-colour {
+    display: none;
+  }
+
+  .story-captions {
+    display: grid;
+    gap: 12px;
+    padding: 20px 16px 0;
+  }
+
+  .story-caption {
+    position: static !important;
+    max-width: none;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* The features: one lens each, in a varied rhythm. */
+
+.features.landing-section {
+  border-top: 0;
+}
+
+.features-head {
+  display: grid;
+  gap: 0 56px;
+}
+
+.features-intro {
+  margin-top: 20px !important;
+  max-width: 30em;
+  color: var(--tack-text);
+  font-size: 20px;
+  line-height: 1.5;
+}
+
+@media (min-width: 1024px) {
+  .features-head {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    align-items: end;
+  }
+
+  .features-head .landing-label {
+    grid-column: 1 / -1;
+  }
+
+  .features-intro {
+    margin-top: 0 !important;
+  }
+}
+
+/* The lenses' headlines: larger than a card title, smaller than the section heading. */
+.landing .agents-words h3,
+.landing .team-words h3,
+.landing .docs-words h3 {
+  max-width: 18ch;
+  font-size: clamp(30px, 3.2vw, 44px);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.feature-lead p,
+.feature-after p,
+.team-words p,
+.docs-lines p {
+  max-width: 34em;
+  margin-top: 16px !important;
+  color: var(--tack-muted);
+  font-size: 17px;
+}
+
+.landing .feature-note {
+  color: var(--tack-faint);
+  font-size: 15px;
+}
+
+/* Agents: a pinned moment on wide screens, where a sync plays out in the link figure. */
+.agents-track {
+  position: relative;
+  margin-top: clamp(64px, 10vw, 120px);
+}
+
+.agents-grid {
+  display: grid;
+  gap: 48px;
+}
+
+.agents-art img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (min-width: 1024px) {
+  .agents-grid {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    align-items: center;
+  }
+}
+
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  /* The pinned frame centres its content in the screen, which already leaves room above it. */
+  .agents-track {
+    height: 260vh;
+    margin-top: 0;
+  }
+
+  .agents-pin {
+    position: sticky;
+    top: 0;
+    display: flex;
+    align-items: center;
+    height: 100vh;
+  }
+
+  .agents-pin > .agents-grid {
+    width: min(1200px, 100% - 2 * 48px);
+  }
+}
+
+.feature-after {
+  margin-top: 8px;
+}
+
+.feature-after .proof {
+  margin-top: 20px;
+}
+
+/* The link figure: one folder, a spine, and a row per agent link. */
+.links-figure {
+  position: relative;
+  margin: 28px 0 0;
+  padding: 18px 20px 20px;
+  border: 1px solid var(--tack-border);
+  border-radius: var(--tack-radius-sm);
+  background: rgb(1 20 34 / 0.6);
+  font-family: var(--tack-font-mono);
+  font-size: 14px;
+}
+
+.links-source {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--tack-heading);
+}
+
+.links-origin {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--tack-accent-strong);
+  box-shadow: 0 0 10px 2px rgb(243 205 163 / 0.35);
+}
+
+.links-spine {
+  position: absolute;
+  top: 46px;
+  bottom: 31px;
+  left: 24px;
+  width: 1px;
+  background: rgb(92 145 173 / 0.6);
+  transform-origin: 50% 0;
+}
+
+.links-figure ol {
+  display: grid;
+  gap: 12px;
+  margin: 14px 0 0;
+  padding: 0 0 0 28px;
+  list-style: none;
+}
+
+.links-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.links-row::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -24px;
+  width: 18px;
+  height: 1px;
+  background: rgb(92 145 173 / 0.6);
+}
+
+.links-mark,
+.links-mark-lit {
+  width: 11px;
+  height: 11px;
+  background:
+    linear-gradient(currentcolor, currentcolor) center / 100% 1px no-repeat,
+    linear-gradient(currentcolor, currentcolor) center / 1px 100% no-repeat;
+}
+
+.links-mark {
+  position: relative;
+  flex: none;
+  color: rgb(144 194 218 / 0.9);
+}
+
+.links-mark-lit {
+  position: absolute;
+  inset: 0;
+  color: var(--tack-accent-strong);
+  filter: drop-shadow(0 0 4px rgb(243 205 163 / 0.8));
+  opacity: 0;
+}
+
+.links-row code {
+  color: var(--tack-agent);
+}
+
+.links-agent {
+  margin-inline-start: auto;
+  color: var(--tack-faint);
+  font-family: var(--tack-font-sans);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* Team: a spread, the horse wide on the left and moving at its own pace. */
+.team {
+  display: grid;
+  gap: 32px;
+  align-items: center;
+  padding-block: clamp(96px, 14vw, 180px) clamp(48px, 8vw, 96px);
+}
+
+.team-art img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.team-words {
+  display: grid;
+  justify-items: start;
+}
+
+.team-words .proof {
+  margin-top: 20px;
+}
+
+/* On one column the words lead, as in the other lenses, so two horses never stack. */
+@media (max-width: 1023px) {
+  .team-words {
+    order: -1;
+  }
+}
+
+.story-caption code:not(.proof),
+.features code:not(.proof) {
+  color: var(--tack-agent);
+  font-family: var(--tack-font-mono);
+  font-size: 0.86em;
+}
+
+@media (min-width: 1024px) {
+  .team {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: 56px;
+  }
+
+  .team-art {
+    margin-inline-start: -6%;
+  }
+}
+
+/* Docs: the words, then the reader's window standing up on the sheet. */
+.docs {
+  padding-block: clamp(64px, 10vw, 120px);
+}
+
+.docs-words {
+  display: grid;
+  gap: 8px 56px;
+}
+
+.docs-lines {
+  display: grid;
+  justify-items: start;
+}
+
+.docs-lines p:first-child {
+  margin-top: 0 !important;
+}
+
+.docs-lines .proof {
+  margin-top: 20px;
+}
+
+@media (min-width: 1024px) {
+  .docs-words {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    align-items: start;
+  }
+}
+
+.docs-stage {
+  position: relative;
+  max-width: 1080px;
+  margin: 64px auto 0;
+  perspective: 1800px;
+}
+
+.docs-window {
+  transform-origin: 50% 0;
+}
+
+.docs-window img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--tack-border-strong);
+  border-radius: var(--tack-radius-lg);
+  box-shadow: 0 40px 80px -40px rgb(1 10 20 / 0.9);
+}
+
+.docs-mark {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Also in Tack: a quiet row, ruled off the sheet. */
+.also {
+  padding-top: 40px;
+  border-top: 1px solid var(--tack-border-strong);
+}
+
+.landing .also-heading {
+  color: var(--tack-muted);
+  font-size: 18px;
+}
+
+.also-items {
+  display: grid;
+  gap: 32px;
+  margin-top: 24px;
+}
+
+.also-item {
+  display: grid;
+  justify-items: start;
+  align-content: start;
+  gap: 8px;
+}
+
+.also-item h4 {
+  margin: 0;
+  color: var(--tack-heading);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.also-item p {
+  color: var(--tack-muted);
+  font-size: 16px;
+}
+
+.also-item .proof {
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+@media (min-width: 800px) {
+  .also-items {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

@@ -1,0 +1,293 @@
+{
+  "applied": null,
+  "classification": "partial",
+  "command": "sync",
+  "diagnostics": [
+    {
+      "code": "catalog-quarantined",
+      "details": {
+        "subject": {
+          "address": {
+            "kind": "skill",
+            "name": "broken",
+            "owner": "shared"
+          },
+          "candidateKind": "skill",
+          "candidatePath": "/fx/source/skills/broken/SKILL.md",
+          "issue": {
+            "code": "skill-frontmatter-schema-invalid",
+            "message": "Missing key\n  at [\"description\"]"
+          },
+          "sourcePath": "/fx/source",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        }
+      },
+      "message": "A catalog candidate is quarantined and cannot be selected.",
+      "severity": "warning"
+    },
+    {
+      "code": "catalog-quarantined",
+      "details": {
+        "subject": {
+          "candidateKind": "skill",
+          "candidatePath": "/fx/source/skills/日本語スキル/SKILL.md",
+          "issue": {
+            "code": "skill-frontmatter-schema-invalid",
+            "message": "Expected a string matching the RegExp ^[a-z0-9]+(?:-[a-z0-9]+)*$\n  at [\"name\"]"
+          },
+          "sourcePath": "/fx/source",
+          "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+        }
+      },
+      "message": "A catalog candidate is quarantined and cannot be selected.",
+      "severity": "warning"
+    },
+    {
+      "code": "managed-link-drift",
+      "details": {
+        "subject": {
+          "adapter": "claude",
+          "destinationPath": "/fx/リポジトリ/.claude/skills/writer",
+          "target": {
+            "_tag": "project-root",
+            "canonicalPath": "/fx/リポジトリ",
+            "projectName": "demo"
+          }
+        }
+      },
+      "message": "A managed link changed after Tack recorded it.",
+      "severity": "warning"
+    },
+    {
+      "code": "managed-link-drift",
+      "details": {
+        "subject": {
+          "adapter": "codex",
+          "destinationPath": "/fx/リポジトリ/.agents/skills/review",
+          "target": {
+            "_tag": "project-root",
+            "canonicalPath": "/fx/リポジトリ",
+            "projectName": "demo"
+          }
+        }
+      },
+      "message": "A managed link changed after Tack recorded it.",
+      "severity": "warning"
+    }
+  ],
+  "next": [],
+  "plan": {
+    "kind": "skill-reconciliation-plan",
+    "namespaceResolutions": [
+      {
+        "namespace": {
+          "_tag": "project",
+          "projectName": "demo"
+        },
+        "resolution": {
+          "groups": [
+            {
+              "_tag": "selected",
+              "members": [
+                {
+                  "kind": "command",
+                  "name": "ship",
+                  "owner": "shared",
+                  "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+                }
+              ]
+            },
+            {
+              "_tag": "selected",
+              "members": [
+                {
+                  "kind": "skill",
+                  "name": "localized",
+                  "owner": "shared",
+                  "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+                }
+              ]
+            },
+            {
+              "_tag": "selected",
+              "members": [
+                {
+                  "kind": "skill",
+                  "name": "planner",
+                  "owner": "shared",
+                  "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+                }
+              ]
+            },
+            {
+              "_tag": "selected",
+              "members": [
+                {
+                  "kind": "skill",
+                  "name": "review",
+                  "owner": "shared",
+                  "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+                }
+              ]
+            },
+            {
+              "_tag": "selected",
+              "members": [
+                {
+                  "kind": "skill",
+                  "name": "reviewer-with-a-very-long-skill-name-that-stretches-columns",
+                  "owner": "shared",
+                  "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+                }
+              ]
+            },
+            {
+              "_tag": "selected",
+              "members": [
+                {
+                  "kind": "skill",
+                  "name": "tester",
+                  "owner": "shared",
+                  "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+                }
+              ]
+            },
+            {
+              "_tag": "selected",
+              "members": [
+                {
+                  "kind": "skill",
+                  "name": "writer",
+                  "owner": "shared",
+                  "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+                }
+              ]
+            }
+          ],
+          "optionalSkips": [],
+          "requestBlockers": []
+        }
+      }
+    ],
+    "selection": {
+      "selector": {
+        "_tag": "project",
+        "projectName": "demo"
+      },
+      "targets": [
+        {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/リポジトリ",
+          "projectName": "demo"
+        }
+      ]
+    },
+    "units": [
+      {
+        "actions": [],
+        "adapter": "claude",
+        "collisions": [],
+        "conflicts": [
+          {
+            "_tag": "managed-link-drift",
+            "destinationPath": "/fx/リポジトリ/.claude/skills/writer",
+            "evidence": {
+              "adapter": "claude",
+              "address": {
+                "kind": "skill",
+                "name": "writer",
+                "owner": "shared",
+                "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+              },
+              "sourceDirectoryPath": "/fx/source/skills/writer",
+              "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+              "target": {
+                "_tag": "project-root",
+                "canonicalPath": "/fx/リポジトリ",
+                "projectName": "demo"
+              }
+            },
+            "observation": {
+              "_tag": "entry",
+              "destinationPath": "/fx/リポジトリ/.claude/skills/writer",
+              "entryType": "directory"
+            }
+          }
+        ],
+        "delivery": {
+          "command": "unsupported",
+          "skill": "delivered"
+        },
+        "summary": {
+          "blocked": 0,
+          "collision": 0,
+          "conflict": 1,
+          "create": 0,
+          "release": 0,
+          "remove": 0,
+          "retire": 0
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/リポジトリ",
+          "projectName": "demo"
+        }
+      },
+      {
+        "actions": [],
+        "adapter": "codex",
+        "collisions": [],
+        "conflicts": [
+          {
+            "_tag": "managed-link-drift",
+            "destinationPath": "/fx/リポジトリ/.agents/skills/review",
+            "evidence": {
+              "adapter": "codex",
+              "address": {
+                "kind": "skill",
+                "name": "review",
+                "owner": "shared",
+                "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23"
+              },
+              "sourceDirectoryPath": "/fx/source/skills/review",
+              "sourceRegistrationId": "0d5b3402-2162-4620-ae41-ddc81538eb23",
+              "target": {
+                "_tag": "project-root",
+                "canonicalPath": "/fx/リポジトリ",
+                "projectName": "demo"
+              }
+            },
+            "observation": {
+              "_tag": "relative-link",
+              "canonicalTarget": "/fx/リポジトリ/README.md",
+              "destinationPath": "/fx/リポジトリ/.agents/skills/review",
+              "rawTarget": "../../README.md"
+            }
+          }
+        ],
+        "delivery": {
+          "command": "unsupported",
+          "skill": "delivered"
+        },
+        "summary": {
+          "blocked": 0,
+          "collision": 0,
+          "conflict": 1,
+          "create": 0,
+          "release": 0,
+          "remove": 0,
+          "retire": 0
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/fx/リポジトリ",
+          "projectName": "demo"
+        }
+      }
+    ],
+    "version": 1
+  },
+  "result": null,
+  "status": "partial",
+  "version": 1
+}

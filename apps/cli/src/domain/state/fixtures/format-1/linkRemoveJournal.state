@@ -1,0 +1,52 @@
+{
+  "format": 1,
+  "data": {
+    "enabledAdapters": [],
+    "sources": [],
+    "projects": [],
+    "userChoices": [],
+    "links": [
+      {
+        "destinationPath": "/work/alpha/.agents/skills/writing",
+        "sourceDirectoryPath": "/sources/a/skills/writing",
+        "resource": {
+          "kind": "skill",
+          "name": "writing",
+          "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+        },
+        "target": {
+          "_tag": "project-root",
+          "canonicalPath": "/work/alpha",
+          "projectName": "alpha"
+        },
+        "delivery": {
+          "_tag": "agent",
+          "adapter": "codex"
+        }
+      }
+    ],
+    "journal": [
+      {
+        "_tag": "remove",
+        "link": {
+          "destinationPath": "/work/alpha/.agents/skills/writing",
+          "sourceDirectoryPath": "/sources/a/skills/writing",
+          "resource": {
+            "kind": "skill",
+            "name": "writing",
+            "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+          },
+          "target": {
+            "_tag": "project-root",
+            "canonicalPath": "/work/alpha",
+            "projectName": "alpha"
+          },
+          "delivery": {
+            "_tag": "agent",
+            "adapter": "codex"
+          }
+        }
+      }
+    ]
+  }
+}

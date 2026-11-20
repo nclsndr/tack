@@ -1,0 +1,540 @@
+{
+  "applied": {
+    "kind": "init-application",
+    "state": "created",
+    "adaptersEnabled": ["claude", "codex"],
+    "user": {
+      "docs": [],
+      "kind": "sync-application",
+      "resources": {
+        "kind": "skill-reconciliation-application",
+        "units": [
+          {
+            "actions": [
+              {
+                "_tag": "applied",
+                "action": {
+                  "_tag": "link-create",
+                  "destinationPath": "/fx/home/.claude/skills/author-tack-profiles",
+                  "evidence": {
+                    "adapter": "claude",
+                    "address": {
+                      "kind": "skill",
+                      "name": "author-tack-profiles",
+                      "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                    },
+                    "sourceDirectoryPath": "/fx/tack/builtins/skills/author-tack-profiles",
+                    "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6",
+                    "target": {
+                      "_tag": "user",
+                      "canonicalPath": "/fx/home"
+                    }
+                  },
+                  "relativeTarget": "../../../../../../../../../../fx/tack/builtins/skills/author-tack-profiles"
+                }
+              },
+              {
+                "_tag": "applied",
+                "action": {
+                  "_tag": "link-create",
+                  "destinationPath": "/fx/home/.claude/skills/manage-tack-sources",
+                  "evidence": {
+                    "adapter": "claude",
+                    "address": {
+                      "kind": "skill",
+                      "name": "manage-tack-sources",
+                      "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                    },
+                    "sourceDirectoryPath": "/fx/tack/builtins/skills/manage-tack-sources",
+                    "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6",
+                    "target": {
+                      "_tag": "user",
+                      "canonicalPath": "/fx/home"
+                    }
+                  },
+                  "relativeTarget": "../../../../../../../../../../fx/tack/builtins/skills/manage-tack-sources"
+                }
+              },
+              {
+                "_tag": "applied",
+                "action": {
+                  "_tag": "link-create",
+                  "destinationPath": "/fx/home/.claude/skills/use-tack",
+                  "evidence": {
+                    "adapter": "claude",
+                    "address": {
+                      "kind": "skill",
+                      "name": "use-tack",
+                      "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                    },
+                    "sourceDirectoryPath": "/fx/tack/builtins/skills/use-tack",
+                    "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6",
+                    "target": {
+                      "_tag": "user",
+                      "canonicalPath": "/fx/home"
+                    }
+                  },
+                  "relativeTarget": "../../../../../../../../../../fx/tack/builtins/skills/use-tack"
+                }
+              },
+              {
+                "_tag": "applied",
+                "action": {
+                  "_tag": "link-create",
+                  "destinationPath": "/fx/home/.claude/skills/write-reader-figures",
+                  "evidence": {
+                    "adapter": "claude",
+                    "address": {
+                      "kind": "skill",
+                      "name": "write-reader-figures",
+                      "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                    },
+                    "sourceDirectoryPath": "/fx/tack/builtins/skills/write-reader-figures",
+                    "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6",
+                    "target": {
+                      "_tag": "user",
+                      "canonicalPath": "/fx/home"
+                    }
+                  },
+                  "relativeTarget": "../../../../../../../../../../fx/tack/builtins/skills/write-reader-figures"
+                }
+              }
+            ],
+            "adapter": "claude",
+            "status": "success",
+            "target": {
+              "_tag": "user",
+              "canonicalPath": "/fx/home"
+            }
+          },
+          {
+            "actions": [
+              {
+                "_tag": "applied",
+                "action": {
+                  "_tag": "directory-create",
+                  "directoryPath": "/fx/home/.agents/skills"
+                }
+              },
+              {
+                "_tag": "applied",
+                "action": {
+                  "_tag": "link-create",
+                  "destinationPath": "/fx/home/.agents/skills/author-tack-profiles",
+                  "evidence": {
+                    "adapter": "codex",
+                    "address": {
+                      "kind": "skill",
+                      "name": "author-tack-profiles",
+                      "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                    },
+                    "sourceDirectoryPath": "/fx/tack/builtins/skills/author-tack-profiles",
+                    "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6",
+                    "target": {
+                      "_tag": "user",
+                      "canonicalPath": "/fx/home"
+                    }
+                  },
+                  "relativeTarget": "../../../../../../../../../../fx/tack/builtins/skills/author-tack-profiles"
+                }
+              },
+              {
+                "_tag": "applied",
+                "action": {
+                  "_tag": "link-create",
+                  "destinationPath": "/fx/home/.agents/skills/manage-tack-sources",
+                  "evidence": {
+                    "adapter": "codex",
+                    "address": {
+                      "kind": "skill",
+                      "name": "manage-tack-sources",
+                      "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                    },
+                    "sourceDirectoryPath": "/fx/tack/builtins/skills/manage-tack-sources",
+                    "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6",
+                    "target": {
+                      "_tag": "user",
+                      "canonicalPath": "/fx/home"
+                    }
+                  },
+                  "relativeTarget": "../../../../../../../../../../fx/tack/builtins/skills/manage-tack-sources"
+                }
+              },
+              {
+                "_tag": "applied",
+                "action": {
+                  "_tag": "link-create",
+                  "destinationPath": "/fx/home/.agents/skills/use-tack",
+                  "evidence": {
+                    "adapter": "codex",
+                    "address": {
+                      "kind": "skill",
+                      "name": "use-tack",
+                      "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                    },
+                    "sourceDirectoryPath": "/fx/tack/builtins/skills/use-tack",
+                    "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6",
+                    "target": {
+                      "_tag": "user",
+                      "canonicalPath": "/fx/home"
+                    }
+                  },
+                  "relativeTarget": "../../../../../../../../../../fx/tack/builtins/skills/use-tack"
+                }
+              },
+              {
+                "_tag": "applied",
+                "action": {
+                  "_tag": "link-create",
+                  "destinationPath": "/fx/home/.agents/skills/write-reader-figures",
+                  "evidence": {
+                    "adapter": "codex",
+                    "address": {
+                      "kind": "skill",
+                      "name": "write-reader-figures",
+                      "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                    },
+                    "sourceDirectoryPath": "/fx/tack/builtins/skills/write-reader-figures",
+                    "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6",
+                    "target": {
+                      "_tag": "user",
+                      "canonicalPath": "/fx/home"
+                    }
+                  },
+                  "relativeTarget": "../../../../../../../../../../fx/tack/builtins/skills/write-reader-figures"
+                }
+              }
+            ],
+            "adapter": "codex",
+            "status": "success",
+            "target": {
+              "_tag": "user",
+              "canonicalPath": "/fx/home"
+            }
+          }
+        ],
+        "version": 1
+      }
+    }
+  },
+  "classification": "success",
+  "command": "init",
+  "diagnostics": [],
+  "next": ["tack guide onboarding", "tack source add PATH"],
+  "plan": {
+    "adapters": {
+      "detection": [
+        {
+          "adapter": "claude",
+          "found": true,
+          "home": "/fx/home/.claude"
+        },
+        {
+          "adapter": "codex",
+          "found": true,
+          "home": "/fx/home/.codex"
+        },
+        {
+          "adapter": "cursor",
+          "found": false,
+          "home": "/fx/home/.cursor"
+        }
+      ],
+      "enabled": [],
+      "source": "detected",
+      "toEnable": ["claude", "codex"]
+    },
+    "handMade": [
+      {
+        "adapter": "claude",
+        "entry": "directory",
+        "kind": "skill",
+        "path": "/fx/home/.claude/skills/my-own"
+      }
+    ],
+    "kind": "init-plan",
+    "state": "create",
+    "stateDirectory": "/fx/home/.tack",
+    "user": {
+      "docs": [],
+      "kind": "sync-plan",
+      "resources": {
+        "kind": "skill-reconciliation-plan",
+        "namespaceResolutions": [
+          {
+            "namespace": {
+              "_tag": "user"
+            },
+            "resolution": {
+              "groups": [
+                {
+                  "_tag": "selected",
+                  "members": [
+                    {
+                      "kind": "skill",
+                      "name": "author-tack-profiles",
+                      "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                    }
+                  ]
+                },
+                {
+                  "_tag": "selected",
+                  "members": [
+                    {
+                      "kind": "skill",
+                      "name": "manage-tack-sources",
+                      "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                    }
+                  ]
+                },
+                {
+                  "_tag": "selected",
+                  "members": [
+                    {
+                      "kind": "skill",
+                      "name": "use-tack",
+                      "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                    }
+                  ]
+                },
+                {
+                  "_tag": "selected",
+                  "members": [
+                    {
+                      "kind": "skill",
+                      "name": "write-reader-figures",
+                      "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                    }
+                  ]
+                }
+              ],
+              "optionalSkips": [],
+              "requestBlockers": []
+            }
+          }
+        ],
+        "selection": {
+          "selector": {
+            "_tag": "user"
+          },
+          "targets": [
+            {
+              "_tag": "user",
+              "canonicalPath": "/fx/home"
+            }
+          ]
+        },
+        "units": [
+          {
+            "actions": [
+              {
+                "_tag": "link-create",
+                "destinationPath": "/fx/home/.claude/skills/author-tack-profiles",
+                "evidence": {
+                  "adapter": "claude",
+                  "address": {
+                    "kind": "skill",
+                    "name": "author-tack-profiles",
+                    "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                  },
+                  "sourceDirectoryPath": "/fx/tack/builtins/skills/author-tack-profiles",
+                  "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6",
+                  "target": {
+                    "_tag": "user",
+                    "canonicalPath": "/fx/home"
+                  }
+                },
+                "relativeTarget": "../../../../../../../../../../fx/tack/builtins/skills/author-tack-profiles"
+              },
+              {
+                "_tag": "link-create",
+                "destinationPath": "/fx/home/.claude/skills/manage-tack-sources",
+                "evidence": {
+                  "adapter": "claude",
+                  "address": {
+                    "kind": "skill",
+                    "name": "manage-tack-sources",
+                    "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                  },
+                  "sourceDirectoryPath": "/fx/tack/builtins/skills/manage-tack-sources",
+                  "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6",
+                  "target": {
+                    "_tag": "user",
+                    "canonicalPath": "/fx/home"
+                  }
+                },
+                "relativeTarget": "../../../../../../../../../../fx/tack/builtins/skills/manage-tack-sources"
+              },
+              {
+                "_tag": "link-create",
+                "destinationPath": "/fx/home/.claude/skills/use-tack",
+                "evidence": {
+                  "adapter": "claude",
+                  "address": {
+                    "kind": "skill",
+                    "name": "use-tack",
+                    "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                  },
+                  "sourceDirectoryPath": "/fx/tack/builtins/skills/use-tack",
+                  "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6",
+                  "target": {
+                    "_tag": "user",
+                    "canonicalPath": "/fx/home"
+                  }
+                },
+                "relativeTarget": "../../../../../../../../../../fx/tack/builtins/skills/use-tack"
+              },
+              {
+                "_tag": "link-create",
+                "destinationPath": "/fx/home/.claude/skills/write-reader-figures",
+                "evidence": {
+                  "adapter": "claude",
+                  "address": {
+                    "kind": "skill",
+                    "name": "write-reader-figures",
+                    "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                  },
+                  "sourceDirectoryPath": "/fx/tack/builtins/skills/write-reader-figures",
+                  "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6",
+                  "target": {
+                    "_tag": "user",
+                    "canonicalPath": "/fx/home"
+                  }
+                },
+                "relativeTarget": "../../../../../../../../../../fx/tack/builtins/skills/write-reader-figures"
+              }
+            ],
+            "adapter": "claude",
+            "collisions": [],
+            "conflicts": [],
+            "delivery": {
+              "command": "unsupported",
+              "skill": "delivered"
+            },
+            "summary": {
+              "blocked": 0,
+              "collision": 0,
+              "conflict": 0,
+              "create": 4,
+              "release": 0,
+              "remove": 0,
+              "retire": 0
+            },
+            "target": {
+              "_tag": "user",
+              "canonicalPath": "/fx/home"
+            }
+          },
+          {
+            "actions": [
+              {
+                "_tag": "directory-create",
+                "directoryPath": "/fx/home/.agents/skills"
+              },
+              {
+                "_tag": "link-create",
+                "destinationPath": "/fx/home/.agents/skills/author-tack-profiles",
+                "evidence": {
+                  "adapter": "codex",
+                  "address": {
+                    "kind": "skill",
+                    "name": "author-tack-profiles",
+                    "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                  },
+                  "sourceDirectoryPath": "/fx/tack/builtins/skills/author-tack-profiles",
+                  "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6",
+                  "target": {
+                    "_tag": "user",
+                    "canonicalPath": "/fx/home"
+                  }
+                },
+                "relativeTarget": "../../../../../../../../../../fx/tack/builtins/skills/author-tack-profiles"
+              },
+              {
+                "_tag": "link-create",
+                "destinationPath": "/fx/home/.agents/skills/manage-tack-sources",
+                "evidence": {
+                  "adapter": "codex",
+                  "address": {
+                    "kind": "skill",
+                    "name": "manage-tack-sources",
+                    "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                  },
+                  "sourceDirectoryPath": "/fx/tack/builtins/skills/manage-tack-sources",
+                  "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6",
+                  "target": {
+                    "_tag": "user",
+                    "canonicalPath": "/fx/home"
+                  }
+                },
+                "relativeTarget": "../../../../../../../../../../fx/tack/builtins/skills/manage-tack-sources"
+              },
+              {
+                "_tag": "link-create",
+                "destinationPath": "/fx/home/.agents/skills/use-tack",
+                "evidence": {
+                  "adapter": "codex",
+                  "address": {
+                    "kind": "skill",
+                    "name": "use-tack",
+                    "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                  },
+                  "sourceDirectoryPath": "/fx/tack/builtins/skills/use-tack",
+                  "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6",
+                  "target": {
+                    "_tag": "user",
+                    "canonicalPath": "/fx/home"
+                  }
+                },
+                "relativeTarget": "../../../../../../../../../../fx/tack/builtins/skills/use-tack"
+              },
+              {
+                "_tag": "link-create",
+                "destinationPath": "/fx/home/.agents/skills/write-reader-figures",
+                "evidence": {
+                  "adapter": "codex",
+                  "address": {
+                    "kind": "skill",
+                    "name": "write-reader-figures",
+                    "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6"
+                  },
+                  "sourceDirectoryPath": "/fx/tack/builtins/skills/write-reader-figures",
+                  "sourceRegistrationId": "98a032d9-b6da-4f82-89ed-782fcd821af6",
+                  "target": {
+                    "_tag": "user",
+                    "canonicalPath": "/fx/home"
+                  }
+                },
+                "relativeTarget": "../../../../../../../../../../fx/tack/builtins/skills/write-reader-figures"
+              }
+            ],
+            "adapter": "codex",
+            "collisions": [],
+            "conflicts": [],
+            "delivery": {
+              "command": "unsupported",
+              "skill": "delivered"
+            },
+            "summary": {
+              "blocked": 0,
+              "collision": 0,
+              "conflict": 0,
+              "create": 4,
+              "release": 0,
+              "remove": 0,
+              "retire": 0
+            },
+            "target": {
+              "_tag": "user",
+              "canonicalPath": "/fx/home"
+            }
+          }
+        ],
+        "version": 1
+      }
+    }
+  },
+  "result": null,
+  "status": "success",
+  "version": 1
+}

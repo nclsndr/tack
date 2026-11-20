@@ -1,0 +1,76 @@
+{
+  "format": 1,
+  "data": {
+    "enabledAdapters": [],
+    "sources": [],
+    "projects": [
+      {
+        "name": "alpha",
+        "gitCommonDirectory": "/work/alpha/.git",
+        "roots": [
+          "/work/alpha",
+          "/work/alpha-wt"
+        ],
+        "removingRoots": [
+          "/work/alpha-old"
+        ],
+        "choices": [
+          {
+            "address": {
+              "kind": "command",
+              "name": "review",
+              "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+            },
+            "decision": "exclude"
+          },
+          {
+            "address": {
+              "kind": "skill",
+              "name": "writing",
+              "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+            },
+            "decision": "include"
+          }
+        ]
+      },
+      {
+        "name": "omega",
+        "gitCommonDirectory": "/work/omega/.git",
+        "roots": [],
+        "removingRoots": [
+          "/work/omega"
+        ],
+        "removalIntent": "project",
+        "choices": [
+          {
+            "address": {
+              "kind": "skill",
+              "name": "writing",
+              "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+            },
+            "decision": "exclude"
+          }
+        ]
+      },
+      {
+        "name": "zeta",
+        "gitCommonDirectory": "/work/zeta/.git",
+        "roots": [],
+        "removingRoots": [
+          "/work/zeta"
+        ]
+      }
+    ],
+    "userChoices": [
+      {
+        "address": {
+          "kind": "skill",
+          "name": "tone",
+          "sourceRegistrationId": "21380456-fa78-4ed4-95ae-110da2a6d41c"
+        },
+        "decision": "include"
+      }
+    ],
+    "links": []
+  }
+}
