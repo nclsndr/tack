@@ -45,7 +45,7 @@ const RequirementsPayloadSchema = Schema.Struct({
 });
 /** Worker to supervisor: one captured Effect log or Shell output chunk. */
 const LogPayloadSchema = Schema.Struct({
-  source: Schema.Literals(["effect", "shell"]),
+  source: Schema.Literals(["script", "shell"]),
   content: Schema.String,
 });
 /** Worker to supervisor: one Shell process group the worker started or settled. */

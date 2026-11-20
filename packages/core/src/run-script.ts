@@ -274,7 +274,7 @@ export async function runScript(definition: unknown, options: RunOptions): Promi
         : content;
     if (length > RunLimits.logEventBytes) truncate("event_bytes", length, RunLimits.logEventBytes);
     const event: RunLog = {
-      source: "effect",
+      source: "script",
       sequence: logs.length + 1,
       timestamp: date.toISOString(),
       content: bounded,

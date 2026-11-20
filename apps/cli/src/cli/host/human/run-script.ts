@@ -69,7 +69,7 @@ export const finalizationFacts = (
       ] satisfies ReadonlyArray<FactRow>)),
 ];
 
-const sourceOrder = ["stdout", "stderr", "effect", "shell", "supervisor"] as const;
+const sourceOrder = ["stdout", "stderr", "script", "shell", "supervisor"] as const;
 
 /** The log display limits: what was kept and observed, whether it was cut, and the limits. */
 export const logSummary = (result: OperatorRunResult, style: Style): ReadonlyArray<string> => {

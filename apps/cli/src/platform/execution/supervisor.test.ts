@@ -274,7 +274,7 @@ describe("supervised worker streams and frames", () => {
     fixture(async (directory) => {
       const received = join(directory, "received-capabilities");
       const worker = await fakeWorker(directory, "requirements-then-invalid", {
-        onStart: `out.write(Buffer.concat([frame('stage',{stage:'load'}),frame('requirements',{secrets:[],services:[]}),frame('log',{source:'effect',content:'x'},'another-run')]));setInterval(()=>{},1000);`,
+        onStart: `out.write(Buffer.concat([frame('stage',{stage:'load'}),frame('requirements',{secrets:[],services:[]}),frame('log',{source:'script',content:'x'},'another-run')]));setInterval(()=>{},1000);`,
         onCapabilities: `writeFileSync(${JSON.stringify(received)},"");`,
       });
       const result = await superviseWorker({
