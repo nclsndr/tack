@@ -45,7 +45,7 @@
     "test": "bun run test:unit && bun run test:eval && bun run test:release",
     "test:unit": "bun --bun vitest run --exclude apps/cli/src/release.system.test.ts",
     "test:coverage": "bun run test:unit --coverage",
-    "test:guidance": "bun --bun vitest run .repo.test.ts",
+    "test:repo": "bun --bun vitest run .repo.test.ts",
     "test:release": "bun --bun vitest run --no-file-parallelism apps/cli/src/release.system.test.ts",
     "tack": "bun run ./apps/cli/src/main.ts",
     "typecheck": "bun run --filter '*' typecheck",

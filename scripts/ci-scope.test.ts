@@ -14,6 +14,7 @@ const guidanceOnly = [
   },
   { label: "a repository skill change", paths: [".ai/skills/tack-git/SKILL.md"] },
   { label: "a pull request template change", paths: [".github/pull_request_template.md"] },
+  { label: "a workflows readme change", paths: [".github/workflows/README.md"] },
 ];
 
 /** Changes that reach the CLI, its package, or CI itself: the suite and the gates both run. */
@@ -30,6 +31,10 @@ const fullRun = [
   { label: "a license change, which the package ships", paths: ["LICENSE"] },
   { label: "a source declaration change", paths: ["tack.yaml"] },
   { label: "a workflow change", paths: [".github/workflows/ci.yml"] },
+  {
+    label: "a workflow change beside the workflows readme",
+    paths: [".github/workflows/README.md", ".github/workflows/ci.yml"],
+  },
   { label: "a script change", paths: ["scripts/ci-scope.ts"] },
   {
     label: "a sibling folder whose name starts like the website's",

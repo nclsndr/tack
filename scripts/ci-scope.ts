@@ -3,7 +3,8 @@
  * and passes the answers to the other jobs as its `suite` and `gates` outputs.
  *
  * - A pull request that changes guidance documents only skips the suite and the gates: `static`
- *   runs the format check and the guidance tests, which are all that read those documents.
+ *   runs the format check and the repository tests (`test:repo`), which are all that read those
+ *   documents.
  * - A pull request that changes only `evals/`, `apps/website/` and guidance documents skips the
  *   release, runtime and package gates: none of them is part of the CLI or its package.
  * - Anything else runs every job, including a change to `packages/harness`, which the website and
@@ -13,8 +14,9 @@ import { execFileSync } from "node:child_process";
 import { appendFileSync } from "node:fs";
 
 /**
- * The documents only contributors and agents read. In CI, only `format:check` and the guidance
- * tests (`apps/cli/test/*.repo.test.ts`) read them; no build, package, website or workflow does.
+ * The documents only contributors and agents read. In CI, only `format:check` and the repository
+ * tests (`test:repo`, `apps/cli/test/*.repo.test.ts`) read them; no build, package, website or
+ * workflow does. GitHub never runs `.github/workflows/README.md`, since it is not YAML.
  */
 const guidanceFiles = [
   "AGENTS.md",
@@ -23,6 +25,7 @@ const guidanceFiles = [
   "README.md",
   "SECURITY.md",
   ".github/pull_request_template.md",
+  ".github/workflows/README.md",
 ] as const;
 
 /** The folders that hold only guidance: the repository's own skills. */

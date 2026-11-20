@@ -53,7 +53,7 @@ jobs:
         run: bun scripts/ci-scope.ts
 
   # Without the suite, it runs only what reads guidance documents: the format check and the
-  # guidance tests.
+  # repository tests. README.md in this folder explains the jobs.
   static:
     name: static
     needs: changes
@@ -67,9 +67,9 @@ jobs:
           bun-version-file: package.json
       - run: bun install --frozen-lockfile
       - run: bun run format:check
-      - name: test (guidance)
+      - name: test (repo)
         if: env.SUITE == 'false'
-        run: bun run test:guidance
+        run: bun run test:repo
       - if: env.SUITE != 'false'
         run: bun run lint
       - if: env.SUITE != 'false'
