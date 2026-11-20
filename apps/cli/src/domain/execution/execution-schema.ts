@@ -40,7 +40,7 @@ export const executionLimits = {
   graceMs: 5000,
 } as const;
 const RunLogSchema = Schema.Struct({
-  source: Schema.Literals(["stdout", "stderr", "effect", "shell", "supervisor"]),
+  source: Schema.Literals(["stdout", "stderr", "script", "shell", "supervisor"]),
   sequence: Schema.Number,
   timestamp: Schema.String,
   content: Schema.String,

@@ -43,7 +43,7 @@ export const makeRunLogs = (mirror: (content: string) => void) => {
         timestamp: new Date().toISOString(),
         content: text,
       });
-      mirror(source === "effect" && text.endsWith("\n") === false ? `${text}\n` : text);
+      mirror(source === "script" && text.endsWith("\n") === false ? `${text}\n` : text);
     },
     truncate: (reason: string) => reasons.add(reason),
     snapshot: (): Pick<OperatorRunResult, "logs" | "logTruncation"> => ({

@@ -51,7 +51,7 @@ export type RunSuccess<A = unknown> = {
 };
 export type PrimaryOutcome<A = unknown> = RunSuccess<A> | RunFailure;
 export type RunLog = {
-  readonly source: "effect";
+  readonly source: "script";
   readonly sequence: number;
   readonly timestamp: string;
   readonly content: string;

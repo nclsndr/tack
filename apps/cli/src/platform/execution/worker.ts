@@ -132,7 +132,7 @@ const execute = async (frame: Frame) => {
       }),
     },
     signal: abort.signal,
-    onLog: (log) => send("log", { source: "effect", content: log.content }),
+    onLog: (log) => send("log", { source: "script", content: log.content }),
   });
   const encoded = encodeRunOutcome(result);
   const { logs: _logs, truncation: _truncation, ...core } = encoded;

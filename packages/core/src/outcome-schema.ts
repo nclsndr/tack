@@ -108,7 +108,7 @@ const Finalization = Schema.Union([
   Schema.Struct({ status: Schema.Literal("failed"), diagnostics: Diagnostics }),
 ]);
 const Log = Schema.Struct({
-  source: Schema.Literal("effect"),
+  source: Schema.Literal("script"),
   sequence: Schema.Natural.check(Schema.isGreaterThan(0)),
   timestamp: Schema.String.check(
     Schema.makeFilter(

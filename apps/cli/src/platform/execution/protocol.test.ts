@@ -35,7 +35,7 @@ const lifecycle: ReadonlyArray<readonly [string, Frame, ReadonlyArray<WorkerStat
   ["load stage", frame("stage", { stage: "load" }), ["starting"]],
   ["execution stage", frame("stage", { stage: "execution" }), ["prepared"]],
   ["requirements", frame("requirements", { secrets: [], services: ["Shell"] }), ["loading"]],
-  ["log", frame("log", { source: "effect", content: "x" }), ["running"]],
+  ["log", frame("log", { source: "script", content: "x" }), ["running"]],
   ["shell start", frame("shell-start", { pid: 7 }), ["running"]],
   ["shell end", frame("shell-end", { pid: 7 }), ["running"]],
   ["core terminal", frame("terminal", { core, coreTruncation: [] }), ["running"]],
@@ -149,9 +149,9 @@ describe("worker terminal vocabulary", () => {
 describe("worker frame encoding", () => {
   it("refuses to encode a frame larger than the frame limit", () => {
     const content = "x".repeat(maximumFrameBytes);
-    expect(() => encodeFrame(frame("log", { source: "effect", content }))).toThrow(ProtocolFailure);
-    expect(encodeFrame(frame("log", { source: "effect", content: "x" })).readUInt32BE()).toBe(
-      JSON.stringify(frame("log", { source: "effect", content: "x" })).length,
+    expect(() => encodeFrame(frame("log", { source: "script", content }))).toThrow(ProtocolFailure);
+    expect(encodeFrame(frame("log", { source: "script", content: "x" })).readUInt32BE()).toBe(
+      JSON.stringify(frame("log", { source: "script", content: "x" })).length,
     );
   });
 });

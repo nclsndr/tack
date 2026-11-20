@@ -126,7 +126,7 @@ describe("encoded run outcome", () => {
 
   it("checks log order, bytes, levels, timestamps and truncation evidence", () => {
     const log = {
-      source: "effect",
+      source: "script",
       sequence: 1,
       timestamp: "2026-10-21T00:00:00.000Z",
       content: "ok",
@@ -179,7 +179,7 @@ describe("encoded run outcome agreement", () => {
     const perLog = RunLimits.logEventBytes;
     const count = Math.floor(RunLimits.logBytes / perLog) + 1;
     const logs = Array.from({ length: count }, (_, index) => ({
-      source: "effect",
+      source: "script",
       sequence: index + 1,
       timestamp: "2026-10-21T00:00:00.000Z",
       content: "x".repeat(perLog),

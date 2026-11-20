@@ -318,8 +318,8 @@ it("captures bounded logs in one observed sequence and mirrors retained content 
   const mirrored: string[] = [];
   const logs = makeRunLogs((content) => mirrored.push(content));
   logs.add("stdout", "one");
-  logs.add("effect", "two");
-  logs.add("effect", "three\n");
+  logs.add("script", "two");
+  logs.add("script", "three\n");
   logs.add("stderr", "x".repeat(70000));
   const snapshot = logs.snapshot();
   expect(snapshot.logs.map((event) => event.sequence)).toEqual([1, 2, 3, 4]);
