@@ -183,6 +183,31 @@ describe("help view", () => {
       "  tack adapter enable --help\n  tack adapter disable --help\n",
     );
   });
+  it.each(["source", "project", "pick", "import", "docs", "profile", "script", "state"])(
+    "points the %s group at the help of every subcommand",
+    (group) => {
+      const result = Schema.decodeUnknownSync(HelpPayloadSchema)(
+        humanFixture("help-choice-set").result,
+      );
+      const text = renderHelp(
+        envelopeOf({
+          command: "help",
+          result: {
+            ...result,
+            commandPath: [group],
+            subcommands: [
+              { name: "first", description: "First", executable: true },
+              { name: "second", description: "Second", executable: true },
+            ],
+          },
+        }),
+        plainStyle,
+      );
+      expect(text?.split("Next\n")[1]).toBe(
+        `  tack ${group} first --help\n  tack ${group} second --help\n`,
+      );
+    },
+  );
 });
 
 describe("docs icons view", () => {
