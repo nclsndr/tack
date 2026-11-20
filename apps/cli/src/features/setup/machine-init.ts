@@ -23,12 +23,15 @@ import { withCommandWriter } from "../writer/recovered-writer.ts";
 /**
  * The folders in the operator home that show an agent is used there, the first one the folder its
  * detection names when none exists. They are the folders Tack links into, whatever
- * `CLAUDE_CONFIG_DIR` or `CODEX_HOME` say, so detection reads the same ones.
+ * `CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `XDG_CONFIG_HOME` or `PI_CODING_AGENT_DIR` say, so detection
+ * reads the same ones.
  */
 export const agentHomes = {
   claude: [".claude"],
   codex: [".codex", ".agents"],
   cursor: [".cursor"],
+  opencode: [".config/opencode"],
+  pi: [".pi"],
 } as const satisfies Record<AgentAdapterId, readonly [string, ...Array<string>]>;
 
 /** Reports, for every adapter, whether its agent's home folder exists in `home`. */

@@ -273,11 +273,14 @@ describe("adapter list view", () => {
     const text = view(
       envelopeOf({
         command: "adapter",
-        result: { kind: "adapters", enabledAdapters: ["claude", "codex", "cursor"] },
+        result: {
+          kind: "adapters",
+          enabledAdapters: ["claude", "codex", "cursor", "opencode", "pi"],
+        },
       }),
       style,
     );
-    expect(flat(text)).toContain("Enabled claude, codex, cursor");
+    expect(flat(text)).toContain("Enabled claude, codex, cursor, opencode, pi");
     expect(text).not.toContain("Not enabled");
     expect(hints).toEqual(["tack status"]);
   });

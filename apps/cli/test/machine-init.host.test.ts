@@ -112,6 +112,8 @@ it.layer(LiveTestLayer)("tack init", (initIt) => {
             { adapter: "claude", home: at(".claude"), found: true },
             { adapter: "codex", home: at(".agents"), found: true },
             { adapter: "cursor", home: at(".cursor"), found: false },
+            { adapter: "opencode", home: at(".config/opencode"), found: false },
+            { adapter: "pi", home: at(".pi"), found: false },
           ],
           source: "detected",
         },
@@ -187,6 +189,22 @@ it.layer(LiveTestLayer)("tack init", (initIt) => {
     }),
   );
 
+  initIt.effect("finds OpenCode by its config folder and Pi by its home folder", () =>
+    Effect.gen(function* () {
+      const { at, fileSystem, json } = yield* machine([".config/opencode", ".pi"]);
+      const envelope = yield* json(["init"]);
+      expect(planOf(envelope).adapters).toMatchObject({
+        toEnable: ["opencode", "pi"],
+        source: "detected",
+      });
+      expect(appliedOf(envelope)).toMatchObject({ adaptersEnabled: ["opencode", "pi"] });
+      expect(yield* fileSystem.readLink(at(".config/opencode/skills/use-tack"))).toContain(
+        "use-tack",
+      );
+      expect(yield* fileSystem.readLink(at(".pi/agent/skills/use-tack"))).toContain("use-tack");
+    }),
+  );
+
   initIt.effect("sets up only the state when it finds no agent", () =>
     Effect.gen(function* () {
       const { fileSystem, json, state } = yield* machine([]);
@@ -197,7 +215,10 @@ it.layer(LiveTestLayer)("tack init", (initIt) => {
         diagnostics: [{ code: "agent-home-not-found", severity: "warning" }],
       });
       expect(envelope.diagnostics[0]?.message).toContain(
-        "it looks for .claude, .codex, .agents, .cursor",
+        "it looks for .claude, .codex, .agents, .cursor, .config/opencode, .pi",
+      );
+      expect(envelope.diagnostics[0]?.message).toContain(
+        "Name yours with --adapter claude, codex, cursor, opencode or pi.",
       );
       expect(appliedOf(envelope)).toMatchObject({ state: "created", adaptersEnabled: [] });
       expect(yield* fileSystem.exists(`${state}/state.json`)).toBe(true);

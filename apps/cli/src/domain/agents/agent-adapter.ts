@@ -30,6 +30,21 @@ const agentAdapterTable = {
     projectSkillDirectory: [".cursor", "skills"],
     userSkillDirectory: [".cursor", "skills"],
   },
+  opencode: {
+    capabilities: ["skill-links", "command-links"],
+    projectCommandDirectory: [".opencode", "commands"],
+    userCommandDirectory: [".config", "opencode", "commands"],
+    projectSkillDirectory: [".opencode", "skills"],
+    userSkillDirectory: [".config", "opencode", "skills"],
+  },
+  // Pi calls commands prompt templates and loads only direct `.md` children of `prompts`.
+  pi: {
+    capabilities: ["skill-links", "command-links"],
+    projectCommandDirectory: [".pi", "prompts"],
+    userCommandDirectory: [".pi", "agent", "prompts"],
+    projectSkillDirectory: [".pi", "skills"],
+    userSkillDirectory: [".pi", "agent", "skills"],
+  },
 } as const satisfies Readonly<Record<string, AgentAdapterDestinations>>;
 
 /** The adapter IDs in table order, which is canonical code-unit order. */

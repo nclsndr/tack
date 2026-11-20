@@ -16,6 +16,7 @@ import { registerSource } from "../sources/source.ts";
 import { enableAdapters } from "./agent.ts";
 import { runStatus } from "../status/status.ts";
 import { cleanManagedLinks, resetTack } from "../maintenance/selected-removal.ts";
+import { disableAdapter } from "../maintenance/adapter-disablement.ts";
 import { runProjectRefreshCommand } from "../refresh/project-refresh.ts";
 import { ManagedLinkEvidenceSchema } from "../../domain/links/managed-link-schema.ts";
 import { applyReconciliationPlan, syncResources } from "../../../test/support/reconciliation.ts";
@@ -403,5 +404,113 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
         ).toBe(true);
         expect((yield* readState(f.options)).data.projects?.[0]?.roots).toEqual([activeRoot]);
       }),
+  );
+
+  test.effect(
+    "links skills and commands into the OpenCode and Pi folders and disables each one alone",
+    () =>
+      Effect.gen(function* () {
+        const f = yield* fixture();
+        yield* enableAdapters(f.options, ["opencode", "pi"]);
+        const native = {
+          opencode: {
+            command: f.path.join(f.home, ".config", "opencode", "commands", "review.md"),
+            skill: f.path.join(f.home, ".config", "opencode", "skills", "review"),
+          },
+          pi: {
+            command: f.path.join(f.home, ".pi", "agent", "prompts", "review.md"),
+            skill: f.path.join(f.home, ".pi", "agent", "skills", "review"),
+          },
+        };
+        const entries = [native.opencode, native.pi].flatMap((paths) => [
+          { link: paths.command, source: f.path.join(f.source, "commands", "review.md") },
+          { link: paths.skill, source: f.path.join(f.source, "skills", "review") },
+        ]);
+
+        const preview = yield* f.reconcile(false);
+        expect(
+          preview.plan.units
+            .filter((unit) => unit.adapter === "opencode" || unit.adapter === "pi")
+            .flatMap((unit) => unit.actions)
+            .flatMap((action) => (action._tag === "link-create" ? [action.destinationPath] : []))
+            .sort(),
+        ).toEqual(entries.map((entry) => entry.link).sort());
+        expect(yield* f.fs.exists(f.path.join(f.home, ".config"))).toBe(false);
+        expect(yield* f.fs.exists(f.path.join(f.home, ".pi"))).toBe(false);
+
+        expect((yield* f.reconcile()).partial).toBe(false);
+        for (const entry of entries) {
+          expect(yield* f.fs.readLink(entry.link)).not.toMatch(/^\//);
+          expect(yield* f.fs.realPath(entry.link)).toBe(entry.source);
+        }
+        expect((yield* f.reconcile()).plan.units.flatMap((unit) => unit.actions)).toEqual([]);
+
+        yield* disableAdapter(f.options, "opencode", { apply: true });
+        expect(yield* f.fs.exists(native.opencode.command)).toBe(false);
+        expect(yield* f.fs.exists(native.opencode.skill)).toBe(false);
+        expect(yield* f.fs.exists(native.pi.command)).toBe(true);
+        expect(yield* f.fs.exists(native.pi.skill)).toBe(true);
+        expect(yield* f.fs.exists(f.command)).toBe(true);
+        expect((yield* readState(f.options)).data.enabledAdapters).toEqual([
+          "claude",
+          "codex",
+          "cursor",
+          "pi",
+        ]);
+      }),
+  );
+
+  test.effect("links skills and commands into the OpenCode and Pi folders of a project root", () =>
+    Effect.gen(function* () {
+      const f = yield* fixture();
+      const anchor = f.path.join(f.root, "git-common");
+      const projectRoot = f.path.join(f.root, "app");
+      for (const directory of [anchor, projectRoot]) yield* f.fs.makeDirectory(directory);
+      yield* mutateStateFixture(f.options, (state) => ({
+        ...state,
+        data: {
+          ...state.data,
+          projects: [{ name: "app", gitCommonDirectory: anchor, roots: [projectRoot] }],
+        },
+      }));
+      const git = Git.of({
+        resolveCommonDirectory: () => Effect.succeed(anchor),
+        listWorktrees: () => Effect.succeed([{ path: projectRoot, bare: false, detached: false }]),
+      });
+      // Out of the user's folders, so the project links both resources itself.
+      for (const kind of ["command", "skill"] as const)
+        yield* setSkillChoice(f.options, {
+          namespace: { _tag: "user" },
+          address: { kind, name: "review", sourceRegistrationId: f.sourceRegistrationId },
+          decision: "exclude",
+        });
+      for (const kind of ["command", "skill"] as const)
+        yield* setSkillChoice(f.options, {
+          namespace: { _tag: "project", projectName: "app" },
+          address: { kind, name: "review", sourceRegistrationId: f.sourceRegistrationId },
+          decision: "include",
+        });
+
+      const result = yield* syncResources(f.options, {
+        adapterOverride: ["opencode", "pi"],
+        apply: true,
+        cwd: projectRoot,
+        selector: { _tag: "project", projectName: "app" },
+        includeOptional: false,
+      }).pipe(Effect.provideService(Git, git));
+
+      expect(result.partial).toBe(false);
+      expect(result.plan.units.map((unit) => unit.adapter)).toEqual(["opencode", "pi"]);
+      const command = f.path.join(f.source, "commands", "review.md");
+      const skill = f.path.join(f.source, "skills", "review");
+      for (const [link, source] of [
+        [f.path.join(projectRoot, ".opencode", "commands", "review.md"), command],
+        [f.path.join(projectRoot, ".opencode", "skills", "review"), skill],
+        [f.path.join(projectRoot, ".pi", "prompts", "review.md"), command],
+        [f.path.join(projectRoot, ".pi", "skills", "review"), skill],
+      ] as const)
+        expect(yield* f.fs.realPath(link)).toBe(source);
+      expect(yield* f.fs.exists(f.path.join(projectRoot, ".cursor"))).toBe(false);
+    }),
   );
 });

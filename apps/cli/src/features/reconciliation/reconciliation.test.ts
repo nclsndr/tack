@@ -117,9 +117,13 @@ it.layer(LiveTestLayer)("reconciliation planning", (planningIt) => {
           path.join(project, ".claude", "skills"),
           path.join(project, ".agents", "skills"),
           path.join(project, ".cursor", "skills"),
+          path.join(project, ".opencode", "skills"),
+          path.join(project, ".pi", "skills"),
           path.join(home, ".claude", "skills"),
           path.join(home, ".agents", "skills"),
           path.join(home, ".cursor", "skills"),
+          path.join(home, ".config", "opencode", "skills"),
+          path.join(home, ".pi", "agent", "skills"),
         ];
         const skillsOnly = { command: "unsupported", skill: "delivered" } as const;
         const skillsAndCommands = { command: "delivered", skill: "delivered" } as const;
@@ -129,9 +133,13 @@ it.layer(LiveTestLayer)("reconciliation planning", (planningIt) => {
           [project, "claude", skillsOnly],
           [project, "codex", skillsOnly],
           [project, "cursor", skillsAndCommands],
+          [project, "opencode", skillsAndCommands],
+          [project, "pi", skillsAndCommands],
           [home, "claude", skillsOnly],
           [home, "codex", skillsOnly],
           [home, "cursor", skillsAndCommands],
+          [home, "opencode", skillsAndCommands],
+          [home, "pi", skillsAndCommands],
         ]);
         expect(plan.units.map((unit) => unit.actions[0])).toEqual(
           skillDirectories.map((directoryPath) => ({ _tag: "directory-create", directoryPath })),
@@ -143,14 +151,7 @@ it.layer(LiveTestLayer)("reconciliation planning", (planningIt) => {
               action._tag === "link-create" ? [action.relativeTarget] : [],
             ),
           ),
-        ).toEqual([
-          path.relative(path.join(project, ".claude", "skills"), source),
-          path.relative(path.join(project, ".agents", "skills"), source),
-          path.relative(path.join(project, ".cursor", "skills"), source),
-          path.relative(path.join(home, ".claude", "skills"), source),
-          path.relative(path.join(home, ".agents", "skills"), source),
-          path.relative(path.join(home, ".cursor", "skills"), source),
-        ]);
+        ).toEqual(skillDirectories.map((directory) => path.relative(directory, source)));
         expect(yield* fileSystem.readDirectory(root)).toEqual(before);
         for (const skillDirectory of skillDirectories) {
           expect(yield* fileSystem.exists(skillDirectory)).toBe(false);
@@ -1139,7 +1140,10 @@ it.layer(LiveTestLayer)("reconciliation planning", (planningIt) => {
             (unit) => unit.adapter === "cursor" && unit.target.canonicalPath === home,
           )?.conflicts,
         ).toMatchObject([{ _tag: "destination-directory-conflict" }]);
-        expect(forward.units.filter((unit) => unit.actions.length > 0)).toHaveLength(5);
+        // Every user and project unit plans its links except the one whose observation failed.
+        expect(forward.units.filter((unit) => unit.actions.length > 0)).toHaveLength(
+          agentAdapterDescriptors.length * targets.length - 1,
+        );
       }),
     ),
   );

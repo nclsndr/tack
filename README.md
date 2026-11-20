@@ -23,7 +23,8 @@
 ## Why Tack
 
 Every coding agent looks for your setup in its own place. Claude Code reads `.claude/skills`,
-Codex reads `.agents/skills`, and Cursor reads `.cursor/skills` and `.cursor/commands`. Each
+Codex reads `.agents/skills`, Cursor reads `.cursor/skills` and `.cursor/commands`, OpenCode reads
+`.opencode/skills` and `.opencode/commands`, and Pi reads `.pi/skills` and `.pi/prompts`. Each
 project keeps its own copy, and each worktree keeps another. Docs and scripts end up pasted
 wherever they were last needed. You fix one copy, and the others drift. When you try a new agent,
 you start again.
@@ -35,7 +36,7 @@ Tack keeps one copy of your setup, the one you maintain, and links it everywhere
 | You write | What your agents get                                                                                                        |
 | --------- | --------------------------------------------------------------------------------------------------------------------------- |
 | Skills    | A link in each agent's skills folder, for you across every project or for one project.                                      |
-| Commands  | A link in Cursor's commands folder.                                                                                         |
+| Commands  | A link in the commands folder of Cursor and OpenCode, and in Pi's prompts folder.                                           |
 | Context   | One shared place for the rules and notes your agents follow. Tack catalogues it; no agent receives it yet.                  |
 | Docs      | A mount at `.tack/docs` in every worktree, a local browser reader and `tack docs search`.                                   |
 | Scripts   | `tack script run NAME` in any registered project, with only the secrets the script declares and a run history.              |
@@ -45,8 +46,9 @@ Tack keeps one copy of your setup, the one you maintain, and links it everywhere
 
 - **Your setup stays yours.** It stays in your folders, under your version control. Agents get
   symbolic links, never copies. Tack records each link it creates and removes only those.
-- **Every agent, every project, every worktree.** One source reaches Claude Code, Codex and Cursor,
-  for you and in each registered project, and Tack links each worktree of a project too.
+- **Every agent, every project, every worktree.** One source reaches Claude Code, Codex, Cursor,
+  OpenCode and Pi, for you and in each registered project, and Tack links each worktree of a
+  project too.
 - **Preview first.** `tack sync` shows the plan. Nothing changes until you add `--apply`.
 - **One setup for the whole team.** Keep the setup in one Git repository. Each teammate clones it,
   adds it with `tack source add` and links it into the agent they use.
