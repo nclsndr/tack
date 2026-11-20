@@ -160,6 +160,29 @@ describe("help view", () => {
     expect(flat(text)).toContain("<names>... (optional)");
     expect(flat(text)).toContain("tack pick include review --user Include it for you.");
   });
+
+  it("points the adapter group at the help of both enable and disable", () => {
+    const result = Schema.decodeUnknownSync(HelpPayloadSchema)(
+      humanFixture("help-choice-set").result,
+    );
+    const text = renderHelp(
+      envelopeOf({
+        command: "help",
+        result: {
+          ...result,
+          commandPath: ["adapter"],
+          subcommands: [
+            { name: "enable", description: "Enable adapters", executable: true },
+            { name: "disable", description: "Disable an adapter", executable: true },
+          ],
+        },
+      }),
+      plainStyle,
+    );
+    expect(text?.split("Next\n")[1]).toBe(
+      "  tack adapter enable --help\n  tack adapter disable --help\n",
+    );
+  });
 });
 
 describe("docs icons view", () => {
