@@ -91,38 +91,87 @@
 /* Header */
 
 /* Sticky at the top, like the docs navigation: above the page's pinned frames, below the skip link.
-   Its ground lets the blueprint show through, blurred, so text scrolling under it never reads
-   through it; a hairline appears under it once the page scrolls. */
+   At the top of the page the header sits flush on the hero. Once the page scrolls, a card pops out
+   from the top behind it and floats over the content: inset from the edges, rounded, on a blurred
+   ground so text scrolling under it never reads through, with a soft shadow. Only the header's own
+   links take clicks; the rest of its strip lets them through to the page. */
 .landing-header {
+  --landing-card-inset: 8px;
+  --landing-card-bleed: 10px;
+
   position: sticky;
   top: 0;
   z-index: 60;
-  border-bottom: 1px solid transparent;
-  background: color-mix(in srgb, var(--tack-bg) 82%, transparent);
-  -webkit-backdrop-filter: blur(16px) saturate(1.4);
-  backdrop-filter: blur(16px) saturate(1.4);
+  pointer-events: none;
 }
 
-@supports (animation-timeline: scroll()) {
+@media (min-width: 640px) {
   .landing-header {
-    animation: landing-header-rule linear both;
+    --landing-card-bleed: 16px;
+  }
+}
+
+.landing-header-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  height: var(--landing-header-height);
+  pointer-events: auto;
+}
+
+/* The card: a layer behind the bar's content, so the content never moves as it pops out. It
+   reaches past the content by `--landing-card-bleed` on each side and stops `--landing-card-inset`
+   short of the header's top and bottom. */
+.landing-header-bar::before {
+  position: absolute;
+  z-index: -1;
+  inset: var(--landing-card-inset) calc(-1 * var(--landing-card-bleed));
+  border: 1px solid color-mix(in srgb, var(--tack-border-strong) 70%, transparent);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--tack-surface) 78%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.05),
+    0 2px 6px -2px rgb(1 10 20 / 0.35),
+    0 16px 36px -16px rgb(1 10 20 / 0.7);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.4);
+  content: "";
+  pointer-events: none;
+}
+
+/* Where scroll timelines run, the card pops out over the first stretch of scroll: it drops from
+   the top and settles into place. Elsewhere it simply floats from the start. */
+@supports (animation-timeline: scroll()) {
+  .landing-header-bar::before {
+    animation: landing-header-card linear both;
     animation-timeline: scroll(root);
     animation-range: 0 var(--landing-header-height);
   }
 }
 
-@keyframes landing-header-rule {
+@keyframes landing-header-card {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.98);
+  }
+
   to {
-    border-bottom-color: var(--tack-border);
+    opacity: 1;
+    transform: none;
   }
 }
 
-.landing-header-bar {
-  display: flex;
-  align-items: center;
-  gap: 32px;
-  box-sizing: border-box;
-  height: calc(var(--landing-header-height) - 1px);
+@media (prefers-reduced-motion: reduce) {
+  @keyframes landing-header-card {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
 }
 
 /* In-page jumps, and the skip link, land below the header. */
