@@ -1,6 +1,10 @@
 /* The landing page, always on the dark token set (see `.tack-theme-dark` in tokens.css). */
 
 .landing {
+  /* The header's height. It stays at the top of the screen, so the pinned frames hold below it and
+     in-page jumps land below it. */
+  --landing-header-height: 80px;
+
   min-height: 100vh;
   background: var(--tack-bg);
   color: var(--tack-text);
@@ -69,7 +73,7 @@
 .landing-skip:focus {
   left: 16px;
   top: 16px;
-  z-index: 10;
+  z-index: 70;
   padding: 8px 12px;
   background: var(--tack-surface);
 }
@@ -86,11 +90,44 @@
 
 /* Header */
 
+/* Sticky at the top, like the docs navigation: above the page's pinned frames, below the skip link.
+   Its ground lets the blueprint show through, blurred, so text scrolling under it never reads
+   through it; a hairline appears under it once the page scrolls. */
 .landing-header {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  border-bottom: 1px solid transparent;
+  background: color-mix(in srgb, var(--tack-bg) 82%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.4);
+}
+
+@supports (animation-timeline: scroll()) {
+  .landing-header {
+    animation: landing-header-rule linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 var(--landing-header-height);
+  }
+}
+
+@keyframes landing-header-rule {
+  to {
+    border-bottom-color: var(--tack-border);
+  }
+}
+
+.landing-header-bar {
   display: flex;
   align-items: center;
   gap: 32px;
-  padding-block: 20px;
+  box-sizing: border-box;
+  height: calc(var(--landing-header-height) - 1px);
+}
+
+/* In-page jumps, and the skip link, land below the header. */
+.landing [id] {
+  scroll-margin-top: var(--landing-header-height);
 }
 
 .landing-wordmark {
@@ -121,7 +158,7 @@
   color: var(--tack-muted);
 }
 
-.landing-header > .landing-button {
+.landing-header-bar > .landing-button {
   margin-inline-start: auto;
 }
 
@@ -130,7 +167,7 @@
     display: flex;
   }
 
-  .landing-header > .landing-button {
+  .landing-header-bar > .landing-button {
     margin-inline-start: 0;
   }
 }
@@ -362,9 +399,9 @@
 /* The hero, on a blueprint sheet: copy, then the demo window as the step into the rest of the page.
    The intro that brings each part in lives in `components/landing/hero-intro.tsx`. */
 /* The hero holds the screen for `--hero-travel` of scroll, then lets go. At rest, the copy and the
-   window sit at the top with `--hero-gap` above and between them; the page opens with both lower,
-   from transforms the hero sets (`components/landing/hero-intro.tsx`). The hero starts under the
-   80px header, so it holds from the first scrolled pixel while the header scrolls away. */
+   window sit under the header with `--hero-gap` above and between them; the page opens with both
+   lower, from transforms the hero sets (`components/landing/hero-intro.tsx`). The hero starts
+   behind the sticky header, so it holds from the first scrolled pixel. */
 .landing-hero {
   --hero-gap: clamp(32px, 5svh, 56px);
   --hero-travel: 480px;
@@ -373,17 +410,13 @@
   /* `clip`, not `hidden`: a hidden overflow makes the hero a scroll container, and the pin's view
      timeline would then measure the hero instead of the viewport. */
   overflow: clip;
-  margin-top: -80px;
+  margin-top: calc(-1 * var(--landing-header-height));
   padding-bottom: clamp(48px, 7vw, 96px);
 }
 
-.landing-header {
-  position: relative;
-  z-index: 2;
-}
-
-/* The docs keep room at the top for their fixed navbar; the landing has none. Without this, every
-   view timeline on the page would measure 64px short of the top. */
+/* The docs keep room at the top for their navbar with `scroll-padding-top`; the landing keeps it
+   with `scroll-margin-top` on its targets instead. A scroll padding would make every view timeline
+   on the page measure from below the header. */
 html:has(.landing) {
   scroll-padding-top: 0;
 }
@@ -401,7 +434,7 @@ html:has(.landing) {
   top: 0;
   height: 100vh;
   height: 100svh;
-  padding-top: var(--hero-gap);
+  padding-top: calc(var(--landing-header-height) + var(--hero-gap));
 }
 
 .hero-pin .demo {
@@ -674,7 +707,6 @@ html:has(.landing) {
   .hero-pin {
     position: relative;
     height: auto;
-    padding-top: calc(80px + var(--hero-gap));
   }
 }
 

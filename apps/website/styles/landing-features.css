@@ -109,12 +109,13 @@
   height: 340vh;
 }
 
+/* Pinned frames hold below the sticky header. */
 .story-sticky {
   position: sticky;
-  top: 0;
+  top: var(--landing-header-height);
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: calc(100vh - var(--landing-header-height));
   min-height: 640px;
   padding-top: clamp(32px, 6vh, 64px);
   overflow: hidden;
@@ -123,7 +124,7 @@
 .story-figure {
   position: relative;
   flex: none;
-  width: min(100%, calc((100vh - 280px) * 2.334));
+  width: min(100%, calc((100vh - var(--landing-header-height) - 280px) * 2.334));
   min-width: min(100%, 720px);
   margin: auto;
   aspect-ratio: 1916 / 821;
@@ -360,10 +361,10 @@
 
   .agents-pin {
     position: sticky;
-    top: 0;
+    top: var(--landing-header-height);
     display: flex;
     align-items: center;
-    height: 100vh;
+    height: calc(100vh - var(--landing-header-height));
   }
 
   .agents-pin > .agents-grid {

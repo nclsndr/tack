@@ -110,21 +110,24 @@ function Tabs({
   );
 }
 
+/** The header stays at the top of the screen as the page scrolls, as the docs navigation does. */
 function Header() {
   return (
-    <header className="landing-header landing-shell">
-      <a href="/" className="landing-wordmark" aria-label="Tack home">
-        <Mark className="landing-mark" />
-        <span>tack</span>
-      </a>
-      <nav aria-label="Main" className="landing-nav">
-        <a href="#demo">Demo</a>
-        <a href="#features">Features</a>
-        <a href={docsHref}>Docs</a>
-      </nav>
-      <a href="#get-started" className="landing-button landing-button-primary">
-        Get started
-      </a>
+    <header className="landing-header">
+      <div className="landing-header-bar landing-shell">
+        <a href="/" className="landing-wordmark" aria-label="Tack home">
+          <Mark className="landing-mark" />
+          <span>tack</span>
+        </a>
+        <nav aria-label="Main" className="landing-nav">
+          <a href="#demo">Demo</a>
+          <a href="#features">Features</a>
+          <a href={docsHref}>Docs</a>
+        </nav>
+        <a href="#get-started" className="landing-button landing-button-primary">
+          Get started
+        </a>
+      </div>
     </header>
   );
 }

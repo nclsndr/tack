@@ -38,44 +38,40 @@ describe("hero scroll", () => {
 });
 
 describe("pin start", () => {
-  /** A laptop screen: the copy and the window at rest 48px apart, 48px below the top. */
+  /**
+   * A laptop screen under an 80px header that stays at the top: the copy and the window at rest
+   * 48px apart, 48px below the header.
+   */
   const laptop = {
     viewport: 900,
     header: 80,
-    copyTop: 48,
+    copyTop: 128,
     copyHeight: 280,
-    windowTop: 376,
-    windowHeight: 640,
-    travel: 480,
+    windowTop: 456,
+    windowHeight: 520,
   };
 
-  /** Where the copy and the window sit on screen at `progress` through the pin, and the header's bottom. */
+  /** Where the copy and the window sit on screen at `progress` through the pin. */
   const at = (layout: typeof laptop, progress: number) => {
     const start = pinStart(layout);
-    const [first, then] = start.copy;
-    const copyShift =
-      progress <= start.headerGone
-        ? first + ((then - first) * progress) / start.headerGone
-        : then * ((1 - progress) / (1 - start.headerGone));
     return {
-      header: Math.max(0, layout.header - layout.travel * progress),
-      copyTop: layout.copyTop + copyShift,
+      copyTop: layout.copyTop + start.copy * (1 - progress),
       windowTop: layout.windowTop + start.window * (1 - progress),
     };
   };
 
   it("centres the copy between the header and a strip of the window", () => {
     const opening = at(laptop, 0);
-    expect(opening.copyTop - opening.header).toBeCloseTo(
+    expect(opening.copyTop - laptop.header).toBeCloseTo(
       opening.windowTop - (opening.copyTop + laptop.copyHeight),
     );
     expect(laptop.viewport - opening.windowTop).toBeCloseTo(126);
   });
 
-  it("keeps the room above the copy equal to the room below it at every point of the pin", () => {
+  it("keeps the room under the header equal to the room below the copy at every point of the pin", () => {
     for (const progress of [0, 0.05, 1 / 6, 0.3, 0.5, 0.8, 1]) {
       const place = at(laptop, progress);
-      expect(place.copyTop - place.header).toBeCloseTo(
+      expect(place.copyTop - laptop.header).toBeCloseTo(
         place.windowTop - (place.copyTop + laptop.copyHeight),
       );
     }
@@ -88,34 +84,31 @@ describe("pin start", () => {
   });
 
   it("keeps the strip of the window between its bounds", () => {
-    const brief = { ...laptop, copyHeight: 120, windowTop: 216 };
+    const brief = { ...laptop, copyHeight: 120, windowTop: 296 };
     const short = pinStart({ ...brief, viewport: 500 });
     const tall = pinStart({ ...laptop, viewport: 1400 });
     expect(500 - (brief.windowTop + short.window)).toBe(88);
     expect(1400 - (laptop.windowTop + tall.window)).toBe(150);
   });
 
-  it("puts a copy too tall to centre just under the header, with the window right below it", () => {
-    const phone = { ...laptop, viewport: 844, copyHeight: 640, windowTop: 736 };
+  /** A phone screen whose copy is too tall to centre above a strip of the window. */
+  const phone = { ...laptop, viewport: 844, copyHeight: 640, windowTop: 816 };
+
+  it("keeps a copy too tall to centre at its place under the header, with the window right below it", () => {
     const opening = at(phone, 0);
-    expect(opening.copyTop).toBe(phone.header + 16);
-    expect(opening.windowTop).toBe(phone.header + 16 + 640 + 48);
+    expect(opening.copyTop).toBe(phone.copyTop);
+    expect(opening.windowTop).toBe(phone.copyTop + 640 + 48);
   });
 
   it("never moves the copy down on its way up", () => {
-    const phone = { ...laptop, viewport: 844, copyHeight: 640, windowTop: 736 };
     for (const layout of [laptop, phone]) {
       const steps = [0, 0.1, 1 / 6, 0.4, 0.7, 1].map((progress) => at(layout, progress).copyTop);
       steps.slice(1).forEach((top, index) => expect(top).toBeLessThanOrEqual(steps[index] ?? 0));
     }
   });
 
-  it("takes the header's departure to the end of a pin shorter than the header", () => {
-    expect(pinStart({ ...laptop, travel: 40 }).headerGone).toBe(1);
-  });
-
   it("leaves room after the hero for the part of the window below the screen", () => {
-    expect(pinStart(laptop).overflow).toBe(116);
+    expect(pinStart(laptop).overflow).toBe(76);
     expect(pinStart({ ...laptop, windowHeight: 400 }).overflow).toBe(0);
   });
 });
