@@ -9,7 +9,7 @@ export default defineConfig({
   outDir: local("./dist"),
   title: "Tack",
   description:
-    "Tack links the skills, commands and docs you maintain into Claude Code, Codex and Cursor.",
+    "Tack links the skills, commands and docs you maintain wherever your coding agents look.",
   icon: "/favicon.svg",
   logo: "/favicon.svg",
   logoText: "tack",

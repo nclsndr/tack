@@ -11,8 +11,7 @@
 
 <p align="center">
   Write your agent setup once, in a folder you own or share: skills, commands, context, docs and
-  scripts. Tack brings it to Claude Code, Codex and Cursor, for you and for every project and
-  worktree.
+  scripts. Tack links it wherever your agents look, for you and for every project and worktree.
 </p>
 
 <p align="center">

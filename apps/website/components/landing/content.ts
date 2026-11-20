@@ -5,8 +5,7 @@
 /** Hero copy. */
 export const hero = {
   headline: "One setup. Every coding agent.",
-  subhead:
-    "Write a skill once. Tack links it into Claude Code, Codex and Cursor, in every project.",
+  subhead: "Write a skill once. Tack links it wherever your agents look, in every project.",
 } as const;
 
 /**
@@ -19,7 +18,7 @@ export const hero = {
 export const story = {
   heading: "Tack is the gear, not the horse.",
   intro:
-    "Claude Code, Codex or Cursor does the running. Tack fits your skills onto whichever you ride, and takes them off clean.",
+    "Your coding agent does the running. Tack fits your skills onto whichever you ride, and takes them off clean.",
   beats: [
     {
       id: "sources",
@@ -32,7 +31,7 @@ export const story = {
     {
       id: "fit",
       title: "Fit every agent.",
-      text: "Tack links your skills into Claude Code, Codex and Cursor. Linked, never copied: edit a skill once and all three see it.",
+      text: "Tack links your skills into each agent you use. Linked, never copied: edit a skill once and every agent sees it.",
       proof: ".claude/skills/review → ~/skills/review",
       region: { left: 44.6, top: 29, width: 11.4, height: 31 },
       caption: { left: 58, top: 46 },
