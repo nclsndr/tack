@@ -144,7 +144,7 @@ const headerFallback =
  * behind it. It is the site header on the landing and on the features page, so its links name
  * their page and work from either one; on the landing they only scroll.
  */
-export function Header() {
+export function Header({ current }: { readonly current?: "features" }) {
   const marker = useRef<HTMLSpanElement>(null);
   const floating = useScrolledPast(marker);
   return (
@@ -161,7 +161,9 @@ export function Header() {
           </a>
           <nav aria-label="Main" className="landing-nav">
             <a href="/#demo">Demo</a>
-            <a href={featuresHref}>Features</a>
+            <a href={featuresHref} aria-current={current === "features" ? "page" : undefined}>
+              Features
+            </a>
             <a href={docsHref}>Docs</a>
           </nav>
           <a href={getStartedHref} className="landing-button landing-button-primary">

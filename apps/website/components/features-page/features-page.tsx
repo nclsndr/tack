@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 import { DraftingSheet, InView, settle } from "../landing/drafting-sheet.tsx";
 import { InlineCode, Proof } from "../landing/inline-code.tsx";
+import { Terminal } from "../terminal.tsx";
 import { docsHref, Footer, getStartedHref, Header } from "../landing/landing.tsx";
 import {
   groundRules,
@@ -8,6 +9,7 @@ import {
   keyDetails,
   lenses,
   outro,
+  previewFigure,
   type Detail,
   type Lens,
 } from "./content.ts";
@@ -59,10 +61,7 @@ function PageHead() {
                 <span className="fp-step">{step(index)}</span>
                 <span className="fp-index-name">{lens.name}</span>
               </span>
-              <span className="fp-index-when">
-                <span className="fp-visually-hidden">{intro.indexWhen}: </span>
-                {lens.when}
-              </span>
+              <span className="fp-index-when">{lens.when}</span>
             </motion.a>
           ))}
         </InView>
@@ -171,13 +170,23 @@ function GroundRules() {
   return (
     <section className="fp-rules" aria-labelledby="rules-title">
       <div className="landing-shell">
-        <InView className="fp-rules-head">
-          <motion.p className="landing-label" data-intro="" variants={settle(0, 8)}>
-            {groundRules.label}
-          </motion.p>
-          <motion.h2 id="rules-title" data-intro="" variants={settle(0.06, 16)}>
-            {groundRules.heading}
-          </motion.h2>
+        <InView className="fp-rules-head" amount={0.2}>
+          <div>
+            <motion.p className="landing-label" data-intro="" variants={settle(0, 8)}>
+              {groundRules.label}
+            </motion.p>
+            <motion.h2 id="rules-title" data-intro="" variants={settle(0.06, 16)}>
+              {groundRules.heading}
+            </motion.h2>
+          </div>
+          <motion.div className="fp-preview" data-intro="" variants={settle(0.16, 16)}>
+            <Terminal
+              commands={[previewFigure.command]}
+              output={previewFigure.output}
+              title="~/code/app"
+            />
+            <p className="fp-preview-caption">{previewFigure.caption}</p>
+          </motion.div>
         </InView>
         <InView as="div" className="fp-details-frame" amount={0.15}>
           <DetailList details={groundRules.rules} />
@@ -238,6 +247,13 @@ ${lenses.map(lensText).join("\n\n")}
 
 ## ${groundRules.label}: ${groundRules.heading}
 
+${previewFigure.caption}
+
+\`\`\`text
+$ ${previewFigure.command}
+${previewFigure.output}
+\`\`\`
+
 ${groundRules.rules.map(item).join("\n")}
 
 ### ${groundRules.limitsHeading}
@@ -260,7 +276,7 @@ export function FeaturesPage() {
       <a href="#main" className="landing-skip">
         Skip to content
       </a>
-      <Header />
+      <Header current="features" />
       <main id="main">
         <DraftingSheet>
           <PageHead />

@@ -39,7 +39,6 @@ export const intro = {
   tagline: "Write a skill once. Tack links it wherever your agents look, in every project.",
   facts: ["Local CLI", "No account, no telemetry", "Open source, MIT"],
   indexLabel: "Jump to",
-  indexWhen: "For when",
 } as const;
 
 /** One source with one of each kind, as the README's example shows it. */
@@ -65,7 +64,7 @@ export const agentsFigure = {
     { path: ".opencode/skills/review", agent: "OpenCode" },
     { path: ".pi/skills/review", agent: "Pi" },
   ],
-  commandsLabel: "and the command ~/agent-setup/commands/ship.md",
+  commandsLabel: "and the command ship.md, for the agents that take commands",
   commands: [
     { path: ".cursor/commands/ship.md", agent: "Cursor" },
     { path: ".opencode/commands/ship.md", agent: "OpenCode" },
@@ -76,24 +75,25 @@ export const agentsFigure = {
 /** One project, its worktrees, and the same link in each. */
 export const projectFigure = {
   project: "project app · picks review",
+  link: ".claude/skills/review",
   worktrees: [
-    { root: "~/code/app", link: ".claude/skills/review" },
-    { root: "~/code/app-hotfix", link: ".claude/skills/review" },
-    { root: "~/code/app-spike", link: ".claude/skills/review" },
+    { root: "~/code/app", note: "main worktree" },
+    { root: "~/code/app-hotfix", note: "worktree" },
+    { root: "~/code/app-spike", note: "worktree" },
   ],
 } as const;
 
-/** A script, as the built-in scripts reference writes one, shortened. */
+/** A script, as the built-in scripts reference writes one, shortened to fit a phone. */
 export const scriptFigure = {
   file: "~/agent-setup/scripts/report.ts",
   code: [
-    "// Tack provides @tackup/cli when it runs the script.",
+    "// Tack provides this import at run time.",
     'import { defineScript } from "@tackup/cli";',
     "",
     "export default defineScript({",
     '  args: { repo: { type: "string" } },',
     '  secrets: ["GITHUB_TOKEN"],',
-    "  run: async ({ args, secrets, exec, log }) => {",
+    "  run: async ({ args, secrets, exec }) => {",
     "    // …",
     "  },",
     "});",
@@ -106,11 +106,36 @@ export const profileFigure = {
     { what: "~/agent-setup/profiles/reviewer.yaml", how: "reviewed like any change" },
     { what: "reviewer.tar.gz", how: "one file, with checksums", command: "tack profile export" },
     {
-      what: "~/app on a CI runner",
+      what: "~/ci/app on a CI runner",
       how: "no source, no fetch",
       command: "tack profile apply-bundle",
     },
   ],
+} as const;
+
+/**
+ * A real sync preview, from the CLI in a throwaway home where Claude Code and Codex were found:
+ * one source with the skill `review`, and the project `app`.
+ */
+export const previewFigure = {
+  command: "tack sync --project app",
+  output: `tack sync · project app · ✓ success
+
+Nothing was written. 2 changes planned.
+
+claude → app · 1 to link
+  create  .claude/skills/        directory
+  create  .claude/skills/review  skill review
+
+codex → app · 1 to link
+  create  .agents/skills/        directory
+  create  .agents/skills/review  skill review
+
+Preview only: nothing was written. There are no docs links to reconcile.
+
+Next
+  tack sync --project app --apply`,
+  caption: "A real preview, on a machine with Claude Code and Codex.",
 } as const;
 
 /** The docs part's figure: the reader, as the landing page shows it. */
@@ -148,7 +173,7 @@ export const lenses = [
       },
       {
         title: "Skills that need other skills.",
-        text: "A skill can declare the skills and commands it depends on, in its own source or one it names. Selecting it brings them along.",
+        text: "A skill can declare the skills and commands it depends on, in its own source or in a source its source depends on. Selecting it brings them along.",
       },
       {
         title: "Context is catalogued, not delivered.",
@@ -182,14 +207,18 @@ export const lenses = [
         command: "tack adapter enable opencode pi",
       },
       {
-        title: "Turn an agent off cleanly.",
-        text: "Disabling an agent previews removing its links. Tack removes only the links it made.",
-        command: "tack adapter disable cursor",
+        title: "Commands where agents read them.",
+        text: "Cursor, OpenCode and Pi also get your commands, as the same Markdown file; Pi calls them prompt templates. Claude Code and Codex get skills only.",
       },
       {
         title: "Your agent can run Tack.",
-        text: "Every enabled agent gets Tack's built-in skills, `use-tack` among them, and `tack guide onboarding` prints setup steps for an agent to follow.",
+        text: "After `tack init`, every enabled agent has Tack's built-in skills, `use-tack` among them, and `tack guide onboarding` prints setup steps for an agent to follow.",
         command: "tack guide onboarding",
+      },
+      {
+        title: "Turn an agent off cleanly.",
+        text: "Disabling an agent previews removing its links. Tack removes only the links it made.",
+        command: "tack adapter disable cursor",
       },
       {
         title: "Finds the agents you have.",
@@ -199,10 +228,6 @@ export const lenses = [
         title: "For you, or for one project.",
         text: "Link a skill at user level and every project sees it, or link it into one project's own agent folders.",
         command: "tack sync --user --apply",
-      },
-      {
-        title: "Commands where agents read them.",
-        text: "Cursor, OpenCode and Pi also get your commands, as the same Markdown file; Pi calls them prompt templates. Claude Code and Codex get skills.",
       },
     ],
   },
@@ -338,7 +363,7 @@ export const lenses = [
     claim: "The exact same set, for a teammate, a CI runner or a remote agent.",
     lines: [
       "A profile is a file in your source that lists the exact resources a project gets. You review it like any other change.",
-      "Apply it to a project, or pack it into one file that sets up a machine without the source.",
+      "Apply it to a teammate's project so everyone gets the same skills, or pack it into one file that sets up a machine without the source.",
     ],
     proof: "tack profile export agent-setup:reviewer reviewer.tar.gz",
     details: [
@@ -349,7 +374,7 @@ export const lenses = [
       },
       {
         title: "A fixed set.",
-        text: "`tack profile apply` gives a project exactly the profile's list, at every root you name. Ordinary picks cannot change it.",
+        text: "`tack profile apply` gives a project exactly the profile's list; you name every one of its roots. Ordinary picks cannot change it.",
         command: "tack profile apply agent-setup:reviewer --project ci --target-root ~/ci/app",
       },
       {
@@ -384,7 +409,7 @@ export const groundRules = {
   rules: [
     {
       title: "Preview first.",
-      text: "Commands that change links print their plan first, and `--apply` writes it. Picks and registrations save at once and link nothing; only `tack init` links at once, to set Tack up.",
+      text: "Commands that change links print their plan first; `--apply`, or your yes in `tack explore`, writes it. Picks, registrations and settings save at once and link nothing. Only `tack init` links at once, to set Tack up.",
       command: "tack sync --all",
     },
     {
@@ -426,7 +451,7 @@ export const groundRules = {
     },
     {
       title: "Host anything.",
-      text: "No server and no account: the reader runs on your machine.",
+      text: "No hosted service and no account: the docs reader runs on your machine.",
     },
   ],
 } as const satisfies {
@@ -439,8 +464,8 @@ export const groundRules = {
 
 /** The page's close. */
 export const outro = {
-  heading: "Start with one prompt.",
-  text: "The home page has the prompt that has your coding agent set Tack up with you, and the commands to do it yourself.",
+  heading: "Set Tack up from the home page.",
+  text: "It has the prompt for your coding agent and the commands to run yourself.",
   start: "Get started",
   docs: "Read the docs",
 } as const;

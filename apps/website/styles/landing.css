@@ -219,6 +219,11 @@
   color: var(--tack-muted);
 }
 
+/* The page the visitor is on, in the header's heading colour. */
+.landing-nav a[aria-current="page"] {
+  color: var(--tack-heading);
+}
+
 /* The header button sets the card's size and corners, so it holds exactly the height the card
    wraps; it keeps the shared button radius. */
 .landing-header-bar > .landing-button {
