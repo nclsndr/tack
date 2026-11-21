@@ -1,0 +1,292 @@
+/* The features page (`components/features-page/`): the landing's sheet, type and link figures,
+   laid out one lens at a time. It adds layout only; colours, type and figures come from the
+   landing's styles and the brand tokens. */
+
+/* The head: the heading and the tagline, then an index of the lenses. */
+.fp-head {
+  padding-block: clamp(48px, 8vw, 96px) clamp(48px, 7vw, 80px);
+}
+
+.landing .fp-head h1 {
+  max-width: 18ch;
+  font-size: clamp(40px, 5.2vw, 68px);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.fp-head .landing-lead {
+  max-width: 30em;
+}
+
+/* The index: one tile per lens, numbered as views on a drafting sheet. */
+.fp-index {
+  display: grid;
+  gap: 1px;
+  margin-top: clamp(40px, 6vw, 64px);
+  border: 1px solid var(--tack-border);
+  border-radius: var(--tack-radius-sm);
+  background: var(--tack-border);
+  overflow: hidden;
+}
+
+.landing a.fp-index-item {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 18px 20px 20px;
+  background: rgb(3 27 49 / 0.92);
+  color: var(--tack-text);
+  transition: background var(--tack-duration-fast) var(--tack-ease);
+}
+
+.landing a.fp-index-item:hover {
+  background: var(--tack-surface);
+  color: var(--tack-text);
+}
+
+.fp-index-name {
+  color: var(--tack-heading);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.fp-index-claim {
+  color: var(--tack-muted);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+@media (min-width: 640px) {
+  .fp-index {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .fp-index {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* A lens's number, in the story captions' brass monospace. */
+.fp-step {
+  color: var(--tack-accent);
+  font-family: var(--tack-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+}
+
+/* A lens: the words and the figure side by side, then its features under a rule. */
+.fp-lens {
+  padding-block: clamp(64px, 9vw, 112px);
+  scroll-margin-top: var(--landing-header-height, 0px);
+}
+
+.fp-lens-grid {
+  display: grid;
+  gap: 40px;
+  align-items: center;
+}
+
+.fp-lens-words {
+  display: grid;
+  justify-items: start;
+}
+
+.fp-lens-label {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 16px !important;
+  color: var(--tack-agent);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.landing .fp-lens h2 {
+  max-width: 18ch;
+  font-size: clamp(30px, 3.2vw, 44px);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.fp-lens-line {
+  max-width: 34em;
+  margin-top: 16px !important;
+  color: var(--tack-muted);
+  font-size: 17px;
+}
+
+.fp-lens-words .fp-proof {
+  margin-top: 24px;
+}
+
+.fp-lens-figure {
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .fp-lens-grid {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: 64px;
+  }
+
+  /* Every other lens puts its figure first, so the page keeps a rhythm. */
+  .fp-lens-words[data-side="end"] {
+    order: 2;
+  }
+}
+
+/* The link figures, at the page's width: the landing's, with room for longer rows. */
+.fp-links .links-row code,
+.fp-steps code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The landing draws its spine as the sync plays; here it is drawn at rest. */
+.fp-spine {
+  transform: none;
+}
+
+.fp-root {
+  color: var(--tack-faint);
+}
+
+.fp-step-text {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.fp-step-how {
+  color: var(--tack-faint);
+  font-size: 12px;
+}
+
+.fp-steps .links-row {
+  align-items: start;
+}
+
+.fp-steps .links-row::before,
+.fp-steps .links-mark {
+  margin-top: 6px;
+}
+
+.fp-steps .links-row::before {
+  top: 0;
+}
+
+.fp-steps ol {
+  gap: 18px;
+}
+
+/* The script figure: the source file, then its code on the figure's dark ground. */
+.fp-code pre {
+  margin: 14px 0 0;
+  padding: 0;
+  overflow-x: auto;
+  background: transparent;
+  color: var(--tack-text);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre;
+}
+
+/* The reader, framed with the landing's drafting marks. */
+.fp-shot {
+  position: relative;
+  margin: 14px;
+}
+
+.fp-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--tack-border-strong);
+  border-radius: var(--tack-radius-md);
+  box-shadow: 0 32px 64px -32px rgb(1 10 20 / 0.9);
+}
+
+/* The features under a lens: a quiet grid, ruled off the sheet, as the landing's "Also" row. */
+.fp-details-frame {
+  margin-top: clamp(40px, 6vw, 64px);
+  padding-top: 32px;
+  border-top: 1px solid var(--tack-border-strong);
+}
+
+.fp-details {
+  display: grid;
+  gap: 32px 40px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fp-detail {
+  display: grid;
+  justify-items: start;
+  align-content: start;
+  gap: 8px;
+}
+
+.landing .fp-detail h3 {
+  color: var(--tack-heading);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.fp-detail p {
+  color: var(--tack-muted);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.fp-detail .proof {
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+/* A proof wraps at its spaces, as the story captions' do, so a flag never breaks in two. */
+.fp .proof {
+  overflow-wrap: break-word;
+}
+
+.fp code:not(.proof, pre code, .links-figure code) {
+  color: var(--tack-agent);
+  font-family: var(--tack-font-mono);
+  font-size: 0.86em;
+}
+
+@media (min-width: 720px) {
+  .fp-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .fp-details {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Under every lens: the ground rules, after the last lens. */
+.fp-rules {
+  padding-block: clamp(64px, 9vw, 112px) clamp(96px, 12vw, 160px);
+}
+
+.fp-rules-head h2 {
+  max-width: 20ch;
+}
+
+.fp-outro-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+}
