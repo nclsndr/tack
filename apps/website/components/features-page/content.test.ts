@@ -12,7 +12,7 @@ const commands = [
     ...lens.details.flatMap((detail) => ("command" in detail ? [detail.command] : [])),
   ]),
   ...groundRules.rules.flatMap((rule) => ("command" in rule ? [rule.command] : [])),
-  ...profileFigure.steps.map((step) => step.how),
+  ...profileFigure.steps.flatMap((step) => ("command" in step ? [step.command] : [])),
 ];
 
 /** The words of a command before `--`, where a script's own arguments start. */

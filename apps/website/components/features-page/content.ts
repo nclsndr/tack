@@ -1,34 +1,45 @@
 /**
- * Features page copy: every Tack feature, grouped by the lens a visitor cares about. Each lens has
- * a claim, plain lines, one command as its proof, a small figure, and the details under it. Text in
- * `backticks` shows as inline code. Every `command` and `proof` that starts with `tack ` is a real
- * command path whose flags exist (`content.test.ts` runs each one's help). Commands reach Cursor,
- * OpenCode and Pi only, and context reaches no agent, so no line here says otherwise.
+ * Features page copy: every Tack feature, in six parts a visitor cares about. Each part has a
+ * claim, the situation it serves, plain lines, one command as its proof, a small figure, and its
+ * features: the first three in view, the rest behind "More". Text in `backticks` shows as inline
+ * code. Every `command` and `proof` is a real command path whose flags exist (`content.test.ts`
+ * runs each one's help). Commands reach Cursor, OpenCode and Pi only, and context reaches no agent,
+ * so no line here says otherwise.
  */
 
-/** One feature under a lens: a title, a plain line and, when one shows it, a command. */
+/** One feature: a title, a plain line and, when one shows it, a command. */
 export type Detail = {
   readonly title: string;
   readonly text: string;
   readonly command?: string;
 };
 
-/** A lens: one thing a visitor cares about, and every feature that serves it. */
+/** A part of the page: one thing a visitor cares about, and every feature that serves it. */
 export type Lens = {
   readonly id: string;
   readonly name: string;
+  /** The situation the part serves, for the index. */
+  readonly when: string;
   readonly claim: string;
   readonly lines: ReadonlyArray<string>;
   readonly proof: string;
+  /** The features; the first `keyDetails` show at once. */
   readonly details: ReadonlyArray<Detail>;
 };
+
+/** How many features of a part show at once; the rest wait behind "More". */
+export const keyDetails = 3;
 
 /** The page's head. */
 export const intro = {
   label: "Features",
-  heading: "Everything Tack does, one lens at a time.",
+  heading: "Everything Tack does, in six parts.",
+  problem:
+    "Every coding agent looks for your setup in its own folder, in every project and every worktree. You fix one copy and the others drift.",
   tagline: "Write a skill once. Tack links it wherever your agents look, in every project.",
-  indexLabel: "Lenses",
+  facts: ["Local CLI", "No account, no telemetry", "Open source, MIT"],
+  indexLabel: "Jump to",
+  indexWhen: "For when",
 } as const;
 
 /** One source with one of each kind, as the README's example shows it. */
@@ -38,13 +49,13 @@ export const sourceFigure = {
     { path: "tack.yaml", kind: "declares" },
     { path: "skills/review/SKILL.md", kind: "skill" },
     { path: "commands/ship.md", kind: "command" },
-    { path: "context/conventions.md", kind: "context" },
+    { path: "context/conventions.md", kind: "context · no agent yet" },
     { path: "docs/handbook/", kind: "docs" },
     { path: "scripts/report.ts", kind: "script" },
   ],
 } as const;
 
-/** One skill folder and the links one sync makes from it in a project, and a command for OpenCode. */
+/** One skill folder and the links one sync makes from it in a project, and its commands. */
 export const agentsFigure = {
   source: "~/agent-setup/skills/review",
   links: [
@@ -53,7 +64,12 @@ export const agentsFigure = {
     { path: ".cursor/skills/review", agent: "Cursor" },
     { path: ".opencode/skills/review", agent: "OpenCode" },
     { path: ".pi/skills/review", agent: "Pi" },
-    { path: ".opencode/commands/ship.md", agent: "OpenCode · command" },
+  ],
+  commandsLabel: "and the command ~/agent-setup/commands/ship.md",
+  commands: [
+    { path: ".cursor/commands/ship.md", agent: "Cursor" },
+    { path: ".opencode/commands/ship.md", agent: "OpenCode" },
+    { path: ".pi/prompts/ship.md", agent: "Pi" },
   ],
 } as const;
 
@@ -61,9 +77,9 @@ export const agentsFigure = {
 export const projectFigure = {
   project: "project app · picks review",
   worktrees: [
-    { root: "~/code/app", link: ".claude/skills/review", note: "main worktree" },
-    { root: "~/code/app-hotfix", link: ".claude/skills/review", note: "worktree" },
-    { root: "~/code/app-spike", link: ".claude/skills/review", note: "worktree" },
+    { root: "~/code/app", link: ".claude/skills/review" },
+    { root: "~/code/app-hotfix", link: ".claude/skills/review" },
+    { root: "~/code/app-spike", link: ".claude/skills/review" },
   ],
 } as const;
 
@@ -71,6 +87,7 @@ export const projectFigure = {
 export const scriptFigure = {
   file: "~/agent-setup/scripts/report.ts",
   code: [
+    "// Tack provides @tackup/cli when it runs the script.",
     'import { defineScript } from "@tackup/cli";',
     "",
     "export default defineScript({",
@@ -85,27 +102,32 @@ export const scriptFigure = {
 
 /** A profile's way from a reviewed file to a machine that never saw the source. */
 export const profileFigure = {
-  file: "~/agent-setup/profiles/reviewer.yaml",
   steps: [
-    { what: "reviewer.tar.gz", how: "tack profile export", note: "one file, with checksums" },
-    { what: "~/app on a CI runner", how: "tack profile apply-bundle", note: "no fetch, no source" },
+    { what: "~/agent-setup/profiles/reviewer.yaml", how: "reviewed like any change" },
+    { what: "reviewer.tar.gz", how: "one file, with checksums", command: "tack profile export" },
+    {
+      what: "~/app on a CI runner",
+      how: "no source, no fetch",
+      command: "tack profile apply-bundle",
+    },
   ],
 } as const;
 
-/** The docs lens's figure: the reader, as the landing page shows it. */
+/** The docs part's figure: the reader, as the landing page shows it. */
 export const docsFigure = {
   alt: "Screenshot: the Tack docs reader showing an architecture walkthrough, with its document index, metadata and a figure.",
 } as const;
 
-/** The lenses, in the order the page shows them. */
+/** The parts, in the order the page shows them. */
 export const lenses = [
   {
-    id: "set-up-once",
-    name: "Set up once",
+    id: "sources",
+    name: "Sources",
+    when: "You keep skills, docs and scripts in folders, alone or as a team.",
     claim: "Write it once, in a folder you own.",
     lines: [
       "Skills, commands, context, docs and scripts live in a source: a folder with a `tack.yaml`, under your own version control. Tack reads it where it is and moves nothing.",
-      "Keep the source in a Git repository and your team shares it. Each teammate clones it and adds it; edits arrive with `git pull`.",
+      "Keep the source in a Git repository and your team shares it. Each teammate clones it and adds it; edits arrive with their own `git pull`.",
     ],
     proof: "tack source add ~/agent-setup",
     details: [
@@ -121,12 +143,16 @@ export const lenses = [
       },
       {
         title: "Skills from GitHub, copied into your source.",
-        text: "Tack copies the skills you choose into a source you own and records where they came from.",
+        text: "Tack copies the skills you choose into a source you own and records where they came from. The next sync links them.",
         command: "tack import add github:org/repo --skill pdf --into agent-setup",
       },
       {
         title: "Skills that need other skills.",
         text: "A skill can declare the skills and commands it depends on, in its own source or one it names. Selecting it brings them along.",
+      },
+      {
+        title: "Context is catalogued, not delivered.",
+        text: "Rules and notes in a source show in `tack catalog` and can be picked, but no agent receives context yet.",
       },
       {
         title: "Checked before anyone uses it.",
@@ -140,15 +166,31 @@ export const lenses = [
     ],
   },
   {
-    id: "every-agent",
-    name: "Reach every agent",
+    id: "agents",
+    name: "Agents",
+    when: "You use more than one coding agent, or want to try the next one.",
     claim: "One skill, in every agent's folder.",
     lines: [
       "Claude Code, Codex, Cursor, OpenCode and Pi each look for skills in their own folder. Tack links one skill folder into each of them.",
-      "Links, never copies: edit the skill once and every agent sees the change.",
+      "Edit the skill once and every agent sees the change, because each one reads the same folder.",
     ],
-    proof: "tack adapter enable opencode pi",
+    proof: "tack sync --project app",
     details: [
+      {
+        title: "Add an agent at any time.",
+        text: "Enable it, and the next sync links every skill you already use into its folder.",
+        command: "tack adapter enable opencode pi",
+      },
+      {
+        title: "Turn an agent off cleanly.",
+        text: "Disabling an agent previews removing its links. Tack removes only the links it made.",
+        command: "tack adapter disable cursor",
+      },
+      {
+        title: "Your agent can run Tack.",
+        text: "Every enabled agent gets Tack's built-in skills, `use-tack` among them, and `tack guide onboarding` prints setup steps for an agent to follow.",
+        command: "tack guide onboarding",
+      },
       {
         title: "Finds the agents you have.",
         text: "`tack init` enables each agent whose folder exists in your home: `~/.claude`, `~/.codex` or `~/.agents`, `~/.cursor`, `~/.config/opencode`, `~/.pi`.",
@@ -162,29 +204,16 @@ export const lenses = [
         title: "Commands where agents read them.",
         text: "Cursor, OpenCode and Pi also get your commands, as the same Markdown file; Pi calls them prompt templates. Claude Code and Codex get skills.",
       },
-      {
-        title: "Turn an agent off cleanly.",
-        text: "Disabling an agent previews removing its links. Tack removes only the links it made.",
-        command: "tack adapter disable cursor",
-      },
-      {
-        title: "Your agent can run Tack.",
-        text: "Every enabled agent gets Tack's built-in skills, `use-tack` among them, so you can ask the agent to pick, sync or check for you.",
-      },
-      {
-        title: "A guide for agents.",
-        text: "`tack guide onboarding` prints the setup steps for an agent to follow, from the Tack that runs it.",
-        command: "tack guide onboarding",
-      },
     ],
   },
   {
-    id: "per-project",
-    name: "Per project",
+    id: "projects",
+    name: "Projects",
+    when: "Each repository needs its own skills, in every worktree.",
     claim: "Each project picks its own. Every worktree follows.",
     lines: [
-      "Register a Git repository once and Tack finds its worktrees. Include or exclude skills for that project; every worktree gets the same links.",
-      "One sync previews the changes for every project and for you, before it writes.",
+      "Register a Git repository once and Tack finds its worktrees. Include or exclude skills for that project, and every worktree gets the same links.",
+      "`tack sync --all` previews the changes for every project and for you before it writes.",
     ],
     proof: "tack pick include review --project app",
     details: [
@@ -222,9 +251,10 @@ export const lenses = [
   {
     id: "docs",
     name: "Docs",
+    when: "Your agents should read the same docs your team does.",
     claim: "Docs your agents can search and you can read.",
     lines: [
-      "Attach a source's docs to a project. Every worktree gets them under `.tack/docs`, as links to the one copy you maintain.",
+      "Attach a source's docs to a project, then sync: every worktree gets them under `.tack/docs`, as links to the one copy you maintain.",
       "Agents search them from the terminal. You read them in a local reader that reloads when you save.",
     ],
     proof: "tack docs attach handbook --project app",
@@ -240,17 +270,17 @@ export const lenses = [
         command: "tack docs serve --project app",
       },
       {
+        title: "Where to write new docs.",
+        text: "`tack docs target` gives an agent the verified folder to write new documents into.",
+        command: "tack docs target --project app",
+      },
+      {
         title: "Copy that cites its source.",
         text: "Copy a passage as rendered text with its source lines, as raw Markdown, or as references only, ready to hand to an agent.",
       },
       {
         title: "Figures that stay true.",
         text: "Docs can draw architecture maps, systems, schemas, file trees, walkthroughs and charts. The built-in `write-reader-figures` skill teaches agents to write them.",
-      },
-      {
-        title: "Where to write new docs.",
-        text: "`tack docs target` gives an agent the verified folder to write new documents into.",
-        command: "tack docs target --project app",
       },
       {
         title: "Checked like code.",
@@ -262,6 +292,7 @@ export const lenses = [
   {
     id: "scripts",
     name: "Scripts",
+    when: "Your agents should run your tools without seeing every secret.",
     claim: "Scripts, run by name, with only the secrets they declare.",
     lines: [
       "Declare a TypeScript script in your source. Run it by name in any registered project.",
@@ -275,11 +306,6 @@ export const lenses = [
         command: "tack script show report",
       },
       {
-        title: "Arguments, checked.",
-        text: "Pass arguments after `--`, or as JSON. Every problem is reported at once, before the script runs.",
-        command: "tack script run report --project app -- --repo org/app",
-      },
-      {
         title: "Secrets stay redacted.",
         text: "Secret values come from `TACK_<NAME>` in Tack's `.env` or your environment. Logs and results show `<redacted>`.",
       },
@@ -287,6 +313,11 @@ export const lenses = [
         title: "Every run, on record.",
         text: "History keeps each run's input, logs and outcome until you clear it.",
         command: "tack script history",
+      },
+      {
+        title: "Arguments, checked.",
+        text: "Pass arguments after `--`, or as JSON. Every problem is reported at once, before the script runs.",
+        command: "tack script run report --project app -- --repo org/app",
       },
       {
         title: "Typed in your editor.",
@@ -303,6 +334,7 @@ export const lenses = [
   {
     id: "profiles",
     name: "Profiles",
+    when: "A CI runner or a remote agent needs exactly the set you reviewed.",
     claim: "The exact same set, for a teammate, a CI runner or a remote agent.",
     lines: [
       "A profile is a file in your source that lists the exact resources a project gets. You review it like any other change.",
@@ -317,44 +349,43 @@ export const lenses = [
       },
       {
         title: "A fixed set.",
-        text: "An applied profile gives the project exactly its list. Ordinary picks cannot change it, and `tack status` and `tack doctor` show it.",
-        command: "tack profile apply agent-setup:reviewer --project app --target-root ~/code/app",
+        text: "`tack profile apply` gives a project exactly the profile's list, at every root you name. Ordinary picks cannot change it.",
+        command: "tack profile apply agent-setup:reviewer --project ci --target-root ~/ci/app",
+      },
+      {
+        title: "Set up a fresh machine.",
+        text: "On a CI runner or in a container, `apply-bundle` links the same set without the original source and without fetching anything.",
+        command: "tack profile apply-bundle reviewer.tar.gz --project ci --target-root ~/ci/app",
       },
       {
         title: "One file to carry.",
         text: "`tack profile export` previews, then packs the profile's files into one `.tar.gz` with checksums. No code, hook or installer runs.",
       },
       {
-        title: "Set up a fresh machine.",
-        text: "On a CI runner or in a container, `apply-bundle` links the same set without the original source and without fetching anything.",
-        command:
-          "tack profile apply-bundle reviewer.tar.gz --project app --target-root ~/app --apply",
-      },
-      {
         title: "Look inside a bundle.",
         text: "Read a bundle's inventory before you apply it; `tack check` validates it.",
         command: "tack profile inspect-bundle reviewer.tar.gz",
+      },
+      {
+        title: "Visible everywhere.",
+        text: "`tack status` and `tack doctor` show the profile a project runs, with its links.",
       },
     ],
   },
 ] as const satisfies ReadonlyArray<Lens>;
 
-/** A lens's id, which is also its anchor on the page. */
+/** A part's id, which is also its anchor on the page. */
 export type LensId = (typeof lenses)[number]["id"];
 
-/** The rules that hold under every lens. */
+/** The rules that hold under every part, and what Tack does not do. */
 export const groundRules = {
-  label: "Under every lens",
-  heading: "Nothing changes until you say so.",
+  label: "Under everything",
+  heading: "No link changes until you say so.",
   rules: [
     {
       title: "Preview first.",
-      text: "Every command that changes links prints its plan first, and `--apply` writes it. Only `tack init` writes at once, to set Tack up.",
+      text: "Commands that change links print their plan first, and `--apply` writes it. Picks and registrations save at once and link nothing; only `tack init` links at once, to set Tack up.",
       command: "tack sync --all",
-    },
-    {
-      title: "Links, never copies.",
-      text: "Tack records every link it makes and removes only those. Files it did not make stay where they are.",
     },
     {
       title: "Each problem names its fix.",
@@ -362,29 +393,54 @@ export const groundRules = {
       command: "tack doctor",
     },
     {
-      title: "Local and quiet.",
-      text: "Tack calls no model and has no telemetry. Only `tack import add` reaches the network, to fetch from GitHub.",
-    },
-    {
-      title: "Built for agents too.",
-      text: "Every view ends with the next command to run, and `--json` gives programs a stable contract for status, sync, init, doctor and upgrade.",
-    },
-    {
       title: "Leave without a trace.",
       text: "`tack state reset --apply` removes every link Tack made and its state. Your files stay.",
       command: "tack state reset",
+    },
+    {
+      title: "Links, never copies.",
+      text: "Tack records every link it makes and removes only those. Files it did not make stay where they are.",
+    },
+    {
+      title: "Local and quiet.",
+      text: "Tack calls no model and has no telemetry. Tack itself reaches the network only for `tack import add`, to fetch from GitHub.",
+    },
+    {
+      title: "Built for agents too.",
+      text: "Every view ends with the next command to run, and `--json` gives programs a stable contract for status, sync, doctor and upgrade.",
+    },
+  ],
+  limitsHeading: "What Tack does not do",
+  limits: [
+    {
+      title: "Deliver context.",
+      text: "Tack catalogues context; no agent receives it yet.",
+    },
+    {
+      title: "Pull for you.",
+      text: "Teammates run `git pull`; Tack links what is on disk.",
+    },
+    {
+      title: "Convert skills.",
+      text: "Every agent gets a link to the same `SKILL.md` folder.",
+    },
+    {
+      title: "Host anything.",
+      text: "No server and no account: the reader runs on your machine.",
     },
   ],
 } as const satisfies {
   readonly label: string;
   readonly heading: string;
   readonly rules: ReadonlyArray<Detail>;
+  readonly limitsHeading: string;
+  readonly limits: ReadonlyArray<Detail>;
 };
 
 /** The page's close. */
 export const outro = {
   heading: "Start with one prompt.",
-  text: "Paste the prompt from the home page into your coding agent, or run the commands yourself.",
+  text: "The home page has the prompt that has your coding agent set Tack up with you, and the commands to do it yourself.",
   start: "Get started",
   docs: "Read the docs",
 } as const;
