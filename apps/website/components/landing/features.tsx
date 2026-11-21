@@ -371,6 +371,9 @@ function AlsoRow() {
           </motion.article>
         ))}
       </div>
+      <motion.p className="also-more" data-intro="" variants={settle(0.2, 0)}>
+        <a href={features.more.href}>{features.more.label}</a>
+      </motion.p>
     </InView>
   );
 }
