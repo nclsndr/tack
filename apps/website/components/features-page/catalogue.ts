@@ -131,7 +131,7 @@ export const featuresPage = {
     {
       term: "Agent",
       definition:
-        "Claude Code, Codex, Cursor, OpenCode or Pi. Each reads its own folders, and Tack links into them.",
+        "Claude Code, Codex, Cursor, OpenCode or Pi. Each reads its own folders, and Tack links into them through an adapter per agent.",
     },
   ],
   startHeading: "Start here",
@@ -246,7 +246,7 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
         id: "team-repository",
         title: "Share a team repository",
         benefit:
-          "A clone that already has a `tack.yaml` registers at once. Teammates get each edit with `git pull`.",
+          "A clone that already has a `tack.yaml` registers at once. Teammates get edits with `git pull`; a new skill waits for their next sync.",
         command: "tack source add ~/team-docs",
         cwd: "~",
         operation: "source add",
@@ -344,7 +344,7 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
         id: "status",
         title: "Know what is linked",
         benefit:
-          "One view of a project's links, agents, sources and catalog, and of anything that needs attention.",
+          "One view of a project's links, agents, sources and catalog, and of anything that needs attention. Tack's own built-in skills count as one of the sources.",
         command: "tack status --project app",
         cwd: "~/code/app",
         operation: "status",
@@ -467,7 +467,10 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
         operation: "profile save",
         mode: "plan",
         capture: profileSave,
-        lines: [[1, 18]],
+        lines: [
+          [1, 5],
+          [8, 18],
+        ],
       }),
       card({
         id: "apply-a-profile",
@@ -513,7 +516,7 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
         id: "doctor",
         title: "Check the whole machine",
         benefit:
-          "`tack doctor` checks state, agents, sources, projects, docs and every link on the machine, and changes nothing.",
+          "`tack doctor` checks state, agents, sources, projects, docs and every link Tack manages, and changes nothing.",
         command: "tack doctor",
         cwd: "~",
         operation: "doctor",
@@ -537,6 +540,7 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
         capture: stateReset,
         lines: [
           [1, 4],
+          [8, 11],
           [218, 224],
         ],
       }),
