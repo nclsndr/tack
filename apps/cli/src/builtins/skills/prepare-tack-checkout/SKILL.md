@@ -59,9 +59,8 @@ project, not only this one. Report a `! partial` line and continue.
 Run `tack status`. The first line must read `✓ success`; report anything else. When your task
 writes documentation, run `tack docs target` and write only there.
 
-Skills linked during this session may not load until the next session. Read one by path
-(`.claude/skills/NAME/SKILL.md`, `.agents/skills/NAME/SKILL.md` or `.cursor/skills/NAME/SKILL.md`)
-when you need it now.
+Skills linked during this session may not load until the next session. Read one by path in your
+agent's folder, such as `.claude/skills/NAME/SKILL.md`, when needed now.
 
 ## Approval
 

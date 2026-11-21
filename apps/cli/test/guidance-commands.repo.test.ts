@@ -126,12 +126,16 @@ it("documents the adapter table in the operations reference row for row", () => 
         .slice(1, -1)
         .map((cell) => cell.trim()),
     );
+  const directory = (segments: ReadonlyArray<string>, prefix: string) =>
+    `\`${prefix}${segments.join("/")}\``;
+  const commands = (segments: ReadonlyArray<string> | undefined, prefix: string) =>
+    segments === undefined ? "not delivered" : `\`${prefix}${segments.join("/")}/NAME.md\``;
   const coded = agentAdapterDescriptors.map((adapter) => [
     `\`${adapter.id}\``,
-    `\`${adapter.projectSkillDirectory.join("/")}\``,
-    adapter.projectCommandDirectory === undefined
-      ? "not delivered"
-      : `\`${adapter.projectCommandDirectory.join("/")}/NAME.md\``,
+    directory(adapter.userSkillDirectory, "~/"),
+    commands(adapter.userCommandDirectory, "~/"),
+    directory(adapter.projectSkillDirectory, ""),
+    commands(adapter.projectCommandDirectory, ""),
   ]);
   expect(documented).toEqual(coded);
 });

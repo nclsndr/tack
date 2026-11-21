@@ -32,14 +32,18 @@ it("finds skills in the documented places only", () => {
       ".claude/skills/agent-a/SKILL.md",
       ".agents/skills/agent-b/SKILL.md",
       ".cursor/skills/agent-c/SKILL.md",
+      ".opencode/skills/agent-d/SKILL.md",
+      ".pi/skills/agent-e/SKILL.md",
       "other/place/SKILL.md",
-      ".opencode/skills/not-searched/SKILL.md",
+      ".github/skills/not-searched/SKILL.md",
       "README.md",
     ]),
   ).toEqual([
     ".agents/skills/agent-b (.agents/skills)",
     ".claude/skills/agent-a (.claude/skills)",
     ".cursor/skills/agent-c (.cursor/skills)",
+    ".opencode/skills/agent-d (.opencode/skills)",
+    ".pi/skills/agent-e (.pi/skills)",
     "skills/.curated/docx (skills)",
     "skills/.experimental/lab (skills)",
     "skills/.system/core (skills)",
@@ -148,6 +152,8 @@ it("asks the remote only for the places it searches", () => {
     ".claude/skills",
     ".agents/skills",
     ".cursor/skills",
+    ".opencode/skills",
+    ".pi/skills",
   ]);
   // A folder scope is searched as a whole: it may itself be the container of the skills.
   expect(discoveryPathspecs({ scope: "pack/x" })).toEqual(["pack/x"]);

@@ -18,7 +18,7 @@
   "diagnostics": [
     {
       "code": "agent-home-not-found",
-      "message": "No agent folder was found in /fx/home (it looks for .claude, .codex, .agents, .cursor), so Tack has no agent to link into. Name yours with --adapter claude, codex or cursor.",
+      "message": "No agent folder was found in /fx/home (it looks for .claude, .codex, .agents, .cursor, .config/opencode, .pi), so Tack has no agent to link into. Name yours with --adapter claude, codex, cursor, opencode or pi.",
       "severity": "warning"
     }
   ],
@@ -40,6 +40,16 @@
           "adapter": "cursor",
           "found": false,
           "home": "/fx/home/.cursor"
+        },
+        {
+          "adapter": "opencode",
+          "found": false,
+          "home": "/fx/home/.config/opencode"
+        },
+        {
+          "adapter": "pi",
+          "found": false,
+          "home": "/fx/home/.pi"
         }
       ],
       "enabled": [],

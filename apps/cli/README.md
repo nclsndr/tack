@@ -7,15 +7,35 @@ script execution. See the [contributing guide](../../CONTRIBUTING.md) for develo
 
 ## Adapters
 
-The current adapters are Claude Code (`claude`), Codex (`codex`), and Cursor (`cursor`). Tack links skills to these directories:
+The current adapters are Claude Code (`claude`), Codex (`codex`), Cursor (`cursor`), OpenCode
+(`opencode`) and Pi (`pi`). Tack links skills to these directories:
 
-| Target       | Claude Code        | Codex              | Cursor             |
-| ------------ | ------------------ | ------------------ | ------------------ |
-| User         | `~/.claude/skills` | `~/.agents/skills` | `~/.cursor/skills` |
-| Project root | `.claude/skills`   | `.agents/skills`   | `.cursor/skills`   |
+| Adapter    | User                        | Project root       |
+| ---------- | --------------------------- | ------------------ |
+| `claude`   | `~/.claude/skills`          | `.claude/skills`   |
+| `codex`    | `~/.agents/skills`          | `.agents/skills`   |
+| `cursor`   | `~/.cursor/skills`          | `.cursor/skills`   |
+| `opencode` | `~/.config/opencode/skills` | `.opencode/skills` |
+| `pi`       | `~/.pi/agent/skills`        | `.pi/skills`       |
 
-Cursor also links selected command files to `~/.cursor/commands/<name>.md` for the user
-and `.cursor/commands/<name>.md` for project roots. Claude Code and Codex currently deliver skills only.
+Cursor, OpenCode and Pi also link selected command files, as `<name>.md`, to these directories.
+Claude Code and Codex currently deliver skills only.
+
+| Adapter    | User                          | Project root         |
+| ---------- | ----------------------------- | -------------------- |
+| `cursor`   | `~/.cursor/commands`          | `.cursor/commands`   |
+| `opencode` | `~/.config/opencode/commands` | `.opencode/commands` |
+| `pi`       | `~/.pi/agent/prompts`         | `.pi/prompts`        |
+
+Pi calls a command a prompt template. Tack links the original Markdown file and does not translate
+it, so arguments and frontmatter mean what each agent makes of them. Tack uses these standard
+folders only: it does not follow `XDG_CONFIG_HOME` or `OPENCODE_CONFIG_DIR` for OpenCode, or
+`PI_CODING_AGENT_DIR` for Pi. Pi reads the project's `.pi` folders from the folder it starts in, so
+start it at the project root, and it loads project resources only after you trust the project.
+OpenCode also reads `.claude/skills` and `.agents/skills`, and Pi reads `.agents/skills`, so a skill
+that the `claude` or `codex` adapter links can show up twice. Disabling one adapter removes only its
+own links, so the agent can still see the skill through another one. An open
+agent session can need a restart, or `/reload` in Pi, to see a new link.
 
 Configure enabled adapters as shown below, or use `tack sync --adapter claude --user --apply`
 to select one for a single invocation.
@@ -34,7 +54,8 @@ It plans the whole setup, then applies it:
 1. **State.** It creates the state and its `.env` when they are absent and keeps them otherwise. A
    state this release cannot read fails the command before anything is planned.
 2. **Agents.** It enables the agents whose home folder exists: `claude` from `~/.claude`, `codex`
-   from `~/.codex` or `~/.agents`, `cursor` from `~/.cursor`. The output lists each one as found or
+   from `~/.codex` or `~/.agents`, `cursor` from `~/.cursor`, `opencode` from `~/.config/opencode`,
+   `pi` from `~/.pi`. The output lists each one as found or
    not found. `--adapter ID`, repeatable, names the agents instead. It only adds adapters and never
    disables one.
 3. **User links.** It applies the plan `tack sync --user` makes once those agents are enabled. On a
@@ -519,8 +540,8 @@ the namespace flag of the colliding target. A failed reference keeps `--project`
 
 The catalog reports skills, commands, context, scripts, and declared docs. Choices support skills,
 commands, and context. Skills and commands share activation metadata and dependency resolution;
-context is opt-in. Delivery depends on the adapter: all three link skills, and Cursor also links
-commands. Status reports selected resources with no delivery capability as undelivered. Context
+context is opt-in. Delivery depends on the adapter: every adapter links skills, and Cursor, OpenCode
+and Pi also link commands. Status reports selected resources with no delivery capability as undelivered. Context
 has no delivery adapter yet. Scripts are catalogued and run by exact address, rather than selected; see
 [script execution](#run-tack-scripts) and the [script author guide](../../packages/core/README.md).
 Docs use the separate [attachment workflow](#attach-source-owned-documents).
@@ -688,7 +709,7 @@ diagnostic. `@` (also after a prefix: `github:org/repo@v1`; write `#v1`), abbrev
 local paths, other hosts and URLs that carry credentials are refused. Private repositories use your git credentials (`gh auth setup-git`, an SSH key); Tack reads no
 token. Tack runs hardened `git` only to fetch the remote, never in the destination, and the
 destination need not be a git repository. Candidates are the skill folders under `skills/`, the
-three agent skill folders or the named folder, to three levels, or to five with `--full-depth`;
+project skill folders of the adapters above or the named folder, to three levels, or to five with `--full-depth`;
 folders whose name starts with `_` are skipped. Symbolic links and other non-regular files are
 never copied.
 

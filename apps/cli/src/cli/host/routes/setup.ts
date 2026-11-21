@@ -1,4 +1,5 @@
 import { Effect, Schema } from "effect";
+import { agentAdapterIds } from "../../../domain/agents/agent-adapter.ts";
 import {
   InitApplicationSchema,
   InitPlanSchema,
@@ -21,6 +22,9 @@ const validInitApplication = Schema.decodeUnknownSync(InitApplicationSchema, {
 /** The diagnostic code of a setup that found no agent and was given none. */
 const agentHomeNotFound = "agent-home-not-found";
 
+/** Every adapter `--adapter` accepts, in table order: `claude, codex, cursor, opencode or pi`. */
+const adapterChoices = `${agentAdapterIds.slice(0, -1).join(", ")} or ${agentAdapterIds.at(-1)}`;
+
 /**
  * Presents what `tack init` planned and applied. Its user part is exactly `sync --user`'s payload,
  * with that sync's diagnostics. It is partial when that sync is, or when no agent was found or
@@ -35,7 +39,7 @@ const machineInitOutcome = ({ plan, applied }: MachineInitExecution): PublicOutc
       ? [
           {
             code: agentHomeNotFound,
-            message: `No agent folder was found in ${plan.home} (it looks for ${Object.values(agentHomes).flat().join(", ")}), so Tack has no agent to link into. Name yours with --adapter claude, codex or cursor.`,
+            message: `No agent folder was found in ${plan.home} (it looks for ${Object.values(agentHomes).flat().join(", ")}), so Tack has no agent to link into. Name yours with --adapter ${adapterChoices}.`,
             severity: "warning" as const,
           },
         ]

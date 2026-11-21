@@ -58,6 +58,34 @@ it("derives every directory and destination from one adapter and target layout",
   ).toBe("/.claude/skills/review");
 });
 
+it.each([
+  ["opencode", "user", "skill", "/home/operator/.config/opencode/skills"],
+  ["opencode", "user", "command", "/home/operator/.config/opencode/commands"],
+  ["opencode", "project-root", "skill", "/work/repo/.opencode/skills"],
+  ["opencode", "project-root", "command", "/work/repo/.opencode/commands"],
+  ["pi", "user", "skill", "/home/operator/.pi/agent/skills"],
+  ["pi", "user", "command", "/home/operator/.pi/agent/prompts"],
+  ["pi", "project-root", "skill", "/work/repo/.pi/skills"],
+  ["pi", "project-root", "command", "/work/repo/.pi/prompts"],
+] as const)(
+  "places %s %s %s links in the agent's native folder",
+  (adapter, tag, kind, directory) => {
+    const target = targets.find((candidate) => candidate._tag === tag) ?? targets[0];
+
+    expect(resourceDirectory(adapter, target, kind)).toBe(directory);
+  },
+);
+
+it("places a Pi command as a direct Markdown child of the prompts folder", () => {
+  expect(
+    managedLinkDestinationPath({
+      adapter: "pi",
+      address: { kind: "command", name: "review" },
+      target: targets[1],
+    }),
+  ).toBe("/work/repo/.pi/prompts/review.md");
+});
+
 it("refuses to place a managed link for a kind the adapter does not deliver", () => {
   expect(() =>
     managedLinkDestinationPath({
@@ -79,9 +107,17 @@ it("lists every folder that may hold managed links for the user and each project
     "/home/ada/.agents/skills",
     "/home/ada/.cursor/skills",
     "/home/ada/.cursor/commands",
+    "/home/ada/.config/opencode/skills",
+    "/home/ada/.config/opencode/commands",
+    "/home/ada/.pi/agent/skills",
+    "/home/ada/.pi/agent/prompts",
     "/work/demo/.claude/skills",
     "/work/demo/.agents/skills",
     "/work/demo/.cursor/skills",
     "/work/demo/.cursor/commands",
+    "/work/demo/.opencode/skills",
+    "/work/demo/.opencode/commands",
+    "/work/demo/.pi/skills",
+    "/work/demo/.pi/prompts",
   ]);
 });

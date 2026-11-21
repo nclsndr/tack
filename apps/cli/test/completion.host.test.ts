@@ -133,9 +133,23 @@ it.layer(LiveTestLayer)("tack completion", (completionIt) => {
     Effect.gen(function* () {
       const { complete } = yield* fixture;
 
-      expect(yield* complete(["adapter", "enable"], "")).toEqual(["claude", "codex", "cursor"]);
-      expect(yield* complete(["adapter", "enable", "claude"], "")).toEqual(["codex", "cursor"]);
-      expect(yield* complete(["adapter", "enable", "claude", "codex"], "")).toEqual(["cursor"]);
+      expect(yield* complete(["adapter", "enable"], "")).toEqual([
+        "claude",
+        "codex",
+        "cursor",
+        "opencode",
+        "pi",
+      ]);
+      expect(yield* complete(["adapter", "enable", "claude"], "")).toEqual([
+        "codex",
+        "cursor",
+        "opencode",
+        "pi",
+      ]);
+      expect(yield* complete(["adapter", "enable", "claude", "codex", "pi"], "")).toEqual([
+        "cursor",
+        "opencode",
+      ]);
       expect(yield* complete(["adapter", "disable", "claude"], "")).toEqual([]);
     }),
   );
