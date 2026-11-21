@@ -13,7 +13,6 @@ it("passes the explorer PTY system test from an export with no .git", () => {
   for (const path of [
     "package.json",
     "bun.lock",
-    "patches",
     "tsconfig.base.json",
     "tsconfig.json",
     "vitest.config.mts",

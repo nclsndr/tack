@@ -1,6 +1,7 @@
 import { mutateState } from "../support/state-fixture.ts";
-import { BunRuntime, BunServices } from "@effect/platform-bun";
-import { Crypto, Effect, FileSystem, Path } from "effect";
+import { BunCrypto, BunRuntime, BunServices } from "@effect/platform-bun";
+import { Effect, FileSystem, Path } from "effect";
+import { SecureRandom } from "effect/crypto";
 import { initializeState, StateStore } from "../../src/services/state-store.ts";
 import { makeStateStoreService } from "../../src/platform/state/state.ts";
 
@@ -11,7 +12,7 @@ const crashPoint = process.env["TACK_TEST_CRASH_POINT"];
 let writes = 0;
 
 const program = Effect.gen(function* () {
-  const crypto = yield* Crypto.Crypto;
+  const random = yield* SecureRandom.SecureRandom;
   const fileSystem = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
   const crashingFileSystem = {
@@ -52,10 +53,10 @@ const program = Effect.gen(function* () {
     }
   });
   return yield* work.pipe(
-    Effect.provideService(StateStore, makeStateStoreService(crypto, crashingFileSystem, path)),
+    Effect.provideService(StateStore, makeStateStoreService(random, crashingFileSystem, path)),
   );
 });
 
-BunRuntime.runMain(program.pipe(Effect.provide(BunServices.layer)), {
+BunRuntime.runMain(program.pipe(Effect.provide([BunServices.layer, BunCrypto.layerSecureRandom])), {
   disableErrorReporting: true,
 });

@@ -1,5 +1,5 @@
 import { Console, Context, Effect, Option, Schema } from "effect";
-import { CliConfig, CliOutput, Command, GlobalFlag, type HelpDoc } from "effect/unstable/cli";
+import { CliConfig, CliOutput, Command, GlobalFlag, type HelpDoc } from "effect/cli";
 import { tackVersion } from "../../version.ts";
 import { tackCommand } from "./command-tree.ts";
 import { isListAlias } from "./list-alias.ts";
@@ -210,7 +210,11 @@ const nodeOf = Effect.fnUntraced(function* (
         onSome: ({ mutation }) => ({ mutation }),
       }),
       arguments: (doc.args ?? []).map(argumentOf),
-      flags: [...doc.flags.map(flagOf), ...(commandPath.length === 0 ? [versionFlagHelp] : [])],
+      // A command accepts its ancestors' flags too; Effect CLI lists them apart from its own.
+      flags: [
+        ...[...(doc.inheritedFlags ?? []), ...doc.flags].map(flagOf),
+        ...(commandPath.length === 0 ? [versionFlagHelp] : []),
+      ],
       examples: (doc.examples ?? []).map((example) => ({
         command: example.command,
         ...(example.description === undefined ? {} : { description: example.description }),

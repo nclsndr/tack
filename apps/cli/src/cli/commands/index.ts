@@ -1,5 +1,5 @@
 import { Console, Effect, Ref } from "effect";
-import { CliConfig, CliError, Command } from "effect/unstable/cli";
+import { CliConfig, CliError, Command } from "effect/cli";
 import { tackCommand } from "./command-tree.ts";
 import {
   commandNameOf,

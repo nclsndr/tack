@@ -1,5 +1,6 @@
 import { expect, it } from "@effect/vitest";
-import { Crypto, Effect, FileSystem, Path, Schema } from "effect";
+import { Effect, FileSystem, Path, Schema } from "effect";
+import { SecureRandom } from "effect/crypto";
 import {
   Source,
   SourceRegistrationPayloadSchema,
@@ -113,7 +114,9 @@ const withBuiltIns = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
       id: "00000000-0000-4000-8000-0000000000b2",
       canonicalPath: yield* fs.realPath(new URL("../src/builtins", import.meta.url).pathname),
     };
-    const source = makeSourceService(yield* Crypto.Crypto, fs, yield* Path.Path, [builtins]);
+    const source = makeSourceService(yield* SecureRandom.SecureRandom, fs, yield* Path.Path, [
+      builtins,
+    ]);
     return yield* effect.pipe(Effect.provideService(Source, source));
   });
 

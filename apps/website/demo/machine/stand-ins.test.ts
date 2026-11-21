@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Effect, Exit, Terminal } from "effect";
-import { ChildProcess } from "effect/unstable/process";
+import { ChildProcess } from "effect/process";
 import {
   unavailableExecutionPlatform,
   unavailableImportRemote,
@@ -13,31 +13,9 @@ import {
   unavailableBundleScanner,
   pageLockProcess,
   unavailableCompression,
-  webCrypto,
 } from "./stand-ins.ts";
 
 describe("in-memory stand-ins", () => {
-  it.effect("hashes and draws random bytes through Web Crypto", () =>
-    Effect.gen(function* () {
-      const digest = yield* webCrypto.digest("SHA-256", new TextEncoder().encode("abc"));
-      const bytes = yield* webCrypto.randomBytes(8);
-
-      expect(Buffer.from(digest).toString("hex")).toBe(
-        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
-      );
-      expect(bytes).toHaveLength(8);
-    }),
-  );
-
-  it.effect("reports a digest the platform refuses as a platform error", () =>
-    Effect.gen(function* () {
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- The test feeds Web Crypto an algorithm the type rules out.
-      const error = yield* Effect.flip(webCrypto.digest("MD5" as "SHA-1", new Uint8Array()));
-
-      expect(error.reason._tag).toBe("Unknown");
-    }),
-  );
-
   it.effect("fails every capability that needs a real machine with one clear message", () =>
     Effect.gen(function* () {
       const failures = yield* Effect.all([

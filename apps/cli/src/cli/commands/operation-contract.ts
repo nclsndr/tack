@@ -1,5 +1,5 @@
 import { Context, Schema } from "effect";
-import { Command } from "effect/unstable/cli";
+import { Command } from "effect/cli";
 import { booleanFlag } from "./flag-utils.ts";
 
 /** Apply flag shared by mutating command families. */

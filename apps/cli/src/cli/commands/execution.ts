@@ -1,5 +1,5 @@
 import { Effect, Schema } from "effect";
-import { Argument, Command, Flag } from "effect/unstable/cli";
+import { Argument, Command, Flag } from "effect/cli";
 import { historyListBounds, isHistoryRunId } from "../../domain/execution/execution-schema.ts";
 import { listAlias } from "./list-alias.ts";
 import { booleanFlag, optionalIntegerFlag, optionalStringFlag } from "./flag-utils.ts";

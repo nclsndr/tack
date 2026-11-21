@@ -1,5 +1,5 @@
 import { Data, Effect, FileSystem, Option, Queue, Terminal } from "effect";
-import { Prompt } from "effect/unstable/cli";
+import { Prompt } from "effect/cli";
 import { ReaderCorpus } from "../../../../services/reader-corpus.ts";
 import type { Style } from "../style.ts";
 import { renderExplorerFrame } from "./frame.ts";

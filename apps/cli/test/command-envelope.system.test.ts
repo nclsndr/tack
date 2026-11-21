@@ -2,7 +2,7 @@ import { writeUnder } from "./support/source-tree.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Schema, Stream } from "effect";
-import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
+import { ChildProcess, ChildProcessSpawner } from "effect/process";
 import { ReconciliationApplyResultSchema } from "../src/features/reconciliation/reconciliation-application.ts";
 import { SyncApplicationSchema, SyncPlanSchema } from "../src/domain/reconciliation/sync-schema.ts";
 import {

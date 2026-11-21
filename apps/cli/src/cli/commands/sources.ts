@@ -1,4 +1,4 @@
-import { Argument, Command, Flag } from "effect/unstable/cli";
+import { Argument, Command, Flag } from "effect/cli";
 import { ResourceKindSchema } from "../../domain/resources/kinds.ts";
 import { listAlias } from "./list-alias.ts";
 import { booleanFlag, optionalFlag, repeatableStringFlag } from "./flag-utils.ts";

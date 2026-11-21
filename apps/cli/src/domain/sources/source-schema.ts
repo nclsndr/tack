@@ -192,11 +192,7 @@ const sourceValidationErrorCodes = [
   "source-is-one-skill",
 ] as const;
 
-const sourceStorageErrorCodes = [
-  "source-access-failed",
-  "declaration-access-failed",
-  "registration-id-generation-failed",
-] as const;
+const sourceStorageErrorCodes = ["source-access-failed", "declaration-access-failed"] as const;
 
 const sourceHealthErrorCodes = ["source-location-changed", "source-bundle-changed"] as const;
 

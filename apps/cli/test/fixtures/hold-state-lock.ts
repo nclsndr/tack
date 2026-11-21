@@ -1,4 +1,4 @@
-import { BunRuntime, BunServices } from "@effect/platform-bun";
+import { BunCrypto, BunRuntime, BunServices } from "@effect/platform-bun";
 import { Config, ConfigProvider, Effect, FileSystem, Path, Stdio, Stream } from "effect";
 import { mutateStateEffect, type StateOptions } from "../../src/services/state-store.ts";
 import { StateStoreLive } from "../../src/platform/state/state.ts";
@@ -25,7 +25,10 @@ const program = Effect.gen(function* () {
 });
 
 BunRuntime.runMain(
-  program.pipe(Effect.provide(StateStoreLive), Effect.provide(BunServices.layer)),
+  program.pipe(
+    Effect.provide(StateStoreLive),
+    Effect.provide([BunServices.layer, BunCrypto.layerSecureRandom]),
+  ),
   {
     disableErrorReporting: true,
   },

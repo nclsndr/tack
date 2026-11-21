@@ -2,7 +2,8 @@ import { writeUnder, bareSkillText, tackMetadata } from "../../../test/support/s
 import { managedLinksOf } from "../../domain/links/link-record-schema.ts";
 import { mutateState } from "../../../test/support/state-fixture.ts";
 import { expect, it } from "@effect/vitest";
-import { Crypto, Effect, FileSystem, Path } from "effect";
+import { Effect, FileSystem, Path } from "effect";
+import { SecureRandom } from "effect/crypto";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { initializeState, type StateOptions } from "../../services/state-store.ts";
 import { managedLinkDestinationPath } from "../../domain/agents/agent-layout.ts";
@@ -371,7 +372,7 @@ it.layer(LiveTestLayer)("status agrees with the reconciliation planner", (agreem
         "skills/helper/SKILL.md",
         bareSkillText("helper", { description: "Helper", tack: ["user-activation: default"] }),
       );
-      const source = makeSourceService(yield* Crypto.Crypto, f.fileSystem, f.path, [
+      const source = makeSourceService(yield* SecureRandom.SecureRandom, f.fileSystem, f.path, [
         { canonicalPath: builtins, id: "00000000-0000-4000-8000-0000000000b1" },
       ]);
       const user = { includeOptional: false, selector: { _tag: "user" } } as const;

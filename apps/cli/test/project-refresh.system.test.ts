@@ -4,7 +4,7 @@ import { allSkillChoices } from "../src/domain/state/state-intent.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Schema } from "effect";
-import { ChildProcessSpawner } from "effect/unstable/process";
+import { ChildProcessSpawner } from "effect/process";
 import { SyncPlanSchema } from "../src/domain/reconciliation/sync-schema.ts";
 import { readState } from "../src/services/state-store.ts";
 import {

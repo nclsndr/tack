@@ -1,5 +1,5 @@
 import { Context, Effect } from "effect";
-import type { Command } from "effect/unstable/cli";
+import type { Command } from "effect/cli";
 import {
   commandNameOf,
   InvocationError,

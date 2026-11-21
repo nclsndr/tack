@@ -1,7 +1,17 @@
 import { skillText } from "../../../test/support/source-tree.ts";
 import { expect, it } from "@effect/vitest";
-import { Effect, FileSystem, Layer, Path, PlatformError, Sink, Stream } from "effect";
-import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
+import {
+  Effect,
+  FileSystem,
+  Layer,
+  Path,
+  PlatformError,
+  Predicate,
+  type Redacted,
+  Sink,
+  Stream,
+} from "effect";
+import { ChildProcess, ChildProcessSpawner, type CommandLine } from "effect/process";
 import { TestClock } from "effect/testing";
 import { vi } from "vitest";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
@@ -55,7 +65,7 @@ const remoteOver = Effect.fnUntraced(function* (
  * call's working directory, environment and input; every other call runs git as usual.
  */
 const rewriting = Effect.fnUntraced(function* (
-  rewrite: (args: ReadonlyArray<string>) => string | undefined,
+  rewrite: (args: ReadonlyArray<CommandLine.Word>) => string | undefined,
 ) {
   const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
   return ChildProcessSpawner.make((command) => {
@@ -263,7 +273,7 @@ it.layer(LiveTestLayer)("import remote over real git", (remoteIt) => {
       const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
       const fileSystem = yield* FileSystem.FileSystem;
       const path = yield* Path.Path;
-      const environments: Array<string | undefined> = [];
+      const environments: Array<string | Redacted.Redacted | undefined> = [];
       const recording = ChildProcessSpawner.make((command) => {
         if (!ChildProcess.isStandardCommand(command))
           return Effect.die("Expected a standard command.");
@@ -388,8 +398,8 @@ it.layer(LiveTestLayer)("import remote over real git", (remoteIt) => {
       );
       const commands: Array<{
         readonly command: string;
-        readonly args: ReadonlyArray<string>;
-        readonly env: Readonly<Record<string, string | undefined>>;
+        readonly args: ReadonlyArray<CommandLine.Word>;
+        readonly env: Readonly<Record<string, string | Redacted.Redacted | undefined>>;
       }> = [];
       const recording = ChildProcessSpawner.make((command) => {
         if (!ChildProcess.isStandardCommand(command))
@@ -679,8 +689,10 @@ it.layer(LiveTestLayer)("import remote over real git", (remoteIt) => {
         if (!ChildProcess.isStandardCommand(command))
           return Effect.die("Expected a standard command.");
         const input = command.options.stdin;
-        if (!command.args.some((arg) => arg.startsWith("--batch-check")) || !Stream.isStream(input))
-          return spawner.spawn(command);
+        const batchCheck = command.args.some(
+          (arg) => Predicate.isString(arg) && arg.startsWith("--batch-check"),
+        );
+        if (!batchCheck || !Stream.isStream(input)) return spawner.spawn(command);
         const closed = Effect.promise(() => new Promise((resolve) => setTimeout(resolve, 100)));
         return spawner.spawn(
           ChildProcess.make("/bin/sh", ["-c", "exec 0<&-; sleep 0.5; exit 128"], {

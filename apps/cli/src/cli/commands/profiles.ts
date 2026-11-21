@@ -3,7 +3,7 @@ import { booleanFlag, optionalFlag, optionalStringFlag } from "./flag-utils.ts";
 import { handle } from "./invocation-receiver.ts";
 import { applyFlag, operationContract } from "./operation-contract.ts";
 import { namespaceFrom, projectFlag, userFlag } from "./target-selector.ts";
-import { Argument, Command, Flag } from "effect/unstable/cli";
+import { Argument, Command, Flag } from "effect/cli";
 import { PortableNameSchema } from "../../domain/identity/identity-schema.ts";
 import { receive } from "./invocation-receiver.ts";
 import { readOnly } from "./operation-contract.ts";

@@ -1,8 +1,6 @@
 **
 !package.json
 !bun.lock
-!patches/
-!patches/**
 !apps/
 !apps/cli/
 !apps/cli/package.json

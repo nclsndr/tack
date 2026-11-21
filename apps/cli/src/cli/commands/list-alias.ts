@@ -1,5 +1,5 @@
 import { Context, type Effect, Option } from "effect";
-import { Command } from "effect/unstable/cli";
+import { Command } from "effect/cli";
 
 /** Marks a subcommand as another spelling of its parent, which `schema` and help do not list. */
 export class ListAliasAnnotation extends Context.Service<ListAliasAnnotation, true>()(

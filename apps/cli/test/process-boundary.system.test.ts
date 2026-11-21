@@ -4,7 +4,7 @@ import { mutateState } from "./support/state-fixture.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, Fiber, FileSystem, Path, Stream } from "effect";
-import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
+import { ChildProcess, ChildProcessSpawner } from "effect/process";
 
 import type { ManagedLinkEvidence } from "../src/domain/links/managed-link-schema.ts";
 import { readState } from "../src/services/state-store.ts";

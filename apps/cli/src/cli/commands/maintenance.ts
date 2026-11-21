@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import { Command } from "effect/unstable/cli";
+import { Command } from "effect/cli";
 import { booleanFlag } from "./flag-utils.ts";
 import { helpNotes } from "./help-notes.ts";
 import { handle, receive } from "./invocation-receiver.ts";

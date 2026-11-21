@@ -1,5 +1,6 @@
-import { BunRuntime, BunServices } from "@effect/platform-bun";
-import { Crypto, Effect, FileSystem, Path } from "effect";
+import { BunCrypto, BunRuntime, BunServices } from "@effect/platform-bun";
+import { Effect, FileSystem, Path } from "effect";
+import { SecureRandom } from "effect/crypto";
 import { agentAdapterDescriptor } from "../../src/domain/agents/agent-adapter.ts";
 import { withRecoveredWriter } from "../../src/features/writer/recovered-writer.ts";
 import { Destination } from "../../src/services/destination.ts";
@@ -40,7 +41,7 @@ if (stateDirectory === undefined || homeDirectory === undefined || sourcesDirect
  * - `after-settle` kills right after the settle checkpoint renamed into place.
  */
 const program = Effect.gen(function* () {
-  const crypto = yield* Crypto.Crypto;
+  const random = yield* SecureRandom.SecureRandom;
   const fileSystem = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
   const statePath = path.join(stateDirectory, "state.json");
@@ -116,11 +117,11 @@ const program = Effect.gen(function* () {
     ).pipe(Effect.provideService(FileSystem.FileSystem, crashingFileSystem));
   });
   return yield* work.pipe(
-    Effect.provideService(StateStore, makeStateStoreService(crypto, crashingFileSystem, path)),
+    Effect.provideService(StateStore, makeStateStoreService(random, crashingFileSystem, path)),
     Effect.provideService(Destination, makeDestinationService(fileSystem, path)),
   );
 });
 
-BunRuntime.runMain(program.pipe(Effect.provide(BunServices.layer)), {
+BunRuntime.runMain(program.pipe(Effect.provide([BunServices.layer, BunCrypto.layerSecureRandom])), {
   disableErrorReporting: true,
 });

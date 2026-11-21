@@ -1,7 +1,7 @@
 import { managedLinksOf } from "../src/domain/links/link-record-schema.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Schema } from "effect";
-import { ChildProcessSpawner } from "effect/unstable/process";
+import { ChildProcessSpawner } from "effect/process";
 import { readState } from "../src/services/state-store.ts";
 import { ReconciliationPlanSchema } from "../src/domain/reconciliation/reconciliation-schema.ts";
 import { ReconciliationApplyResultSchema } from "../src/domain/reconciliation/reconciliation-application-schema.ts";

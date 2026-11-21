@@ -1,5 +1,6 @@
 import { bundleFactsDigest } from "../../domain/bundles/bundle-codec.ts";
-import { Crypto, Effect, FileSystem, Path } from "effect";
+import { Effect, FileSystem, Path } from "effect";
+import { SecureRandom } from "effect/crypto";
 import type { BundleManifest } from "../../domain/bundles/bundle-schema.ts";
 import type { ArchiveEntry } from "../../domain/bundles/tar.ts";
 import {
@@ -19,7 +20,7 @@ export const planBundleRetention = Effect.fnUntraced(function* (
 ) {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
-  const crypto = yield* Crypto.Crypto;
+  const random = yield* SecureRandom.SecureRandom;
   const stateRoot = yield* fs.realPath(yield* resolveStateDirectory(options));
   const directory = path.join(stateRoot, "bundles", manifest.identity);
   const prior = state.data.sources.filter(
@@ -60,7 +61,7 @@ export const planBundleRetention = Effect.fnUntraced(function* (
   const ids = new Map<string, string>();
   for (const source of manifest.sources) {
     const existing = prior.find((candidate) => candidate.bundle?.sourceKey === source.key);
-    ids.set(source.key, existing?.id ?? (yield* crypto.randomUUIDv4));
+    ids.set(source.key, existing?.id ?? (yield* random.uuidV4()));
   }
   const registrations = bundleRegistrationsFor(manifest, ids, (key) =>
     path.join(directory, "sources", key),

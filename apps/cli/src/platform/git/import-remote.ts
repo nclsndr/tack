@@ -1,5 +1,5 @@
 import { Effect, FileSystem, Layer, Path, Stream } from "effect";
-import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
+import { ChildProcess, ChildProcessSpawner } from "effect/process";
 import { lstatSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { compiledRelease } from "../../release.ts";

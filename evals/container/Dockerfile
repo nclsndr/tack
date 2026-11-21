@@ -3,7 +3,6 @@ FROM oven/bun:1.4.2 AS build
 RUN apt-get update && apt-get install -y --no-install-recommends git
 WORKDIR /build
 COPY package.json bun.lock ./
-COPY patches patches
 COPY apps/cli/package.json apps/cli/package.json
 COPY packages/core/package.json packages/core/package.json
 COPY packages/reader/package.json packages/reader/package.json

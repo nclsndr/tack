@@ -65,7 +65,6 @@ it("builds a movable release from a clean export and runs its complete flow", as
   for (const path of [
     "package.json",
     "bun.lock",
-    "patches",
     "scripts/build-release.ts",
     "apps/cli/package.json",
     "apps/cli/src",

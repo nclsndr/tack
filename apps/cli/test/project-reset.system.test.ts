@@ -3,7 +3,7 @@ import { pendingRemovalsOf } from "../src/domain/links/link-record-schema.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
-import { ChildProcessSpawner } from "effect/unstable/process";
+import { ChildProcessSpawner } from "effect/process";
 import { decodeState } from "../src/domain/state/state-codec.ts";
 import { managedLinkDestinationPath } from "../src/domain/agents/agent-layout.ts";
 import {

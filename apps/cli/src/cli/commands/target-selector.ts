@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import { Flag } from "effect/unstable/cli";
+import { Flag } from "effect/cli";
 import type { ChoiceNamespace } from "../../domain/choices/choice-schema.ts";
 import { ProjectNameSchema } from "../../domain/projects/project-schema.ts";
 import type { TargetSelector } from "../../domain/projects/project-schema.ts";

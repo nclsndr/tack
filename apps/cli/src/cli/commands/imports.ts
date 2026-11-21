@@ -1,5 +1,5 @@
 import { Effect, Option } from "effect";
-import { Argument, Command, Flag } from "effect/unstable/cli";
+import { Argument, Command, Flag } from "effect/cli";
 import { booleanFlag, optionalStringFlag } from "./flag-utils.ts";
 import { handle, invalid, receive } from "./invocation-receiver.ts";
 import { applyFlag, previewApply, readOnly } from "./operation-contract.ts";

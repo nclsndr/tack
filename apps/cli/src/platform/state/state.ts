@@ -1,4 +1,5 @@
-import { Crypto, Effect, FileSystem, Layer, Path, PlatformError, Schema } from "effect";
+import { Effect, FileSystem, Layer, Path, PlatformError, Schema } from "effect";
+import { SecureRandom } from "effect/crypto";
 import { emptyState, type State } from "../../domain/state/state-schema.ts";
 import { routeStateDocument, stateFileName, stateFormat } from "../../domain/state/state-format.ts";
 import { decodeState, encodeState } from "../../domain/state/state-codec.ts";
@@ -254,13 +255,9 @@ const writeStateAtomically = Effect.fnUntraced(function* (statePath: string, sta
     Effect.mapError((cause) => new StateMutationError({ message: cause.message, statePath })),
   );
   const encodedState = JSON.stringify(persistedState, null, 2);
-  const crypto = yield* Crypto.Crypto;
+  const random = yield* SecureRandom.SecureRandom;
   const fileSystem = yield* FileSystem.FileSystem;
-  const temporaryStateId = yield* crypto.randomUUIDv4.pipe(
-    Effect.mapError((error) =>
-      toStateStorageError("generate temporary state id", statePath, error),
-    ),
-  );
+  const temporaryStateId = yield* random.uuidV4();
   const temporaryStatePath = `${statePath}.tmp-${temporaryStateId}`;
   const writeAndReplace = Effect.scoped(
     Effect.gen(function* () {
@@ -344,13 +341,13 @@ const readStateLive = Effect.fnUntraced(function* (options: StateOptions) {
 
 /** Builds the state capability over explicit platform services. */
 export const makeStateStoreService = (
-  crypto: Crypto.Crypto,
+  random: SecureRandom.SecureRandom["Service"],
   fileSystem: FileSystem.FileSystem,
   path: Path.Path,
 ): StateStore["Service"] => {
   const provideInternal = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
     effect.pipe(
-      Effect.provideService(Crypto.Crypto, crypto),
+      Effect.provideService(SecureRandom.SecureRandom, random),
       Effect.provideService(FileSystem.FileSystem, fileSystem),
       Effect.provideService(Path.Path, path),
     );
@@ -470,12 +467,12 @@ export const makeStateStoreService = (
   });
 };
 
-/** Provides state persistence over Effect's filesystem, path, and crypto services. */
+/** Provides state persistence over Effect's filesystem, path, and secure random services. */
 export const StateStoreLive = Layer.effect(
   StateStore,
   Effect.gen(function* () {
     return makeStateStoreService(
-      yield* Crypto.Crypto,
+      yield* SecureRandom.SecureRandom,
       yield* FileSystem.FileSystem,
       yield* Path.Path,
     );

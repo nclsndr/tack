@@ -1,4 +1,4 @@
-import { Argument, Command } from "effect/unstable/cli";
+import { Argument, Command } from "effect/cli";
 import { receive } from "./invocation-receiver.ts";
 import { applyFlag, previewApply } from "./operation-contract.ts";
 

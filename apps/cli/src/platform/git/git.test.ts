@@ -1,5 +1,5 @@
 import { expect, it } from "@effect/vitest";
-import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
+import { ChildProcess, ChildProcessSpawner, type CommandLine } from "effect/process";
 import { Effect, PlatformError, Sink, Stream } from "effect";
 import { Git } from "../../services/git.ts";
 import { GitLive, makeGitService } from "./git.ts";
@@ -23,7 +23,10 @@ const fakeHandle = (stdout: string, stderr: string, exitCode: number) =>
 
 it.effect("runs each Git discovery command with captured output and checks its exit code", () =>
   Effect.gen(function* () {
-    const commands: Array<{ readonly args: ReadonlyArray<string>; readonly cwd: string }> = [];
+    const commands: Array<{
+      readonly args: ReadonlyArray<CommandLine.Word>;
+      readonly cwd: string;
+    }> = [];
     const spawner = ChildProcessSpawner.make((command) => {
       if (ChildProcess.isStandardCommand(command) === false) {
         return Effect.die("Expected a standard Git command.");

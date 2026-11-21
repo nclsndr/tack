@@ -5,7 +5,7 @@ import { RecordLocationSchema, TransportSchema } from "./providers/provider-sche
 
 const hexDigest = (length: number) =>
   Schema.String.check(Schema.isPattern(/^[0-9a-f]+$/)).check(
-    Schema.isLengthBetween(length, length),
+    Schema.isBetweenLength(length, length),
   );
 
 const filesAreSortedAndUnique = Schema.makeFilter(

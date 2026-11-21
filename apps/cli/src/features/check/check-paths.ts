@@ -1,4 +1,5 @@
-import { Crypto, Effect, Path } from "effect";
+import { Effect, Path } from "effect";
+import { SecureRandom } from "effect/crypto";
 import {
   makeCheckReport,
   type CheckFinding,
@@ -24,7 +25,7 @@ export const checkPaths = Effect.fnUntraced(function* (
   } = {},
 ) {
   const path = yield* Path.Path;
-  const crypto = yield* Crypto.Crypto;
+  const random = yield* SecureRandom.SecureRandom;
   const inputs = yield* Effect.forEach(paths, discoverCheckInput);
   const folders = [
     ...new Set(
@@ -35,7 +36,7 @@ export const checkPaths = Effect.fnUntraced(function* (
   ];
   const base = emptyState();
   const registrations = yield* Effect.forEach(folders, (directory) =>
-    crypto.randomUUIDv4.pipe(Effect.map((id) => ({ id, canonicalPath: directory }))),
+    random.uuidV4().pipe(Effect.map((id) => ({ id, canonicalPath: directory }))),
   );
   const snapshot =
     folders.length === 0
