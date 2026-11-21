@@ -163,7 +163,7 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
         mode: "now",
         capture: init,
         lines: [
-          [1, 9],
+          [1, 8],
           [78, 83],
         ],
         start: "Set up a machine",
@@ -183,16 +183,6 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
           [44, 48],
         ],
         start: "Preview a sync",
-      }),
-      card({
-        id: "links-not-copies",
-        title: "Links, not copies",
-        benefit:
-          "Each agent folder holds links back to your folder, so an edit to a skill reaches every agent at once, without a sync.",
-        command: "ls -go .claude/skills",
-        cwd: "~/code/app",
-        capture: links,
-        start: "Links, not copies",
       }),
       card({
         id: "commands-where-read",
@@ -221,6 +211,16 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
           [23, 26],
           [32, 33],
         ],
+      }),
+      card({
+        id: "links-not-copies",
+        title: "Links, not copies",
+        benefit:
+          "Each agent folder holds links back to your folder, so an edit to a skill reaches every agent at once, without a sync.",
+        command: "ls -go .claude/skills",
+        cwd: "~/code/app",
+        capture: links,
+        start: "Links, not copies",
       }),
     ],
   },
@@ -411,7 +411,7 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
     label: "Scripts",
     heading: "Scripts, run by name.",
     intro:
-      "Declare a script in a source and run it in any registered project. A script gets only the secrets it declares, and every run leaves a record.",
+      "Declare a script in a source, with its arguments, and run it by name in any registered project. Every run leaves a record.",
     capabilities: [
       card({
         id: "run-a-script",
@@ -424,7 +424,7 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
         mode: "run",
         capture: scriptRun,
         lines: [
-          [1, 9],
+          [1, 6],
           [13, 20],
         ],
       }),
@@ -488,7 +488,7 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
         id: "bundle",
         title: "One file for CI and remote agents",
         benefit:
-          "Export a profile as one bundle with checksums. `tack profile apply-bundle` sets up the same links on a fresh machine, without your sources and without fetching anything.",
+          "Export a profile as one bundle with checksums. On a fresh machine, `tack profile apply-bundle` links the same skills from it, without your sources and without fetching anything.",
         command: "tack profile export team-docs:frontend ~/frontend.tar.gz",
         cwd: "~",
         operation: "profile export",
@@ -496,8 +496,8 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
         capture: profileExport,
         lines: [
           [1, 6],
+          [11, 12],
           [17, 19],
-          [27, 28],
         ],
       }),
     ],
@@ -511,17 +511,18 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
     capabilities: [
       card({
         id: "doctor",
-        title: "Every problem names its next step",
+        title: "Check the whole machine",
         benefit:
-          "`tack doctor` checks state, agents, sources, projects, docs and every link. Each problem it finds names the command to run next.",
+          "`tack doctor` checks state, agents, sources, projects, docs and every link on the machine, and changes nothing.",
         command: "tack doctor",
         cwd: "~",
         operation: "doctor",
         mode: "read",
         capture: doctor,
         lines: [
-          [1, 8],
-          [32, 33],
+          [1, 5],
+          [15, 16],
+          [24, 29],
         ],
       }),
       card({
@@ -536,7 +537,7 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
         capture: stateReset,
         lines: [
           [1, 4],
-          [182, 188],
+          [218, 224],
         ],
       }),
       card({
@@ -570,7 +571,7 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
  * line that depends on how Tack was installed. Each has its command, in the words of `tack --help`.
  */
 export const alsoInTack = {
-  heading: "Also in the CLI",
+  heading: "Also in Tack",
   items: [
     {
       title: "Browse and pick in your terminal.",

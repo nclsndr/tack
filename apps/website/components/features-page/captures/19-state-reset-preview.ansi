@@ -1,6 +1,6 @@
 [1mtack state reset[22m[2m · all managed state ·[22m[32m ✓ success[39m
 
-Preview only: nothing was written. 76 to remove, 1 docs link to
+Preview only: nothing was written. 94 to remove, 1 docs link to
 remove.
 
 [1mScope[22m  every managed link and retained cleanup obligation
@@ -158,6 +158,42 @@ remove.
   [31m[39m          debug                       [2mproject app[22m
   [31m− remove[39m  ~/code/app/.pi/skills/      [2mskill review · pi ·[22m
   [31m[39m          review                      [2mproject app[22m
+  [31m− remove[39m  ~/code/ci/.agents/skills/   [2mskill commit · codex ·[22m
+  [31m[39m          commit                      [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.agents/skills/   [2mskill debug · codex ·[22m
+  [31m[39m          debug                       [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.agents/skills/   [2mskill review · codex ·[22m
+  [31m[39m          review                      [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.claude/skills/   [2mskill commit · claude ·[22m
+  [31m[39m          commit                      [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.claude/skills/   [2mskill debug · claude ·[22m
+  [31m[39m          debug                       [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.claude/skills/   [2mskill review · claude ·[22m
+  [31m[39m          review                      [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.cursor/          [2mcommand release · cursor[22m
+  [31m[39m          commands/release.md         [2m· project ci[22m
+  [31m− remove[39m  ~/code/ci/.cursor/skills/   [2mskill commit · cursor ·[22m
+  [31m[39m          commit                      [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.cursor/skills/   [2mskill debug · cursor ·[22m
+  [31m[39m          debug                       [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.cursor/skills/   [2mskill review · cursor ·[22m
+  [31m[39m          review                      [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.opencode/        [2mcommand release ·[22m
+  [31m[39m          commands/release.md         [2mopencode · project ci[22m
+  [31m− remove[39m  ~/code/ci/.opencode/        [2mskill commit · opencode[22m
+  [31m[39m          skills/commit               [2m· project ci[22m
+  [31m− remove[39m  ~/code/ci/.opencode/        [2mskill debug · opencode ·[22m
+  [31m[39m          skills/debug                [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.opencode/        [2mskill review · opencode[22m
+  [31m[39m          skills/review               [2m· project ci[22m
+  [31m− remove[39m  ~/code/ci/.pi/prompts/      [2mcommand release · pi ·[22m
+  [31m[39m          release.md                  [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.pi/skills/       [2mskill commit · pi ·[22m
+  [31m[39m          commit                      [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.pi/skills/debug  [2mskill debug · pi ·[22m
+  [31m[39m                                      [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.pi/skills/       [2mskill review · pi ·[22m
+  [31m[39m          review                      [2mproject ci[22m
   [31m− remove[39m  ~/code/web/.agents/skills/  [2mskill commit · codex ·[22m
   [31m[39m          commit                      [2mproject web[22m
   [31m− remove[39m  ~/code/web/.agents/skills/  [2mskill review · codex ·[22m

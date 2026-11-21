@@ -1,9 +1,6 @@
-[1mtack doctor[22m[2m · 0.1.0+dev · 1 failed · 10 ok ·[22m[31m ✗ domain[39m
+[1mtack doctor[22m[2m · 0.1.0+dev · 11 ok ·[22m[32m ✓ success[39m
 
-[1mProblems[22m[2m 1 check[22m
-  [31m✗[39m links
-    18 destinations differ from what Tack expects.
-    [36mtack sync --project ci --state-dir ~/.tack[39m
+[32mNo problems found.[39m
 
 [1mChecked[22m
   [32m✓[39m release
@@ -26,8 +23,7 @@
     All declared dependency sources are registered.
   [32m✓[39m projects
     4 registered projects, all healthy.
+  [32m✓[39m links
+    94 managed destinations, all matching.
   [32m✓[39m docs
     1 project with attached docs, all mounted and loading.
-
-[1mNext[22m
-  [36mtack sync --project ci --state-dir ~/.tack[39m
