@@ -1,0 +1,28 @@
+[1mtack profile export[22m[2m ·[22m[32m ✓ success[39m
+
+Content snapshot team-docs:frontend · exported
+~/frontend.tar.gz
+
+Bundle version 1 · 8dc74afa11f8b63db321078adb89daac690c548840b529787dfe4b346755c245
+Profile frontend · defining source source-1
+Source source-0 · skills
+  source requirement skills → source-0
+  source requirement team-docs → source-1
+  direct skill review · review
+  direct skill commit · commit
+Source source-1 · team-docs
+  source requirement skills → source-0
+  source requirement team-docs → source-1
+
+Exact payload (8 files/directories)
+  dir  755 0 B sources/source-0/commit · sha256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  file 644 170 B sources/source-0/commit/SKILL.md · sha256 e744ed9da62bed93604dafa2706b8fedca3eda73c3a9f4d2114c53b7e3cb8f58
+  dir  755 0 B sources/source-0/review · sha256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  file 644 187 B sources/source-0/review/SKILL.md · sha256 685b15ded1e285bc4f9b18ccea2c933a2dc89c35e4bad270934b2aa5a1da6468
+  file 644 81 B sources/source-0/tack.yaml · sha256 c2fd6dc2240ce936ea7f56928f066a322826e72eac065ec34f9745550ea398bb
+  dir  755 0 B sources/source-1/profiles · sha256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  file 644 128 B sources/source-1/profiles/frontend.yaml · sha256 7e71629f7632aaeb12e3dc49167fc2131d899652a92866ced70be928ee5bf3ab
+  file 644 104 B sources/source-1/tack.yaml · sha256 1b792bcf7e7adad44f82079aa9fdf6a1041110dca980cf59a63e8d39e6a4e22d
+
+Content only: no sender state, installed links, ownership, execution history or automatic setup.
+Known sensitive paths are refused; arbitrary authored text is not certified secret-free. Checksums establish integrity, not publisher authenticity.

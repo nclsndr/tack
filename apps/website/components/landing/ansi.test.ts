@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseAnsi } from "./ansi.ts";
+import { parseAnsi, plainAnsi } from "./ansi.ts";
 
 describe("parseAnsi", () => {
   it("returns plain text as one unstyled span", () => {
@@ -28,5 +28,13 @@ describe("parseAnsi", () => {
     expect(parseAnsi(`\u001b[${code};4mx\u001b[m`)).toEqual([
       { text: "x", bold: false, dim: false, color },
     ]);
+  });
+});
+
+describe("plainAnsi", () => {
+  it("keeps the text a terminal shows and drops every style sequence", () => {
+    expect(
+      plainAnsi("\u001b[1mtack\u001b[22m \u001b[2;36msync\u001b[0m\n  \u001b[32m✓\u001b[m done"),
+    ).toBe("tack sync\n  ✓ done");
   });
 });

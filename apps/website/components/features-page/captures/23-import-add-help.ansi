@@ -1,0 +1,44 @@
+[1mtack help[22m[2m · import add ·[22m[32m ✓ success[39m
+
+Preview a remote location and copy chosen skills into a declared
+skills folder of a source you own; --apply requires --into,
+writes the folder and an imports record in the source's
+tack.yaml, and delivers nothing until sync
+
+  [2mUsage[22m  tack import add [flags] <location>
+  [2mMode[22m   preview-apply
+
+[1mArguments[22m
+  <location>  A location that names its provider:
+              github:org/repo[/folder][#ref], or an
+              https://github.com/... URL or git@github.com:....
+              Providers: github
+
+[1mFlags[22m
+  --into <string>   The registered source that receives the
+                    skills, SOURCE or SOURCE:FOLDER; required
+                    with --apply
+  --skill <string>  Import this skill by name; repeat for
+                    several
+  --all             Import every importable skill in the
+                    location
+  --full-depth      Search every folder up to five levels deep
+  --apply           Apply the planned changes
+
+[1mRoot flags[22m
+  --json                Print the version 1 JSON envelope; only
+                        status, sync, doctor, upgrade and
+                        version have a stable payload
+  --state-dir <string>  Override the Tack state directory
+
+[1mExamples[22m
+  [36mtack import add github:anthropics/skills[39m
+    [2mList what the location offers[22m
+  [36mtack import add github:anthropics/skills --skill pdf --into[39m \
+    [36mmy-skills[39m
+    [2mPreview the copy and where it will be delivered[22m
+  [36mtack import add github:anthropics/skills --skill pdf --into[39m \
+    [36mmy-skills --apply[39m
+  [36mtack import add github:anthropics/skills --all --into[39m \
+    [36mmy-skills:vendor/skills --apply[39m
+    [2mUse a named declared skills folder[22m

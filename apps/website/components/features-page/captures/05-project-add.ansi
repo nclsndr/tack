@@ -1,0 +1,10 @@
+[1mtack project add[22m[2m · app ·[22m[32m ✓ success[39m
+
+Registered project app.
+
+  [2manchor[22m  ~/code/app/.git
+  [2mroots[22m   ~/code/app
+
+[1mNext[22m
+  [36mtack catalog[39m
+  [36mtack sync --project app[39m

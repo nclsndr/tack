@@ -509,10 +509,12 @@
 }
 
 .story-caption code:not(.proof),
-.features code:not(.proof) {
+.features code:not(.proof),
+.catalogue-page p > code {
   color: var(--tack-agent);
   font-family: var(--tack-font-mono);
   font-size: 0.86em;
+  font-variant-ligatures: none;
 }
 
 @media (min-width: 1024px) {
@@ -628,4 +630,9 @@
   .also-items {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+/* The way on to the features page, under the row. */
+.also-more {
+  margin-top: 40px !important;
 }

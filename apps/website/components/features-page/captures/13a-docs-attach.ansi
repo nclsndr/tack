@@ -1,0 +1,8 @@
+[1mtack docs attach[22m[2m · app ·[22m[32m ✓ success[39m
+
+Docs attach saved for project app; it has 1 attached resource.
+
+  [2mattached[22m  handbook
+
+[1mNext[22m
+  [36mtack sync --no-adapters --project app[39m

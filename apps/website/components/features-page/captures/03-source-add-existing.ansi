@@ -1,0 +1,11 @@
+[1mtack source add[22m[2m ·[22m[32m ✓ success[39m
+
+Registered source team-docs (~/team-docs).
+
+  [2mid[22m    f4ba3172-1317-4194-9075-abebe7f5f574
+  [2mdocs[22m  handbook
+
+0 skills · 1 command · 0 context · 1 script · 1 docs
+
+[1mNext[22m
+  [36mtack project add NAME --repository-cwd PATH[39m

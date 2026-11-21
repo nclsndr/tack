@@ -4,6 +4,7 @@ import { features } from "./content.ts";
 import { corners, InView, settle } from "./drafting-sheet.tsx";
 import { Illustration } from "./illustration.tsx";
 import { InlineCode, Proof } from "./inline-code.tsx";
+import { featuresHref } from "./routes.ts";
 import {
   usePinned,
   useScrollFrames,
@@ -371,6 +372,11 @@ function AlsoRow() {
           </motion.article>
         ))}
       </div>
+      <motion.p className="also-more" data-intro="" variants={settle(0.2, 0)}>
+        <a href={featuresHref} className="landing-button">
+          {also.more}
+        </a>
+      </motion.p>
     </InView>
   );
 }

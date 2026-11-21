@@ -17,6 +17,16 @@ export default defineConfig({
   route: { cleanUrls: true },
   // Writes llms.txt, llms-full.txt and a Markdown twin beside every HTML page.
   llms: true,
+  builderConfig: {
+    tools: {
+      rspack: {
+        module: {
+          // The features page imports real terminal captures as text, `capture.ansi?raw`.
+          rules: [{ test: /\.ansi$/, resourceQuery: /raw/, type: "asset/source" }],
+        },
+      },
+    },
+  },
   themeConfig: {
     // Dark is the site default; the warm paper light theme is the alternate.
     darkMode: "dark",

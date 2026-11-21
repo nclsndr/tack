@@ -1,0 +1,520 @@
+import { hero } from "../landing/content.ts";
+import init from "./captures/01-init.ansi?raw";
+import sourceAddPreview from "./captures/02a-source-add-preview.ansi?raw";
+import sourceAddExisting from "./captures/03-source-add-existing.ansi?raw";
+import catalog from "./captures/04-catalog.ansi?raw";
+import projectAdd from "./captures/05-project-add.ansi?raw";
+import syncPreview from "./captures/06a-sync-preview.ansi?raw";
+import links from "./captures/07b-ls-links-no-owner.ansi?raw";
+import adapterDisable from "./captures/08b-adapter-disable-preview.ansi?raw";
+import pickInclude from "./captures/09a-pick-include.ansi?raw";
+import projectRefresh from "./captures/10-project-refresh.ansi?raw";
+import status from "./captures/11-status.ansi?raw";
+import doctor from "./captures/12a-doctor-problem.ansi?raw";
+import docsAttach from "./captures/13a-docs-attach.ansi?raw";
+import docsSearch from "./captures/13d-docs-search.ansi?raw";
+import docsTarget from "./captures/13e-docs-target.ansi?raw";
+import docsServe from "./captures/13f-docs-serve.ansi?raw";
+import scriptShow from "./captures/14a-script-show.ansi?raw";
+import scriptRun from "./captures/14b-script-run.ansi?raw";
+import scriptHistory from "./captures/14c-script-history.ansi?raw";
+import profileSave from "./captures/15a-profile-save-preview.ansi?raw";
+import profileApply from "./captures/15b-profile-apply-preview.ansi?raw";
+import profileExport from "./captures/15e-profile-export.ansi?raw";
+import check from "./captures/16-check.ansi?raw";
+import guide from "./captures/17a-guide.ansi?raw";
+import statusJson from "./captures/18-status-json.ansi?raw";
+import stateReset from "./captures/19-state-reset-preview.ansi?raw";
+import exploreHelp from "./captures/21-explore-help.ansi?raw";
+import importAddHelp from "./captures/23-import-add-help.ansi?raw";
+import { excerpt, type LineRanges } from "./excerpt.ts";
+
+/**
+ * What running a command does, keyed and worded as the legend of `tack --help` (a test holds them
+ * to the CLI's own map). `label` is the word a card shows.
+ */
+export const modes = {
+  read: { label: "read", meaning: "changes nothing" },
+  now: { label: "now", meaning: "saves at once" },
+  plan: { label: "plan", meaning: "previews; add --apply to write" },
+  run: { label: "run", meaning: "executes a declared script" },
+  conditional: {
+    label: "conditional",
+    meaning: "may save at once; see the command help conditions",
+  },
+} as const;
+
+type Mode = keyof typeof modes;
+
+/** A card as written: its words, the command, and the lines of the real capture it shows. */
+type CapabilitySource = {
+  /** The card's anchor on the page. */
+  readonly id: string;
+  readonly title: string;
+  /** One line on what the capability gives you. Text in `backticks` shows as inline code. */
+  readonly benefit: string;
+  /** The command line as typed, with `~` for the home folder. */
+  readonly command: string;
+  /** The folder the command ran in, shown in the terminal's title bar. */
+  readonly cwd: string;
+  /**
+   * The full output the command printed in the capture sandbox, styles included. Captured at 64
+   * columns with `FORCE_COLOR=1`; the sandbox's home folder reads as `~`.
+   */
+  readonly capture: string;
+  /** The capture lines the card shows; omit it to show the whole capture. */
+  readonly lines?: LineRanges;
+} & (
+  | {
+      /** The `tack` operation the command runs, as `tack --help` names it. */
+      readonly operation: string;
+      readonly mode: Mode;
+    }
+  | { readonly operation?: undefined; readonly mode?: undefined }
+);
+
+/** A card: as written, with the output it shows derived from its capture. */
+export type Capability = CapabilitySource & { readonly output: string };
+
+/** A group of cards under one heading. */
+export type CapabilityGroup = {
+  readonly id: string;
+  readonly label: string;
+  readonly heading: string;
+  /** Text in `backticks` shows as inline code. */
+  readonly intro: string;
+  readonly capabilities: ReadonlyArray<Capability>;
+};
+
+const card = (source: CapabilitySource): Capability => ({
+  ...source,
+  output: excerpt(source.capture, source.lines),
+});
+
+/** The page's own copy, around the catalogue. */
+export const featuresPage = {
+  label: "Features",
+  headline: "Everything Tack does, in its own output.",
+  lead: hero.subhead,
+  intro:
+    "Each card names one thing Tack does and shows the command that does it, with what it printed in a test sandbox: five agents, two projects, a skills folder and a team repository. Where output runs long, the card says how many lines it leaves out.",
+  legend: "Each card names how its command behaves, in the words of `tack --help`:",
+  closing: {
+    heading: "Try it on your own folders.",
+    text: "Set Tack up once, register a folder of skills, and preview your first sync.",
+  },
+} as const;
+
+/** Every capability, grouped by what it is for, in reading order. */
+export const catalogue: ReadonlyArray<CapabilityGroup> = [
+  {
+    id: "agents",
+    label: "Agents",
+    heading: "One skill folder, every agent.",
+    intro:
+      "Tack links the same folders into Claude Code, Codex, Cursor, OpenCode and Pi, for you and in each project. Agents get links, never copies.",
+    capabilities: [
+      card({
+        id: "set-up-a-machine",
+        title: "Set up a machine in one command",
+        benefit:
+          "`tack init` finds the agents on the machine, turns them on and links Tack's own skills for you. Skills you made by hand stay untouched.",
+        command: "tack init",
+        cwd: "~",
+        operation: "init",
+        mode: "now",
+        capture: init,
+        lines: [
+          [1, 15],
+          [77, 83],
+        ],
+      }),
+      card({
+        id: "preview-every-link",
+        title: "See every link before it is made",
+        benefit:
+          "A sync prints its plan for each agent and writes nothing until you add `--apply`.",
+        command: "tack sync --project app",
+        cwd: "~/code/app",
+        operation: "sync",
+        mode: "plan",
+        capture: syncPreview,
+        lines: [
+          [1, 16],
+          [44, 48],
+        ],
+      }),
+      card({
+        id: "links-not-copies",
+        title: "Links, not copies",
+        benefit:
+          "Each agent folder holds links back to your folder, so an edit to a skill reaches every agent at once, without a sync.",
+        command: "ls -go .claude/skills",
+        cwd: "~/code/app",
+        capture: links,
+      }),
+      card({
+        id: "commands-where-read",
+        title: "Commands for the agents that read them",
+        benefit:
+          "Commands link into Cursor, OpenCode and Pi, which gets them as prompt templates. The plan names the agents that get none.",
+        command: "tack sync --project app",
+        cwd: "~/code/app",
+        operation: "sync",
+        mode: "plan",
+        capture: syncPreview,
+        lines: [[33, 42]],
+      }),
+      card({
+        id: "turn-an-agent-off",
+        title: "Turn an agent off cleanly",
+        benefit:
+          "Disabling an agent previews every link Tack would remove, for you and in each project. Your files stay.",
+        command: "tack adapter disable cursor",
+        cwd: "~",
+        operation: "adapter disable",
+        mode: "plan",
+        capture: adapterDisable,
+        lines: [
+          [1, 14],
+          [23, 33],
+        ],
+      }),
+    ],
+  },
+  {
+    id: "sources",
+    label: "Sources",
+    heading: "Your folders, under your Git.",
+    intro:
+      "A source is a folder you already keep, with skills, commands, context, scripts or docs. Tack reads it where it is and never moves it.",
+    capabilities: [
+      card({
+        id: "any-folder",
+        title: "Turn any folder into a source",
+        benefit:
+          "Point Tack at a folder of skills: it previews the `tack.yaml` it would write, and registers the folder with `--apply`.",
+        command: "tack source add ~/skills --skills .",
+        cwd: "~",
+        operation: "source add",
+        mode: "conditional",
+        capture: sourceAddPreview,
+      }),
+      card({
+        id: "team-repository",
+        title: "Share a team repository",
+        benefit:
+          "A clone that already has a `tack.yaml` registers at once. Teammates get each edit with `git pull`.",
+        command: "tack source add ~/team-docs",
+        cwd: "~",
+        operation: "source add",
+        mode: "conditional",
+        capture: sourceAddExisting,
+      }),
+      card({
+        id: "catalog",
+        title: "See everything your sources declare",
+        benefit:
+          "One list of the skills, commands, scripts and docs across your sources, each with its description.",
+        command: "tack catalog",
+        cwd: "~",
+        operation: "catalog",
+        mode: "read",
+        capture: catalog,
+        lines: [
+          [1, 1],
+          [9, 9],
+          [47, 64],
+        ],
+      }),
+      card({
+        id: "check",
+        title: "Check a source before you push",
+        benefit:
+          "`tack check` validates sources, profiles and docs pages without any Tack state, so it runs on any machine.",
+        command: "tack check ~/team-docs ~/skills",
+        cwd: "~",
+        operation: "check",
+        mode: "read",
+        capture: check,
+        lines: [[1, 17]],
+      }),
+      card({
+        id: "import",
+        title: "Copy skills from GitHub",
+        benefit:
+          "Preview what a GitHub repository offers, then copy the skills you choose into a source you own, with a record of where they came from.",
+        command: "tack import add --help",
+        cwd: "~",
+        operation: "import add",
+        mode: "plan",
+        capture: importAddHelp,
+        lines: [[1, 15]],
+      }),
+    ],
+  },
+  {
+    id: "projects",
+    label: "Projects",
+    heading: "Every project, every worktree.",
+    intro:
+      "Register a Git project once. Tack links into each of its worktrees, and each project can pick its own skills.",
+    capabilities: [
+      card({
+        id: "register-a-project",
+        title: "Register a project",
+        benefit:
+          "Run it inside a Git repository: Tack records the project and the roots it links into.",
+        command: "tack project add app",
+        cwd: "~/code/app",
+        operation: "project add",
+        mode: "now",
+        capture: projectAdd,
+      }),
+      card({
+        id: "pick-per-project",
+        title: "Pick skills per project",
+        benefit:
+          "Include an opt-in skill in one project, or exclude one it does not need. The next sync applies it.",
+        command: "tack pick include ship --project api",
+        cwd: "~",
+        operation: "pick include",
+        mode: "now",
+        capture: pickInclude,
+      }),
+      card({
+        id: "worktrees",
+        title: "Worktrees included",
+        benefit:
+          "Add a worktree and refresh the project: Tack adds it as a root, and the next sync links it too.",
+        command: "tack project refresh --project app",
+        cwd: "~",
+        operation: "project refresh",
+        mode: "plan",
+        capture: projectRefresh,
+      }),
+      card({
+        id: "status",
+        title: "Know what is linked",
+        benefit:
+          "One view of a project's links, agents, sources and catalog, and of anything that needs attention.",
+        command: "tack status --project app",
+        cwd: "~/code/app",
+        operation: "status",
+        mode: "read",
+        capture: status,
+      }),
+    ],
+  },
+  {
+    id: "docs",
+    label: "Docs",
+    heading: "Docs your agents can find.",
+    intro:
+      "Attach a docs folder to a project. Every worktree gets it under `.tack/docs`, agents search it from the terminal, and you read it in a local reader.",
+    capabilities: [
+      card({
+        id: "attach-docs",
+        title: "Attach docs to a project",
+        benefit:
+          "Attach a source's docs once. The next sync mounts them in every worktree of the project.",
+        command: "tack docs attach handbook --project app",
+        cwd: "~/code/app",
+        operation: "docs attach",
+        mode: "now",
+        capture: docsAttach,
+      }),
+      card({
+        id: "search-docs",
+        title: "Search from the terminal",
+        benefit: "Agents search the attached docs and get each hit with its file and line numbers.",
+        command: "tack docs search changelog",
+        cwd: "~/code/app",
+        operation: "docs search",
+        mode: "read",
+        capture: docsSearch,
+      }),
+      card({
+        id: "write-docs",
+        title: "Tell agents where to write",
+        benefit:
+          "`tack docs target` gives an agent the verified folder for new docs, inside the project.",
+        command: "tack docs target",
+        cwd: "~/code/app",
+        operation: "docs target",
+        mode: "read",
+        capture: docsTarget,
+      }),
+      card({
+        id: "read-docs",
+        title: "Read them in a local reader",
+        benefit:
+          "`tack docs serve` opens the attached docs in a reader in your browser, on your machine.",
+        command: "tack docs serve --no-open --port 4815",
+        cwd: "~/code/app",
+        operation: "docs serve",
+        mode: "read",
+        capture: docsServe,
+        lines: [[3, 10]],
+      }),
+    ],
+  },
+  {
+    id: "scripts",
+    label: "Scripts",
+    heading: "Scripts, run by name.",
+    intro:
+      "Declare a script in a source and run it in any registered project. A script gets only the secrets it declares, and every run leaves a record.",
+    capabilities: [
+      card({
+        id: "run-a-script",
+        title: "Run a script by name",
+        benefit:
+          "The script's own output comes first, then Tack's report of the run: its outcome and the value it returned.",
+        command: "tack script run changelog -- --limit 3",
+        cwd: "~/code/app",
+        operation: "script run",
+        mode: "run",
+        capture: scriptRun,
+        lines: [[1, 20]],
+      }),
+      card({
+        id: "show-a-script",
+        title: "See what a script takes",
+        benefit: "Its description, its file and its arguments, before you run it.",
+        command: "tack script show changelog",
+        cwd: "~/code/app",
+        operation: "script show",
+        mode: "read",
+        capture: scriptShow,
+      }),
+      card({
+        id: "script-history",
+        title: "Look back at past runs",
+        benefit: "Every run is kept with its outcome and times, and opens in full by its id.",
+        command: "tack script history",
+        cwd: "~/code/app",
+        operation: "script history",
+        mode: "read",
+        capture: scriptHistory,
+      }),
+    ],
+  },
+  {
+    id: "profiles",
+    label: "Profiles",
+    heading: "The exact same set, anywhere.",
+    intro:
+      "A profile is a reviewed list of resources, kept in your source like any other file. Apply it to a project, or pack it into one file for a machine without your sources.",
+    capabilities: [
+      card({
+        id: "save-a-profile",
+        title: "Turn your picks into a profile",
+        benefit:
+          "Save a project's current selection as a profile file in your source, previewed as a diff first.",
+        command: "tack profile save ~/team-docs daily --project api",
+        cwd: "~",
+        operation: "profile save",
+        mode: "plan",
+        capture: profileSave,
+        lines: [[1, 18]],
+      }),
+      card({
+        id: "apply-a-profile",
+        title: "Give a project exactly that set",
+        benefit: "Applying a profile previews its members and the link each agent gets.",
+        command: "tack profile apply team-docs:frontend --project web --target-root ~/code/web",
+        cwd: "~",
+        operation: "profile apply",
+        mode: "plan",
+        capture: profileApply,
+        lines: [[1, 16]],
+      }),
+      card({
+        id: "bundle",
+        title: "One file for CI and remote agents",
+        benefit:
+          "Export a profile as one bundle with checksums. `tack profile apply-bundle` sets up the same links on a fresh machine, without your sources and without fetching anything.",
+        command: "tack profile export team-docs:frontend ~/frontend.tar.gz --apply",
+        cwd: "~",
+        operation: "profile export",
+        mode: "plan",
+        capture: profileExport,
+        lines: [[1, 12]],
+      }),
+    ],
+  },
+  {
+    id: "safety",
+    label: "Safety and automation",
+    heading: "Safe to try, easy to leave.",
+    intro:
+      "Every command that changes links previews first. Tack removes only the links it made, and your agent can run it for you.",
+    capabilities: [
+      card({
+        id: "doctor",
+        title: "Every problem names its next step",
+        benefit:
+          "`tack doctor` checks the whole machine, and each problem ends with the command to run next.",
+        command: "tack doctor",
+        cwd: "~",
+        operation: "doctor",
+        mode: "read",
+        capture: doctor,
+        lines: [
+          [1, 9],
+          [34, 36],
+        ],
+      }),
+      card({
+        id: "leave-cleanly",
+        title: "Leave without a trace",
+        benefit:
+          "`tack state reset` previews removing every link Tack made, and its state. Your files stay where they are.",
+        command: "tack state reset",
+        cwd: "~",
+        operation: "state reset",
+        mode: "plan",
+        capture: stateReset,
+        lines: [
+          [1, 11],
+          [181, 188],
+        ],
+      }),
+      card({
+        id: "agents-run-tack",
+        title: "Your agent can run it",
+        benefit:
+          "Built-in guides and skills teach agents Tack's commands, and every view ends with the next command.",
+        command: "tack guide",
+        cwd: "~",
+        operation: "guide",
+        mode: "read",
+        capture: guide,
+      }),
+      card({
+        id: "json",
+        title: "A stable contract for scripts",
+        benefit:
+          "`--json` prints one versioned envelope, with a stable payload for status, sync, doctor, upgrade and the version.",
+        command: "tack status --project app --json | jq | head -20",
+        cwd: "~/code/app",
+        operation: "status",
+        mode: "read",
+        capture: statusJson,
+      }),
+      card({
+        id: "explore",
+        title: "Browse and pick in your terminal",
+        benefit:
+          "`tack explore` opens one project's catalog to stage picks and docs, and applies nothing until you review the changes.",
+        command: "tack explore --help",
+        cwd: "~",
+        operation: "explore",
+        mode: "conditional",
+        capture: exploreHelp,
+        lines: [[1, 18]],
+      }),
+    ],
+  },
+];

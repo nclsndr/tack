@@ -1,0 +1,33 @@
+[1mtack adapter disable[22m[2m · adapter cursor ·[22m[32m ✓ success[39m
+
+Preview only: nothing was written. 9 to remove.
+
+[1mEnabled adapters[22m  claude, codex, cursor, opencode, pi → claude,
+[1m[22m                  codex, opencode, pi
+
+[1mActions[22m
+  [31m− remove[39m  ~/.cursor/skills/author-    [2mskill[22m
+  [31m[39m          tack-profiles               [2mauthor-tack-profiles ·[22m
+  [31m[39m                                      [2mcursor · user[22m
+  [31m− remove[39m  ~/.cursor/skills/manage-    [2mskill[22m
+  [31m[39m          tack-sources                [2mmanage-tack-sources ·[22m
+  [31m[39m                                      [2mcursor · user[22m
+  [31m− remove[39m  ~/.cursor/skills/prepare-   [2mskill[22m
+  [31m[39m          tack-checkout               [2mprepare-tack-checkout ·[22m
+  [31m[39m                                      [2mcursor · user[22m
+  [31m− remove[39m  ~/.cursor/skills/use-tack   [2mskill use-tack · cursor[22m
+  [31m[39m                                      [2m· user[22m
+  [31m− remove[39m  ~/.cursor/skills/write-     [2mskill[22m
+  [31m[39m          reader-figures              [2mwrite-reader-figures ·[22m
+  [31m[39m                                      [2mcursor · user[22m
+  [31m− remove[39m  ~/code/app/.cursor/         [2mcommand release · cursor[22m
+  [31m[39m          commands/release.md         [2m· project app[22m
+  [31m− remove[39m  ~/code/app/.cursor/skills/  [2mskill commit · cursor ·[22m
+  [31m[39m          commit                      [2mproject app[22m
+  [31m− remove[39m  ~/code/app/.cursor/skills/  [2mskill debug · cursor ·[22m
+  [31m[39m          debug                       [2mproject app[22m
+  [31m− remove[39m  ~/code/app/.cursor/skills/  [2mskill review · cursor ·[22m
+  [31m[39m          review                      [2mproject app[22m
+
+[1mNext[22m
+  [36mtack adapter disable cursor --apply[39m

@@ -18,9 +18,8 @@ import {
 } from "./hero-intro.tsx";
 import { InlineCode } from "./inline-code.tsx";
 import { Mark } from "./mark.tsx";
+import { docsHref, featuresHref, getStartedHref } from "./routes.ts";
 import { Story } from "./story.tsx";
-
-const docsHref = "/docs/";
 
 /** Copies text to the clipboard and reports the result in a live region. */
 function CopyButton({ text, label }: { readonly text: string; readonly label: string }) {
@@ -135,9 +134,10 @@ const headerFallback =
 /**
  * The header stays at the top of the screen as the page scrolls, as the docs navigation does. At
  * the top of the page it sits flush on the hero; once the page leaves the top, a card pops out
- * behind it.
+ * behind it. The landing page and the features page share it: its links are absolute, so they
+ * lead to the same places from either page, and `current` marks the page it is on.
  */
-function Header() {
+export function Header({ current }: { readonly current?: "features" }) {
   const marker = useRef<HTMLSpanElement>(null);
   const floating = useScrolledPast(marker);
   return (
@@ -153,11 +153,13 @@ function Header() {
             <span>tack</span>
           </a>
           <nav aria-label="Main" className="landing-nav">
-            <a href="#demo">Demo</a>
-            <a href="#features">Features</a>
+            <a href="/#demo">Demo</a>
+            <a href={featuresHref} aria-current={current === "features" ? "page" : undefined}>
+              Features
+            </a>
             <a href={docsHref}>Docs</a>
           </nav>
-          <a href="#get-started" className="landing-button landing-button-primary">
+          <a href={getStartedHref} className="landing-button landing-button-primary">
             Get started
           </a>
         </div>
@@ -294,7 +296,8 @@ function Closing() {
   );
 }
 
-function Footer() {
+/** The site footer, on the landing page and the features page. */
+export function Footer() {
   return (
     <footer className="landing-footer">
       <div className="landing-shell landing-footer-row">
@@ -352,6 +355,8 @@ ${featureList}
 ### ${features.also.heading}
 
 ${also}
+
+[${features.also.more}](${featuresHref})
 
 ## ${story.heading}
 

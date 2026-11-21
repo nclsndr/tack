@@ -1,0 +1,37 @@
+[1mtack check[22m[2m ·[22m[32m ✓ success[39m
+
+Checks 5 · errors 0 · warnings 0
+
+source ~/team-docs
+  skill: 0
+  command: 1
+  context: 0
+  script: 1
+  docs: 1
+
+profile ~/team-docs/profiles/frontend.yaml
+  Structure: valid · Source linkage: complete
+  Direct members (2)
+  skill skills:review
+  skill skills:commit
+  Required dependencies (0)
+
+docs ~/team-docs/handbook/index.md
+  Figures (0)
+  Icons (0)
+  Author components (0)
+
+docs ~/team-docs/handbook/releases.md
+  Figures (0)
+  Icons (0)
+  Author components (0)
+
+source ~/skills
+  skill: 4
+  command: 0
+  context: 0
+  script: 0
+  docs: 0
+
+
+Write files, run tack check with the relevant paths, and repeat until clean.
