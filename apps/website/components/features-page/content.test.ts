@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { makeDemoSession, shellWords } from "../../demo/demo-shell.ts";
-import { groundRules, lenses, profileFigure } from "./content.ts";
+import { groundRules, lenses, previewFigure, profileFigure } from "./content.ts";
 
 const escape = String.fromCharCode(27);
 const plain = (text: string) => text.replaceAll(new RegExp(`${escape}\\[[0-9;]*m`, "g"), "");
@@ -13,6 +13,7 @@ const commands = [
   ]),
   ...groundRules.rules.flatMap((rule) => ("command" in rule ? [rule.command] : [])),
   ...profileFigure.steps.flatMap((step) => ("command" in step ? [step.command] : [])),
+  previewFigure.command,
 ];
 
 /** The words of a command before `--`, where a script's own arguments start. */

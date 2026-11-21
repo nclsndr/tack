@@ -2,13 +2,10 @@
    laid out one part at a time. It adds layout only; colours, type and figures come from the
    landing's styles and the brand tokens. */
 
-.fp-visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
+/* Headings break into even lines, so none ends on one word. */
+.fp h1,
+.fp h2 {
+  text-wrap: balance;
 }
 
 /* The head: the heading, the problem and the tagline, a line of facts, then the index. */
@@ -149,6 +146,25 @@
   }
 }
 
+/* On a phone the index is a compact two-column list of names; each part says when it serves. */
+@media (max-width: 639px) {
+  .fp-index {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .landing a.fp-index-item {
+    padding: 12px 14px;
+  }
+
+  .fp-index-name {
+    font-size: 16px;
+  }
+
+  .fp-index-when {
+    display: none;
+  }
+}
+
 @media (min-width: 1024px) {
   .fp-index {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -165,7 +181,7 @@
 
 /* A part: the words and the figure side by side, then its features under a rule. */
 .fp-lens {
-  padding-block: clamp(64px, 9vw, 112px);
+  padding-block: clamp(48px, 6vw, 80px);
   scroll-margin-top: var(--landing-header-height, 0px);
 }
 
@@ -271,6 +287,10 @@
   transform: none;
 }
 
+.fp-root {
+  color: var(--tack-faint);
+}
+
 .landing .fp-figure-note {
   margin: 18px 0 0;
   padding-inline-start: 28px;
@@ -289,6 +309,11 @@
   .links-figure.fp-links {
     font-size: 13px;
   }
+
+  /* A worktree root takes its own line above the link it holds. */
+  .fp-links .fp-root {
+    display: block;
+  }
 }
 
 /* The script figure: the source file, then its code on the figure's dark ground. */
@@ -302,6 +327,12 @@
   font-size: 13px;
   line-height: 1.7;
   white-space: pre;
+}
+
+@media (max-width: 639px) {
+  .fp-code pre {
+    font-size: 11.5px;
+  }
 }
 
 /* The profile figure: three steps down the sheet, each command on the arrow between them. */
@@ -359,13 +390,36 @@
   margin: 14px;
 }
 
+.fp-shot-frame {
+  overflow: hidden;
+  border: 1px solid var(--tack-border-strong);
+  border-radius: var(--tack-radius-lg);
+  box-shadow: 0 40px 80px -40px rgb(1 10 20 / 0.9);
+}
+
 .fp-shot img {
   display: block;
   width: 100%;
   height: auto;
-  border: 1px solid var(--tack-border-strong);
-  border-radius: var(--tack-radius-lg);
-  box-shadow: 0 40px 80px -40px rgb(1 10 20 / 0.9);
+}
+
+/* On a phone the whole reader is too small to read: show its article pane, at a readable size. */
+@media (max-width: 639px) {
+  .fp-shot-frame {
+    aspect-ratio: 1 / 1;
+  }
+
+  .fp-shot picture {
+    display: block;
+    height: 100%;
+  }
+
+  .fp-shot img {
+    width: auto;
+    max-width: none;
+    height: 100%;
+    margin-left: -32%;
+  }
 }
 
 /* The features under a part: a quiet grid, ruled off the sheet, as the landing's "Also" row. */
@@ -481,8 +535,36 @@
   padding-block: clamp(64px, 9vw, 112px) clamp(96px, 12vw, 160px);
 }
 
+/* The ground rules' head: the heading beside a real preview, the rule it proves. */
+.fp-rules-head {
+  display: grid;
+  gap: 32px 56px;
+  align-items: center;
+}
+
 .fp-rules-head h2 {
-  max-width: 20ch;
+  max-width: 14ch;
+}
+
+.fp-preview {
+  min-width: 0;
+}
+
+.fp-preview .tack-terminal {
+  margin: 0;
+  font-size: 12px;
+}
+
+.landing .fp-preview-caption {
+  margin-top: 10px;
+  color: var(--tack-faint);
+  font-size: 13px;
+}
+
+@media (min-width: 1024px) {
+  .fp-rules-head {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  }
 }
 
 .fp-limits {

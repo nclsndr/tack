@@ -30,8 +30,11 @@ function PathText({ path }: { readonly path: string }) {
   ));
 }
 
-/** One row of a link figure: a plus mark, a path and the label on its right. */
-type Row = { readonly path: string; readonly tag: string };
+/**
+ * One row of a link figure: a plus mark, a path and the label on its right. A `root` leads the
+ * path, drawn fainter, when the rows share one path in different folders.
+ */
+type Row = { readonly path: string; readonly tag: string; readonly root?: string };
 
 /** A link figure's rows, each landing after the one before it from `start`. */
 function Rows({ rows, start = 0 }: { readonly rows: ReadonlyArray<Row>; readonly start?: number }) {
@@ -46,6 +49,11 @@ function Rows({ rows, start = 0 }: { readonly rows: ReadonlyArray<Row>; readonly
         >
           <span className="links-mark" aria-hidden="true" />
           <code>
+            {row.root === undefined ? null : (
+              <span className="fp-root">
+                <PathText path={`${row.root}/`} />
+              </span>
+            )}
             <PathText path={row.path} />
           </code>
           <span className="links-agent">{row.tag}</span>
@@ -125,7 +133,11 @@ function ProjectFigure() {
     <LinkFigure
       origin={projectFigure.project}
       label={`Project app links its picked skill into each worktree: ${projectFigure.worktrees.map((tree) => tree.root).join(", ")}.`}
-      rows={projectFigure.worktrees.map((tree) => ({ path: tree.link, tag: tree.root }))}
+      rows={projectFigure.worktrees.map((tree) => ({
+        root: tree.root,
+        path: projectFigure.link,
+        tag: tree.note,
+      }))}
     />
   );
 }
@@ -183,14 +195,16 @@ function ProfileFigure() {
 function DocsFigure() {
   return (
     <motion.figure className="fp-shot" data-intro="" variants={settle(0.12, 16)}>
-      <Illustration
-        name="docs-reader"
-        widths={[640, 1280]}
-        sizes="(max-width: 1024px) 100vw, 1100px"
-        width={2268}
-        height={1560}
-        alt={docsFigure.alt}
-      />
+      <div className="fp-shot-frame">
+        <Illustration
+          name="docs-reader"
+          widths={[640, 1280]}
+          sizes="(max-width: 1024px) 200vw, 1100px"
+          width={2268}
+          height={1560}
+          alt={docsFigure.alt}
+        />
+      </div>
       {corners.map((corner) => (
         <span key={corner.name} className="drafting-mark" data-corner={corner.name} />
       ))}
