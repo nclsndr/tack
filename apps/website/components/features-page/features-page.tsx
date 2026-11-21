@@ -2,16 +2,24 @@ import { motion } from "motion/react";
 import { DraftingSheet, InView, settle } from "../landing/drafting-sheet.tsx";
 import { InlineCode, Proof } from "../landing/inline-code.tsx";
 import { docsHref, Footer, getStartedHref, Header } from "../landing/landing.tsx";
-import { groundRules, intro, lenses, outro, type Detail, type Lens } from "./content.ts";
-import { lensFigures } from "./figures.tsx";
+import {
+  groundRules,
+  intro,
+  keyDetails,
+  lenses,
+  outro,
+  type Detail,
+  type Lens,
+} from "./content.ts";
+import { lensFigures, wideFigures } from "./figures.tsx";
 
-/** A lens's number on the page, two digits, as a drafting sheet numbers its views. */
+/** A part's number on the page, two digits, as a drafting sheet numbers its views. */
 const step = (index: number) => String(index + 1).padStart(2, "0");
 
 /** The details' delays, so they arrive one after another with shrinking gaps. */
 const detailDelay = (index: number) => 0.04 + Math.min(index, 5) * 0.05;
 
-/** The page's head: the heading, the tagline, and an index of the lenses that jumps to each. */
+/** The page's head: the heading, the problem, the tagline, and an index that jumps to each part. */
 function PageHead() {
   return (
     <header className="landing-shell fp-head">
@@ -22,11 +30,22 @@ function PageHead() {
         <motion.h1 id="features-title" data-intro="" variants={settle(0.06, 16)}>
           {intro.heading}
         </motion.h1>
-        <motion.p className="landing-lead" data-intro="" variants={settle(0.16, 10)}>
-          {intro.tagline}
-        </motion.p>
+        <div className="fp-head-lines">
+          <motion.p className="fp-problem" data-intro="" variants={settle(0.14, 10)}>
+            {intro.problem}
+          </motion.p>
+          <motion.p className="landing-lead" data-intro="" variants={settle(0.2, 10)}>
+            {intro.tagline}
+          </motion.p>
+          <motion.ul className="fp-facts" data-intro="" variants={settle(0.26, 0)}>
+            {intro.facts.map((fact) => (
+              <li key={fact}>{fact}</li>
+            ))}
+          </motion.ul>
+        </div>
       </InView>
-      <nav aria-label={intro.indexLabel}>
+      <nav aria-label={intro.indexLabel} className="fp-index-frame">
+        <p className="fp-index-label">{intro.indexLabel}</p>
         <InView as="div" className="fp-index" amount={0.2}>
           {lenses.map((lens, index) => (
             <motion.a
@@ -34,11 +53,16 @@ function PageHead() {
               href={`#${lens.id}`}
               className="fp-index-item"
               data-intro=""
-              variants={settle(0.2 + index * 0.05, 10)}
+              variants={settle(0.12 + index * 0.05, 10)}
             >
-              <span className="fp-step">{step(index)}</span>
-              <span className="fp-index-name">{lens.name}</span>
-              <span className="fp-index-claim">{lens.claim}</span>
+              <span className="fp-index-top">
+                <span className="fp-step">{step(index)}</span>
+                <span className="fp-index-name">{lens.name}</span>
+              </span>
+              <span className="fp-index-when">
+                <span className="fp-visually-hidden">{intro.indexWhen}: </span>
+                {lens.when}
+              </span>
             </motion.a>
           ))}
         </InView>
@@ -60,9 +84,27 @@ function DetailItem({ detail, index }: { readonly detail: Detail; readonly index
   );
 }
 
+/** A plain list of features, in the details grid. */
+function DetailList({
+  details,
+  label,
+}: {
+  readonly details: ReadonlyArray<Detail>;
+  readonly label?: string;
+}) {
+  return (
+    <ul className="fp-details" aria-label={label}>
+      {details.map((detail, at) => (
+        <DetailItem key={detail.title} detail={detail} index={at} />
+      ))}
+    </ul>
+  );
+}
+
 /**
- * A lens: its number and name, the claim, plain lines and the proof beside its figure, then every
- * feature under it. The figure sits on alternate sides down the page, so the lenses keep a rhythm.
+ * A part: its number and name, the claim, plain lines and the proof beside its figure, then its
+ * features: the key ones in view and the rest behind "More". Figures sit on alternate sides down
+ * the page, so the parts keep a rhythm; a wide figure takes the whole width under the words.
  */
 function LensSection({
   lens,
@@ -73,11 +115,14 @@ function LensSection({
 }) {
   const Figure = lensFigures[lens.id];
   const titleId = `${lens.id}-title`;
+  const key = lens.details.slice(0, keyDetails);
+  const more = lens.details.slice(keyDetails);
+  const layout = wideFigures.has(lens.id) ? "wide" : index % 2 === 0 ? "start" : "end";
   return (
     <section id={lens.id} className="fp-lens" aria-labelledby={titleId}>
       <div className="landing-shell">
-        <InView className="fp-lens-grid" amount={0.3}>
-          <div className="fp-lens-words" data-side={index % 2 === 0 ? "start" : "end"}>
+        <InView className="fp-lens-grid" amount={0.25}>
+          <div className="fp-lens-words" data-layout={layout}>
             <motion.p className="fp-lens-label" data-intro="" variants={settle(0, 8)}>
               <span className="fp-step">{step(index)}</span>
               {lens.name}
@@ -85,37 +130,43 @@ function LensSection({
             <motion.h2 id={titleId} data-intro="" variants={settle(0.06, 16)}>
               {lens.claim}
             </motion.h2>
-            {lens.lines.map((line, at) => (
-              <motion.p
-                key={line}
-                className="fp-lens-line"
-                data-intro=""
-                variants={settle(0.14 + at * 0.06, 10)}
-              >
-                <InlineCode text={line} />
-              </motion.p>
-            ))}
-            <motion.div data-intro="" variants={settle(0.28, 0)}>
-              <Proof text={lens.proof} className="fp-proof" />
-            </motion.div>
+            <div className="fp-lens-body">
+              {lens.lines.map((line, at) => (
+                <motion.p
+                  key={line}
+                  className="fp-lens-line"
+                  data-intro=""
+                  variants={settle(0.14 + at * 0.06, 10)}
+                >
+                  <InlineCode text={line} />
+                </motion.p>
+              ))}
+              <motion.div data-intro="" variants={settle(0.28, 0)}>
+                <Proof text={lens.proof} className="fp-proof" />
+              </motion.div>
+            </div>
           </div>
-          <div className="fp-lens-figure">
+          <div className="fp-lens-figure" data-layout={layout}>
             <Figure />
           </div>
         </InView>
         <InView as="div" className="fp-details-frame" amount={0.15}>
-          <ul className="fp-details" aria-label={`${lens.name}: every feature`}>
-            {lens.details.map((detail, at) => (
-              <DetailItem key={detail.title} detail={detail} index={at} />
-            ))}
-          </ul>
+          <DetailList details={key} label={`${lens.name}: key features`} />
+          {more.length === 0 ? null : (
+            <details className="fp-more">
+              <summary>
+                More about {lens.name.toLowerCase()} <span className="fp-count">{more.length}</span>
+              </summary>
+              <DetailList details={more} label={`${lens.name}: more features`} />
+            </details>
+          )}
         </InView>
       </div>
     </section>
   );
 }
 
-/** The rules that hold under every lens, ruled off the sheet. */
+/** The rules that hold under every part, then what Tack does not do, ruled off the sheet. */
 function GroundRules() {
   return (
     <section className="fp-rules" aria-labelledby="rules-title">
@@ -129,9 +180,18 @@ function GroundRules() {
           </motion.h2>
         </InView>
         <InView as="div" className="fp-details-frame" amount={0.15}>
-          <ul className="fp-details">
-            {groundRules.rules.map((rule, at) => (
-              <DetailItem key={rule.title} detail={rule} index={at} />
+          <DetailList details={groundRules.rules} />
+        </InView>
+        <InView as="div" className="fp-limits" amount={0.3}>
+          <motion.h3 data-intro="" variants={settle(0, 8)}>
+            {groundRules.limitsHeading}
+          </motion.h3>
+          <ul>
+            {groundRules.limits.map((limit, at) => (
+              <motion.li key={limit.title} data-intro="" variants={settle(detailDelay(at), 8)}>
+                <span className="fp-limit-mark" aria-hidden="true" />
+                <strong>{limit.title}</strong> <InlineCode text={limit.text} />
+              </motion.li>
             ))}
           </ul>
         </InView>
@@ -165,18 +225,24 @@ function FeaturesMarkdown() {
   const item = (detail: Detail) =>
     `- **${detail.title}** ${detail.text}${detail.command === undefined ? "" : ` \`${detail.command}\``}`;
   const lensText = (lens: Lens, index: number) =>
-    `## ${step(index)} · ${lens.name}: ${lens.claim}\n\n${lens.lines.join(" ")}\n\n\`\`\`sh\n${lens.proof}\n\`\`\`\n\n${lens.details.map(item).join("\n")}`;
+    `## ${step(index)} · ${lens.name}: ${lens.claim}\n\nFor when: ${lens.when}\n\n${lens.lines.join(" ")}\n\n\`\`\`sh\n${lens.proof}\n\`\`\`\n\n${lens.details.map(item).join("\n")}`;
   return (
     <>
       {`# ${intro.heading}
 
-${intro.tagline}
+${intro.problem} ${intro.tagline}
+
+${intro.facts.join(" · ")}
 
 ${lenses.map(lensText).join("\n\n")}
 
 ## ${groundRules.label}: ${groundRules.heading}
 
 ${groundRules.rules.map(item).join("\n")}
+
+### ${groundRules.limitsHeading}
+
+${groundRules.limits.map(item).join("\n")}
 
 ## ${outro.heading}
 
@@ -186,7 +252,7 @@ ${outro.text} [${outro.start}](${getStartedHref}) · [${outro.docs}](${docsHref}
   );
 }
 
-/** The features page: every Tack feature, by lens, on the landing's blueprint sheet. */
+/** The features page: every Tack feature, in six parts, on the landing's blueprint sheet. */
 export function FeaturesPage() {
   if (import.meta.env.SSG_MD === true) return <FeaturesMarkdown />;
   return (
