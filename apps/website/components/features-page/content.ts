@@ -17,7 +17,7 @@ export const opening = {
   title: "From first setup to day two.",
   lead: "Write a skill once. Tack links it wherever your agents look, in every project.",
   intro:
-    "Follow one setup through Tack, step by step: what you run, and what Tack does in return. Every command here is real, and each terminal shows what the CLI printed; a `…` line marks what is left out.",
+    "Follow one setup through Tack, step by step: what you run, and what Tack does in return. Every command here is real, and each terminal shows what the CLI printed; a line holding only `…` marks a cut.",
   /** Where to get Tack while it is not on npm. */
   install: {
     text: "Tack is not published to npm yet. To try it today, install it from a checkout of",
@@ -57,7 +57,7 @@ export type Step = {
   readonly summary: string;
   /** The command lines the visitor runs, in order. */
   readonly run: ReadonlyArray<string>;
-  /** Commands the step runs on another machine, after `run`, and where. */
+  /** A second group of commands, after `run`, under its own label: another machine, or an undo. */
   readonly elsewhere?: { readonly label: string; readonly run: ReadonlyArray<string> };
   /** A second way to take the step, in one line. */
   readonly or?: string;
@@ -89,7 +89,8 @@ at user scope.
          ~/.config/opencode, pi ~/.pi
 
 claude → user · 5 to link
-  applied  create  .claude/skills/                      directory
+…
+  applied  create  .claude/skills/use-tack              skill use-tack
 …`,
     },
     tack: [
@@ -199,13 +200,13 @@ Preview only: nothing was written. There are no docs links to reconcile.
 
 Next
   tack sync --project app --apply`,
-      cut: "Cut to Claude Code and Pi. Codex gets the same skills; Cursor and OpenCode get them and the command.",
+      cut: "Cut to Claude Code and Pi. Codex gets the same skills; Cursor and OpenCode get them and the command. The `directory` rows make the agent folders and do not count as links.",
     },
     tack: [
       "Links every skill from both sources into Claude Code, Codex, Cursor, OpenCode and Pi, in every worktree of the project.",
       "Links commands into Cursor, OpenCode and Pi. Claude Code and Codex get skills only.",
       "Records every link it makes, removes only those, and never overwrites a file it did not create.",
-      "An edit to a skill needs no sync: the links point at your folder.",
+      "Leaves your `.gitignore` alone: `tack status --project app --details` prints the lines that ignore the links, for you to add.",
     ],
   },
   {
@@ -242,7 +243,7 @@ Next
     tack: [
       "Saves the choice at once; nothing changes on disk until you sync.",
       "Brings along the skills a skill declares it needs.",
-      "`--user` turns a skill on for you in every project: one link in your own agent folders.",
+      "`tack pick include review --user` turns a skill on for you in every project: one link in your own agent folders.",
       "Keeps its own built-in skills locked in.",
     ],
   },
@@ -254,6 +255,7 @@ Next
       "Give a project the team's handbook. Agents read it as files and search it; you read it in a local reader.",
     run: [
       "tack docs attach handbook --project app",
+      "tack sync --project app",
       "tack sync --project app --apply",
       "tack docs search ownership --project app",
       "tack docs serve --project app",
@@ -371,9 +373,13 @@ Logs
     title: "Pin a setup with profiles.",
     summary:
       "A profile is a file in the team's source that lists the exact skills a project gets. Export it once, and a CI runner with only Tack and Claude Code gets the same set.",
-    run: ["tack check ~/team", "tack profile export team:on-call ~/on-call.tar.gz --apply"],
+    run: [
+      "tack check ~/team",
+      "tack profile export team:on-call ~/on-call.tar.gz",
+      "tack profile export team:on-call ~/on-call.tar.gz --apply",
+    ],
     elsewhere: {
-      label: "On the CI runner",
+      label: "On the CI runner, with the bundle copied over",
       run: [
         "tack init",
         "tack project add app",
@@ -410,9 +416,9 @@ claude → app · 2 to link
     },
     tack: [
       "Checks the profile with the rest of the source, without state or network.",
-      "Packs the profile's files into one `.tar.gz` bundle with checksums.",
+      "Packs `team:on-call`, the `on-call` profile of source `team`, into one `.tar.gz` bundle with checksums.",
       "Applies the bundle on a fresh machine, container or CI runner that has Tack, without the original sources and without fetching anything.",
-      "Gives the project exactly the profile's list; ordinary picks cannot change it.",
+      "Gives the project exactly the profile's list, beside Tack's own built-in skills; ordinary picks cannot change it.",
     ],
   },
   {
@@ -421,12 +427,11 @@ claude → app · 2 to link
     title: "Check on it, or take it all back.",
     summary:
       "Sync and cleanup previews end with the command that applies them, and each problem `doctor` finds names its fix. Tack can also undo everything it made.",
-    run: [
-      "tack status --project app",
-      "tack doctor",
-      "tack adapter disable cursor",
-      "tack state reset",
-    ],
+    run: ["tack status --project app", "tack doctor"],
+    elsewhere: {
+      label: "To undo, preview first",
+      run: ["tack adapter disable cursor", "tack state reset"],
+    },
     output: {
       cwd: "~",
       command: "tack doctor",
@@ -465,9 +470,9 @@ export const also = {
       proof: "tack import add github:anthropics/skills --skill pdf --into skills",
     },
     {
-      title: "Checks for what you write.",
-      text: "Validates sources, profiles, bundles and docs figures without state, network or running your code, with a file and line for each finding.",
-      proof: "tack check ~/skills",
+      title: "What your sources declare.",
+      text: "Lists every skill, command, context file, script and docs resource the sources declare, and the issues that hold one back.",
+      proof: "tack catalog",
     },
     {
       title: "Turn an agent back on.",
@@ -475,9 +480,9 @@ export const also = {
       proof: "tack adapter enable cursor",
     },
     {
-      title: "Guides for your agent.",
-      text: "Prints the onboarding, `AGENTS.md` and day-two guides of the Tack you run, for an agent to follow.",
-      proof: "tack guide onboarding",
+      title: "Take back one piece.",
+      text: "Previews removing a source's links, docs mounts and picks; `--apply` removes them and unregisters it. The folder stays.",
+      proof: "tack source remove skills",
     },
     {
       title: "Upgrades you run.",

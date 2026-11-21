@@ -8,6 +8,9 @@ export const docsHref = "/docs/";
 /** The page that walks through every feature. */
 export const featuresHref = "/features";
 
+/** The docs page that walks through installing Tack and the first commands. */
+export const gettingStartedHref = `${docsHref}getting-started`;
+
 /**
  * Whether the page has scrolled past `marker`, a strip at its top: the header floats as a card from
  * then on. The strip's place is read at most once a frame while the page scrolls, and once at the
@@ -43,11 +46,11 @@ const headerFallback =
 
 /**
  * Where the header's links go. The landing page jumps within itself; every other page links back
- * to the landing page's sections.
+ * to the landing page's demo and sends Get started to the docs.
  */
 const headerLinks = {
   landing: { demo: "#demo", start: "#get-started" },
-  features: { demo: "/#demo", start: "/#get-started" },
+  features: { demo: "/#demo", start: gettingStartedHref },
 } as const;
 
 /**

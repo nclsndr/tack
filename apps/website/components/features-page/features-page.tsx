@@ -1,11 +1,14 @@
 import { motion } from "motion/react";
 import { DraftingSheet, InView, settle } from "../landing/drafting-sheet.tsx";
 import { InlineCode } from "../landing/inline-code.tsx";
-import { docsHref, featuresHref, SiteFooter, SiteHeader } from "../landing/site-chrome.tsx";
+import {
+  featuresHref,
+  gettingStartedHref as startHref,
+  SiteFooter,
+  SiteHeader,
+} from "../landing/site-chrome.tsx";
 import { also, closing, days, limits, opening, steps } from "./content.ts";
 import { CommandChip, stepNumber, Walkthrough } from "./walkthrough.tsx";
-
-const startHref = `${docsHref}getting-started`;
 
 /**
  * The opening: the label, the headline and the tagline, then the whole route at a glance, each

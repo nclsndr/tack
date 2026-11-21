@@ -48,6 +48,33 @@ function useActiveStep(ids: ReadonlyArray<string>) {
 }
 
 /**
+ * Whether the reader has scrolled past `end`: it has risen above the top third of the screen. It is
+ * read at most once a frame while the page scrolls, and once at the start.
+ */
+function usePassed(end: RefObject<HTMLElement | null>) {
+  const [passed, setPassed] = useState(false);
+  useEffect(() => {
+    const element = end.current;
+    if (element === null) return undefined;
+    let frame = 0;
+    const read = () => {
+      frame = 0;
+      setPassed(element.getBoundingClientRect().top < window.innerHeight / 3);
+    };
+    const schedule = () => {
+      if (frame === 0) frame = window.requestAnimationFrame(read);
+    };
+    read();
+    window.addEventListener("scroll", schedule, { passive: true });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+    };
+  }, [end]);
+  return passed;
+}
+
+/**
  * The route rail beside the steps, on wide screens: each step as a station, grouped by day. The
  * spine fills as the walkthrough scrolls, and the station the reader is on lights brass.
  */
@@ -173,7 +200,14 @@ function CodeWindow({ file, text }: { readonly file: string; readonly text: stri
 function StepEvidence({ step }: { readonly step: Step }) {
   return (
     <div className="route-evidence">
-      {step.id === "sync" ? <LinksPlate /> : null}
+      {step.id === "sync" ? (
+        <div>
+          <LinksPlate />
+          <p className="route-cut">
+            One skill, five links: the paths are inside the project, <code>~/code/app</code>.
+          </p>
+        </div>
+      ) : null}
       {step.code !== undefined ? <CodeWindow file={step.code.file} text={step.code.text} /> : null}
       {step.output !== undefined ? (
         <div>
@@ -318,13 +352,15 @@ export function Walkthrough() {
   const active = useActiveStep(steps.map((step) => step.id));
   const at = steps.findIndex((step) => step.id === active);
   const current = steps[at];
+  const end = useRef<HTMLSpanElement>(null);
+  const passed = usePassed(end);
   return (
     <section className="route" aria-label="Walkthrough">
       {/* On narrow screens, where the rail does not fit, a slip under the header names the step. */}
       <div
         className="route-progress"
         aria-hidden="true"
-        data-shown={current === undefined ? "false" : "true"}
+        data-shown={current === undefined || passed === true ? "false" : "true"}
       >
         <div className="landing-shell">
           <span className="route-progress-slip">
@@ -360,6 +396,7 @@ export function Walkthrough() {
               )}
             </div>
           ))}
+          <span ref={end} className="route-end" aria-hidden="true" />
         </div>
       </div>
     </section>

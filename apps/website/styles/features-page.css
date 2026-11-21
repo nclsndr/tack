@@ -155,6 +155,9 @@
 
 .route {
   padding-bottom: clamp(48px, 8vw, 96px);
+  /* `clip`, not `hidden`: the sticky rail and slip still stick, and the slip cannot show past the
+     walkthrough's end. */
+  overflow: clip;
 }
 
 .route-grid {
@@ -590,10 +593,12 @@
 }
 
 @media (max-width: 639px) {
-  /* Terminal lines keep their columns on a phone and scroll sideways; the right edge fades to show
-     there is more. */
+  /* Terminal lines keep their columns on a phone and scroll sideways. The right edge fades while
+     there is more to scroll, and clears at the end; without scroll timelines it stays clear. */
   .route-evidence .tack-terminal pre {
-    mask-image: linear-gradient(90deg, #000 82%, transparent);
+    mask-image: linear-gradient(90deg, #000 calc(100% - var(--route-edge)), transparent);
+    animation: route-edge linear both;
+    animation-timeline: scroll(self inline);
   }
 
   .route-evidence .tack-terminal {
@@ -610,4 +615,28 @@
     flex-basis: 100%;
     margin-inline-start: 23px;
   }
+}
+
+/* How far the fade at a phone terminal's right edge reaches: 48px at the start of its sideways
+   scroll, none at the end. */
+@property --route-edge {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+@keyframes route-edge {
+  from {
+    --route-edge: 48px;
+  }
+
+  to {
+    --route-edge: 0px;
+  }
+}
+
+/* The end of the steps, which the phone slip watches to leave with them. */
+.route-end {
+  display: block;
+  height: 0;
 }
