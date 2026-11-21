@@ -90,8 +90,9 @@ repository you share, commit the `tack.yaml` that Tack writes, so others get the
 Repeat this section for each folder of skills. Scripts and anything else the flags cannot say go
 into `tack.yaml` by hand; your agent's `manage-tack-sources` skill knows how.
 
-Every agent gets your skills. Commands reach Cursor only: Tack links commands only into Cursor's
-folder, and the `tack sync` preview names each command that an agent will not get. Context is not
+Every agent gets your skills. Commands reach Cursor, OpenCode and Pi only: Claude Code and Codex
+have no commands folder Tack links into, and the `tack sync` preview names each command that an
+agent will not get. Context is not
 selected unless you pick it, and even then reaches no agent, because no agent has a folder Tack can
 link it into.
 

@@ -426,17 +426,20 @@
   list-style: none;
 }
 
+/* On the narrowest phones the agent wraps under its path rather than widening the figure. */
 .links-row {
   position: relative;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 2px 12px;
 }
 
 .links-row::before {
   content: "";
   position: absolute;
-  top: 50%;
+  /* Half a line, so the branch meets the path's line even when the agent wraps under it. */
+  top: 0.5lh;
   left: -24px;
   width: 18px;
   height: 1px;

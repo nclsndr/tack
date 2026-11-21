@@ -94,8 +94,8 @@ export const demo = {
 
 /**
  * The features, one block per lens: agents, team, docs. Each block has a headline, plain lines and
- * one command as its proof. Text in `backticks` shows as inline code. Commands reach Cursor only
- * and context reaches no agent, so no line here says otherwise.
+ * one command as its proof. Text in `backticks` shows as inline code. Commands reach Cursor,
+ * OpenCode and Pi only, and context reaches no agent, so no line here says otherwise.
  */
 export const features = {
   heading: "One copy, linked everywhere.",
@@ -104,18 +104,23 @@ export const features = {
   agents: {
     title: "Every agent, every project, every worktree.",
     lines: [
-      "One skill folder, linked into Claude Code, Codex and Cursor: for you, and in each project you register, worktrees included.",
+      "One skill folder, linked into Claude Code, Codex, Cursor, OpenCode and Pi: for you, and in each project you register, worktrees included.",
       "Turn on a new agent and one sync links every skill you use. Turn it off and only Tack's links go.",
     ],
     note: "Each agent also gets the `use-tack` skill, so it can run Tack for you.",
     proof: "tack adapter enable codex",
-    /** One skill folder, and the three links one sync makes to it in a project. */
+    /**
+     * One skill folder, and the link one sync makes to it in a project for each agent, in the CLI's
+     * adapter order. `content.test.ts` checks the paths against the CLI's adapter table.
+     */
     links: {
       source: "~/skills/review",
       destinations: [
         { agent: "Claude Code", path: ".claude/skills/review" },
         { agent: "Codex", path: ".agents/skills/review" },
         { agent: "Cursor", path: ".cursor/skills/review" },
+        { agent: "OpenCode", path: ".opencode/skills/review" },
+        { agent: "Pi", path: ".pi/skills/review" },
       ],
     },
     alt: "Illustration: a blue wireframe horse fitted with a leather driving harness and brass rings.",

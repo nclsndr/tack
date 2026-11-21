@@ -72,17 +72,23 @@ function FeaturesHead() {
 /** The pinned agents moment's whole run, from the frame pinning to it letting go. */
 const pinRun: ScrollRange = ["start start", "end end"];
 
-/** Where each of the three links lands in the agents moment, as shares of its scroll. */
-const linkBeats = [
-  { from: 0.16, to: 0.28 },
-  { from: 0.34, to: 0.46 },
-  { from: 0.52, to: 0.64 },
-] as const;
+/** The share of the agents moment's scroll in which the links land, first to last. */
+const linkSpan = { from: 0.16, to: 0.64 } as const;
 
 /**
- * One skill folder and the three links one sync makes to it. As the moment scrolls, the spine
- * draws down from the folder and each agent's link lands in turn, its mark flashing brass as it
- * arrives: one cause, three effects, in the order a sync writes them.
+ * Where each link lands in the agents moment, as shares of its scroll: evenly over `linkSpan`, each
+ * taking two thirds of its step so a gap separates one landing from the next.
+ */
+const linkBeat = (index: number, count: number) => {
+  const step = (linkSpan.to - linkSpan.from) / (count - 1 + 2 / 3);
+  const from = linkSpan.from + index * step;
+  return { from, to: from + (step * 2) / 3 };
+};
+
+/**
+ * One skill folder and the link one sync makes to it for each agent. As the moment scrolls, the
+ * spine draws down from the folder and each agent's link lands in turn, its mark flashing brass as
+ * it arrives: one cause, one effect per agent, in the order a sync writes them.
  */
 function LinkFigure({
   track,
@@ -92,8 +98,6 @@ function LinkFigure({
   readonly pinned: boolean;
 }) {
   const { links } = features.agents;
-  const first = linkBeats[0];
-  const last = linkBeats[2];
   // Pinned, the sync follows the moment's run; otherwise it follows the figure's own pass up the
   // screen, so the links land while the figure is in view.
   const figure = useRef<HTMLElement>(null);
@@ -115,12 +119,12 @@ function LinkFigure({
         className="links-spine"
         frames={{
           transform: ["scaleY(0)", "scaleY(0)", "scaleY(1)", "scaleY(1)"],
-          times: [0, first.from, last.to, 1],
+          times: [0, linkSpan.from, linkSpan.to, 1],
         }}
       />
       <ol>
-        {links.destinations.map((link, index) => {
-          const at = linkBeats[index] ?? first;
+        {links.destinations.map((link, index, all) => {
+          const at = linkBeat(index, all.length);
           return (
             <ScrollPart
               key={link.path}
