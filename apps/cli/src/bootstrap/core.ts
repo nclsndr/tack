@@ -10,6 +10,7 @@ import { runCli } from "../cli/host/run.ts";
 
 export type { CompletionCandidate } from "../cli/host/completion.ts";
 export { HostEnvironment } from "../cli/host/host-environment.ts";
+export { agentAdapterDescriptors } from "../domain/agents/agent-adapter.ts";
 export { PortableLive } from "./portable-layer.ts";
 export { TerminalContext } from "../cli/host/human/terminal-context.ts";
 export { makeSourceService, Source } from "../features/sources/source.ts";

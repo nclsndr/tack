@@ -196,7 +196,7 @@ export const agentWalkthrough: ReadonlyArray<AgentBeat> = [
         text: [
           "**Preview:** 7 changes in each project, no conflicts:",
           "- `commit` and `review` for Claude Code, Codex and Cursor.",
-          "- The `release` command for Cursor only: commands reach Cursor only.",
+          "- The `release` command for Cursor only: Claude Code and Codex take no commands.",
           "",
           "The links point to paths on this machine, so committed links break for teammates. Apply, and what about Git?",
         ].join("\n"),
