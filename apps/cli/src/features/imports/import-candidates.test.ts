@@ -1,7 +1,7 @@
 import { declare, skillText } from "../../../test/support/source-tree.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
-import { ChildProcessSpawner } from "effect/unstable/process";
+import { ChildProcessSpawner } from "effect/process";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { importRequest, withImportWorld } from "../../../test/support/import-world.ts";
 import { defaultImportLimits, ImportRemote } from "../../services/import-remote.ts";

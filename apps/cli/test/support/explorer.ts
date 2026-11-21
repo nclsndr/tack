@@ -1,3 +1,4 @@
+import { Effect, type Terminal } from "effect";
 import { expect } from "vitest";
 import type { ExplorerActivity } from "../../src/cli/host/human/explorer/activity.ts";
 import type { ExplorerDestination } from "../../src/cli/host/human/explorer/destination.ts";
@@ -14,6 +15,14 @@ import {
 import { makeStyle } from "../../src/cli/host/human/style.ts";
 
 export const sourceRegistrationId = "00000000-0000-4000-8000-000000000001";
+
+/**
+ * The `size` of a scripted terminal. The explorer takes resizes from the process, never from
+ * `Terminal.size`, so reading it is a test bug.
+ */
+export const unwatchedTerminalSize: Terminal.Terminal["size"] = Effect.die(
+  "The explorer read Terminal.size; it takes resizes from the process.",
+);
 
 export const user = { _tag: "user" } as const;
 export const project = { _tag: "project", projectName: "demo" } as const;

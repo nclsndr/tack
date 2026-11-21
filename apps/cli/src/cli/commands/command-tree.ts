@@ -1,7 +1,7 @@
 import { checkCommand } from "./check.ts";
 import { guideCommand } from "./guide.ts";
 import { typesCommand } from "./types.ts";
-import { Command } from "effect/unstable/cli";
+import { Command } from "effect/cli";
 import { pickCommand } from "./choices.ts";
 import { docsCommand } from "./docs.ts";
 import { importCommands } from "./imports.ts";

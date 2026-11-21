@@ -1,5 +1,6 @@
-import { BunServices } from "@effect/platform-bun";
-import { Crypto, Effect, FileSystem, Layer, Path } from "effect";
+import { BunCrypto, BunServices } from "@effect/platform-bun";
+import { Effect, FileSystem, Layer, Path } from "effect";
+import { SecureRandom } from "effect/crypto";
 import { Destination } from "../../src/services/destination.ts";
 import { Source, makeSourceService } from "../../src/features/sources/source.ts";
 import {
@@ -24,7 +25,7 @@ export const LiveTestLayer = Layer.mergeAll(
     Source,
     Effect.gen(function* () {
       return makeSourceService(
-        yield* Crypto.Crypto,
+        yield* SecureRandom.SecureRandom,
         yield* FileSystem.FileSystem,
         yield* Path.Path,
       );
@@ -57,7 +58,7 @@ export const LiveTestLayer = Layer.mergeAll(
     Reader,
     Reader.of({ start: () => Effect.die("The reader requires an explicit test replacement.") }),
   ),
-).pipe(Layer.provideMerge(BunServices.layer));
+).pipe(Layer.provideMerge(Layer.mergeAll(BunServices.layer, BunCrypto.layerSecureRandom)));
 
 /** Rebinds every filesystem-backed capability to one test filesystem override. */
 export const provideTestFileSystem = <A, E, R>(
@@ -65,13 +66,13 @@ export const provideTestFileSystem = <A, E, R>(
   fileSystem: FileSystem.FileSystem,
 ) =>
   Effect.gen(function* () {
-    const crypto = yield* Crypto.Crypto;
+    const random = yield* SecureRandom.SecureRandom;
     const path = yield* Path.Path;
 
     return yield* effect.pipe(
       Effect.provideService(Destination, makeDestinationService(fileSystem, path)),
-      Effect.provideService(Source, makeSourceService(crypto, fileSystem, path)),
-      Effect.provideService(StateStore, makeStateStoreService(crypto, fileSystem, path)),
+      Effect.provideService(Source, makeSourceService(random, fileSystem, path)),
+      Effect.provideService(StateStore, makeStateStoreService(random, fileSystem, path)),
       Effect.provideService(FileSystem.FileSystem, fileSystem),
     );
   });

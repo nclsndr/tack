@@ -1,4 +1,5 @@
 import { LiveTestLayer } from "./support/live-test-layer.ts";
+import { unwatchedTerminalSize } from "./support/explorer.ts";
 import { BunServices } from "@effect/platform-bun";
 import { expect, it } from "@effect/vitest";
 import {
@@ -54,6 +55,7 @@ const interactive: TerminalContextShape = {
 const forbiddenTerminal = Terminal.make({
   columns: Effect.die("Explorer read terminal dimensions before refusal."),
   rows: Effect.die("Explorer read terminal dimensions before refusal."),
+  size: Effect.die("Explorer watched the terminal size before refusal."),
   display: () => Effect.die("Explorer drew before refusal."),
   readInput: Effect.die("Explorer read keys before refusal."),
   readLine: Effect.die("Explorer read a line before refusal."),
@@ -280,6 +282,7 @@ const scriptedTerminal = Effect.fnUntraced(function* (
   const terminal = Terminal.make({
     columns: Effect.succeed(80),
     rows: Effect.succeed(12),
+    size: unwatchedTerminalSize,
     readInput: Effect.succeed(queue),
     readLine: Effect.succeed(""),
     display: (text) => Ref.update(displayed, (values) => [...values, text]),
@@ -345,6 +348,7 @@ it.layer(LiveTestLayer)("explorer sessions", (test) => {
       const terminal = Terminal.make({
         columns: Ref.get(columns),
         rows: Ref.get(rows),
+        size: unwatchedTerminalSize,
         readInput: Effect.succeed(queue),
         readLine: Effect.succeed(""),
         display: (text) =>
@@ -375,6 +379,7 @@ it.layer(LiveTestLayer)("explorer sessions", (test) => {
       const terminal = Terminal.make({
         columns: base.columns,
         rows: base.rows,
+        size: base.size,
         readInput: base.readInput,
         readLine: base.readLine,
         display: (text) =>

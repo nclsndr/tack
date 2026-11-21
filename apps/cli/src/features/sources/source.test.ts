@@ -5,7 +5,8 @@ import { catalogReport } from "../../domain/sources/catalog-report.ts";
 import { LiveTestLayer, provideTestFileSystem } from "../../../test/support/live-test-layer.ts";
 import { faultyFileSystem, platformTestError } from "../../../test/support/faults.ts";
 import { expect, it } from "@effect/vitest";
-import { Crypto, Effect, FileSystem, Path, PlatformError, Schema } from "effect";
+import { Effect, FileSystem, Path, PlatformError, Schema } from "effect";
+import { SecureRandom } from "effect/crypto";
 import {
   makeSourceService,
   registerSource,
@@ -23,20 +24,23 @@ const stateFileName = "state.json";
 
 const validDeclaration = () => "version: 1\nskills:\n  - path: skills\n";
 
-type SourceRequirements = Crypto.Crypto | FileSystem.FileSystem | Path.Path | Source | StateStore;
+type SourceRequirements =
+  | SecureRandom.SecureRandom
+  | FileSystem.FileSystem
+  | Path.Path
+  | Source
+  | StateStore;
 
-const withCrypto = <A, E>(
+const withSecureRandom = <A, E>(
   effect: Effect.Effect<A, E, SourceRequirements>,
-  transform: (crypto: Crypto.Crypto) => Crypto.Crypto,
+  random: SecureRandom.SecureRandom["Service"],
 ) =>
   Effect.gen(function* () {
-    const crypto = yield* Crypto.Crypto;
     const fileSystem = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
-    const transformed = transform(crypto);
     return yield* effect.pipe(
-      Effect.provideService(Source, makeSourceService(transformed, fileSystem, path)),
-      Effect.provideService(Crypto.Crypto, transformed),
+      Effect.provideService(Source, makeSourceService(random, fileSystem, path)),
+      Effect.provideService(SecureRandom.SecureRandom, random),
     );
   });
 
@@ -68,7 +72,7 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
       Effect.gen(function* () {
         const fs = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const crypto = yield* Crypto.Crypto;
+        const random = yield* SecureRandom.SecureRandom;
         const builtinPath = yield* createSource(root, "builtin");
         const builtin = {
           canonicalPath: yield* fs.realPath(builtinPath),
@@ -97,7 +101,7 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
           "---\nname: reserved\ndescription: Reserved source test\n---\n",
         );
         const inspections = yield* inspectSources(options).pipe(
-          Effect.provideService(Source, makeSourceService(crypto, fs, path, [builtin])),
+          Effect.provideService(Source, makeSourceService(random, fs, path, [builtin])),
         );
         const byPath = (name: string) =>
           inspections.find((source) => path.basename(source.registration.canonicalPath) === name);
@@ -141,7 +145,7 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
         expect(byPath("builtin")?.labelIssues).toBeUndefined();
         expect(inspections.filter((source) => source.status === "unhealthy")).toEqual([]);
         const catalog = yield* resolveCatalog(options).pipe(
-          Effect.provideService(Source, makeSourceService(crypto, fs, path, [builtin])),
+          Effect.provideService(Source, makeSourceService(random, fs, path, [builtin])),
         );
         expect(catalog.entries.some((entry) => entry.address.name === "reserved")).toBe(true);
         expect(
@@ -493,7 +497,7 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
     ),
   );
 
-  sourceIt.effect("maps platform and UUID failures without persisting a registration", () =>
+  sourceIt.effect("maps platform failures without persisting a registration", () =>
     withStateFixture(({ options, root, stateDirectory }) =>
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
@@ -534,14 +538,6 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
                 : undefined,
           }),
         );
-        const uuidError = yield* withCrypto(
-          Effect.flip(registerSource(options, { sourcePath })),
-          (crypto) => ({
-            ...crypto,
-            randomUUIDv4: Effect.fail(platformTestError("randomUUIDv4")),
-          }),
-        );
-
         expect(realPathError).toBeInstanceOf(SourceStorageError);
         expect(realPathError).toMatchObject({ code: "source-access-failed" });
         expect(statMissing).toBeInstanceOf(SourceValidationError);
@@ -550,16 +546,14 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
         expect(statError).toMatchObject({ code: "source-access-failed" });
         expect(declarationError).toBeInstanceOf(SourceStorageError);
         expect(declarationError).toMatchObject({ code: "declaration-access-failed" });
-        expect(uuidError).toBeInstanceOf(SourceStorageError);
-        expect(uuidError).toMatchObject({ code: "registration-id-generation-failed" });
         expect(yield* fileSystem.readFileString(statePath)).toBe(stateBeforeFailures);
 
         const registered = yield* registerSource(options, { sourcePath });
-        const repeatedWithoutUuid = yield* withCrypto(
+        // A repeated registration keeps its identity, so it never draws a new UUID.
+        const repeatedWithoutUuid = yield* withSecureRandom(
           registerSource(options, { sourcePath }),
-          (crypto) => ({
-            ...crypto,
-            randomUUIDv4: Effect.fail(platformTestError("randomUUIDv4")),
+          SecureRandom.make(() => {
+            throw new Error("A repeated registration generated a UUID.");
           }),
         );
 
@@ -573,7 +567,7 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
       Effect.gen(function* () {
         const fs = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const crypto = yield* Crypto.Crypto;
+        const random = yield* SecureRandom.SecureRandom;
         const canonicalPath = yield* fs.realPath(yield* createSource(root, "builtin"));
         const registration = { canonicalPath, id: "00000000-0000-4000-8000-000000000010" };
         const skillDirectory = path.join(canonicalPath, "skills", "use-tack");
@@ -604,7 +598,7 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
               }),
             ),
           ).toBeInstanceOf(SourceRegistrationNotFoundError);
-        }).pipe(Effect.provideService(Source, makeSourceService(crypto, fs, path, [registration])));
+        }).pipe(Effect.provideService(Source, makeSourceService(random, fs, path, [registration])));
       }),
     ),
   );
@@ -614,12 +608,12 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
       Effect.gen(function* () {
         const fs = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const crypto = yield* Crypto.Crypto;
+        const random = yield* SecureRandom.SecureRandom;
         const sourcePath = yield* createSource(root, "builtin");
         const registered = yield* registerSource(options, { sourcePath });
         const builtin = { ...registered.registration, id: "00000000-0000-4000-8000-000000000010" };
         const inspections = yield* inspectSources(options).pipe(
-          Effect.provideService(Source, makeSourceService(crypto, fs, path, [builtin])),
+          Effect.provideService(Source, makeSourceService(random, fs, path, [builtin])),
         );
         expect(inspections).toMatchObject([
           { origin: "builtin", registration: builtin, status: "healthy" },
@@ -634,7 +628,7 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
       Effect.gen(function* () {
         const fs = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const crypto = yield* Crypto.Crypto;
+        const random = yield* SecureRandom.SecureRandom;
         const normal = yield* registerSource(options, {
           sourcePath: yield* createSource(root, "normal"),
         });
@@ -651,7 +645,7 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
             { registration: normal.registration, status: "healthy" },
           ]);
           expect((yield* readState(options)).data.sources).toEqual([normal.registration]);
-        }).pipe(Effect.provideService(Source, makeSourceService(crypto, fs, path, [builtin])));
+        }).pipe(Effect.provideService(Source, makeSourceService(random, fs, path, [builtin])));
       }),
     ),
   );
@@ -661,7 +655,7 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
       Effect.gen(function* () {
         const fs = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const crypto = yield* Crypto.Crypto;
+        const random = yield* SecureRandom.SecureRandom;
         const canonicalPath = yield* fs.realPath(yield* createSource(root, "builtin"));
         const builtin = { canonicalPath, id: "00000000-0000-4000-8000-000000000010" };
         const normal = yield* registerSource(options, {
@@ -672,7 +666,7 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
             registrationId: normal.registration.id,
             sourcePath: canonicalPath,
           }),
-        ).pipe(Effect.provideService(Source, makeSourceService(crypto, fs, path, [builtin])));
+        ).pipe(Effect.provideService(Source, makeSourceService(random, fs, path, [builtin])));
         expect(result).toBeInstanceOf(SourcePathConflictError);
         expect(result).toMatchObject({ conflictingRegistrationId: builtin.id });
         expect((yield* readState(options)).data.sources).toEqual([normal.registration]);

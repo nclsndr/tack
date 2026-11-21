@@ -2,16 +2,8 @@ import { Yaml } from "../../domain/runtime-neutral.ts";
 import { bundleSourceLabel } from "../../domain/bundles/bundle-registration.ts";
 import { bundleIntegrityIssue } from "./bundle-integrity.ts";
 import { constFalse } from "effect/Function";
-import {
-  Context,
-  Crypto,
-  Effect,
-  FileSystem,
-  Path,
-  PlatformError,
-  Predicate,
-  Schema,
-} from "effect";
+import { Context, Effect, FileSystem, Path, PlatformError, Predicate, Schema } from "effect";
+import type { SecureRandom } from "effect/crypto";
 import {
   SourceHealthErrorCodeSchema,
   SourceStorageErrorCodeSchema,
@@ -340,7 +332,7 @@ const validateSource = Effect.fnUntraced(function* (
 
 type SourceService = {
   readonly builtInSources?: ReadonlyArray<SourceRegistration>;
-  readonly nextRegistrationId: (sourcePath: string) => Effect.Effect<string, SourceStorageError>;
+  readonly nextRegistrationId: Effect.Effect<string>;
   readonly validate: (
     sourcePath: string,
   ) => Effect.Effect<ValidatedSource, SourceStorageError | SourceValidationError>;
@@ -353,25 +345,14 @@ export class Source extends Context.Service<Source, SourceService>()(
 
 /** Builds source operations over explicit platform services. */
 export const makeSourceService = (
-  crypto: Crypto.Crypto,
+  random: SecureRandom.SecureRandom["Service"],
   fileSystem: FileSystem.FileSystem,
   path: Path.Path,
   builtInSources: ReadonlyArray<SourceRegistration> = [],
 ): Source["Service"] =>
   Source.of({
     builtInSources,
-    nextRegistrationId: (sourcePath) =>
-      crypto.randomUUIDv4.pipe(
-        Effect.mapError(
-          (error) =>
-            new SourceStorageError({
-              code: "registration-id-generation-failed",
-              message: error.message,
-              operation: "generate registration identity",
-              path: sourcePath,
-            }),
-        ),
-      ),
+    nextRegistrationId: random.uuidV4(),
     validate: (sourcePath) =>
       validateSource(sourcePath).pipe(
         Effect.provideService(FileSystem.FileSystem, fileSystem),
@@ -414,7 +395,7 @@ export const registerSource = Effect.fnUntraced(function* (
         } satisfies StateMutation<SourceMutationResult>;
       }
 
-      const id = yield* sourceService.nextRegistrationId(source.canonicalPath);
+      const id = yield* sourceService.nextRegistrationId;
       const registration = { id, canonicalPath: source.canonicalPath } satisfies SourceRegistration;
 
       return {

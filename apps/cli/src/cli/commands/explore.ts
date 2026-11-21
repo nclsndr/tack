@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import { Command } from "effect/unstable/cli";
+import { Command } from "effect/cli";
 import { handle } from "./invocation-receiver.ts";
 import { operationContract } from "./operation-contract.ts";
 import { namespaceFrom, projectFlag, userFlag } from "./target-selector.ts";

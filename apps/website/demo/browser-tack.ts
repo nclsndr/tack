@@ -1,5 +1,6 @@
-import { Crypto, FileSystem, Layer, Path, Terminal } from "effect";
-import { ChildProcessSpawner } from "effect/unstable/process";
+import { Effect, FileSystem, Layer, Path, Terminal } from "effect";
+import { SecureRandom } from "effect/crypto";
+import { ChildProcessSpawner } from "effect/process";
 import {
   BundleScanner,
   completePathWith,
@@ -34,7 +35,6 @@ import {
   unavailableReader,
   unavailableReaderCorpus,
   unavailableSpawner,
-  webCrypto,
 } from "./machine/stand-ins.ts";
 
 /** The machine one in-memory Tack runs on: its volume, the operator's home and the built-ins. */
@@ -61,13 +61,20 @@ const servicesFor = (
   const platform = Layer.mergeAll(
     Layer.succeed(FileSystem.FileSystem, fileSystem),
     Layer.succeed(Path.Path, path),
-    Layer.succeed(Crypto.Crypto, webCrypto),
+    SecureRandom.layerWebCrypto,
     Layer.succeed(Terminal.Terminal, nonInteractiveTerminal),
     Layer.succeed(ChildProcessSpawner.ChildProcessSpawner, unavailableSpawner),
   );
   return Layer.mergeAll(
     PortableLive,
-    Layer.succeed(Source, makeSourceService(webCrypto, fileSystem, path, [machine.builtInSource])),
+    Layer.effect(
+      Source,
+      Effect.gen(function* () {
+        return makeSourceService(yield* SecureRandom.SecureRandom, fileSystem, path, [
+          machine.builtInSource,
+        ]);
+      }),
+    ),
     Layer.succeed(Git, makeMemoryGit(machine.volume)),
     Layer.succeed(Reader, unavailableReader),
     Layer.succeed(ReaderCorpus, unavailableReaderCorpus),

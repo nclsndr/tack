@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import { Argument, Command } from "effect/unstable/cli";
+import { Argument, Command } from "effect/cli";
 import { docsRoot, docsSelection } from "./docs-root.ts";
 import { docsIconsCommand, docsSearchCommand, docsServeCommand } from "./docs-reader.ts";
 import { listAlias } from "./list-alias.ts";

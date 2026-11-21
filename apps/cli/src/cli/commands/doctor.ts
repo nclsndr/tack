@@ -1,4 +1,4 @@
-import { Command } from "effect/unstable/cli";
+import { Command } from "effect/cli";
 import { receive } from "./invocation-receiver.ts";
 import { readOnly } from "./operation-contract.ts";
 

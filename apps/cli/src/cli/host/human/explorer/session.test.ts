@@ -1,6 +1,7 @@
 import { expect, it } from "@effect/vitest";
 import { Cause, Effect, FileSystem, Option, Path, Queue, Ref, Terminal } from "effect";
 import { LiveTestLayer } from "../../../../../test/support/live-test-layer.ts";
+import { unwatchedTerminalSize } from "../../../../../test/support/explorer.ts";
 import { ReaderCorpusLive } from "../../../../platform/reader/search.ts";
 import { makeStyle } from "../style.ts";
 import { initialExplorerState, type ExplorerEntry, type ExplorerState } from "./model.ts";
@@ -43,6 +44,7 @@ const scriptedTerminal = Effect.fnUntraced(function* (keys: ReadonlyArray<Termin
   const terminal = Terminal.make({
     columns: Effect.succeed(100),
     rows: Effect.succeed(20),
+    size: unwatchedTerminalSize,
     readInput: Effect.succeed(queue),
     readLine: Effect.succeed(""),
     display: (text) => Ref.update(displayed, (values) => [...values, text]),

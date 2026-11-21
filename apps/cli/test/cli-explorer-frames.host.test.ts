@@ -5,6 +5,7 @@ import { BunServices } from "@effect/platform-bun";
 import { expect, it } from "@effect/vitest";
 import { Effect, Option, Queue, Ref, Terminal } from "effect";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
+import { unwatchedTerminalSize } from "./support/explorer.ts";
 import { renderExplorerFrame } from "../src/cli/host/human/explorer/frame.ts";
 import { runExplorer } from "../src/cli/host/human/explorer/session.ts";
 import {
@@ -125,6 +126,7 @@ it.layer(LiveTestLayer)("review and result resize events", (test) => {
       const terminal = Terminal.make({
         columns: Ref.get(dimensions).pipe(Effect.map((value) => value.columns)),
         rows: Ref.get(dimensions).pipe(Effect.map((value) => value.rows)),
+        size: unwatchedTerminalSize,
         readInput: Effect.succeed(keys),
         readLine: Effect.succeed(""),
         display: (frame) =>

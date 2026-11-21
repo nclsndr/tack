@@ -2,7 +2,8 @@ import { profileFixture as fixture } from "./support/profile-fixture.ts";
 import { runManagedRemoval } from "../src/features/removal/removal.ts";
 import { agentLink } from "../src/domain/links/link-record-schema.ts";
 import { expect, it } from "@effect/vitest";
-import { Crypto, Effect, FileSystem, PlatformError } from "effect";
+import { Effect, FileSystem, PlatformError } from "effect";
+import { SecureRandom } from "effect/crypto";
 import { provideTestFileSystem } from "./support/live-test-layer.ts";
 import { runStatus } from "../src/features/status/status.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
@@ -91,7 +92,9 @@ it.layer(LiveTestLayer)("exact profile application", (test) => {
           id: "00000000-0000-4000-8000-0000000000b1",
           canonicalPath: yield* fs.realPath(new URL("../src/builtins", import.meta.url).pathname),
         };
-        const sourceService = makeSourceService(yield* Crypto.Crypto, fs, path, [builtins]);
+        const sourceService = makeSourceService(yield* SecureRandom.SecureRandom, fs, path, [
+          builtins,
+        ]);
         yield* Effect.gen(function* () {
           yield* run(
             runSyncCommand(options, {

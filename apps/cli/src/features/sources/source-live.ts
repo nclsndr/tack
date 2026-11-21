@@ -1,4 +1,5 @@
-import { Crypto, Effect, FileSystem, Layer, Path } from "effect";
+import { Effect, FileSystem, Layer, Path } from "effect";
+import { SecureRandom } from "effect/crypto";
 import { builtInSource } from "../../release.ts";
 import { makeSourceService, Source } from "./source.ts";
 
@@ -10,7 +11,7 @@ export const SourceLive = Layer.effect(
     const canonicalPath = yield* fs
       .realPath(builtInSource.canonicalPath)
       .pipe(Effect.catch(() => Effect.succeed(builtInSource.canonicalPath)));
-    return makeSourceService(yield* Crypto.Crypto, fs, yield* Path.Path, [
+    return makeSourceService(yield* SecureRandom.SecureRandom, fs, yield* Path.Path, [
       { ...builtInSource, canonicalPath },
     ]);
   }),

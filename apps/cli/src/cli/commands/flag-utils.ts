@@ -1,5 +1,5 @@
 import { Option, Schema } from "effect";
-import { Flag } from "effect/unstable/cli";
+import { Flag } from "effect/cli";
 
 /** Creates a repeat-safe boolean CLI flag. */
 export const booleanFlag = (name: string, description: string) =>

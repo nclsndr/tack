@@ -1,6 +1,6 @@
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
-import { ChildProcess } from "effect/unstable/process";
+import { ChildProcess } from "effect/process";
 import { agentAdapterDescriptor } from "../src/domain/agents/agent-adapter.ts";
 import { managedLinkDestinationPath } from "../src/domain/agents/agent-layout.ts";
 import {

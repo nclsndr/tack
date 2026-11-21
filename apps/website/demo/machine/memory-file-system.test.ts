@@ -52,6 +52,25 @@ describe("memory file system", () => {
     }),
   );
 
+  it.effect("types directory entries without following links, which globbing walks", () =>
+    Effect.gen(function* () {
+      const { fs } = setup();
+      yield* fs.makeDirectory("skills/review", { recursive: true });
+      yield* fs.writeFileString("skills/review/SKILL.md", "# Review");
+      yield* fs.symlink("skills/review", "linked");
+
+      expect((yield* fs.lstat("linked")).type).toBe("SymbolicLink");
+      expect(yield* fs.readDirectoryEntries(".")).toEqual([
+        { name: "linked", type: "SymbolicLink" },
+        { name: "skills", type: "Directory" },
+      ]);
+      expect(yield* fs.readDirectoryEntries("skills/review")).toEqual([
+        { name: "SKILL.md", type: "File" },
+      ]);
+      expect(yield* fs.glob("skills/*/SKILL.md")).toEqual(["skills/review/SKILL.md"]);
+    }),
+  );
+
   it.effect("maps volume failures to platform error reasons", () =>
     Effect.gen(function* () {
       const { fs } = setup();
@@ -67,7 +86,7 @@ describe("memory file system", () => {
       expect(yield* reasonOf(fs.access("missing"))).toBe("NotFound");
       expect(yield* reasonOf(fs.access("file"))).toBe("success");
       expect(yield* reasonOf(fs.writeFileString("file", "", { flag: "wx" }))).toBe("AlreadyExists");
-      expect(yield* reasonOf(fs.glob("*"))).toBe("Unknown");
+      expect(yield* reasonOf(fs.readDirectoryEntries("file"))).toBe("BadResource");
       expect(yield* reasonOf(Stream.runDrain(fs.watch("file")))).toBe("Unknown");
     }),
   );

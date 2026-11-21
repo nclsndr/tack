@@ -1,4 +1,4 @@
-import { Command } from "effect/unstable/cli";
+import { Command } from "effect/cli";
 import { optionalStringFlag } from "./flag-utils.ts";
 import { jsonFlag } from "./output-flag.ts";
 

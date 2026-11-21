@@ -1,5 +1,5 @@
-import { Crypto, Effect, PlatformError, Terminal } from "effect";
-import { ChildProcessSpawner } from "effect/unstable/process";
+import { Effect, PlatformError, Terminal } from "effect";
+import { ChildProcessSpawner } from "effect/process";
 import {
   BundleScanner,
   Compression,
@@ -20,24 +20,6 @@ import {
 /** Why a capability is missing where Tack runs over a memory volume, such as the browser demo. */
 export const unavailableMessage = (capability: string) =>
   `${capability} needs a real machine and is not available in this in-memory Tack.`;
-
-/** Effect's crypto over the Web Crypto API, which browsers, Node and Bun all provide. */
-export const webCrypto = Crypto.make({
-  randomBytes: (size) => globalThis.crypto.getRandomValues(new Uint8Array(size)),
-  digest: (algorithm, data) =>
-    Effect.tryPromise({
-      try: async () =>
-        new Uint8Array(await globalThis.crypto.subtle.digest(algorithm, data.slice())),
-      catch: (cause) =>
-        PlatformError.systemError({
-          _tag: "Unknown",
-          module: "Crypto",
-          method: "digest",
-          description: "Could not compute digest",
-          cause,
-        }),
-    }),
-});
 
 /** The docs reader serves HTTP from a local process, which a memory volume cannot host. */
 export const unavailableReader = {
@@ -122,6 +104,7 @@ export const unavailableSpawner = ChildProcessSpawner.make((command) =>
 export const nonInteractiveTerminal = Terminal.make({
   columns: Effect.succeed(80),
   rows: Effect.succeed(24),
+  size: Effect.die(new Error(unavailableMessage("Watching the terminal size"))),
   readInput: Effect.die(new Error(unavailableMessage("Reading keys"))),
   readLine: Effect.fail(new Terminal.QuitError()),
   display: () => Effect.void,

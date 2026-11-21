@@ -1,4 +1,5 @@
-import { Crypto, Effect, Path, Schema } from "effect";
+import { Effect, Path, Schema } from "effect";
+import { SecureRandom } from "effect/crypto";
 import {
   ExecutionPlatform,
   ExecutionError,
@@ -202,8 +203,8 @@ const runWithCancellation = Effect.fnUntraced(function* (
   cancellation: import("../../services/execution-platform.ts").RunCancellation,
 ) {
   const platform = yield* ExecutionPlatform;
-  const crypto = yield* Crypto.Crypto;
-  const runId = yield* crypto.randomUUIDv4;
+  const random = yield* SecureRandom.SecureRandom;
+  const runId = yield* random.uuidV4();
   const stateDirectory = yield* resolveStateDirectory(stateOptions);
   const observedState = yield* readInvocationSnapshot(stateOptions).pipe(
     Effect.map((snapshot) => snapshot.state),
@@ -331,10 +332,10 @@ export const describeScript = Effect.fnUntraced(function* (
   address: OperatorRunRequest["address"],
 ) {
   const platform = yield* ExecutionPlatform;
-  const crypto = yield* Crypto.Crypto;
+  const random = yield* SecureRandom.SecureRandom;
   const stateDirectory = yield* initializedStateDirectory(stateOptions);
   const entry = yield* declaredScript(stateOptions, address);
-  const runId = yield* crypto.randomUUIDv4;
+  const runId = yield* random.uuidV4();
   const executed = yield* Effect.acquireUseRelease(
     platform.cancellation(),
     (cancellation) =>

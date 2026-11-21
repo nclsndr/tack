@@ -1,6 +1,7 @@
-import { type Crypto, Effect, type FileSystem, Path, Runtime, Schema } from "effect";
+import { Effect, type FileSystem, Path, Runtime, Schema } from "effect";
 import type { PlatformError, Scope, Stdio } from "effect";
-import type { Command } from "effect/unstable/cli";
+import type { Command } from "effect/cli";
+import type { SecureRandom } from "effect/crypto";
 import type { Invocation } from "../../commands/index.ts";
 import type { BundleScanner } from "../../../services/bundle-scanner.ts";
 import type { Compression } from "../../../services/compression.ts";
@@ -38,7 +39,6 @@ export type RouteServices =
   | BundleScanner
   | Command.Environment
   | Compression
-  | Crypto.Crypto
   | Destination
   | ExecutionPlatform
   | FileSystem.FileSystem
@@ -48,6 +48,7 @@ export type RouteServices =
   | Path.Path
   | Reader
   | ReaderCorpus
+  | SecureRandom.SecureRandom
   | Scope.Scope
   | Source
   | StateStore;

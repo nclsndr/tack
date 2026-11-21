@@ -1,7 +1,8 @@
 import { LiveTestLayer, provideTestFileSystem } from "../../../test/support/live-test-layer.ts";
 import { faultyFileSystem, platformTestError } from "../../../test/support/faults.ts";
 import { expect, it } from "@effect/vitest";
-import { Crypto, Deferred, Effect, FileSystem, Fiber, Path, Schema } from "effect";
+import { Deferred, Effect, FileSystem, Fiber, Path, Schema } from "effect";
+import { SecureRandom } from "effect/crypto";
 import {
   initializeState,
   makeStateNoticeCollector,
@@ -35,20 +36,18 @@ const stateFileName = "state.json";
 const dotenvFileName = ".env";
 const lockFileName = "state.lock";
 
-type StateRequirements = Crypto.Crypto | FileSystem.FileSystem | Path.Path | StateStore;
+type StateRequirements = SecureRandom.SecureRandom | FileSystem.FileSystem | Path.Path | StateStore;
 
-const withCrypto = <A, E>(
+const withSecureRandom = <A, E>(
   effect: Effect.Effect<A, E, StateRequirements>,
-  transform: (crypto: Crypto.Crypto) => Crypto.Crypto,
+  random: SecureRandom.SecureRandom["Service"],
 ) =>
   Effect.gen(function* () {
-    const crypto = yield* Crypto.Crypto;
     const fileSystem = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
-    const transformed = transform(crypto);
     return yield* effect.pipe(
-      Effect.provideService(StateStore, makeStateStoreService(transformed, fileSystem, path)),
-      Effect.provideService(Crypto.Crypto, transformed),
+      Effect.provideService(StateStore, makeStateStoreService(random, fileSystem, path)),
+      Effect.provideService(SecureRandom.SecureRandom, random),
     );
   });
 
@@ -546,7 +545,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
         // Cross-store ownership fails before a temporary state file is opened.
         yield* Schema.decodeUnknownEffect(StateSchema)(invalid);
         yield* provideTestFileSystem(
-          withCrypto(
+          withSecureRandom(
             withStateCheckpointWriter(options, (writer) =>
               Effect.gen(function* () {
                 const current = writer.current();
@@ -557,12 +556,9 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
                 expect(writer.current()).toBe(current);
               }),
             ),
-            (crypto) => ({
-              ...crypto,
-              randomUUIDv4: Effect.suspend(() => {
-                temporaryIdCount += 1;
-                return crypto.randomUUIDv4;
-              }),
+            SecureRandom.make((size) => {
+              temporaryIdCount += 1;
+              return globalThis.crypto.getRandomValues(new Uint8Array(size));
             }),
           ),
           yield* faultyFileSystem({
@@ -873,7 +869,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
     ),
   );
 
-  stateIt.effect("reports temporary-ID and mutator failures without persisting invalid state", () =>
+  stateIt.effect("reports mutator failures without persisting invalid state", () =>
     withStateDirectory((stateDirectory) =>
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
@@ -881,15 +877,6 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
         const options = stateOptions(stateDirectory);
         const statePath = path.join(stateDirectory, stateFileName);
 
-        const temporaryIdError = yield* withCrypto(
-          Effect.flip(initializeState(options)),
-          (crypto) => ({
-            ...crypto,
-            randomUUIDv4: Effect.fail(platformTestError("randomUUIDv4")),
-          }),
-        );
-
-        expect(temporaryIdError).toBeInstanceOf(StateStorageError);
         yield* initializeState(options);
         const persistedStateBeforeMutatorFailures = yield* fileSystem.readFileString(statePath);
         const thrownError = yield* Effect.flip(

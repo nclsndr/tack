@@ -1,6 +1,6 @@
 import { Schema, SchemaAST } from "effect";
 
-// Effect 4 rc.115 treats Struct({}) like TypeScript's {} type. The stricter
+// Effect 4 (through 4.1) treats Struct({}) like TypeScript's {} type. The stricter
 // input check must participate in union decoding, before a branch is selected.
 const emptyObject = Schema.makeFilter<unknown>(
   (value) =>

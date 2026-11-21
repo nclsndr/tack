@@ -1,4 +1,5 @@
-import { Crypto, Effect } from "effect";
+import { Effect } from "effect";
+import { SecureRandom } from "effect/crypto";
 import { emptyState } from "../../domain/state/state-schema.ts";
 import { bundleRegistrationsFor } from "../../domain/bundles/bundle-registration.ts";
 import { inspectBundleProjection } from "./bundle-snapshot.ts";
@@ -11,9 +12,9 @@ export const checkBundleProjection = Effect.fnUntraced(function* (archive: {
   readonly manifest: BundleManifest;
   readonly entries: ReadonlyArray<ArchiveEntry>;
 }) {
-  const crypto = yield* Crypto.Crypto;
+  const random = yield* SecureRandom.SecureRandom;
   const ids = new Map<string, string>();
-  for (const source of archive.manifest.sources) ids.set(source.key, yield* crypto.randomUUIDv4);
+  for (const source of archive.manifest.sources) ids.set(source.key, yield* random.uuidV4());
   const registrations = bundleRegistrationsFor(
     archive.manifest,
     ids,

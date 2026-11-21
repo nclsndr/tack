@@ -1,5 +1,5 @@
 import { Context } from "effect";
-import { Command } from "effect/unstable/cli";
+import { Command } from "effect/cli";
 
 /** One titled block of `term  meaning` rows that help prints after a command's flags. */
 export type HelpNote = {

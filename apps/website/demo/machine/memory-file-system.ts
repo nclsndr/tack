@@ -47,7 +47,7 @@ const infoOf = (stat: VolumeStat): FileSystem.File.Info => ({
   mtime: Option.some(stat.mtime),
   atime: Option.some(stat.mtime),
   birthtime: Option.some(stat.mtime),
-  dev: 0,
+  dev: 0n,
   ino: Option.none(),
   mode: stat.mode,
   nlink: Option.none(),
@@ -206,9 +206,9 @@ export const makeMemoryFileSystem = (
       ),
     chmod: (target, mode) => attempt("chmod", target, (absolute) => volume.chmod(absolute, mode)),
     chown: (target) => attempt("chown", target, (absolute) => void volume.stat(absolute)),
-    glob: (pattern) => Effect.fail(unsupported("glob", pattern)),
     link: (from, to) =>
       attempt("link", to, (absolute) => volume.link(path.resolve(from), absolute)),
+    lstat: (target) => attempt("lstat", target, (absolute) => infoOf(volume.lstat(absolute))),
     makeDirectory: (target, options) =>
       attempt("makeDirectory", target, (absolute) =>
         volume.mkdir(absolute, {
@@ -225,6 +225,14 @@ export const makeMemoryFileSystem = (
       attempt("readDirectory", target, (absolute) =>
         readDirectory(volume.realpath(absolute), options?.recursive === true),
       ),
+    readDirectoryEntries: (target) =>
+      attempt("readDirectoryEntries", target, (absolute) => {
+        const directory = volume.realpath(absolute);
+        return volume.readdir(directory).map((name) => ({
+          name,
+          type: types[volume.lstat(`${directory}/${name}`).type],
+        }));
+      }),
     readFile: (target) => attempt("readFile", target, (absolute) => volume.readFile(absolute)),
     readLink: (target) => attempt("readLink", target, (absolute) => volume.readlink(absolute)),
     realPath: (target) => attempt("realPath", target, (absolute) => volume.realpath(absolute)),

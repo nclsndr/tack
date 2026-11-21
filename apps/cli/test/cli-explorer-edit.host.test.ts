@@ -1,7 +1,8 @@
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { BunServices } from "@effect/platform-bun";
 import { expect, it } from "@effect/vitest";
-import { Cause, Crypto, Effect, FileSystem, Option, Path, Queue, Ref, Terminal } from "effect";
+import { Cause, Effect, FileSystem, Option, Path, Queue, Ref, Terminal } from "effect";
+import { SecureRandom } from "effect/crypto";
 import type { ChoiceNamespace } from "../src/domain/choices/choice-schema.ts";
 import { explorerEntries } from "../src/cli/host/human/explorer/entries.ts";
 import { renderExplorerFrame } from "../src/cli/host/human/explorer/frame.ts";
@@ -21,7 +22,14 @@ import type { RouteServices } from "../src/cli/host/routes/route.ts";
 import { loadExplorer, makeExplorerEditor } from "../src/cli/host/human/explorer/editor.ts";
 import { Source, makeSourceService, registerSource } from "../src/features/sources/source.ts";
 import { mutateState } from "./support/state-fixture.ts";
-import { choice, key, on, press, sourceRegistrationId } from "./support/explorer.ts";
+import {
+  choice,
+  key,
+  on,
+  press,
+  sourceRegistrationId,
+  unwatchedTerminalSize,
+} from "./support/explorer.ts";
 import { initializeState, readState } from "../src/services/state-store.ts";
 import { type State } from "../src/domain/state/state-schema.ts";
 import { makeExplorerDestinations } from "../src/cli/host/human/explorer/profile-editor.ts";
@@ -320,6 +328,7 @@ const scriptedTerminal = Effect.fnUntraced(function* (keys: ReadonlyArray<Termin
   const terminal = Terminal.make({
     columns: Effect.succeed(100),
     rows: Effect.succeed(24),
+    size: unwatchedTerminalSize,
     readInput: Effect.succeed(queue),
     readLine: Effect.succeed(""),
     display: (text) => Ref.update(displayed, (values) => [...values, text]),
@@ -702,7 +711,7 @@ it.layer(LiveTestLayer)("built-in browse write boundary", (test) => {
       const before = yield* readState(options);
       const registration = before.data.sources[0];
       if (registration === undefined) throw new Error("Missing fixture source.");
-      const source = makeSourceService(yield* Crypto.Crypto, fs, path, [registration]);
+      const source = makeSourceService(yield* SecureRandom.SecureRandom, fs, path, [registration]);
       yield* Effect.gen(function* () {
         const namespace = user;
         const style = makeStyle({ color: false, width: 140, homeDirectory: root });

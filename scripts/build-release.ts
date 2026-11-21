@@ -82,7 +82,6 @@ run(
 for (const path of [
   "package.json",
   "bun.lock",
-  "patches",
   "apps/cli/package.json",
   "packages/core/package.json",
   "packages/reader/package.json",
