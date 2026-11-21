@@ -9,7 +9,8 @@ export function InlineCode({ text }: { readonly text: string }) {
 
 /**
  * A proof point: one command or fact a reader can check, in monospace. A Tack command gets a
- * prompt in front of it.
+ * prompt in front of it. It wraps only between words, so a flag such as `--project` never breaks
+ * after its hyphens.
  */
 export function Proof({ text, className }: { readonly text: string; readonly className?: string }) {
   return (
@@ -19,7 +20,12 @@ export function Proof({ text, className }: { readonly text: string; readonly cla
           ${" "}
         </span>
       ) : null}
-      {text}
+      {text.split(" ").map((word, index) => (
+        <span key={index}>
+          {index === 0 ? "" : " "}
+          <span className="proof-word">{word}</span>
+        </span>
+      ))}
     </code>
   );
 }

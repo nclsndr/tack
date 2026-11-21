@@ -20,7 +20,10 @@ import { InlineCode } from "./inline-code.tsx";
 import { Mark } from "./mark.tsx";
 import { Story } from "./story.tsx";
 
-const docsHref = "/docs/";
+export const docsHref = "/docs/";
+
+/** The features page, every feature by lens. */
+const featuresHref = "/features";
 
 /** Copies text to the clipboard and reports the result in a live region. */
 function CopyButton({ text, label }: { readonly text: string; readonly label: string }) {
@@ -110,6 +113,9 @@ function Tabs({
   );
 }
 
+/** Where the header and the features page send a visitor to start. */
+export const getStartedHref = "/#get-started";
+
 /**
  * Whether the page has scrolled past `marker`, a strip at its top: the header floats as a card from
  * then on. An observer watches the strip, so nothing runs on each scrolled frame.
@@ -135,9 +141,10 @@ const headerFallback =
 /**
  * The header stays at the top of the screen as the page scrolls, as the docs navigation does. At
  * the top of the page it sits flush on the hero; once the page leaves the top, a card pops out
- * behind it.
+ * behind it. It is the site header on the landing and on the features page, so its links name
+ * their page and work from either one; on the landing they only scroll.
  */
-function Header() {
+export function Header({ current }: { readonly current?: "features" }) {
   const marker = useRef<HTMLSpanElement>(null);
   const floating = useScrolledPast(marker);
   return (
@@ -153,11 +160,13 @@ function Header() {
             <span>tack</span>
           </a>
           <nav aria-label="Main" className="landing-nav">
-            <a href="#demo">Demo</a>
-            <a href="#features">Features</a>
+            <a href="/#demo">Demo</a>
+            <a href={featuresHref} aria-current={current === "features" ? "page" : undefined}>
+              Features
+            </a>
             <a href={docsHref}>Docs</a>
           </nav>
-          <a href="#get-started" className="landing-button landing-button-primary">
+          <a href={getStartedHref} className="landing-button landing-button-primary">
             Get started
           </a>
         </div>
@@ -294,7 +303,8 @@ function Closing() {
   );
 }
 
-function Footer() {
+/** The site footer, on the landing and on the features page. */
+export function Footer() {
   return (
     <footer className="landing-footer">
       <div className="landing-shell landing-footer-row">
@@ -352,6 +362,8 @@ ${featureList}
 ### ${features.also.heading}
 
 ${also}
+
+[${features.more.label}](${features.more.href})
 
 ## ${story.heading}
 

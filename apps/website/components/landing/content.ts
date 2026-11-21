@@ -159,6 +159,8 @@ export const features = {
       },
     ],
   },
+  /** The way on to the features page, which details every feature by lens. */
+  more: { label: "See every feature, lens by lens →", href: "/features" },
 } as const;
 
 /** Getting started: the install command, the first commands and the Node requirement. */
