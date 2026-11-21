@@ -1,0 +1,67 @@
+[1mtack catalog[22m[2m · 12 resources ·[22m[32m ✓ success[39m
+
+[1mSources (3)[22m
+  tack[2m (declared) ·[22m
+    <checkout>/apps/cli/src/builtins
+  skills[2m (declared) ·[22m ~/skills
+  team-docs[2m (declared) ·[22m ~/team-docs
+
+[1mSkills (9)[22m
+  author-tack-profiles[2m  tack · builtin · opt-in · user default[22m
+    Author, publish, inspect and repair fixed Tack profiles. Use
+    for profile files, source linkage, independent membership
+    copies, explicit application and portable content bundles.
+    Use manage-tack-sources for resource declarations and
+    use-tack for daily selection.
+  manage-tack-sources[2m  tack · builtin · opt-in · user default[22m
+    Author Tack sources, folders of skills, commands, context,
+    scripts and docs. Use before editing any file inside a
+    source, to check its maintainers first, and to create or
+    register a source, declare resources in tack.yaml, set
+    dependencies, resolve name clashes or fix catalog issues.
+  prepare-tack-checkout[2m  tack · builtin · opt-in · user default[22m
+    Link a repository's Tack skills and docs before you work in
+    it. Use at the start of work in a repository whose AGENTS.md
+    or CLAUDE.md has a Tack section, or whose root has a
+    tack.yaml, and in every new clone or worktree of one. Use
+    use-tack for any other Tack command.
+  use-tack[2m  tack · builtin · opt-in · user default[22m
+    Operate Tack, which manages cross-agent skills, commands,
+    context, docs and scripts. Use for any `tack` command -
+    discover resources, pick and sync them into Claude Code,
+    Codex, Cursor, OpenCode or Pi, attach and search docs, run
+    declared scripts, check health and upgrades. To create or
+    edit a source, use the `manage-tack-sources` skill.
+  write-reader-figures[2m  tack · builtin · opt-in · user default[22m
+    Write figures in Tack docs - architecture maps, running
+    systems, schemas and domain models, file trees,
+    walkthroughs, charts and authored figures that the docs
+    reader renders with one frame. Use when a document needs a
+    picture of how code is organised, which parts run and what
+    they send each other, which tables or entities exist and who
+    may touch them, what is on disk, an ordered procedure,
+    quantities or a one-off mechanism, before writing any figure
+    or a `tree` block, and instead of ASCII art. Also for icons,
+    callouts, tabs and defined terms in MDX docs. Run `tack
+    check` on the page when done.
+  commit[2m  skills[22m
+    Write a conventional commit message from the staged diff.
+  debug[2m  skills[22m
+    Reproduce a bug with a failing test before changing any
+    code.
+  review[2m  skills[22m
+    Review a change for correctness, naming and tests before it
+    is pushed.
+  ship[2m  skills · opt-in[22m
+    Cut a release: bump the version, tag main and write the
+    changelog.
+
+[1mCommands (1)[22m
+  release  [2mteam-docs[22m  Prepare a release from main
+
+[1mScripts (1)[22m
+  changelog  [2mteam-docs[22m  List the latest commits of the current
+             [2m[22m           project.
+
+[1mDocs (1)[22m
+  handbook  [2mteam-docs[22m  [2m~/team-docs/handbook[22m

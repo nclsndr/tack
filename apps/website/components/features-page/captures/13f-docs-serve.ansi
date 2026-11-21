@@ -1,0 +1,11 @@
+[1m[36mstart  [39m[22m build started...
+[1m[32mready  [39m[22m built in [1m4.20s[22m
+[1mtack docs serve[22m[2m · app ·[22m[32m ✓ success[39m
+
+[1mReader ready[22m
+  [2mURL[22m      http://127.0.0.1:4815
+  [2mProject[22m  app
+  [2mRoot[22m     ~/code/app
+
+Serving the attached docs in the foreground until interrupted.
+[1m[36mstart  [39m[22m building [2mvirtual modules[22m

@@ -1,0 +1,83 @@
+[1mtack init[22m[2m · user ·[22m[32m ✓ success[39m
+
+[2mCreated ~/.tack. Enabled claude, codex, cursor, opencode, pi.[22m
+[2mLinked 25 skills at user scope.[22m
+
+  [2mfound[22m  claude ~/.claude, codex ~/.codex, cursor ~/.cursor,
+         opencode ~/.config/opencode, pi ~/.pi
+
+[1mclaude → user[22m[2m ·[22m 5 to link
+  [32mapplied[39m  [32mcreate[39m  .claude/skills/        [2mskill[22m
+  [32m[39m         [32m[39m        author-tack-profiles   [2mauthor-tack-profiles[22m
+  [32mapplied[39m  [32mcreate[39m  .claude/skills/        [2mskill[22m
+  [32m[39m         [32m[39m        manage-tack-sources    [2mmanage-tack-sources[22m
+  [32mapplied[39m  [32mcreate[39m  .claude/skills/        [2mskill[22m
+  [32m[39m         [32m[39m        prepare-tack-checkout  [2mprepare-tack-checkout[22m
+  [32mapplied[39m  [32mcreate[39m  .claude/skills/use-    [2mskill use-tack[22m
+  [32m[39m         [32m[39m        tack                   [2m[22m
+  [32mapplied[39m  [32mcreate[39m  .claude/skills/write-  [2mskill[22m
+  [32m[39m         [32m[39m        reader-figures         [2mwrite-reader-figures[22m
+
+[1mcodex → user[22m[2m ·[22m 5 to link
+  [32mapplied[39m  [32mcreate[39m  .agents/skills/        [2mdirectory[22m
+  [32mapplied[39m  [32mcreate[39m  .agents/skills/        [2mskill[22m
+  [32m[39m         [32m[39m        author-tack-profiles   [2mauthor-tack-profiles[22m
+  [32mapplied[39m  [32mcreate[39m  .agents/skills/        [2mskill[22m
+  [32m[39m         [32m[39m        manage-tack-sources    [2mmanage-tack-sources[22m
+  [32mapplied[39m  [32mcreate[39m  .agents/skills/        [2mskill[22m
+  [32m[39m         [32m[39m        prepare-tack-checkout  [2mprepare-tack-checkout[22m
+  [32mapplied[39m  [32mcreate[39m  .agents/skills/use-    [2mskill use-tack[22m
+  [32m[39m         [32m[39m        tack                   [2m[22m
+  [32mapplied[39m  [32mcreate[39m  .agents/skills/write-  [2mskill[22m
+  [32m[39m         [32m[39m        reader-figures         [2mwrite-reader-figures[22m
+
+[1mcursor → user[22m[2m ·[22m 5 to link
+  [32mapplied[39m  [32mcreate[39m  .cursor/skills/        [2mdirectory[22m
+  [32mapplied[39m  [32mcreate[39m  .cursor/skills/        [2mskill[22m
+  [32m[39m         [32m[39m        author-tack-profiles   [2mauthor-tack-profiles[22m
+  [32mapplied[39m  [32mcreate[39m  .cursor/skills/        [2mskill[22m
+  [32m[39m         [32m[39m        manage-tack-sources    [2mmanage-tack-sources[22m
+  [32mapplied[39m  [32mcreate[39m  .cursor/skills/        [2mskill[22m
+  [32m[39m         [32m[39m        prepare-tack-checkout  [2mprepare-tack-checkout[22m
+  [32mapplied[39m  [32mcreate[39m  .cursor/skills/use-    [2mskill use-tack[22m
+  [32m[39m         [32m[39m        tack                   [2m[22m
+  [32mapplied[39m  [32mcreate[39m  .cursor/skills/write-  [2mskill[22m
+  [32m[39m         [32m[39m        reader-figures         [2mwrite-reader-figures[22m
+
+[1mopencode → user[22m[2m ·[22m 5 to link
+  [32mapplied[39m  [32mcreate[39m  .config/opencode/      [2mdirectory[22m
+  [32m[39m         [32m[39m        skills/                [2m[22m
+  [32mapplied[39m  [32mcreate[39m  .config/opencode/      [2mskill[22m
+  [32m[39m         [32m[39m        skills/author-tack-    [2mauthor-tack-profiles[22m
+  [32m[39m         [32m[39m        profiles               [2m[22m
+  [32mapplied[39m  [32mcreate[39m  .config/opencode/      [2mskill[22m
+  [32m[39m         [32m[39m        skills/manage-tack-    [2mmanage-tack-sources[22m
+  [32m[39m         [32m[39m        sources                [2m[22m
+  [32mapplied[39m  [32mcreate[39m  .config/opencode/      [2mskill[22m
+  [32m[39m         [32m[39m        skills/prepare-tack-   [2mprepare-tack-checkout[22m
+  [32m[39m         [32m[39m        checkout               [2m[22m
+  [32mapplied[39m  [32mcreate[39m  .config/opencode/      [2mskill use-tack[22m
+  [32m[39m         [32m[39m        skills/use-tack        [2m[22m
+  [32mapplied[39m  [32mcreate[39m  .config/opencode/      [2mskill[22m
+  [32m[39m         [32m[39m        skills/write-reader-   [2mwrite-reader-figures[22m
+  [32m[39m         [32m[39m        figures                [2m[22m
+
+[1mpi → user[22m[2m ·[22m 5 to link
+  [32mapplied[39m  [32mcreate[39m  .pi/agent/skills/      [2mdirectory[22m
+  [32mapplied[39m  [32mcreate[39m  .pi/agent/skills/      [2mskill[22m
+  [32m[39m         [32m[39m        author-tack-profiles   [2mauthor-tack-profiles[22m
+  [32mapplied[39m  [32mcreate[39m  .pi/agent/skills/      [2mskill[22m
+  [32m[39m         [32m[39m        manage-tack-sources    [2mmanage-tack-sources[22m
+  [32mapplied[39m  [32mcreate[39m  .pi/agent/skills/      [2mskill[22m
+  [32m[39m         [32m[39m        prepare-tack-checkout  [2mprepare-tack-checkout[22m
+  [32mapplied[39m  [32mcreate[39m  .pi/agent/skills/use-  [2mskill use-tack[22m
+  [32m[39m         [32m[39m        tack                   [2m[22m
+  [32mapplied[39m  [32mcreate[39m  .pi/agent/skills/      [2mskill[22m
+  [32m[39m         [32m[39m        write-reader-figures   [2mwrite-reader-figures[22m
+
+[1mHand-made, left untouched[22m
+  ~/.claude/skills/my-notes  [2mfolder · claude skill[22m
+
+[1mNext[22m
+  [36mtack guide onboarding[39m
+  [36mtack source add PATH[39m

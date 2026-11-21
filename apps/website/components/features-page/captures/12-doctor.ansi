@@ -1,0 +1,29 @@
+[1mtack doctor[22m[2m · 0.1.0+dev · 11 ok ·[22m[32m ✓ success[39m
+
+[32mNo problems found.[39m
+
+[1mChecked[22m
+  [32m✓[39m release
+    Tack 0.1.0+dev is running; tack upgrade names the command
+    that upgrades it.
+  [32m✓[39m state
+    State format 1 at ~/.tack is readable.
+  [32m✓[39m profiles
+    Retained profile inventories are resolved.
+  [32m✓[39m profile-definitions
+    Published profile definitions are valid and linked.
+  [32m✓[39m adapters
+    Enabled: claude, codex, cursor, opencode, pi.
+  [32m✓[39m sources
+    2 registered sources, all healthy.
+  [32m✓[39m imports
+    No skill is imported. git 2.55 can fetch for `tack import
+    add`.
+  [32m✓[39m unregistered-dependency-source
+    All declared dependency sources are registered.
+  [32m✓[39m projects
+    4 registered projects, all healthy.
+  [32m✓[39m links
+    94 managed destinations, all matching.
+  [32m✓[39m docs
+    1 project with attached docs, all mounted and loading.

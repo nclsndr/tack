@@ -1,0 +1,12 @@
+[1mtack script show[22m[2m ·[22m[32m ✓ success[39m
+
+  [2mScript[22m       changelog
+  [2mDescription[22m  List the latest commits of the current project.
+  [2mFile[22m         ~/team-docs/scripts/
+               changelog.ts
+
+[1mArguments[22m
+  --limit <number>  default 5  How many commits to list
+
+[1mNext[22m
+  [36mtack script run changelog[39m

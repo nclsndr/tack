@@ -52,3 +52,9 @@ export const parseAnsi = (text: string): ReadonlyArray<AnsiSpan> => {
     { pen: plainPen, spans: [] },
   ).spans;
 };
+
+/** The text a terminal shows for `text`, without its style sequences, for the Markdown twin. */
+export const plainAnsi = (text: string) =>
+  parseAnsi(text)
+    .map((span) => span.text)
+    .join("");

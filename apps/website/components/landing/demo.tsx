@@ -46,7 +46,7 @@ import {
 import type { DemoSession } from "../../demo/demo-shell.ts";
 import { demoWalkthrough } from "../../demo/demo-walkthrough.ts";
 import { atBottom, followAfter, following } from "../../demo/scroll-follow.ts";
-import { parseAnsi } from "./ansi.ts";
+import { AnsiText } from "./ansi-text.tsx";
 import { demo } from "./content.ts";
 import { AgentScreen } from "./demo-agent.tsx";
 import { DemoWorkspace } from "./demo-workspace.tsx";
@@ -92,24 +92,6 @@ const visitStorage = () => {
 
 const prefersReducedMotion = () =>
   typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-/** One output line with Tack's colors. */
-function OutputText({ text }: { readonly text: string }) {
-  return parseAnsi(text).map((span, index) => (
-    <span
-      key={index}
-      className={[
-        span.bold === true ? "demo-bold" : "",
-        span.dim === true ? "demo-dim" : "",
-        span.color === undefined ? "" : `demo-${span.color}`,
-      ]
-        .filter((name) => name !== "")
-        .join(" ")}
-    >
-      {span.text}
-    </span>
-  ));
-}
 
 /**
  * Measures how many monospace columns fit `screen`, so Tack wraps its views to it. It measures
@@ -519,7 +501,7 @@ export function CliDemo() {
         entries={entries}
         spinner={spinner}
         draft={draft}
-        output={(text) => <OutputText text={text} />}
+        output={(text) => <AnsiText text={text} />}
         onScroll={(box) => dispatchFollow({ kind: "scrolled", atBottom: atBottom(box) })}
         unseen={follow.unseen}
         onJump={jumpToNewest}
@@ -553,7 +535,7 @@ export function CliDemo() {
             </div>
           ) : (
             <div key={line.id} className="demo-line">
-              <OutputText text={line.text} />
+              <AnsiText text={line.text} />
             </div>
           ),
         )}

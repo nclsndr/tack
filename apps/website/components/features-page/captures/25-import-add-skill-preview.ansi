@@ -1,0 +1,134 @@
+[1mtack import add[22m[2m · preview ·[22m[32m ✓ success[39m
+
+  [2mLocation[22m  github:anthropics/skills · tracking the default
+            branch
+  [2mRevision[22m  e4bb5d960d87 (resolved now)
+  [2mInto[22m      skills · ~/skills
+
+[1mSkills found (19)[22m
+  [2m·[22m  academy-guide          skills/academy-guide
+      [2mStop and check this skill before finishing any reply to a[22m
+      [2mquestion about how to use Claude or a Claude product — it[22m
+      [2mrecommends matching courses, tutorials, and use cases from[22m
+      [2mClaude Academy (academy.c[22m
+      [2m2 files, 19 KB[22m
+  [2m·[22m  algorithmic-art        skills/algorithmic-art
+      [2mCreating algorithmic art using p5.js with seeded[22m
+      [2mrandomness and interactive parameter exploration. Use this[22m
+      [2mwhen users request creating art using code, generative[22m
+      [2mart, algorithmic art, flow fields, or[22m
+      [2m4 files, 58 KB[22m
+  [2m·[22m  brand-guidelines       skills/brand-guidelines
+      [2mApplies Anthropic's official brand colors and typography[22m
+      [2mto any sort of artifact that may benefit from having[22m
+      [2mAnthropic's look-and-feel. Use it when brand colors or[22m
+      [2mstyle guidelines, visual formatting[22m
+      [2m2 files, 13 KB[22m
+  [2m·[22m  canvas-design          skills/canvas-design
+      [2mCreate beautiful visual art in .png and .pdf documents[22m
+      [2musing design philosophy. You should use this skill when[22m
+      [2mthe user asks to create a poster, piece of art, design, or[22m
+      [2mother static piece. Create ori[22m
+      [2m83 files, 5.3 MB, 54 not text[22m
+  [31m✗[39m  claude-api             skills/claude-api
+      [31mExpected a value with a length of at most 1024 at[39m
+      [31m["description"] (skill-frontmatter-schema-invalid)[39m
+  [2m·[22m  discernment-nudge      skills/discernment-nudge
+      [2mAfter you give a substantive answer or draft that the user[22m
+      [2mmay act on — advice or recommendations, drafted artifacts[22m
+      [2msuch as goals, plans, pitches, proposals, or emails,[22m
+      [2mestimates or projections, anal[22m
+      [2m2 files, 21 KB[22m
+  [2m·[22m  doc-coauthoring        skills/doc-coauthoring
+      [2mGuide users through a structured workflow for co-authoring[22m
+      [2mdocumentation. Use when user wants to write documentation,[22m
+      [2mproposals, technical specs, decision docs, or similar[22m
+      [2mstructured content. This wor[22m
+      [2m1 file, 15 KB[22m
+  [2m·[22m  docx                   skills/docx
+      [2mUse this skill whenever the user wants to create, read,[22m
+      [2medit, or manipulate Word documents (.docx files) or Word[22m
+      [2mtemplates (.dotx files). Triggers include: any mention of[22m
+      [2m'Word doc', 'word document',[22m
+      [2m61 files, 1.1 MB, 5 executable[22m
+  [2m·[22m  frontend-design        skills/frontend-design
+      [2mGuidance for distinctive, intentional visual design when[22m
+      [2mbuilding new UI or reshaping an existing one. Helps with[22m
+      [2maesthetic direction, typography, and making choices that[22m
+      [2mdon't read as templated defau[22m
+      [2m2 files, 19 KB[22m
+  [2m·[22m  internal-comms         skills/internal-comms
+      [2mA set of resources to help me write all kinds of internal[22m
+      [2mcommunications, using the formats that my company likes to[22m
+      [2muse. Claude should use this skill whenever asked to write[22m
+      [2msome sort of internal com[22m
+      [2m6 files, 22 KB[22m
+  [2m·[22m  mcp-builder            skills/mcp-builder
+      [2mGuide for creating high-quality MCP (Model Context[22m
+      [2mProtocol) servers that enable LLMs to interact with[22m
+      [2mexternal services through well-designed tools. Use when[22m
+      [2mbuilding MCP servers to integrate externa[22m
+      [2m11 files, 155 KB[22m
+  [32m✓[39m  pdf                    skills/pdf
+      [2mUse this skill whenever the user wants to do anything with[22m
+      [2mPDF files. This includes reading or extracting text/tables[22m
+      [2mfrom PDFs, combining or merging multiple PDFs into one,[22m
+      [2msplitting PDFs apart, rota[22m
+      [2m12 files, 67 KB, 1 executable[22m
+  [2m·[22m  pptx                   skills/pptx
+      [2mUse this skill any time a .pptx or .potx file is involved[22m
+      [2min any way — as input, output, or both. This includes:[22m
+      [2mcreating slide decks, pitch decks, or presentations;[22m
+      [2mreading, parsing, or extracting te[22m
+      [2m58 files, 1.1 MB, 5 executable[22m
+  [2m·[22m  skill-creator          skills/skill-creator
+      [2mCreate new skills, modify and improve existing skills, and[22m
+      [2mmeasure skill performance. Use when users want to create a[22m
+      [2mskill from scratch, edit, or optimize an existing skill,[22m
+      [2mrun evals to test a skill[22m
+      [2m18 files, 220 KB, 7 executable[22m
+  [2m·[22m  slack-gif-creator      skills/slack-gif-creator
+      [2mKnowledge and utilities for creating animated GIFs[22m
+      [2moptimized for Slack. Provides constraints, validation[22m
+      [2mtools, and animation concepts. Use when users request[22m
+      [2manimated GIFs for Slack like "make me a G[22m
+      [2m7 files, 43 KB, 4 executable[22m
+  [2m·[22m  theme-factory          skills/theme-factory
+      [2mToolkit for styling artifacts with a theme. These[22m
+      [2martifacts can be slides, docs, reportings, HTML landing[22m
+      [2mpages, etc. There are 10 pre-set themes with colors/fonts[22m
+      [2mthat you can apply to any artifact t[22m
+      [2m13 files, 141 KB, 1 not text[22m
+  [2m·[22m  web-artifacts-builder  skills/web-artifacts-builder
+      [2mSuite of tools for creating elaborate, multi-component[22m
+      [2mclaude.ai HTML artifacts using modern frontend web[22m
+      [2mtechnologies (React, Tailwind CSS, shadcn/ui). Use for[22m
+      [2mcomplex artifacts requiring state manag[22m
+      [2m5 files, 45 KB, 2 executable, 1 not text[22m
+  [2m·[22m  webapp-testing         skills/webapp-testing
+      [2mToolkit for interacting with and testing local web[22m
+      [2mapplications using Playwright. Supports verifying frontend[22m
+      [2mfunctionality, debugging UI behavior, capturing browser[22m
+      [2mscreenshots, and viewing browser l[22m
+      [2m6 files, 22 KB, 1 executable[22m
+  [2m·[22m  xlsx                   skills/xlsx
+      [2mUse this skill any time a spreadsheet file is the primary[22m
+      [2minput or output. This means any task where the user wants[22m
+      [2mto: open, read, edit, or fix an existing .xlsx, .xlsm,[22m
+      [2m.xltx, .csv, or .tsv file (e.[22m
+      [2m53 files, 1.1 MB, 2 executable[22m
+
+[1mWill write[22m
+  pdf/       12 files, 67 KB
+  tack.yaml  imports: 1 record added (rest of the file
+             unchanged)
+
+[1mDelivery at the next sync[22m
+  [2mOn by default, like every skill in skills.[22m
+  [2mProjects[22m  api, app, ci, web · 4 of 4 registered projects
+  [2mUser[22m      no · user activation is opt-in
+  [2mClashes[22m   none
+
+[1mNext[22m
+  [36mtack import add github:anthropics/skills --skill pdf --into[39m \
+    [36mskills --apply[39m

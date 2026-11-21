@@ -1,0 +1,48 @@
+[1mtack profile apply[22m[2m ·[22m[32m ✓ success[39m
+
+Fixed profile team-docs:frontend · preview
+Target: ~/code/web
+Existing selection: none (computed defaults do not count)
+
+Direct members (2)
+  skill review
+  skill commit
+Required dependencies (0)
+
+skill review: claude → .claude/skills/review
+skill review: codex → .agents/skills/review
+skill review: cursor → .cursor/skills/review
+skill review: opencode → .opencode/skills/review
+skill review: pi → .pi/skills/review
+skill commit: claude → .claude/skills/commit
+skill commit: codex → .agents/skills/commit
+skill commit: cursor → .cursor/skills/commit
+skill commit: opencode → .opencode/skills/commit
+skill commit: pi → .pi/skills/commit
+
+[1mclaude → web[22m[2m ·[22m 2 to link
+  [32mcreate[39m  .claude/skills/        [2mdirectory[22m
+  [32mcreate[39m  .claude/skills/commit  [2mskill commit[22m
+  [32mcreate[39m  .claude/skills/review  [2mskill review[22m
+
+[1mcodex → web[22m[2m ·[22m 2 to link
+  [32mcreate[39m  .agents/skills/        [2mdirectory[22m
+  [32mcreate[39m  .agents/skills/commit  [2mskill commit[22m
+  [32mcreate[39m  .agents/skills/review  [2mskill review[22m
+
+[1mcursor → web[22m[2m ·[22m 2 to link
+  [32mcreate[39m  .cursor/skills/        [2mdirectory[22m
+  [32mcreate[39m  .cursor/skills/commit  [2mskill commit[22m
+  [32mcreate[39m  .cursor/skills/review  [2mskill review[22m
+
+[1mopencode → web[22m[2m ·[22m 2 to link
+  [32mcreate[39m  .opencode/skills/        [2mdirectory[22m
+  [32mcreate[39m  .opencode/skills/commit  [2mskill commit[22m
+  [32mcreate[39m  .opencode/skills/review  [2mskill review[22m
+
+[1mpi → web[22m[2m ·[22m 2 to link
+  [32mcreate[39m  .pi/skills/        [2mdirectory[22m
+  [32mcreate[39m  .pi/skills/commit  [2mskill commit[22m
+  [32mcreate[39m  .pi/skills/review  [2mskill review[22m
+
+Ambient user instructions and release-owned skills remain outside this target's profile control.

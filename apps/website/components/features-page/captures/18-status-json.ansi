@@ -1,0 +1,20 @@
+{
+  "applied": null,
+  "classification": "success",
+  "command": "status",
+  "diagnostics": [],
+  "next": [],
+  "plan": null,
+  "result": {
+    "catalog": {
+      "quarantined": 0,
+      "resources": 12,
+      "unavailable": 0
+    },
+    "destinations": [
+      {
+        "_tag": "matching",
+        "adapter": "codex",
+        "address": {
+          "kind": "skill",
+          "name": "commit",

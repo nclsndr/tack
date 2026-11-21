@@ -1,0 +1,224 @@
+[1mtack state reset[22m[2m · all managed state ·[22m[32m ✓ success[39m
+
+Preview only: nothing was written. 94 to remove, 1 docs link to
+remove.
+
+[1mScope[22m  every managed link and retained cleanup obligation
+
+[1mActions[22m
+  [31m− remove[39m  ~/.agents/skills/author-    [2mskill[22m
+  [31m[39m          tack-profiles               [2mauthor-tack-profiles ·[22m
+  [31m[39m                                      [2mcodex · user[22m
+  [31m− remove[39m  ~/.agents/skills/manage-    [2mskill[22m
+  [31m[39m          tack-sources                [2mmanage-tack-sources ·[22m
+  [31m[39m                                      [2mcodex · user[22m
+  [31m− remove[39m  ~/.agents/skills/prepare-   [2mskill[22m
+  [31m[39m          tack-checkout               [2mprepare-tack-checkout ·[22m
+  [31m[39m                                      [2mcodex · user[22m
+  [31m− remove[39m  ~/.agents/skills/use-tack   [2mskill use-tack · codex ·[22m
+  [31m[39m                                      [2muser[22m
+  [31m− remove[39m  ~/.agents/skills/write-     [2mskill[22m
+  [31m[39m          reader-figures              [2mwrite-reader-figures ·[22m
+  [31m[39m                                      [2mcodex · user[22m
+  [31m− remove[39m  ~/.claude/skills/author-    [2mskill[22m
+  [31m[39m          tack-profiles               [2mauthor-tack-profiles ·[22m
+  [31m[39m                                      [2mclaude · user[22m
+  [31m− remove[39m  ~/.claude/skills/manage-    [2mskill[22m
+  [31m[39m          tack-sources                [2mmanage-tack-sources ·[22m
+  [31m[39m                                      [2mclaude · user[22m
+  [31m− remove[39m  ~/.claude/skills/prepare-   [2mskill[22m
+  [31m[39m          tack-checkout               [2mprepare-tack-checkout ·[22m
+  [31m[39m                                      [2mclaude · user[22m
+  [31m− remove[39m  ~/.claude/skills/use-tack   [2mskill use-tack · claude[22m
+  [31m[39m                                      [2m· user[22m
+  [31m− remove[39m  ~/.claude/skills/write-     [2mskill[22m
+  [31m[39m          reader-figures              [2mwrite-reader-figures ·[22m
+  [31m[39m                                      [2mclaude · user[22m
+  [31m− remove[39m  ~/.config/opencode/skills/  [2mskill[22m
+  [31m[39m          author-tack-profiles        [2mauthor-tack-profiles ·[22m
+  [31m[39m                                      [2mopencode · user[22m
+  [31m− remove[39m  ~/.config/opencode/skills/  [2mskill[22m
+  [31m[39m          manage-tack-sources         [2mmanage-tack-sources ·[22m
+  [31m[39m                                      [2mopencode · user[22m
+  [31m− remove[39m  ~/.config/opencode/skills/  [2mskill[22m
+  [31m[39m          prepare-tack-checkout       [2mprepare-tack-checkout ·[22m
+  [31m[39m                                      [2mopencode · user[22m
+  [31m− remove[39m  ~/.config/opencode/skills/  [2mskill use-tack ·[22m
+  [31m[39m          use-tack                    [2mopencode · user[22m
+  [31m− remove[39m  ~/.config/opencode/skills/  [2mskill[22m
+  [31m[39m          write-reader-figures        [2mwrite-reader-figures ·[22m
+  [31m[39m                                      [2mopencode · user[22m
+  [31m− remove[39m  ~/.cursor/skills/author-    [2mskill[22m
+  [31m[39m          tack-profiles               [2mauthor-tack-profiles ·[22m
+  [31m[39m                                      [2mcursor · user[22m
+  [31m− remove[39m  ~/.cursor/skills/manage-    [2mskill[22m
+  [31m[39m          tack-sources                [2mmanage-tack-sources ·[22m
+  [31m[39m                                      [2mcursor · user[22m
+  [31m− remove[39m  ~/.cursor/skills/prepare-   [2mskill[22m
+  [31m[39m          tack-checkout               [2mprepare-tack-checkout ·[22m
+  [31m[39m                                      [2mcursor · user[22m
+  [31m− remove[39m  ~/.cursor/skills/use-tack   [2mskill use-tack · cursor[22m
+  [31m[39m                                      [2m· user[22m
+  [31m− remove[39m  ~/.cursor/skills/write-     [2mskill[22m
+  [31m[39m          reader-figures              [2mwrite-reader-figures ·[22m
+  [31m[39m                                      [2mcursor · user[22m
+  [31m− remove[39m  ~/.pi/agent/skills/author-  [2mskill[22m
+  [31m[39m          tack-profiles               [2mauthor-tack-profiles ·[22m
+  [31m[39m                                      [2mpi · user[22m
+  [31m− remove[39m  ~/.pi/agent/skills/manage-  [2mskill[22m
+  [31m[39m          tack-sources                [2mmanage-tack-sources · pi[22m
+  [31m[39m                                      [2m· user[22m
+  [31m− remove[39m  ~/.pi/agent/skills/         [2mskill[22m
+  [31m[39m          prepare-tack-checkout       [2mprepare-tack-checkout ·[22m
+  [31m[39m                                      [2mpi · user[22m
+  [31m− remove[39m  ~/.pi/agent/skills/use-     [2mskill use-tack · pi ·[22m
+  [31m[39m          tack                        [2muser[22m
+  [31m− remove[39m  ~/.pi/agent/skills/write-   [2mskill[22m
+  [31m[39m          reader-figures              [2mwrite-reader-figures ·[22m
+  [31m[39m                                      [2mpi · user[22m
+  [31m− remove[39m  ~/code/api/.agents/skills/  [2mskill commit · codex ·[22m
+  [31m[39m          commit                      [2mproject api[22m
+  [31m− remove[39m  ~/code/api/.agents/skills/  [2mskill debug · codex ·[22m
+  [31m[39m          debug                       [2mproject api[22m
+  [31m− remove[39m  ~/code/api/.agents/skills/  [2mskill review · codex ·[22m
+  [31m[39m          review                      [2mproject api[22m
+  [31m− remove[39m  ~/code/api/.agents/skills/  [2mskill ship · codex ·[22m
+  [31m[39m          ship                        [2mproject api[22m
+  [31m− remove[39m  ~/code/api/.claude/skills/  [2mskill commit · claude ·[22m
+  [31m[39m          commit                      [2mproject api[22m
+  [31m− remove[39m  ~/code/api/.claude/skills/  [2mskill debug · claude ·[22m
+  [31m[39m          debug                       [2mproject api[22m
+  [31m− remove[39m  ~/code/api/.claude/skills/  [2mskill review · claude ·[22m
+  [31m[39m          review                      [2mproject api[22m
+  [31m− remove[39m  ~/code/api/.claude/skills/  [2mskill ship · claude ·[22m
+  [31m[39m          ship                        [2mproject api[22m
+  [31m− remove[39m  ~/code/api/.cursor/         [2mcommand release · cursor[22m
+  [31m[39m          commands/release.md         [2m· project api[22m
+  [31m− remove[39m  ~/code/api/.cursor/skills/  [2mskill commit · cursor ·[22m
+  [31m[39m          commit                      [2mproject api[22m
+  [31m− remove[39m  ~/code/api/.cursor/skills/  [2mskill debug · cursor ·[22m
+  [31m[39m          debug                       [2mproject api[22m
+  [31m− remove[39m  ~/code/api/.cursor/skills/  [2mskill review · cursor ·[22m
+  [31m[39m          review                      [2mproject api[22m
+  [31m− remove[39m  ~/code/api/.cursor/skills/  [2mskill ship · cursor ·[22m
+  [31m[39m          ship                        [2mproject api[22m
+  [31m− remove[39m  ~/code/api/.opencode/       [2mcommand release ·[22m
+  [31m[39m          commands/release.md         [2mopencode · project api[22m
+  [31m− remove[39m  ~/code/api/.opencode/       [2mskill commit · opencode[22m
+  [31m[39m          skills/commit               [2m· project api[22m
+  [31m− remove[39m  ~/code/api/.opencode/       [2mskill debug · opencode ·[22m
+  [31m[39m          skills/debug                [2mproject api[22m
+  [31m− remove[39m  ~/code/api/.opencode/       [2mskill review · opencode[22m
+  [31m[39m          skills/review               [2m· project api[22m
+  [31m− remove[39m  ~/code/api/.opencode/       [2mskill ship · opencode ·[22m
+  [31m[39m          skills/ship                 [2mproject api[22m
+  [31m− remove[39m  ~/code/api/.pi/prompts/     [2mcommand release · pi ·[22m
+  [31m[39m          release.md                  [2mproject api[22m
+  [31m− remove[39m  ~/code/api/.pi/skills/      [2mskill commit · pi ·[22m
+  [31m[39m          commit                      [2mproject api[22m
+  [31m− remove[39m  ~/code/api/.pi/skills/      [2mskill debug · pi ·[22m
+  [31m[39m          debug                       [2mproject api[22m
+  [31m− remove[39m  ~/code/api/.pi/skills/      [2mskill review · pi ·[22m
+  [31m[39m          review                      [2mproject api[22m
+  [31m− remove[39m  ~/code/api/.pi/skills/ship  [2mskill ship · pi ·[22m
+  [31m[39m                                      [2mproject api[22m
+  [31m− remove[39m  ~/code/app/.agents/skills/  [2mskill commit · codex ·[22m
+  [31m[39m          commit                      [2mproject app[22m
+  [31m− remove[39m  ~/code/app/.agents/skills/  [2mskill debug · codex ·[22m
+  [31m[39m          debug                       [2mproject app[22m
+  [31m− remove[39m  ~/code/app/.agents/skills/  [2mskill review · codex ·[22m
+  [31m[39m          review                      [2mproject app[22m
+  [31m− remove[39m  ~/code/app/.claude/skills/  [2mskill commit · claude ·[22m
+  [31m[39m          commit                      [2mproject app[22m
+  [31m− remove[39m  ~/code/app/.claude/skills/  [2mskill debug · claude ·[22m
+  [31m[39m          debug                       [2mproject app[22m
+  [31m− remove[39m  ~/code/app/.claude/skills/  [2mskill review · claude ·[22m
+  [31m[39m          review                      [2mproject app[22m
+  [31m− remove[39m  ~/code/app/.cursor/         [2mcommand release · cursor[22m
+  [31m[39m          commands/release.md         [2m· project app[22m
+  [31m− remove[39m  ~/code/app/.cursor/skills/  [2mskill commit · cursor ·[22m
+  [31m[39m          commit                      [2mproject app[22m
+  [31m− remove[39m  ~/code/app/.cursor/skills/  [2mskill debug · cursor ·[22m
+  [31m[39m          debug                       [2mproject app[22m
+  [31m− remove[39m  ~/code/app/.cursor/skills/  [2mskill review · cursor ·[22m
+  [31m[39m          review                      [2mproject app[22m
+  [31m− remove[39m  ~/code/app/.opencode/       [2mcommand release ·[22m
+  [31m[39m          commands/release.md         [2mopencode · project app[22m
+  [31m− remove[39m  ~/code/app/.opencode/       [2mskill commit · opencode[22m
+  [31m[39m          skills/commit               [2m· project app[22m
+  [31m− remove[39m  ~/code/app/.opencode/       [2mskill debug · opencode ·[22m
+  [31m[39m          skills/debug                [2mproject app[22m
+  [31m− remove[39m  ~/code/app/.opencode/       [2mskill review · opencode[22m
+  [31m[39m          skills/review               [2m· project app[22m
+  [31m− remove[39m  ~/code/app/.pi/prompts/     [2mcommand release · pi ·[22m
+  [31m[39m          release.md                  [2mproject app[22m
+  [31m− remove[39m  ~/code/app/.pi/skills/      [2mskill commit · pi ·[22m
+  [31m[39m          commit                      [2mproject app[22m
+  [31m− remove[39m  ~/code/app/.pi/skills/      [2mskill debug · pi ·[22m
+  [31m[39m          debug                       [2mproject app[22m
+  [31m− remove[39m  ~/code/app/.pi/skills/      [2mskill review · pi ·[22m
+  [31m[39m          review                      [2mproject app[22m
+  [31m− remove[39m  ~/code/ci/.agents/skills/   [2mskill commit · codex ·[22m
+  [31m[39m          commit                      [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.agents/skills/   [2mskill debug · codex ·[22m
+  [31m[39m          debug                       [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.agents/skills/   [2mskill review · codex ·[22m
+  [31m[39m          review                      [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.claude/skills/   [2mskill commit · claude ·[22m
+  [31m[39m          commit                      [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.claude/skills/   [2mskill debug · claude ·[22m
+  [31m[39m          debug                       [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.claude/skills/   [2mskill review · claude ·[22m
+  [31m[39m          review                      [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.cursor/          [2mcommand release · cursor[22m
+  [31m[39m          commands/release.md         [2m· project ci[22m
+  [31m− remove[39m  ~/code/ci/.cursor/skills/   [2mskill commit · cursor ·[22m
+  [31m[39m          commit                      [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.cursor/skills/   [2mskill debug · cursor ·[22m
+  [31m[39m          debug                       [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.cursor/skills/   [2mskill review · cursor ·[22m
+  [31m[39m          review                      [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.opencode/        [2mcommand release ·[22m
+  [31m[39m          commands/release.md         [2mopencode · project ci[22m
+  [31m− remove[39m  ~/code/ci/.opencode/        [2mskill commit · opencode[22m
+  [31m[39m          skills/commit               [2m· project ci[22m
+  [31m− remove[39m  ~/code/ci/.opencode/        [2mskill debug · opencode ·[22m
+  [31m[39m          skills/debug                [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.opencode/        [2mskill review · opencode[22m
+  [31m[39m          skills/review               [2m· project ci[22m
+  [31m− remove[39m  ~/code/ci/.pi/prompts/      [2mcommand release · pi ·[22m
+  [31m[39m          release.md                  [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.pi/skills/       [2mskill commit · pi ·[22m
+  [31m[39m          commit                      [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.pi/skills/debug  [2mskill debug · pi ·[22m
+  [31m[39m                                      [2mproject ci[22m
+  [31m− remove[39m  ~/code/ci/.pi/skills/       [2mskill review · pi ·[22m
+  [31m[39m          review                      [2mproject ci[22m
+  [31m− remove[39m  ~/code/web/.agents/skills/  [2mskill commit · codex ·[22m
+  [31m[39m          commit                      [2mproject web[22m
+  [31m− remove[39m  ~/code/web/.agents/skills/  [2mskill review · codex ·[22m
+  [31m[39m          review                      [2mproject web[22m
+  [31m− remove[39m  ~/code/web/.claude/skills/  [2mskill commit · claude ·[22m
+  [31m[39m          commit                      [2mproject web[22m
+  [31m− remove[39m  ~/code/web/.claude/skills/  [2mskill review · claude ·[22m
+  [31m[39m          review                      [2mproject web[22m
+  [31m− remove[39m  ~/code/web/.cursor/skills/  [2mskill commit · cursor ·[22m
+  [31m[39m          commit                      [2mproject web[22m
+  [31m− remove[39m  ~/code/web/.cursor/skills/  [2mskill review · cursor ·[22m
+  [31m[39m          review                      [2mproject web[22m
+  [31m− remove[39m  ~/code/web/.opencode/       [2mskill commit · opencode[22m
+  [31m[39m          skills/commit               [2m· project web[22m
+  [31m− remove[39m  ~/code/web/.opencode/       [2mskill review · opencode[22m
+  [31m[39m          skills/review               [2m· project web[22m
+  [31m− remove[39m  ~/code/web/.pi/skills/      [2mskill commit · pi ·[22m
+  [31m[39m          commit                      [2mproject web[22m
+  [31m− remove[39m  ~/code/web/.pi/skills/      [2mskill review · pi ·[22m
+  [31m[39m          review                      [2mproject web[22m
+
+[1mDocs links[22m
+  [31m− remove[39m  ~/code/app/.tack/docs/      [2mdocs handbook · project[22m
+  [31m[39m          f4ba3172-1317-4194-9075-    [2mapp[22m
+  [31m[39m          abebe7f5f574/handbook       [2m[22m
+
+[1mNext[22m
+  [36mtack state reset --apply[39m

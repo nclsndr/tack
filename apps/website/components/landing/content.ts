@@ -141,6 +141,7 @@ export const features = {
   },
   also: {
     heading: "Also in Tack",
+    more: "See every feature, with real output",
     items: [
       {
         title: "Scripts, run by name.",

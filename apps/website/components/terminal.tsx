@@ -1,7 +1,13 @@
+import { plainAnsi } from "./landing/ansi.ts";
+import { AnsiText } from "./landing/ansi-text.tsx";
+
 type TerminalProps = {
   /** The commands typed at the prompt, one per line. */
   readonly commands: readonly string[];
-  /** What the commands print. Omit it for commands shown without their output. */
+  /**
+   * What the commands print. Omit it for commands shown without their output. SGR style sequences
+   * (`ESC[...m`) draw in Tack's colors, as in the demo terminal.
+   */
   readonly output?: string;
   /** The label in the window bar. */
   readonly title?: string;
@@ -15,14 +21,17 @@ function terminalText({
   readonly commands: readonly string[];
   readonly output?: string | undefined;
 }) {
-  return [...commands.map((command) => `$ ${command}`), ...(output === undefined ? [] : [output])]
+  return [
+    ...commands.map((command) => `$ ${command}`),
+    ...(output === undefined ? [] : [plainAnsi(output)]),
+  ]
     .join("\n")
     .trimEnd();
 }
 
 /**
  * A command and its output in a dark terminal window, in both themes. The Markdown twin gets the
- * same text as a plain `text` code fence.
+ * same text, without styles, as a plain `text` code fence.
  */
 export function Terminal({ commands, output, title = "Terminal" }: TerminalProps) {
   if (import.meta.env.SSG_MD === true)
@@ -47,7 +56,9 @@ export function Terminal({ commands, output, title = "Terminal" }: TerminalProps
             </span>
           ))}
           {output === undefined ? null : (
-            <span className="tack-terminal-output">{output.trimEnd()}</span>
+            <span className="tack-terminal-output">
+              <AnsiText text={output.trimEnd()} />
+            </span>
           )}
         </code>
       </pre>

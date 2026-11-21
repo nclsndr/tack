@@ -1,0 +1,397 @@
+/* The features page: a catalogue of every capability on the landing page's blueprint sheet
+   (`components/features-page/features-page.tsx`). It draws on the landing's tokens and classes:
+   `.landing`, `.landing-shell`, `.landing-label`, `.landing-button`, the sheet and the terminal. */
+
+/* The sheet starts under the sticky header, as the hero's does. */
+.catalogue-page .sheet-run {
+  margin-top: calc(-1 * var(--landing-header-height));
+  padding-top: var(--landing-header-height);
+}
+
+/* Opening */
+
+.catalogue-opening {
+  display: grid;
+  gap: 48px;
+  padding-block: clamp(56px, 9vw, 112px) clamp(40px, 6vw, 72px);
+}
+
+@media (min-width: 1024px) {
+  .catalogue-opening {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 4fr);
+    gap: 64px;
+    align-items: end;
+  }
+}
+
+/* The primer beside the opening: three words, then the cards to read first. */
+.catalogue-primer {
+  padding: 24px;
+  border: 1px solid var(--tack-border);
+  border-radius: var(--tack-radius-md);
+  background: color-mix(in srgb, var(--tack-bg-deep) 70%, transparent);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.catalogue-primer dl {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+}
+
+.catalogue-primer dt {
+  color: var(--tack-heading);
+  font-weight: 600;
+}
+
+.catalogue-primer dd {
+  margin: 2px 0 0;
+  color: var(--tack-muted);
+}
+
+.landing .catalogue-primer-heading {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--tack-border);
+  color: var(--tack-agent);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.catalogue-primer ol {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: catalogue-start;
+}
+
+.catalogue-primer li {
+  counter-increment: catalogue-start;
+}
+
+.catalogue-primer li::before {
+  content: counter(catalogue-start) ".";
+  display: inline-block;
+  width: 22px;
+  color: var(--tack-accent);
+  font-family: var(--tack-font-mono);
+  font-size: 13px;
+}
+
+.catalogue-opening h1 {
+  max-width: 16ch;
+  font-size: clamp(40px, 5vw, 68px);
+  line-height: 1.04;
+  letter-spacing: -0.04em;
+}
+
+.landing .catalogue-intro {
+  margin-top: 16px;
+  max-width: 40em;
+  color: var(--tack-muted);
+  font-size: 16px;
+}
+
+/* Index: every group and its capabilities, one column per group. */
+
+.catalogue-index {
+  padding-bottom: clamp(48px, 7vw, 88px);
+}
+
+.catalogue-index > ol {
+  display: grid;
+  gap: 28px 32px;
+  margin: 0;
+  padding: 24px 0 0;
+  border-top: 1px solid var(--tack-border-strong);
+  list-style: none;
+  counter-reset: catalogue-group;
+}
+
+@media (min-width: 640px) {
+  .catalogue-index > ol {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .catalogue-index > ol {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.catalogue-index > ol > li {
+  counter-increment: catalogue-group;
+}
+
+.landing a.catalogue-index-group {
+  display: inline-flex;
+  gap: 10px;
+  align-items: baseline;
+  color: var(--tack-heading);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.catalogue-index-group::before {
+  content: counter(catalogue-group, decimal-leading-zero);
+  color: var(--tack-accent);
+  font-family: var(--tack-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.catalogue-index ul {
+  display: grid;
+  gap: 4px;
+  margin: 10px 0 0;
+  padding: 0 0 0 30px;
+  list-style: none;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.landing .catalogue-index ul a {
+  color: var(--tack-muted);
+}
+
+.landing .catalogue-index ul a:hover {
+  color: var(--tack-accent-strong);
+}
+
+/* The legend: the modes a card names, as `tack --help` words them. */
+.catalogue-legend {
+  display: grid;
+  gap: 12px;
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--tack-border);
+  color: var(--tack-muted);
+  font-size: 14px;
+}
+
+.catalogue-legend dl {
+  display: grid;
+  gap: 10px 32px;
+  margin: 0;
+}
+
+@media (min-width: 900px) {
+  .catalogue-legend dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.catalogue-legend dl > div {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+}
+
+.catalogue-legend dd {
+  margin: 0;
+}
+
+/* The mode's own name in `tack --help`, before its plain meaning. */
+.catalogue-legend dd code.catalogue-legend-cli {
+  margin-inline-end: 6px;
+  color: var(--tack-faint);
+}
+
+.catalogue-legend dd code {
+  color: var(--tack-agent);
+  font-family: var(--tack-font-mono);
+  font-size: 0.9em;
+}
+
+/* A group: its heading over a grid of capability cards. */
+
+.catalogue-group {
+  padding-block: clamp(56px, 8vw, 96px);
+  border-top: 1px solid var(--tack-border);
+}
+
+.catalogue-group-head {
+  max-width: 44em;
+}
+
+.catalogue-group-head h2 {
+  max-width: 28ch;
+  font-size: clamp(30px, 3.4vw, 44px);
+}
+
+.landing .catalogue-group-intro {
+  margin-top: 16px;
+  color: var(--tack-muted);
+  font-size: 17px;
+}
+
+.capability-grid {
+  display: grid;
+  gap: 24px;
+  margin-top: clamp(32px, 4vw, 48px);
+}
+
+@media (min-width: 1024px) {
+  .capability-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 32px;
+  }
+}
+
+/* A capability card: a slip of the sheet holding the benefit and the terminal that proves it. The
+   terminal fills the rest of the card, so cards side by side end together without a gap. */
+.capability {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 10px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--tack-border);
+  border-radius: var(--tack-radius-md);
+  background: color-mix(in srgb, var(--tack-surface) 72%, transparent);
+}
+
+@media (max-width: 639px) {
+  .capability {
+    padding: 16px 14px;
+  }
+}
+
+.capability-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.landing .capability h3 {
+  font-size: 19px;
+}
+
+/* How the command behaves, in plain words; the CLI's own word is in the legend and on hover. */
+.capability-mode {
+  padding: 1px 8px;
+  border: 1px solid var(--tack-border-strong);
+  border-radius: var(--tack-radius-xs);
+  color: var(--tack-muted);
+  font-family: var(--tack-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  line-height: 1.6;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.capability-mode[data-mode="plan"] {
+  border-color: color-mix(in srgb, var(--tack-accent) 45%, transparent);
+  color: var(--tack-accent);
+}
+
+.capability-mode[data-mode="now"],
+.capability-mode[data-mode="conditional"] {
+  border-color: color-mix(in srgb, var(--tack-agent) 40%, transparent);
+  color: var(--tack-agent);
+}
+
+.capability-mode[data-mode="run"] {
+  border-color: color-mix(in srgb, var(--tack-success) 40%, transparent);
+  color: var(--tack-success);
+}
+
+.landing .capability-benefit {
+  color: var(--tack-text);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.capability .tack-terminal {
+  display: flex;
+  flex-direction: column;
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.capability .tack-terminal pre {
+  flex: 1;
+}
+
+/* On a wide card the 64 columns fit, so only a line the CLI did not wrap itself wraps here. */
+@media (min-width: 1024px) {
+  .capability .tack-terminal pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* On a phone the 64 columns do not fit: the output scrolls sideways, and its right edge fades to
+   show there is more. */
+@media (max-width: 639px) {
+  .capability .tack-terminal {
+    font-size: 11px;
+  }
+
+  .capability .tack-terminal pre {
+    mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
+  }
+}
+
+.capability-tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* A card to read first: its tag in brass, and a brass edge. */
+.capability-start {
+  padding: 1px 8px;
+  border-radius: var(--tack-radius-xs);
+  background: var(--tack-action-bg);
+  color: var(--tack-action-text);
+  font-family: var(--tack-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  line-height: 1.6;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.capability:has(.capability-start) {
+  border-color: color-mix(in srgb, var(--tack-accent) 40%, transparent);
+}
+
+/* A group with an odd number of cards ends on one wide card instead of a half-empty row: its words
+   on the left, its terminal on the right. */
+@media (min-width: 1024px) {
+  .capability:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    grid-template-rows: auto 1fr;
+    column-gap: 32px;
+  }
+
+  .capability:last-child:nth-child(odd) > .tack-terminal {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    margin-top: 0;
+  }
+}
+
+/* Also in the CLI: the landing's quiet row, ruled off after the groups. */
+.catalogue-also {
+  padding-block: clamp(32px, 5vw, 64px) clamp(56px, 8vw, 96px);
+}
+
+.landing .catalogue-closing-note {
+  margin-top: -16px;
+  color: var(--tack-faint);
+  font-size: 15px;
+}

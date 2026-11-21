@@ -1,0 +1,48 @@
+[1mtack sync[22m[2m · project app ·[22m[32m ✓ success[39m
+
+[2mNothing was written. 18 changes planned.[22m
+
+[1mclaude → app[22m[2m ·[22m 3 to link
+  [32mcreate[39m  .claude/skills/        [2mdirectory[22m
+  [32mcreate[39m  .claude/skills/commit  [2mskill commit[22m
+  [32mcreate[39m  .claude/skills/debug   [2mskill debug[22m
+  [32mcreate[39m  .claude/skills/review  [2mskill review[22m
+
+[1mcodex → app[22m[2m ·[22m 3 to link
+  [32mcreate[39m  .agents/skills/        [2mdirectory[22m
+  [32mcreate[39m  .agents/skills/commit  [2mskill commit[22m
+  [32mcreate[39m  .agents/skills/debug   [2mskill debug[22m
+  [32mcreate[39m  .agents/skills/review  [2mskill review[22m
+
+[1mcursor → app[22m[2m ·[22m 4 to link
+  [32mcreate[39m  .cursor/commands/            [2mdirectory[22m
+  [32mcreate[39m  .cursor/skills/              [2mdirectory[22m
+  [32mcreate[39m  .cursor/commands/release.md  [2mcommand release[22m
+  [32mcreate[39m  .cursor/skills/commit        [2mskill commit[22m
+  [32mcreate[39m  .cursor/skills/debug         [2mskill debug[22m
+  [32mcreate[39m  .cursor/skills/review        [2mskill review[22m
+
+[1mopencode → app[22m[2m ·[22m 4 to link
+  [32mcreate[39m  .opencode/commands/            [2mdirectory[22m
+  [32mcreate[39m  .opencode/skills/              [2mdirectory[22m
+  [32mcreate[39m  .opencode/commands/release.md  [2mcommand release[22m
+  [32mcreate[39m  .opencode/skills/commit        [2mskill commit[22m
+  [32mcreate[39m  .opencode/skills/debug         [2mskill debug[22m
+  [32mcreate[39m  .opencode/skills/review        [2mskill review[22m
+
+[1mpi → app[22m[2m ·[22m 4 to link
+  [32mcreate[39m  .pi/prompts/            [2mdirectory[22m
+  [32mcreate[39m  .pi/skills/             [2mdirectory[22m
+  [32mcreate[39m  .pi/prompts/release.md  [2mcommand release[22m
+  [32mcreate[39m  .pi/skills/commit       [2mskill commit[22m
+  [32mcreate[39m  .pi/skills/debug        [2mskill debug[22m
+  [32mcreate[39m  .pi/skills/review       [2mskill review[22m
+
+[2mCommands reach cursor, opencode, pi only: Tack does not link[22m
+[2mcommands for claude, codex.[22m
+
+Preview only: nothing was written. There are no docs links to
+reconcile.
+
+[1mNext[22m
+  [36mtack sync --project app --apply[39m

@@ -1,0 +1,14 @@
+[1mtack docs search[22m[2m · app ·[22m[32m ✓ success[39m
+
+  [2mQuery[22m     changelog
+  [2mProject[22m   app · ~/code/app
+  [2mResults[22m   1 hit, within the limit of 10
+  [2mCoverage[22m  complete
+
+[1mHits[22m
+  1. [1mReleases[22m
+     releases.md · handbook
+     ~/team-docs/handbook/releases.md:3
+       Tag from main, write the changelog, then announce in #re…
+     ~/team-docs/handbook/releases.md:7
+       Branch from the last release tag, fix, tag a patch relea…

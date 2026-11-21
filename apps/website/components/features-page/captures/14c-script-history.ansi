@@ -1,0 +1,12 @@
+[1mtack script history[22m[2m ·[22m[32m ✓ success[39m
+
+Runs 1-1 of 1, newest first.
+[2mPage: limit 20, offset 0.[22m
+
+  [32m✓ success[39m  e0b003fb-a32e-4949-8fcb-4d3874ab99d3
+    script changelog
+    2026-11-21 00:09:43 → 00:09:44 UTC
+
+[1mNext[22m
+  [36mtack script history show[39m \
+    [36me0b003fb-a32e-4949-8fcb-4d3874ab99d3[39m

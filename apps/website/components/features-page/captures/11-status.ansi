@@ -1,0 +1,9 @@
+[1mtack status[22m[2m · project app ·[22m[32m ✓ success[39m
+
+[1mDestinations[22m[2m 18 linked, 0 need attention[22m
+
+  [2mAdapters[22m  claude, codex, cursor, opencode, pi
+  [2mSources[22m   3 sources, all healthy
+  [2mCatalog[22m   12 resources
+  [2mProjects[22m  app (1 root)
+  [2mState[22m     ~/.tack

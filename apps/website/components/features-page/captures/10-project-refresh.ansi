@@ -1,0 +1,9 @@
+[1mtack project refresh[22m[2m · project app ·[22m[32m ✓ success[39m
+
+Preview only: nothing was written. 1 root change.
+
+[1mProject app[22m[2m 1 root change[22m
+  [32m+ add[39m  ~/code/app-sign-up  [2m[22m
+
+[1mNext[22m
+  [36mtack project refresh --project app --apply[39m

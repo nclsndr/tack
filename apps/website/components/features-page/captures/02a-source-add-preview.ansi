@@ -1,0 +1,14 @@
+[1mtack source add[22m[2m ·[22m[32m ✓ success[39m
+
+Would create ~/skills/tack.yaml and register source skills.
+No files or state changed.
+
+  version: 1
+  kind: skills
+
+skills collection · 3 skills
+  commit, debug, review
+
+[1mNext[22m
+  [36mtack source add ~/skills --skills .[39m \
+    [36m--apply[39m

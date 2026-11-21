@@ -1,0 +1,28 @@
+b4b1f07 Bump dependencies
+401a2b6 Fix the session timeout
+2927585 Add the sign-in page
+Found 3 commits
+[1mtack script run[22m[2m ·[22m[32m ✓ success[39m
+
+  [2mRun[22m           e0b003fb-a32e-4949-8fcb-4d3874ab99d3
+  [2mOutcome[22m       [32m✓ success at output stage[39m
+  [2mMessage[22m       The script completed.
+  [2mFinalization[22m  complete
+  [2mHistory[22m       full record saved
+
+[1mValue[22m
+  {
+    "commits": [
+      "b4b1f07 Bump dependencies",
+      "401a2b6 Fix the session timeout",
+      "2927585 Add the sign-in page"
+    ]
+  }
+
+[1mLogs[22m
+  2 of 2 events kept, 102 B observed (script 1, shell 1)
+  Not truncated; the limits are 10000 events and 10 MiB.
+
+[1mNext[22m
+  [36mtack script history show[39m \
+    [36me0b003fb-a32e-4949-8fcb-4d3874ab99d3[39m

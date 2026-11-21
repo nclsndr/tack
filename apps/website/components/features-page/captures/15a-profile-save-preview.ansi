@@ -1,0 +1,79 @@
+[1mtack profile save[22m[2m ·[22m[32m ✓ success[39m
+
+Copy daily selection → profile · preview
+~/team-docs/profiles/daily.yaml
+
+Built-in skills omitted. Release-owned skills are always delivered and locked; profiles do not control them.
+
+skill commit · project api
+skill debug · project api
+skill review · project api
+skill ship · project api
+command release · project api
+
++ skill commit
++ skill debug
++ skill review
++ skill ship
++ command release
+
+--- profile before
+(new file)
++++ profile after
+version: 1
+name: daily
+members:
+  - kind: skill
+    name: commit
+    source: skills
+  - kind: skill
+    name: debug
+    source: skills
+  - kind: skill
+    name: review
+    source: skills
+  - kind: skill
+    name: ship
+    source: skills
+  - kind: command
+    name: release
+depends-on:
+  - skills
+
+
+--- tack.yaml before
+version: 2
+name: team-docs
+commands:
+  - path: commands
+scripts:
+  - name: changelog
+    path: scripts/changelog.ts
+    description: List the latest commits of the current project.
+docs:
+  - name: handbook
+    path: handbook
+profiles:
+  - name: frontend
+    path: profiles/frontend.yaml
+
++++ tack.yaml after
+version: 2
+name: team-docs
+commands:
+  - path: commands
+scripts:
+  - name: changelog
+    path: scripts/changelog.ts
+    description: List the latest commits of the current project.
+docs:
+  - name: handbook
+    path: handbook
+profiles:
+  - name: frontend
+    path: profiles/frontend.yaml
+  - name: daily
+    path: profiles/daily.yaml
+
+
+Save changes only the source profile/publication. Daily choices and links remain independent.
