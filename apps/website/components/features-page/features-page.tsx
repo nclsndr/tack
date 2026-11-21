@@ -43,6 +43,9 @@ function PageHead() {
             {intro.facts.map((fact) => (
               <li key={fact}>{fact}</li>
             ))}
+            <li>
+              <a href="#limits">{intro.limitsLink}</a>
+            </li>
           </motion.ul>
         </div>
       </InView>
@@ -192,7 +195,7 @@ function GroundRules() {
           <DetailList details={groundRules.rules} />
         </InView>
         <InView as="div" className="fp-limits" amount={0.3}>
-          <motion.h3 data-intro="" variants={settle(0, 8)}>
+          <motion.h3 id="limits" data-intro="" variants={settle(0, 8)}>
             {groundRules.limitsHeading}
           </motion.h3>
           <ul>

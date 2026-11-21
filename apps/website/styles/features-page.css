@@ -70,7 +70,11 @@
     display: grid;
     grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
     gap: 0 56px;
-    align-items: end;
+    align-items: start;
+  }
+
+  .fp-head-lines {
+    padding-top: 10px;
   }
 
   .fp-head-words .landing-label {
@@ -181,7 +185,7 @@
 
 /* A part: the words and the figure side by side, then its features under a rule. */
 .fp-lens {
-  padding-block: clamp(48px, 6vw, 80px);
+  padding-block: clamp(48px, 6vw, 80px) clamp(16px, 2vw, 24px);
   scroll-margin-top: var(--landing-header-height, 0px);
 }
 
@@ -553,6 +557,14 @@
 .fp-preview .tack-terminal {
   margin: 0;
   font-size: 12px;
+}
+
+/* On a phone the preview's long lines wrap instead of running past the window. */
+@media (max-width: 639px) {
+  .fp-preview .tack-terminal pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
 }
 
 .landing .fp-preview-caption {
