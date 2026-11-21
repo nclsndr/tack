@@ -1,6 +1,10 @@
 /* The landing page, always on the dark token set (see `.tack-theme-dark` in tokens.css). */
 
 .landing {
+  /* The header's height. It stays at the top of the screen, so the pinned frames hold below it and
+     in-page jumps land below it. */
+  --landing-header-height: 80px;
+
   min-height: 100vh;
   background: var(--tack-bg);
   color: var(--tack-text);
@@ -69,7 +73,7 @@
 .landing-skip:focus {
   left: 16px;
   top: 16px;
-  z-index: 10;
+  z-index: 70;
   padding: 8px 12px;
   background: var(--tack-surface);
 }
@@ -86,11 +90,105 @@
 
 /* Header */
 
+/* Sticky at the top, like the docs navigation: above the page's pinned frames, below the skip link.
+   At the top of the page the header sits flush on the hero. Once the page scrolls, a card pops out
+   from the top behind it and floats over the content: inset from the edges, rounded, on a blurred
+   ground so text scrolling under it never reads through, with a soft shadow. Only the header's own
+   links take clicks; the rest of its strip lets them through to the page. */
 .landing-header {
+  /* The card wraps the header button with one gap on the top, the right and the bottom, and its
+     corners run parallel to the button's: its radius is the button's plus that gap. */
+  --landing-header-button-height: 40px;
+  --landing-card-inset: 12px;
+  --landing-card-height: calc(var(--landing-header-button-height) + 2 * var(--landing-card-inset));
+  --landing-card-top: calc((var(--landing-header-height) - var(--landing-card-height)) / 2);
+  --landing-card-bleed: var(--landing-card-inset);
+  --landing-card-radius: calc(var(--tack-radius-button) + var(--landing-card-inset));
+  /* How the card pops out: from just above its place, resting flat on the page, it comes down and
+     lifts off, its shadow deepening as it lands. A gentle ease-out keeps it calm. */
+  --landing-card-rise: -4px;
+  --landing-card-ease: cubic-bezier(0.25, 0.8, 0.25, 1);
+  --landing-card-shadow-flat:
+    inset 0 1px 0 rgb(255 255 255 / 0), 0 0 0 -2px rgb(1 10 20 / 0), 0 0 0 -16px rgb(1 10 20 / 0);
+  --landing-card-shadow-raised:
+    inset 0 1px 0 rgb(255 255 255 / 0.05), 0 2px 6px -2px rgb(1 10 20 / 0.35),
+    0 16px 36px -16px rgb(1 10 20 / 0.7);
+
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.landing-header-bar {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 32px;
-  padding-block: 20px;
+  height: var(--landing-header-height);
+  pointer-events: auto;
+}
+
+/* The card: a layer behind the bar's content, so the content never moves as it pops out. It
+   reaches past the content by `--landing-card-bleed` on each side and is centred on the header. */
+.landing-header-bar::before {
+  position: absolute;
+  z-index: -1;
+  inset: var(--landing-card-top) calc(-1 * var(--landing-card-bleed));
+  border: 1px solid color-mix(in srgb, var(--tack-border-strong) 70%, transparent);
+  border-radius: var(--landing-card-radius);
+  background: color-mix(in srgb, var(--tack-surface) 78%, transparent);
+  box-shadow: var(--landing-card-shadow-flat);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.4);
+  content: "";
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(var(--landing-card-rise));
+  transition:
+    opacity var(--tack-duration-fast) ease-in,
+    transform var(--tack-duration-fast) ease-in,
+    box-shadow var(--tack-duration-fast) ease-in;
+}
+
+/* Once the page leaves the top, the card pops out: it fades in as it comes down the last few pixels
+   to its place, and its shadow deepens a beat longer, so it settles and then lifts. It leaves
+   faster than it came. Under reduced motion it only fades, and the durations drop to zero. */
+.landing-header[data-floating="true"] .landing-header-bar::before {
+  opacity: 1;
+  transform: none;
+  box-shadow: var(--landing-card-shadow-raised);
+  transition:
+    opacity 320ms ease-out,
+    transform 360ms var(--landing-card-ease),
+    box-shadow 480ms var(--landing-card-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-header {
+    --landing-card-rise: 0px;
+  }
+
+  .landing-header[data-floating="true"] .landing-header-bar::before {
+    transition: opacity var(--tack-duration-fast) linear;
+  }
+}
+
+/* The strip at the top of the page that the header watches: once it scrolls out of view, the
+   header floats as a card. */
+.landing-header-marker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 16px;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+/* In-page jumps, and the skip link, land below the header. */
+.landing [id] {
+  scroll-margin-top: var(--landing-header-height);
 }
 
 .landing-wordmark {
@@ -121,8 +219,12 @@
   color: var(--tack-muted);
 }
 
-.landing-header > .landing-button {
+/* The header button sets the card's size and corners, so it holds exactly the height the card
+   wraps; it keeps the shared button radius. */
+.landing-header-bar > .landing-button {
+  height: var(--landing-header-button-height);
   margin-inline-start: auto;
+  border-radius: var(--tack-radius-button);
 }
 
 @media (min-width: 720px) {
@@ -130,7 +232,7 @@
     display: flex;
   }
 
-  .landing-header > .landing-button {
+  .landing-header-bar > .landing-button {
     margin-inline-start: 0;
   }
 }
@@ -362,9 +464,9 @@
 /* The hero, on a blueprint sheet: copy, then the demo window as the step into the rest of the page.
    The intro that brings each part in lives in `components/landing/hero-intro.tsx`. */
 /* The hero holds the screen for `--hero-travel` of scroll, then lets go. At rest, the copy and the
-   window sit at the top with `--hero-gap` above and between them; the page opens with both lower,
-   from transforms the hero sets (`components/landing/hero-intro.tsx`). The hero starts under the
-   80px header, so it holds from the first scrolled pixel while the header scrolls away. */
+   window sit under the header with `--hero-gap` above and between them; the page opens with both
+   lower, from transforms the hero sets (`components/landing/hero-intro.tsx`). The hero starts
+   behind the sticky header, so it holds from the first scrolled pixel. */
 .landing-hero {
   --hero-gap: clamp(32px, 5svh, 56px);
   --hero-travel: 480px;
@@ -373,17 +475,13 @@
   /* `clip`, not `hidden`: a hidden overflow makes the hero a scroll container, and the pin's view
      timeline would then measure the hero instead of the viewport. */
   overflow: clip;
-  margin-top: -80px;
+  margin-top: calc(-1 * var(--landing-header-height));
   padding-bottom: clamp(48px, 7vw, 96px);
 }
 
-.landing-header {
-  position: relative;
-  z-index: 2;
-}
-
-/* The docs keep room at the top for their fixed navbar; the landing has none. Without this, every
-   view timeline on the page would measure 64px short of the top. */
+/* The docs keep room at the top for their navbar with `scroll-padding-top`; the landing keeps it
+   with `scroll-margin-top` on its targets instead. A scroll padding would make every view timeline
+   on the page measure from below the header. */
 html:has(.landing) {
   scroll-padding-top: 0;
 }
@@ -401,7 +499,7 @@ html:has(.landing) {
   top: 0;
   height: 100vh;
   height: 100svh;
-  padding-top: var(--hero-gap);
+  padding-top: calc(var(--landing-header-height) + var(--hero-gap));
 }
 
 .hero-pin .demo {
@@ -674,7 +772,6 @@ html:has(.landing) {
   .hero-pin {
     position: relative;
     height: auto;
-    padding-top: calc(80px + var(--hero-gap));
   }
 }
 

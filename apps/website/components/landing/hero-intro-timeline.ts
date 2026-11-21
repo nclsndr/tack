@@ -52,53 +52,38 @@ export const hasLanded = (progress: number) => progress >= heroScroll.landed;
 export type PinLayout = {
   /** The height of the screen the hero holds. */
   readonly viewport: number;
-  /** The header's height: the page opens with it over the top of the hero. */
+  /** The header's height: it stays over the top of the hero, and of the screen, as the page scrolls. */
   readonly header: number;
   readonly copyTop: number;
   readonly copyHeight: number;
   readonly windowTop: number;
   readonly windowHeight: number;
-  /** How far the page scrolls while the hero holds. */
-  readonly travel: number;
 };
 
 /** How much of the window the first screen shows, as a share of it, between two bounds. */
 const peekOf = (viewport: number) => Math.min(150, Math.max(88, viewport * 0.14));
 
-/** The least room between the header and the copy when the copy is too tall to centre. */
-const minimumGap = 16;
-
 /**
  * Where the hero starts as the page opens, from its layout at rest. At rest the copy and the
- * window sit at the top with an equal gap above and between them. The page opens with the copy
- * centred between the header and a strip of the window, so the gap above the copy equals the gap
- * below it, and the window lies that strip from the bottom.
+ * window sit under the header with an equal gap above and between them. The page opens with the
+ * copy centred between the header and a strip of the window, so the gap above the copy equals the
+ * gap below it, and the window lies that strip from the bottom. A copy too tall to centre opens at
+ * its place, with the window right below it.
  *
- * `window` is how far the window starts below its place; it closes linearly over the pin. `copy`
- * gives how far the copy sits below its place at the start and when the header has scrolled away,
- * at `headerGone` through the pin; between those points it moves linearly too. The room above the
- * copy runs to the header's bottom edge while the header shows and to the top of the screen after,
- * and with those three points it equals the room below the copy at every point of the pin.
+ * `copy` and `window` are how far each part starts below its place; both close linearly over the
+ * pin, so the room under the header stays equal to the room below the copy at every point of it.
  * `overflow` is how far the window at rest reaches below the screen, the room the page must leave
  * after the hero.
  */
 export const pinStart = (layout: PinLayout) => {
   const gap = layout.windowTop - layout.copyTop - layout.copyHeight;
-  const room = layout.viewport - layout.header - peekOf(layout.viewport) - layout.copyHeight;
-  const copyStart = layout.header + Math.max(minimumGap, room / 2);
-  const windowStart = Math.max(
-    layout.viewport - peekOf(layout.viewport),
-    copyStart + layout.copyHeight + gap,
-  );
-  const window = windowStart - layout.windowTop;
-  const copy = copyStart - layout.copyTop;
-  const headerGone = Math.min(1, layout.header / layout.travel);
-  const windowThen = layout.windowTop + window * (1 - headerGone);
-  const copyThen = (windowThen - layout.copyHeight) / 2 - layout.copyTop;
+  const peek = peekOf(layout.viewport);
+  const room = layout.viewport - layout.header - peek - layout.copyHeight;
+  const copyStart = Math.max(layout.copyTop, layout.header + room / 2);
+  const windowStart = Math.max(layout.viewport - peek, copyStart + layout.copyHeight + gap);
   return {
-    copy: [copy, Math.min(copy, Math.max(0, copyThen))] as const,
-    headerGone,
-    window,
+    copy: copyStart - layout.copyTop,
+    window: windowStart - layout.windowTop,
     overflow: Math.max(0, layout.windowTop + layout.windowHeight - layout.viewport),
   };
 };

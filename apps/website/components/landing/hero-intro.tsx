@@ -51,7 +51,7 @@ const atRest = [
   "[data-intro]{opacity:1!important;transform:none!important}",
   "[data-intro-accent]{display:none!important}",
   ".hero-track{height:auto!important;margin-bottom:0!important}",
-  ".hero-pin{position:relative!important;height:auto!important;padding-top:calc(80px + var(--hero-gap))!important}",
+  ".hero-pin{position:relative!important;height:auto!important}",
 ].join("");
 
 /** Draws the hero at rest when the browser runs no JavaScript, so nothing waits for the intro. */
@@ -199,7 +199,6 @@ export function HeroPin({ children }: { readonly children: ReactNode }) {
         copyHeight: resting.height,
         windowTop: layoutOffset(staged, box).top,
         windowHeight: staged.offsetHeight,
-        travel: holder.offsetHeight - box.offsetHeight,
       });
       holder.style.setProperty("--hero-overflow", `${next.overflow}px`);
       // `useRise` rebuilds only when the distances change, so a new object here costs nothing.
@@ -213,10 +212,7 @@ export function HeroPin({ children }: { readonly children: ReactNode }) {
     return () => observer.disconnect();
   }, [still]);
 
-  const copyRise =
-    start === undefined
-      ? undefined
-      : { below: [...start.copy, 0], times: [0, start.headerGone, 1] };
+  const copyRise = start === undefined ? undefined : { below: [start.copy, 0], times: [0, 1] };
   useRise(copy, track, copyRise);
   // The layer behind the copy rides with it, so the copy always sits on the same part of it.
   useRise(field, track, copyRise);
