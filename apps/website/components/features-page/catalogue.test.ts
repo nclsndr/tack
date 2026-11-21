@@ -2,7 +2,7 @@ import { mapModes, operationMap } from "@tackup/cli/core";
 import { describe, expect, it } from "vitest";
 import { makeDemoSession } from "../../demo/demo-shell.ts";
 import { plainAnsi } from "../landing/ansi.ts";
-import { catalogue, modes } from "./catalogue.ts";
+import { alsoInTack, catalogue, modes } from "./catalogue.ts";
 
 const capabilities = catalogue.flatMap((group) => group.capabilities);
 
@@ -10,6 +10,12 @@ const capabilities = catalogue.flatMap((group) => group.capabilities);
 const tackCards = capabilities.flatMap((capability) =>
   capability.operation === undefined ? [] : [{ ...capability, operation: capability.operation }],
 );
+
+/** Every Tack command line the page shows: on a card, or in the list after the cards. */
+const commandLines = [
+  ...tackCards.map((card) => [card.id, card] as const),
+  ...alsoInTack.items.map((item) => [item.operation, item] as const),
+];
 
 /** The mode `tack --help` gives an operation. */
 const cliMode = (operation: string) =>
@@ -44,27 +50,21 @@ describe("features catalogue", () => {
     "%s shows output that the command it names printed",
     (_id, card) => {
       const lines = plainAnsi(card.capture).split("\n");
-      const header = card.command.includes("--help")
-        ? `tack help · ${card.operation} ·`
-        : `tack ${card.operation} ·`;
+      const header = `tack ${card.operation} ·`;
       if (card.command.includes("--json")) expect(lines[0]).toBe("{");
       else expect(lines.some((line) => line.startsWith(header))).toBe(true);
     },
   );
 
-  it.each(tackCards.map((card) => [card.id, card] as const))(
-    "%s runs a command line the real CLI accepts",
-    async (_id, card) => {
-      const session = makeDemoSession();
-      // The shell pipe and the script's own arguments are not Tack's to parse, and --json would
-      // print the help as an envelope.
-      const line = (card.command.split(/ \| | -- /)[0] ?? card.command).replace(" --json", "");
-      const help = line.includes("--help") ? line : `${line} --help`;
-      const result = await session.run(help, 80);
-      expect(plainAnsi(result.output)).toContain(`tack help · ${card.operation} ·`);
-      expect(result.exitCode).toBe(0);
-    },
-  );
+  it.each(commandLines)("%s runs a command line the real CLI accepts", async (_id, card) => {
+    const session = makeDemoSession();
+    // The shell pipe and the script's own arguments are not Tack's to parse, and --json would
+    // print the help as an envelope.
+    const line = (card.command.split(/ \| | -- /)[0] ?? card.command).replace(" --json", "");
+    const result = await session.run(`${line} --help`, 80);
+    expect(plainAnsi(result.output)).toContain(`tack help · ${card.operation} ·`);
+    expect(result.exitCode).toBe(0);
+  });
 
   it("draws every excerpt from inside its capture", () => {
     capabilities.forEach((capability) => expect(capability.output.length).toBeGreaterThan(0));

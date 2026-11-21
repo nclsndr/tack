@@ -515,6 +515,7 @@
   font-family: var(--tack-font-mono);
   font-size: 0.86em;
   font-variant-ligatures: none;
+  white-space: nowrap;
 }
 
 @media (min-width: 1024px) {
@@ -608,6 +609,7 @@
   gap: 8px;
 }
 
+.also-item h3,
 .also-item h4 {
   margin: 0;
   color: var(--tack-heading);

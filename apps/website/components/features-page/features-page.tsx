@@ -2,42 +2,79 @@ import { motion, useReducedMotion } from "motion/react";
 import { Fragment } from "react";
 import { DraftingSheet, InView, settle } from "../landing/drafting-sheet.tsx";
 import { IntroFallback } from "../landing/hero-intro.tsx";
-import { InlineCode } from "../landing/inline-code.tsx";
+import { InlineCode, Proof } from "../landing/inline-code.tsx";
 import { Footer, Header } from "../landing/landing.tsx";
 import { docsHref, getStartedHref } from "../landing/routes.ts";
 import { Terminal } from "../terminal.tsx";
 import {
+  alsoInTack,
   catalogue,
   featuresPage,
   modes,
+  shellMode,
   type Capability,
   type CapabilityGroup,
 } from "./catalogue.ts";
 
-/** The page's opening: what the page holds, the tagline, and the way to start. */
+/** The cards a first-time reader should open first, in reading order. */
+const startCards = catalogue
+  .flatMap((group) => group.capabilities)
+  .flatMap((capability) =>
+    capability.start === undefined ? [] : [{ id: capability.id, name: capability.start }],
+  );
+
+/**
+ * The page's opening: what the page holds, the tagline and the way to start; beside it, the three
+ * words the page builds on and the cards to read first.
+ */
 function Opening() {
   return (
     <InView className="catalogue-opening landing-shell">
-      <motion.p className="landing-label" data-intro="" variants={settle(0, 8)}>
-        {featuresPage.label}
-      </motion.p>
-      <motion.h1 id="features-page-title" data-intro="" variants={settle(0.06, 16)}>
-        {featuresPage.headline}
-      </motion.h1>
-      <motion.p className="landing-lead" data-intro="" variants={settle(0.14, 10)}>
-        {featuresPage.lead}
-      </motion.p>
-      <motion.p className="catalogue-intro" data-intro="" variants={settle(0.2, 8)}>
-        {featuresPage.intro}
-      </motion.p>
-      <motion.div className="landing-actions" data-intro="" variants={settle(0.26, 0)}>
-        <a href={getStartedHref} className="landing-button landing-button-primary">
-          Get started
-        </a>
-        <a href={docsHref} className="landing-button">
-          Read the docs
-        </a>
-      </motion.div>
+      <div className="catalogue-opening-words">
+        <motion.p className="landing-label" data-intro="" variants={settle(0, 8)}>
+          {featuresPage.label}
+        </motion.p>
+        <motion.h1 id="features-page-title" data-intro="" variants={settle(0.06, 16)}>
+          {featuresPage.headline}
+        </motion.h1>
+        <motion.p className="landing-lead" data-intro="" variants={settle(0.14, 10)}>
+          {featuresPage.lead}
+        </motion.p>
+        <motion.p className="catalogue-intro" data-intro="" variants={settle(0.2, 8)}>
+          {featuresPage.intro}
+        </motion.p>
+        <motion.div className="landing-actions" data-intro="" variants={settle(0.26, 0)}>
+          <a href={getStartedHref} className="landing-button landing-button-primary">
+            Get started
+          </a>
+          <a href={docsHref} className="landing-button">
+            Read the docs
+          </a>
+        </motion.div>
+      </div>
+      <motion.aside
+        className="catalogue-primer"
+        aria-label="Before you read"
+        data-intro=""
+        variants={settle(0.3, 12)}
+      >
+        <dl>
+          {featuresPage.terms.map((entry) => (
+            <div key={entry.term}>
+              <dt>{entry.term}</dt>
+              <dd>{entry.definition}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="catalogue-primer-heading">{featuresPage.startHeading}</p>
+        <ol>
+          {startCards.map((card) => (
+            <li key={card.id}>
+              <a href={`#${card.id}`}>{card.name}</a>
+            </li>
+          ))}
+        </ol>
+      </motion.aside>
     </InView>
   );
 }
@@ -67,12 +104,12 @@ function Index() {
   );
 }
 
-/** How a card's command behaves, in the CLI's word, with the CLI's meaning on hover. */
+/** How a card's command behaves, in plain words, with the CLI's own wording on hover. */
 function ModeTag({ mode }: { readonly mode: Capability["mode"] }) {
-  if (mode === undefined) return <span className="capability-mode">shell</span>;
+  const { label, meaning } = mode === undefined ? shellMode : modes[mode];
   return (
-    <span className="capability-mode" data-mode={mode} title={modes[mode].meaning}>
-      {modes[mode].label}
+    <span className="capability-mode" data-mode={mode ?? "shell"} title={meaning}>
+      {label}
     </span>
   );
 }
@@ -112,7 +149,10 @@ function CapabilityCard({
   );
 }
 
-/** The modes a card can name, with their meanings, as the legend of `tack --help` gives them. */
+/**
+ * The tags a card can show, each with the mode `tack --help` names and its meaning there, and the
+ * tag for a plain shell command.
+ */
 function Legend() {
   return (
     <div className="catalogue-legend">
@@ -127,11 +167,50 @@ function Legend() {
                 {label}
               </span>
             </dt>
-            <dd>{meaning}</dd>
+            <dd>
+              <code>{mode}</code>: {meaning}
+            </dd>
           </div>
         ))}
+        <div>
+          <dt>
+            <span className="capability-mode" data-mode="shell">
+              {shellMode.label}
+            </span>
+          </dt>
+          <dd>{shellMode.meaning}</dd>
+        </div>
       </dl>
     </div>
+  );
+}
+
+/** The smaller capabilities, one line and one command each, as the landing's "Also" row draws them. */
+function AlsoRow() {
+  return (
+    <section className="catalogue-also" aria-labelledby="also-title">
+      <InView className="landing-shell also" amount={0.4}>
+        <motion.h2 id="also-title" className="also-heading" data-intro="" variants={settle(0, 0)}>
+          {alsoInTack.heading}
+        </motion.h2>
+        <div className="also-items">
+          {alsoInTack.items.map((item, index) => (
+            <motion.article
+              key={item.operation}
+              className="also-item"
+              data-intro=""
+              variants={settle(0.04 + 0.05 * index, 10)}
+            >
+              <h3>{item.title}</h3>
+              <p>
+                <InlineCode text={item.text} />
+              </p>
+              <Proof text={item.command} />
+            </motion.article>
+          ))}
+        </div>
+      </InView>
+    </section>
   );
 }
 
@@ -180,7 +259,7 @@ function Closing() {
 function FeaturesMarkdown() {
   return (
     <>
-      {`# ${featuresPage.headline}\n\n${featuresPage.lead}\n\n${featuresPage.intro}\n`}
+      {`# ${featuresPage.headline}\n\n${featuresPage.lead}\n\n${featuresPage.intro}\n\n${featuresPage.terms.map((entry) => `- **${entry.term}**: ${entry.definition}`).join("\n")}\n`}
       {catalogue.map((group) => (
         <Fragment key={group.id}>
           {`\n## ${group.heading}\n\n${group.intro}\n`}
@@ -192,6 +271,7 @@ function FeaturesMarkdown() {
           ))}
         </Fragment>
       ))}
+      {`\n## ${alsoInTack.heading}\n\n${alsoInTack.items.map((item) => `- **${item.title}** ${item.text} \`${item.command}\``).join("\n")}\n`}
       {`\n## ${featuresPage.closing.heading}\n\n${featuresPage.closing.text} [Get started](${getStartedHref})\n`}
     </>
   );
@@ -217,6 +297,7 @@ export function FeaturesPage() {
           {catalogue.map((group) => (
             <Group key={group.id} group={group} />
           ))}
+          <AlsoRow />
         </DraftingSheet>
         <Closing />
       </main>

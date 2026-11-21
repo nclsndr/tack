@@ -10,7 +10,7 @@ import adapterDisable from "./captures/08b-adapter-disable-preview.ansi?raw";
 import pickInclude from "./captures/09a-pick-include.ansi?raw";
 import projectRefresh from "./captures/10-project-refresh.ansi?raw";
 import status from "./captures/11-status.ansi?raw";
-import doctor from "./captures/12a-doctor-problem.ansi?raw";
+import doctor from "./captures/12-doctor.ansi?raw";
 import docsAttach from "./captures/13a-docs-attach.ansi?raw";
 import docsSearch from "./captures/13d-docs-search.ansi?raw";
 import docsTarget from "./captures/13e-docs-target.ansi?raw";
@@ -25,24 +25,26 @@ import check from "./captures/16-check.ansi?raw";
 import guide from "./captures/17a-guide.ansi?raw";
 import statusJson from "./captures/18-status-json.ansi?raw";
 import stateReset from "./captures/19-state-reset-preview.ansi?raw";
-import exploreHelp from "./captures/21-explore-help.ansi?raw";
-import importAddHelp from "./captures/23-import-add-help.ansi?raw";
+import importAdd from "./captures/25-import-add-skill-preview.ansi?raw";
 import { excerpt, type LineRanges } from "./excerpt.ts";
 
 /**
  * What running a command does, keyed and worded as the legend of `tack --help` (a test holds them
- * to the CLI's own map). `label` is the word a card shows.
+ * to the CLI's own map). `label` is the plain words a card shows for it.
  */
 export const modes = {
-  read: { label: "read", meaning: "changes nothing" },
-  now: { label: "now", meaning: "saves at once" },
-  plan: { label: "plan", meaning: "previews; add --apply to write" },
-  run: { label: "run", meaning: "executes a declared script" },
+  read: { label: "Reads only", meaning: "changes nothing" },
+  now: { label: "Saves at once", meaning: "saves at once" },
+  plan: { label: "Previews first", meaning: "previews; add --apply to write" },
+  run: { label: "Runs a script", meaning: "executes a declared script" },
   conditional: {
-    label: "conditional",
+    label: "Saves or previews",
     meaning: "may save at once; see the command help conditions",
   },
 } as const;
+
+/** The tag of a card whose command is a plain shell command, not Tack. */
+export const shellMode = { label: "Shell", meaning: "a plain shell command, not Tack" } as const;
 
 type Mode = keyof typeof modes;
 
@@ -64,6 +66,8 @@ type CapabilitySource = {
   readonly capture: string;
   /** The capture lines the card shows; omit it to show the whole capture. */
   readonly lines?: LineRanges;
+  /** A short name for the card in the opening's "Start here" list, for the first cards to read. */
+  readonly start?: string;
 } & (
   | {
       /** The `tack` operation the command runs, as `tack --help` names it. */
@@ -97,8 +101,26 @@ export const featuresPage = {
   headline: "Everything Tack does, in its own output.",
   lead: hero.subhead,
   intro:
-    "Each card names one thing Tack does and shows the command that does it, with what it printed in a test sandbox: five agents, two projects, a skills folder and a team repository. Where output runs long, the card says how many lines it leaves out.",
-  legend: "Each card names how its command behaves, in the words of `tack --help`:",
+    "Each card names one thing Tack does and shows the command that does it, with what it printed in a test sandbox: five agents, four projects, a skills folder and a team repository. Where output runs long, the card says how many lines it leaves out.",
+  /** The three words the rest of the page builds on. */
+  terms: [
+    {
+      term: "Source",
+      definition:
+        "A folder you keep, alone or in a shared Git repository, with skills, commands, context, scripts or docs.",
+    },
+    {
+      term: "Project",
+      definition: "A Git repository Tack links into, with each of its worktrees.",
+    },
+    {
+      term: "Agent",
+      definition:
+        "Claude Code, Codex, Cursor, OpenCode or Pi. Each reads its own folders, and Tack links into them.",
+    },
+  ],
+  startHeading: "Start here",
+  legend: "Each card tags how its command behaves. `tack --help` words it as:",
   closing: {
     heading: "Try it on your own folders.",
     text: "Set Tack up once, register a folder of skills, and preview your first sync.",
@@ -125,9 +147,10 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
         mode: "now",
         capture: init,
         lines: [
-          [1, 15],
-          [77, 83],
+          [1, 9],
+          [78, 83],
         ],
+        start: "Set up a machine",
       }),
       card({
         id: "preview-every-link",
@@ -143,6 +166,7 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
           [1, 16],
           [44, 48],
         ],
+        start: "Preview a sync",
       }),
       card({
         id: "links-not-copies",
@@ -152,12 +176,13 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
         command: "ls -go .claude/skills",
         cwd: "~/code/app",
         capture: links,
+        start: "Links, not copies",
       }),
       card({
         id: "commands-where-read",
         title: "Commands for the agents that read them",
         benefit:
-          "Commands link into Cursor, OpenCode and Pi, which gets them as prompt templates. The plan names the agents that get none.",
+          "Commands link into Cursor, OpenCode and Pi (Pi reads them as prompt templates). The plan names the agents that get none.",
         command: "tack sync --project app",
         cwd: "~/code/app",
         operation: "sync",
@@ -176,8 +201,9 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
         mode: "plan",
         capture: adapterDisable,
         lines: [
-          [1, 14],
-          [23, 33],
+          [1, 6],
+          [23, 26],
+          [32, 33],
         ],
       }),
     ],
@@ -185,7 +211,7 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
   {
     id: "sources",
     label: "Sources",
-    heading: "Your folders, under your Git.",
+    heading: "Your folders, where they already are.",
     intro:
       "A source is a folder you already keep, with skills, commands, context, scripts or docs. Tack reads it where it is and never moves it.",
     capabilities: [
@@ -210,6 +236,7 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
         operation: "source add",
         mode: "conditional",
         capture: sourceAddExisting,
+        start: "Share with a team",
       }),
       card({
         id: "catalog",
@@ -244,12 +271,16 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
         title: "Copy skills from GitHub",
         benefit:
           "Preview what a GitHub repository offers, then copy the skills you choose into a source you own, with a record of where they came from.",
-        command: "tack import add --help",
+        command: "tack import add github:anthropics/skills --skill pdf --into skills",
         cwd: "~",
         operation: "import add",
         mode: "plan",
-        capture: importAddHelp,
-        lines: [[1, 15]],
+        capture: importAdd,
+        lines: [
+          [1, 8],
+          [72, 77],
+          [120, 134],
+        ],
       }),
     ],
   },
@@ -284,7 +315,7 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
       }),
       card({
         id: "worktrees",
-        title: "Worktrees included",
+        title: "Add worktrees as you make them",
         benefit:
           "Add a worktree and refresh the project: Tack adds it as a root, and the next sync links it too.",
         command: "tack project refresh --project app",
@@ -349,7 +380,7 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
         id: "read-docs",
         title: "Read them in a local reader",
         benefit:
-          "`tack docs serve` opens the attached docs in a reader in your browser, on your machine.",
+          "`tack docs serve` serves the attached docs in a reader on your own machine, at a local address.",
         command: "tack docs serve --no-open --port 4815",
         cwd: "~/code/app",
         operation: "docs serve",
@@ -440,7 +471,10 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
         operation: "profile export",
         mode: "plan",
         capture: profileExport,
-        lines: [[1, 12]],
+        lines: [
+          [1, 5],
+          [27, 27],
+        ],
       }),
     ],
   },
@@ -449,26 +483,27 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
     label: "Safety and automation",
     heading: "Safe to try, easy to leave.",
     intro:
-      "Every command that changes links previews first. Tack removes only the links it made, and your agent can run it for you.",
+      "Syncs, removals and resets preview first and change nothing until you add `--apply`. Tack removes only the links it made, and your agent can run it all for you.",
     capabilities: [
       card({
         id: "doctor",
-        title: "Every problem names its next step",
+        title: "Check the whole machine",
         benefit:
-          "`tack doctor` checks the whole machine, and each problem ends with the command to run next.",
+          "`tack doctor` checks state, agents, sources, projects and every link, and names the command to run next for each problem it finds.",
         command: "tack doctor",
         cwd: "~",
         operation: "doctor",
         mode: "read",
         capture: doctor,
         lines: [
-          [1, 9],
-          [34, 36],
+          [1, 5],
+          [15, 18],
+          [24, 27],
         ],
       }),
       card({
         id: "leave-cleanly",
-        title: "Leave without a trace",
+        title: "Undo everything Tack linked",
         benefit:
           "`tack state reset` previews removing every link Tack made, and its state. Your files stay where they are.",
         command: "tack state reset",
@@ -477,15 +512,15 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
         mode: "plan",
         capture: stateReset,
         lines: [
-          [1, 11],
-          [181, 188],
+          [1, 4],
+          [182, 188],
         ],
       }),
       card({
         id: "agents-run-tack",
         title: "Your agent can run it",
         benefit:
-          "Built-in guides and skills teach agents Tack's commands, and every view ends with the next command.",
+          "Built-in guides and skills teach agents Tack's commands, and most views end with the command to run next.",
         command: "tack guide",
         cwd: "~",
         operation: "guide",
@@ -494,27 +529,43 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
       }),
       card({
         id: "json",
-        title: "A stable contract for scripts",
+        title: "JSON for tools and CI",
         benefit:
-          "`--json` prints one versioned envelope, with a stable payload for status, sync, doctor, upgrade and the version.",
+          "`--json` prints one envelope for programs, with a stable payload for status, sync, doctor, upgrade and the version.",
         command: "tack status --project app --json | jq | head -20",
         cwd: "~/code/app",
         operation: "status",
         mode: "read",
         capture: statusJson,
       }),
-      card({
-        id: "explore",
-        title: "Browse and pick in your terminal",
-        benefit:
-          "`tack explore` opens one project's catalog to stage picks and docs, and applies nothing until you review the changes.",
-        command: "tack explore --help",
-        cwd: "~",
-        operation: "explore",
-        mode: "conditional",
-        capture: exploreHelp,
-        lines: [[1, 18]],
-      }),
     ],
   },
 ];
+
+/**
+ * Smaller capabilities whose output does not fit a card: an interactive screen, a file write, or a
+ * line that depends on how Tack was installed. Each has its command, in the words of `tack --help`.
+ */
+export const alsoInTack = {
+  heading: "Also in the CLI",
+  items: [
+    {
+      title: "Browse and pick in your terminal.",
+      text: "`tack explore` lists one project's catalog, stages picks and docs, and saves after you review them.",
+      command: "tack explore --project app",
+      operation: "explore",
+    },
+    {
+      title: "Editor types for scripts.",
+      text: "`tack types` writes the types your editor needs for a source's scripts, after a preview.",
+      command: "tack types ~/team-docs",
+      operation: "types",
+    },
+    {
+      title: "The right upgrade command.",
+      text: "`tack upgrade` names the command that upgrades the Tack you run, for the way it was installed.",
+      command: "tack upgrade",
+      operation: "upgrade",
+    },
+  ],
+} as const;
