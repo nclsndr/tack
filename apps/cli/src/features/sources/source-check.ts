@@ -7,6 +7,7 @@ import { isCollection, type SourceDeclaration } from "../../domain/sources/sourc
 import { Source } from "./source.ts";
 import { checkProfilePublications } from "./profile-files.ts";
 import { declarationFileName } from "./declaration-file.ts";
+import { skippedCollectionFolders, skippedFoldersMessage } from "./collection-skipped-folders.ts";
 
 /** Inspects a directory through catalog discovery without registration, state or network. */
 export const checkSource = Effect.fnUntraced(function* (sourcePath: string) {
@@ -67,6 +68,23 @@ export const inspectDeclaration = Effect.fnUntraced(function* (
   ]);
   const declarationFile = path.join(canonicalPath, declarationFileName);
   const rows = catalog.declarations?.[registration.id] ?? [];
+  const skipped =
+    isCollection(declaration) && declaration.kind === "skills"
+      ? yield* skippedCollectionFolders(canonicalPath)
+      : [];
+  // The folders a skills collection skips warn on its one entry; they never fail it.
+  const skippedWarnings: ReadonlyArray<SourceFinding> =
+    skipped.length === 0
+      ? []
+      : [
+          {
+            code: "collection-folders-skipped",
+            message: skippedFoldersMessage(skipped),
+            severity: "warning",
+            field: "kind",
+            file: declarationFile,
+          },
+        ];
   return rows.map((row, position) => {
     const key = resourceKinds[row.kind].declarationKey;
     const index = rows.slice(0, position).filter(({ kind }) => kind === row.kind).length;
@@ -90,17 +108,20 @@ export const inspectDeclaration = Effect.fnUntraced(function* (
         )
         .map((entry) => entry.address.name)
         .sort(compareCodeUnits),
-      findings: row.problems.map((problem): SourceFinding => ({
-        code: problem.code,
-        message: problem.message,
-        severity: "error",
-        field,
-        file:
-          problem.code.startsWith("declaration-") || row.kind === "docs"
-            ? declarationFile
-            : (problem.candidatePath ?? declarationFile),
-        ...(problem.candidatePath === undefined ? {} : { candidatePath: problem.candidatePath }),
-      })),
+      findings: [
+        ...row.problems.map((problem): SourceFinding => ({
+          code: problem.code,
+          message: problem.message,
+          severity: "error",
+          field,
+          file:
+            problem.code.startsWith("declaration-") || row.kind === "docs"
+              ? declarationFile
+              : (problem.candidatePath ?? declarationFile),
+          ...(problem.candidatePath === undefined ? {} : { candidatePath: problem.candidatePath }),
+        })),
+        ...(row.collection === true ? skippedWarnings : []),
+      ],
     };
   });
 });

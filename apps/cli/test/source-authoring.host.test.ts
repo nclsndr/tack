@@ -332,6 +332,77 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
       }),
   );
   test.effect(
+    "source add and check warn about the folders a skills collection skips and still succeed",
+    () =>
+      Effect.gen(function* () {
+        const { root, state, path, write } = yield* scratch;
+        const flat = path.join(root, "flat");
+        for (const name of ["alpha", "beta", "team/review"])
+          yield* write(
+            `flat/${name}/SKILL.md`,
+            `---\nname: ${path.basename(name)}\ndescription: S\n---\n`,
+          );
+        yield* write("flat/commands/hi.md", "# Hi");
+        const warning = {
+          code: "collection-folders-skipped",
+          severity: "warning",
+          field: "kind",
+          message: expect.stringContaining("Tack skips commands/ and team/"),
+        };
+        const preview = yield* json(root, state, ["source", "add", flat, "--skills", "."]);
+        expect(exitCodeForEnvelope(preview)).toBe(0);
+        expect(preview.plan).toMatchObject({
+          entries: [{ resources: ["alpha", "beta"], findings: [warning] }],
+        });
+        const human = (yield* run(root, state, ["source", "add", flat, "--skills", "."]))
+          .split(/\s+/)
+          .join(" ");
+        expect(human).toContain("warning: collection-folders-skipped:");
+        expect(human).toContain("Tack skips commands/ and team/");
+        yield* run(root, state, ["state", "init"]);
+        const applied = yield* json(root, state, [
+          "source",
+          "add",
+          flat,
+          "--skills",
+          ".",
+          "--apply",
+        ]);
+        expect(exitCodeForEnvelope(applied)).toBe(0);
+        expect(applied.applied).toMatchObject({
+          inspection: { counts: { skill: 2, command: 0 }, findings: [warning] },
+        });
+        const checked = yield* json(root, state, ["check", flat]);
+        expect(exitCodeForEnvelope(checked)).toBe(0);
+        expect(checked.result).toMatchObject({
+          summary: { errors: 0, warnings: 1 },
+          findings: [warning],
+        });
+      }),
+  );
+  test.effect(
+    "source add registers a skills collection that holds only folders it skips, with the warning",
+    () =>
+      Effect.gen(function* () {
+        const { root, state, path, write } = yield* scratch;
+        const flat = path.join(root, "flat");
+        yield* write("flat/commands/hi.md", "# Hi");
+        yield* run(root, state, ["state", "init"]);
+        const applied = yield* json(root, state, [
+          "source",
+          "add",
+          flat,
+          "--skills",
+          ".",
+          "--apply",
+        ]);
+        expect(exitCodeForEnvelope(applied)).toBe(0);
+        expect(applied.applied).toMatchObject({
+          inspection: { findings: [{ code: "collection-folders-skipped" }] },
+        });
+      }),
+  );
+  test.effect(
     "source add refuses a tack.yaml that a registered source's walk reaches until it excludes it",
     () =>
       Effect.gen(function* () {

@@ -384,7 +384,12 @@ kind: skills
 Names that start with `.` or `_` are never resources. A collection takes `name`, `maintainers`,
 `depends-on` (skills and commands) and `reader` (docs); no resource keys, patterns or profiles.
 Context and scripts need the list form. A collection declares nothing else, so other content beside
-it is a source of its own with its own `tack.yaml`. A skills collection whose folder holds
+it is a source of its own with its own `tack.yaml`. When a skills collection's top holds a
+`commands` folder, or a folder without `SKILL.md` that holds one further down, `tack source add
+--skills .` and `tack check` name those folders in the warning `collection-folders-skipped`, which
+changes no exit code: declare them with the list form, or make each a source of its own. Dot,
+underscore and `node_modules` folders and folders with their own `tack.yaml` are not named. A
+skills collection whose folder holds
 `SKILL.md` is one skill, and the source is unhealthy with `source-is-one-skill`; `kind: skill` is
 refused. `tack import add --into SOURCE` writes into a skills collection's top; `SOURCE:FOLDER` is
 refused. `tack source` shows its one declaration as `(collection)`, and `catalog --details` says

@@ -182,4 +182,100 @@ it.layer(LiveTestLayer)("source check", (test) => {
       expect(report.counts.context).toBe(row.context);
     }),
   );
+
+  test.effect.each([
+    {
+      case: "a commands folder and a group of skills at the top of a skills collection",
+      declaration: "version: 1\nkind: skills\n",
+      files: ["alpha/SKILL.md", "commands/hi.md", "team/review/SKILL.md"],
+      skipped: ["commands", "team"],
+    },
+    {
+      case: "a skill deep below a folder at the top of a skills collection",
+      declaration: "version: 1\nkind: skills\n",
+      files: ["alpha/SKILL.md", "vendor/skills/lint/SKILL.md"],
+      skipped: ["vendor"],
+    },
+    {
+      case: "hidden, draft, plain and other-source folders of a skills collection",
+      declaration: "version: 1\nkind: skills\n",
+      files: [
+        "alpha/SKILL.md",
+        ".git/x/SKILL.md",
+        "_drafts/x/SKILL.md",
+        "notes/readme.md",
+        "split/tack.yaml",
+        "split/review/SKILL.md",
+        "group/vendor/tack.yaml",
+        "group/vendor/lint/SKILL.md",
+        "notes/.cache/x/SKILL.md",
+        "README.md",
+      ],
+      // A link to the collection, one back to its own folder and a dangling one end the walk.
+      links: { root: ".", "notes/self": ".", "notes/gone": "missing" },
+      skipped: [],
+    },
+    {
+      case: "a commands collection, which never reads folders",
+      declaration: "version: 1\nkind: commands\n",
+      files: ["hi.md", "commands/hi.md", "team/review/SKILL.md"],
+      skipped: [],
+    },
+  ])("warns about $case only when Tack skips them", (row) =>
+    Effect.gen(function* () {
+      const { fs, path, root, write } = yield* folders;
+      yield* write("tack.yaml", row.declaration);
+      for (const file of row.files)
+        yield* write(
+          file,
+          file.endsWith("SKILL.md") ? bareSkillText(path.basename(path.dirname(file))) : "x",
+        );
+      for (const [link, target] of Object.entries(row.links ?? {}))
+        yield* fs.symlink(target, path.join(root, link));
+      const report = yield* checkSource(root);
+      const warnings = report.findings.filter((finding) => finding.severity === "warning");
+      expect(warnings).toEqual(
+        row.skipped.length === 0
+          ? []
+          : [
+              {
+                code: "collection-folders-skipped",
+                message: expect.stringContaining(
+                  new Intl.ListFormat("en").format(row.skipped.map((name) => `${name}/`)),
+                ),
+                severity: "warning",
+                field: "kind",
+                file: path.join(root, "tack.yaml"),
+              },
+            ],
+      );
+      expect(report.findings.filter((finding) => finding.severity === "error")).toEqual([]);
+    }),
+  );
+
+  test.effect("leaves an unlistable skills collection to the error its reader reports", () =>
+    Effect.gen(function* () {
+      const { fs, root, write } = yield* folders;
+      yield* write("tack.yaml", "version: 1\nkind: skills\n");
+      yield* write("team/review/SKILL.md", bareSkillText("review"));
+      yield* fs.chmod(root, 0o300);
+      const report = yield* checkSource(root).pipe(
+        Effect.ensuring(fs.chmod(root, 0o755).pipe(Effect.orDie)),
+      );
+      expect(report.findings.map(({ severity }) => severity)).toEqual(["error"]);
+    }),
+  );
+
+  test.effect("names the list form and splitting into sources as the fix for skipped folders", () =>
+    Effect.gen(function* () {
+      const { root, write } = yield* folders;
+      yield* write("tack.yaml", "version: 1\nkind: skills\n");
+      yield* write("alpha/SKILL.md", bareSkillText("alpha"));
+      yield* write("commands/hi.md", "# Hi");
+      const [entry] = yield* inspectDeclaration(root, { version: 1, kind: "skills" });
+      expect(entry?.findings.map((finding) => finding.message)).toEqual([
+        "This skills collection reads only the skill folders at its top, so Tack skips commands/, which holds what a collection cannot. Declare it with the list form in tack.yaml, a skills or commands entry for each folder, or make it a source of its own with its own tack.yaml.",
+      ]);
+    }),
+  );
 });

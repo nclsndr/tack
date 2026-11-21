@@ -35,7 +35,10 @@ A collection declares nothing else. Other content beside it is its own source wi
 `tack.yaml`, such as a docs collection in `~/skills/handbook` beside a skills collection in
 `~/skills`: the skills collection never reads `handbook`, which holds no `SKILL.md`. To keep one
 source, move the skills into `skills/` and use the list form. Group folders at the top of a
-collection are not read: make a group its own collection, or use the list form.
+collection are not read: make a group its own collection, or use the list form. `tack source add
+--skills .` and `tack check` warn with `collection-folders-skipped` and name each `commands` folder
+and each group folder with a `SKILL.md` below it that the collection skips; the warning changes no
+exit code.
 
 ## List form
 
