@@ -4,7 +4,7 @@ import { also, steps } from "./content.ts";
 
 /** Every `tack` command line the features page shows a visitor. */
 const shownCommands = [
-  ...steps.flatMap((step) => step.run),
+  ...steps.flatMap((step) => [...step.run, ...(step.elsewhere?.run ?? [])]),
   ...also.items.map((item) => item.proof),
 ].filter((line) => line.startsWith("tack "));
 
@@ -55,7 +55,8 @@ describe("features page commands", () => {
   it("shows each terminal under the command that printed it, one the step runs", () => {
     expect(
       steps.flatMap((step) =>
-        step.output === undefined || step.run.includes(step.output.command) === true
+        step.output === undefined ||
+        [...step.run, ...(step.elsewhere?.run ?? [])].includes(step.output.command) === true
           ? []
           : [step.id],
       ),

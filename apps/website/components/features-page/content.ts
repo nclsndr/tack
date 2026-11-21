@@ -17,7 +17,13 @@ export const opening = {
   title: "From first setup to day two.",
   lead: "Write a skill once. Tack links it wherever your agents look, in every project.",
   intro:
-    "Follow one setup through Tack, step by step: what you run, and what Tack does in return. Every command here is real, and each terminal shows what the CLI printed, trimmed where it repeats.",
+    "Follow one setup through Tack, step by step: what you run, and what Tack does in return. Every command here is real, and each terminal shows what the CLI printed; a `…` line marks what is left out.",
+  /** Where to get Tack while it is not on npm. */
+  install: {
+    text: "Tack is not published to npm yet. To try it today, install it from a checkout of",
+    link: "its repository",
+    href: "https://github.com/nclsndr/tack/blob/main/CONTRIBUTING.md#run-your-changes",
+  },
 } as const;
 
 /** The two parts of the walkthrough, in order. */
@@ -51,6 +57,8 @@ export type Step = {
   readonly summary: string;
   /** The command lines the visitor runs, in order. */
   readonly run: ReadonlyArray<string>;
+  /** Commands the step runs on another machine, after `run`, and where. */
+  readonly elsewhere?: { readonly label: string; readonly run: ReadonlyArray<string> };
   /** A second way to take the step, in one line. */
   readonly or?: string;
   /** An excerpt of what one of the step's commands printed. */
@@ -114,10 +122,15 @@ No files or state changed.
   kind: skills
 
 skills collection · 2 skills
-  commit, review`,
+  commit, review
+
+Next
+  tack source add \\
+    ~/skills \\
+    --skills . --apply`,
     },
     tack: [
-      "Previews the `tack.yaml` it would write for a plain folder, and what each entry finds. `--apply` writes it.",
+      "`--skills .` says the folder itself holds skills. Tack previews the `tack.yaml` it would write and what it finds; `--apply` writes it.",
       "Registers the team's clone at once: it already has a `tack.yaml`. Two skills, one command, one script and the handbook.",
       "Reads nothing by convention: only what `tack.yaml` declares reaches the catalog.",
       "Never moves or copies your files.",
@@ -138,7 +151,11 @@ skills collection · 2 skills
 Registered project app.
 
   anchor  ~/code/app/.git
-  roots   ~/code/app`,
+  roots   ~/code/app
+
+Next
+  tack catalog
+  tack sync --project app`,
     },
     tack: [
       "Records the repository and every worktree it has.",
@@ -176,7 +193,12 @@ pi → app · 5 to link
   create  .pi/skills/triage    skill triage
 
 Commands reach cursor, opencode, pi only: Tack does not link commands for
-claude, codex.`,
+claude, codex.
+
+Preview only: nothing was written. There are no docs links to reconcile.
+
+Next
+  tack sync --project app --apply`,
       cut: "Cut to Claude Code and Pi. Codex gets the same skills; Cursor and OpenCode get them and the command.",
     },
     tack: [
@@ -212,12 +234,15 @@ codex → app · 1 to remove
   remove  .agents/skills/commit  skill commit · deselected
 …
 pi → app · 1 to remove
-  remove  .pi/skills/commit  skill commit · deselected`,
+  remove  .pi/skills/commit  skill commit · deselected
+…
+Next
+  tack sync --project app --apply`,
     },
     tack: [
       "Saves the choice at once; nothing changes on disk until you sync.",
       "Brings along the skills a skill declares it needs.",
-      "With `--user`, picks a skill for you in every project, linked once in your own agent folders.",
+      "`--user` turns a skill on for you in every project: one link in your own agent folders.",
       "Keeps its own built-in skills locked in.",
     ],
   },
@@ -296,7 +321,11 @@ claude → user · up to date
     title: "Run scripts by name.",
     summary:
       "The team's `tack.yaml` declares a TypeScript script. Run it by name, inside any registered project.",
-    run: ["tack script show report", "tack script run report -- --limit 3", "tack script history"],
+    run: [
+      "tack script show report",
+      "tack script run report --quiet -- --limit 3",
+      "tack script history",
+    ],
     code: {
       file: "~/team/scripts/report.ts",
       text: `import { defineScript } from "@tackup/cli";
@@ -312,25 +341,26 @@ export default defineScript({
     },
     output: {
       cwd: "~/code/app",
-      command: "tack script run report -- --limit 3",
-      text: `292d973 Fix the session timeout
-1f60557 Add the login page
-ab9c75c Start the app
-…
-tack script run · ✓ success
+      command: "tack script run report --quiet -- --limit 3",
+      text: `tack script run · ✓ success
 
-  Run           7cbd17a5-83ac-4b8a-9a59-21497b8776ed
+  Run           ecb9710e-165c-4f97-9028-511e260f41c0
   Outcome       ✓ success at output stage
   Message       The script completed.
   Finalization  complete
   History       full record saved
 
 Value
-  {"commits":3}`,
+  {"commits":3}
+
+Logs
+  3 of 3 events kept, 161 B observed (script 1, shell 2)
+  Not truncated; the limits are 10000 events and 10 MiB.
+…`,
     },
     tack: [
       "Runs the script in a fresh worker, in the root of the project you run it from.",
-      "Checks its arguments against the declaration, and keeps a history of every run.",
+      "Checks its arguments against the declaration, and keeps its logs and result in a history of every run. `--quiet` keeps them there instead of on screen.",
       "Hands a script only the secrets it declares, from `TACK_<NAME>`, and redacts them from logs and results.",
       "Writes editor types for the script API with `tack types --apply`.",
     ],
@@ -340,12 +370,16 @@ Value
     day: "day-two",
     title: "Pin a setup with profiles.",
     summary:
-      "A profile is a file in the team's source that lists the exact skills a project gets. Export it once, and a CI runner gets the same set.",
-    run: [
-      "tack check ~/team",
-      "tack profile export team:on-call on-call.tar.gz --apply",
-      "tack profile apply-bundle on-call.tar.gz --project app --target-root ~/work/app --apply",
-    ],
+      "A profile is a file in the team's source that lists the exact skills a project gets. Export it once, and a CI runner with only Tack and Claude Code gets the same set.",
+    run: ["tack check ~/team", "tack profile export team:on-call ~/on-call.tar.gz --apply"],
+    elsewhere: {
+      label: "On the CI runner",
+      run: [
+        "tack init",
+        "tack project add app",
+        "tack profile apply-bundle ~/on-call.tar.gz --project app --target-root ~/work/app --apply",
+      ],
+    },
     or: "Or save what a project uses today as a new profile with `tack profile save`.",
     code: {
       file: "~/team/profiles/on-call.yaml",
@@ -358,7 +392,7 @@ members:
     output: {
       cwd: "CI runner · ~/work/app",
       command:
-        "tack profile apply-bundle on-call.tar.gz --project app --target-root ~/work/app --apply",
+        "tack profile apply-bundle ~/on-call.tar.gz --project app --target-root ~/work/app --apply",
       text: `tack profile apply-bundle · ✓ success
 …
 Direct members (2)
@@ -377,7 +411,7 @@ claude → app · 2 to link
     tack: [
       "Checks the profile with the rest of the source, without state or network.",
       "Packs the profile's files into one `.tar.gz` bundle with checksums.",
-      "Sets up a fresh machine, container or CI runner from the bundle, without the original sources and without fetching anything.",
+      "Applies the bundle on a fresh machine, container or CI runner that has Tack, without the original sources and without fetching anything.",
       "Gives the project exactly the profile's list; ordinary picks cannot change it.",
     ],
   },
@@ -386,12 +420,12 @@ claude → app · 2 to link
     day: "day-two",
     title: "Check on it, or take it all back.",
     summary:
-      "Each preview ends with the command that applies it, and each problem names its fix. Tack can also undo everything it made.",
+      "Sync and cleanup previews end with the command that applies them, and each problem `doctor` finds names its fix. Tack can also undo everything it made.",
     run: [
       "tack status --project app",
       "tack doctor",
       "tack adapter disable cursor",
-      "tack state reset --apply",
+      "tack state reset",
     ],
     output: {
       cwd: "~",
@@ -413,9 +447,9 @@ Checked
     1 project with attached docs, all mounted and loading.`,
     },
     tack: [
-      "`status` reports every link of a project; `doctor` checks the whole machine.",
-      "Turning an agent off previews, then removes only that agent's links.",
-      "`state reset --apply` removes every link Tack made, then its state. Your files stay.",
+      "`status` counts a project's links and flags any that need attention; `doctor` checks the whole machine.",
+      "`adapter disable` previews; with `--apply` it removes only that agent's links, then turns it off.",
+      "`state reset` previews; with `--apply` it removes every link Tack made, then its state. Your files stay.",
       "`--json` gives scripts a stable contract for `status`, `sync`, `doctor` and `upgrade`.",
     ],
   },
@@ -427,8 +461,8 @@ export const also = {
   items: [
     {
       title: "Skills from GitHub.",
-      text: "Copies a skill into a source you own and records where it came from. The one command that reaches the network.",
-      proof: "tack import add github:anthropics/skills --skill pdf --into team",
+      text: "Previews copying a skill from a GitHub repository; `--apply` copies it into a source you own and records where it came from. The one command that reaches the network.",
+      proof: "tack import add github:anthropics/skills --skill pdf --into skills",
     },
     {
       title: "Checks for what you write.",
@@ -436,9 +470,9 @@ export const also = {
       proof: "tack check ~/skills",
     },
     {
-      title: "An agent you add later.",
-      text: "Installed a new agent after `tack init`? Turn it on, and the next sync links every skill you use into it.",
-      proof: "tack adapter enable opencode",
+      title: "Turn an agent back on.",
+      text: "After `adapter disable`, or for an agent you install after `tack init`: the next sync links every skill you use into it.",
+      proof: "tack adapter enable cursor",
     },
     {
       title: "Guides for your agent.",
@@ -466,14 +500,13 @@ export const limits = {
     "Commands reach Cursor, OpenCode and Pi. Claude Code and Codex get skills only.",
     "Tack does not run `git pull` for you, or edit your `.gitignore`.",
     "No hosted service, no account, no telemetry. Only `tack import add` reaches the network.",
-    "Tack is under active development and is not yet published to npm.",
   ],
 } as const;
 
 /** The closing call to action. */
 export const closing = {
   heading: "See it run, then make it yours.",
-  text: "The landing page runs the same walkthrough on a machine that lives in the page.",
+  text: "The landing page replays a coding agent setting Tack up, on a machine that lives in the page.",
   demo: "Watch the demo",
   start: "Get started",
 } as const;

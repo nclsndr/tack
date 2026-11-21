@@ -64,7 +64,11 @@ function RouteRail({
     "end 0.55",
   ]);
   return (
-    <nav className="route-rail" aria-label="Steps">
+    <nav
+      className="route-rail"
+      aria-label="Steps"
+      data-active={active === undefined ? "false" : "true"}
+    >
       <span className="route-rail-spine" aria-hidden="true">
         <span ref={fill} className="route-rail-fill" />
       </span>
@@ -132,11 +136,9 @@ export function CommandChip({ text }: { readonly text: string }) {
   const words = text.split(" ");
   return (
     <code className="proof route-chip">
-      {text.startsWith("tack ") ? (
-        <span className="proof-prompt" aria-hidden="true">
-          ${" "}
-        </span>
-      ) : null}
+      <span className="proof-prompt" aria-hidden="true">
+        ${" "}
+      </span>
       {words.map((word, index) => (
         <Fragment key={index}>
           {index === 0 ? null : " "}
@@ -257,6 +259,24 @@ function StepArticle({
                 </motion.li>
               ))}
             </ol>
+            {step.elsewhere === undefined ? null : (
+              <>
+                <motion.p
+                  className="route-side route-elsewhere"
+                  data-intro=""
+                  variants={settle(0.18, 0)}
+                >
+                  {step.elsewhere.label}
+                </motion.p>
+                <ol className="route-commands">
+                  {step.elsewhere.run.map((line, at) => (
+                    <motion.li key={line} data-intro="" variants={settle(0.2 + at * 0.06, 8)}>
+                      <CommandChip text={line} />
+                    </motion.li>
+                  ))}
+                </ol>
+              </>
+            )}
             {step.or === undefined ? null : (
               <motion.p className="route-or" data-intro="" variants={settle(0.24, 0)}>
                 <InlineCode text={step.or} />

@@ -26,7 +26,10 @@ function Opening() {
             {opening.lead}
           </motion.p>
           <motion.p className="route-opening-intro" data-intro="" variants={settle(0.2, 10)}>
-            {opening.intro}
+            <InlineCode text={opening.intro} />
+          </motion.p>
+          <motion.p className="route-opening-install" data-intro="" variants={settle(0.26, 8)}>
+            {opening.install.text} <a href={opening.install.href}>{opening.install.link}</a>.
           </motion.p>
         </div>
       </InView>
@@ -140,8 +143,12 @@ function FeaturesMarkdown() {
     const code =
       item.code === undefined
         ? ""
-        : `\n\n\`${item.code.file}\`:\n\n\`\`\`ts\n${item.code.text}\n\`\`\``;
-    const or = item.or === undefined ? "" : `\n\n${item.or}`;
+        : `\n\n\`${item.code.file}\`:\n\n\`\`\`${item.code.file.slice(item.code.file.lastIndexOf(".") + 1)}\n${item.code.text}\n\`\`\``;
+    const elsewhere =
+      item.elsewhere === undefined
+        ? ""
+        : `\n\n${item.elsewhere.label}:\n\n\`\`\`sh\n${item.elsewhere.run.join("\n")}\n\`\`\``;
+    const or = `${elsewhere}${item.or === undefined ? "" : `\n\n${item.or}`}`;
     return `### ${stepNumber(index)}. ${item.title}
 
 ${item.summary}
@@ -172,6 +179,8 @@ ${item.tack.map((fact) => `- ${fact}`).join("\n")}${output}${code}`;
 ${opening.lead}
 
 ${opening.intro}
+
+${opening.install.text} [${opening.install.link}](${opening.install.href}).
 
 ${walkthrough}
 

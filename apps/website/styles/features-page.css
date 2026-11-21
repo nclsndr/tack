@@ -516,30 +516,56 @@
   margin: 0;
 }
 
+/* Where to get Tack while it is not on npm: a quiet line under the intro, ruled in brass. */
+.landing .route-opening-install {
+  max-width: 34em;
+  margin-top: 16px !important;
+  padding-left: 14px;
+  border-left: 1px solid var(--tack-accent);
+  color: var(--tack-muted);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* The commands a step runs on another machine, under their own label. */
+.landing .route-elsewhere {
+  margin-top: 22px !important;
+}
+
+/* The rail stays faint beside the route map, and comes up once the reader reaches a step. */
+.route-rail {
+  transition: opacity var(--tack-duration-base) var(--tack-ease);
+}
+
+.route-rail[data-active="false"] {
+  opacity: 0.4;
+}
+
 /* The header names the page the reader is on. */
 .landing .landing-nav a[aria-current="page"] {
   color: var(--tack-heading);
 }
 
-/* Narrow screens: a slip under the header names the step, in place of the rail. It takes no room
-   in the flow and shows once the reader reaches the first step. */
+/* Narrow screens: a slip docked under the header card names the step, in place of the rail. It
+   takes no room in the flow, hides what scrolls under it, and shows from the first step on. */
 .route-progress {
   position: sticky;
-  top: calc(var(--landing-header-height) + 6px);
+  top: calc(var(--landing-header-height) - 4px);
   z-index: 50;
   height: 0;
   pointer-events: none;
 }
 
 .route-progress-slip {
-  display: inline-flex;
+  display: flex;
   align-items: baseline;
   gap: 10px;
-  max-width: 100%;
-  padding: 6px 12px;
+  width: calc(100% + 2 * var(--landing-card-inset, 12px));
+  margin-inline: calc(-1 * var(--landing-card-inset, 12px));
+  padding: 8px var(--landing-card-inset, 12px);
   border: 1px solid color-mix(in srgb, var(--tack-border-strong) 70%, transparent);
-  border-radius: var(--tack-radius-button);
-  background: color-mix(in srgb, var(--tack-surface) 88%, transparent);
+  border-radius: var(--landing-card-radius, 18px);
+  background: color-mix(in srgb, var(--tack-surface) 97%, transparent);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   color: var(--tack-heading);
@@ -564,10 +590,10 @@
 }
 
 @media (max-width: 639px) {
-  /* Terminal lines wrap on a phone instead of running off the frame. */
+  /* Terminal lines keep their columns on a phone and scroll sideways; the right edge fades to show
+     there is more. */
   .route-evidence .tack-terminal pre {
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
+    mask-image: linear-gradient(90deg, #000 82%, transparent);
   }
 
   .route-evidence .tack-terminal {
