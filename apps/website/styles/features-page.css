@@ -176,20 +176,32 @@
 }
 
 .catalogue-legend dl {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 24px;
+  display: grid;
+  gap: 10px 32px;
   margin: 0;
 }
 
+@media (min-width: 900px) {
+  .catalogue-legend dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .catalogue-legend dl > div {
-  display: flex;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 12px;
   align-items: baseline;
 }
 
 .catalogue-legend dd {
   margin: 0;
+}
+
+/* The mode's own name in `tack --help`, before its plain meaning. */
+.catalogue-legend dd code.catalogue-legend-cli {
+  margin-inline-end: 6px;
+  color: var(--tack-faint);
 }
 
 .catalogue-legend dd code {
@@ -332,7 +344,54 @@
   }
 }
 
+.capability-tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* A card to read first: its tag in brass, and a brass edge. */
+.capability-start {
+  padding: 1px 8px;
+  border-radius: var(--tack-radius-xs);
+  background: var(--tack-action-bg);
+  color: var(--tack-action-text);
+  font-family: var(--tack-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  line-height: 1.6;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.capability:has(.capability-start) {
+  border-color: color-mix(in srgb, var(--tack-accent) 40%, transparent);
+}
+
+/* A group with an odd number of cards ends on one wide card instead of a half-empty row: its words
+   on the left, its terminal on the right. */
+@media (min-width: 1024px) {
+  .capability:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    grid-template-rows: auto 1fr;
+    column-gap: 32px;
+  }
+
+  .capability:last-child:nth-child(odd) > .tack-terminal {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    margin-top: 0;
+  }
+}
+
 /* Also in the CLI: the landing's quiet row, ruled off after the groups. */
 .catalogue-also {
   padding-block: clamp(32px, 5vw, 64px) clamp(56px, 8vw, 96px);
+}
+
+.landing .catalogue-closing-note {
+  margin-top: -16px;
+  color: var(--tack-faint);
+  font-size: 15px;
 }

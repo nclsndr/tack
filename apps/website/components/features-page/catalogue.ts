@@ -20,7 +20,7 @@ import scriptRun from "./captures/14b-script-run.ansi?raw";
 import scriptHistory from "./captures/14c-script-history.ansi?raw";
 import profileSave from "./captures/15a-profile-save-preview.ansi?raw";
 import profileApply from "./captures/15b-profile-apply-preview.ansi?raw";
-import profileExport from "./captures/15e-profile-export.ansi?raw";
+import profileExport from "./captures/15d-profile-export-preview.ansi?raw";
 import check from "./captures/16-check.ansi?raw";
 import guide from "./captures/17a-guide.ansi?raw";
 import statusJson from "./captures/18-status-json.ansi?raw";
@@ -30,21 +30,36 @@ import { excerpt, type LineRanges } from "./excerpt.ts";
 
 /**
  * What running a command does, keyed and worded as the legend of `tack --help` (a test holds them
- * to the CLI's own map). `label` is the plain words a card shows for it.
+ * to the CLI's own map). `label` is the tag a card shows and `plain` says it for a newcomer, with
+ * `backticks` for inline code.
  */
 export const modes = {
-  read: { label: "Reads only", meaning: "changes nothing" },
-  now: { label: "Saves at once", meaning: "saves at once" },
-  plan: { label: "Previews first", meaning: "previews; add --apply to write" },
-  run: { label: "Runs a script", meaning: "executes a declared script" },
+  read: { label: "Reads only", plain: "Changes nothing.", meaning: "changes nothing" },
+  now: { label: "Saves at once", plain: "Saves its change at once.", meaning: "saves at once" },
+  plan: {
+    label: "Previews first",
+    plain: "Prints its plan and writes nothing until you add `--apply`.",
+    meaning: "previews; add --apply to write",
+  },
+  run: {
+    label: "Runs a script",
+    plain: "Runs a script a source declares.",
+    meaning: "executes a declared script",
+  },
   conditional: {
     label: "Saves or previews",
+    plain:
+      "Saves at once when it can, and previews otherwise. A folder with a `tack.yaml` registers at once; without one, Tack previews the file it would write.",
     meaning: "may save at once; see the command help conditions",
   },
 } as const;
 
 /** The tag of a card whose command is a plain shell command, not Tack. */
-export const shellMode = { label: "Shell", meaning: "a plain shell command, not Tack" } as const;
+export const shellMode = {
+  label: "Shell",
+  plain: "A plain shell command, not Tack.",
+  meaning: "a plain shell command, not Tack",
+} as const;
 
 type Mode = keyof typeof modes;
 
@@ -101,7 +116,7 @@ export const featuresPage = {
   headline: "Everything Tack does, in its own output.",
   lead: hero.subhead,
   intro:
-    "Each card names one thing Tack does and shows the command that does it, with what it printed in a test sandbox: five agents, four projects, a skills folder and a team repository. Where output runs long, the card says how many lines it leaves out.",
+    "Each agent reads skills from its own folders, so copies pile up and drift. Tack keeps the one copy you maintain and links it everywhere. Each card below names one thing Tack does and shows what its command printed in a test sandbox: five agents, four projects, a skills folder and a team repository. Where output runs long, the card says how many lines it leaves out.",
   /** The three words the rest of the page builds on. */
   terms: [
     {
@@ -120,10 +135,11 @@ export const featuresPage = {
     },
   ],
   startHeading: "Start here",
-  legend: "Each card tags how its command behaves. `tack --help` words it as:",
+  legend: "Each card tags how its command behaves, with the mode `tack --help` gives it:",
   closing: {
     heading: "Try it on your own folders.",
     text: "Set Tack up once, register a folder of skills, and preview your first sync.",
+    note: "Tack is not published to npm yet. Until it is, it installs from a clone of its repository.",
   },
 } as const;
 
@@ -251,7 +267,7 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
         lines: [
           [1, 1],
           [9, 9],
-          [47, 64],
+          [47, 67],
         ],
       }),
       card({
@@ -278,7 +294,7 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
         capture: importAdd,
         lines: [
           [1, 8],
-          [72, 77],
+          [72, 72],
           [120, 134],
         ],
       }),
@@ -289,7 +305,7 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
     label: "Projects",
     heading: "Every project, every worktree.",
     intro:
-      "Register a Git project once. Tack links into each of its worktrees, and each project can pick its own skills.",
+      "Register a Git project once, and refresh it when you add a worktree: Tack links into each of its worktrees, and each project can pick its own skills.",
     capabilities: [
       card({
         id: "register-a-project",
@@ -407,7 +423,10 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
         operation: "script run",
         mode: "run",
         capture: scriptRun,
-        lines: [[1, 20]],
+        lines: [
+          [1, 9],
+          [13, 20],
+        ],
       }),
       card({
         id: "show-a-script",
@@ -436,7 +455,7 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
     label: "Profiles",
     heading: "The exact same set, anywhere.",
     intro:
-      "A profile is a reviewed list of resources, kept in your source like any other file. Apply it to a project, or pack it into one file for a machine without your sources.",
+      "A profile is a list of resources kept as a file in your source, so you review it like any other change. Apply it to a project, or pack it into one file for a machine without your sources.",
     capabilities: [
       card({
         id: "save-a-profile",
@@ -459,21 +478,26 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
         operation: "profile apply",
         mode: "plan",
         capture: profileApply,
-        lines: [[1, 16]],
+        lines: [
+          [1, 4],
+          [7, 9],
+          [12, 16],
+        ],
       }),
       card({
         id: "bundle",
         title: "One file for CI and remote agents",
         benefit:
           "Export a profile as one bundle with checksums. `tack profile apply-bundle` sets up the same links on a fresh machine, without your sources and without fetching anything.",
-        command: "tack profile export team-docs:frontend ~/frontend.tar.gz --apply",
+        command: "tack profile export team-docs:frontend ~/frontend.tar.gz",
         cwd: "~",
         operation: "profile export",
         mode: "plan",
         capture: profileExport,
         lines: [
-          [1, 5],
-          [27, 27],
+          [1, 6],
+          [17, 19],
+          [27, 28],
         ],
       }),
     ],
@@ -487,18 +511,17 @@ export const catalogue: ReadonlyArray<CapabilityGroup> = [
     capabilities: [
       card({
         id: "doctor",
-        title: "Check the whole machine",
+        title: "Every problem names its next step",
         benefit:
-          "`tack doctor` checks state, agents, sources, projects and every link, and names the command to run next for each problem it finds.",
+          "`tack doctor` checks state, agents, sources, projects, docs and every link. Each problem it finds names the command to run next.",
         command: "tack doctor",
         cwd: "~",
         operation: "doctor",
         mode: "read",
         capture: doctor,
         lines: [
-          [1, 5],
-          [15, 18],
-          [24, 27],
+          [1, 8],
+          [32, 33],
         ],
       }),
       card({

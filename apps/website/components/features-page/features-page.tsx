@@ -139,7 +139,12 @@ function CapabilityCard({
     >
       <header className="capability-head">
         <h3 id={`${capability.id}-title`}>{capability.title}</h3>
-        <ModeTag mode={capability.mode} />
+        <span className="capability-tags">
+          {capability.start === undefined ? null : (
+            <span className="capability-start">{featuresPage.startHeading}</span>
+          )}
+          <ModeTag mode={capability.mode} />
+        </span>
       </header>
       <p className="capability-benefit">
         <InlineCode text={capability.benefit} />
@@ -160,7 +165,7 @@ function Legend() {
         <InlineCode text={featuresPage.legend} />
       </p>
       <dl>
-        {Object.entries(modes).map(([mode, { label, meaning }]) => (
+        {Object.entries(modes).map(([mode, { label, plain }]) => (
           <div key={mode}>
             <dt>
               <span className="capability-mode" data-mode={mode}>
@@ -168,7 +173,7 @@ function Legend() {
               </span>
             </dt>
             <dd>
-              <code>{mode}</code>: {meaning}
+              <code className="catalogue-legend-cli">{mode}</code> <InlineCode text={plain} />
             </dd>
           </div>
         ))}
@@ -178,7 +183,7 @@ function Legend() {
               {shellMode.label}
             </span>
           </dt>
-          <dd>{shellMode.meaning}</dd>
+          <dd>{shellMode.plain}</dd>
         </div>
       </dl>
     </div>
@@ -247,6 +252,7 @@ function Closing() {
       <div className="landing-shell">
         <h2 id="catalogue-closing-title">{featuresPage.closing.heading}</h2>
         <p>{featuresPage.closing.text}</p>
+        <p className="catalogue-closing-note">{featuresPage.closing.note}</p>
         <a href={getStartedHref} className="landing-button landing-button-primary">
           Get started
         </a>
@@ -265,14 +271,14 @@ function FeaturesMarkdown() {
           {`\n## ${group.heading}\n\n${group.intro}\n`}
           {group.capabilities.map((capability) => (
             <Fragment key={capability.id}>
-              {`\n### ${capability.title}\n\n${capability.benefit}${capability.mode === undefined ? "" : ` Mode: ${capability.mode}, ${modes[capability.mode].meaning}.`}\n`}
+              {`\n### ${capability.title}\n\n${capability.benefit}${capability.mode === undefined ? "" : ` Mode: ${capability.mode}, ${modes[capability.mode].plain}`}\n`}
               <Terminal commands={[capability.command]} output={capability.output} />
             </Fragment>
           ))}
         </Fragment>
       ))}
       {`\n## ${alsoInTack.heading}\n\n${alsoInTack.items.map((item) => `- **${item.title}** ${item.text} \`${item.command}\``).join("\n")}\n`}
-      {`\n## ${featuresPage.closing.heading}\n\n${featuresPage.closing.text} [Get started](${getStartedHref})\n`}
+      {`\n## ${featuresPage.closing.heading}\n\n${featuresPage.closing.text} ${featuresPage.closing.note} [Get started](${getStartedHref})\n`}
     </>
   );
 }

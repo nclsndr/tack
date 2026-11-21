@@ -1,12 +1,12 @@
-[1mtack catalog[22m[2m · 11 resources ·[22m[32m ✓ success[39m
+[1mtack catalog[22m[2m · 12 resources ·[22m[32m ✓ success[39m
 
 [1mSources (3)[22m
   tack[2m (declared) ·[22m
     <checkout>/apps/cli/src/builtins
-  skills[2m (derived) ·[22m ~/skills
+  skills[2m (declared) ·[22m ~/skills
   team-docs[2m (declared) ·[22m ~/team-docs
 
-[1mSkills (8)[22m
+[1mSkills (9)[22m
   author-tack-profiles[2m  tack · builtin · opt-in · user default[22m
     Author, publish, inspect and repair fixed Tack profiles. Use
     for profile files, source linkage, independent membership
@@ -52,6 +52,9 @@
   review[2m  skills[22m
     Review a change for correctness, naming and tests before it
     is pushed.
+  ship[2m  skills · opt-in[22m
+    Cut a release: bump the version, tag main and write the
+    changelog.
 
 [1mCommands (1)[22m
   release  [2mteam-docs[22m  Prepare a release from main
