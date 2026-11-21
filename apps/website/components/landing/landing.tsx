@@ -1,5 +1,5 @@
 import { agentPrompt } from "@tackup/harness/prompts/landing";
-import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useState, type KeyboardEvent, type ReactNode } from "react";
 import { demoWalkthrough } from "../../demo/demo-walkthrough.ts";
 import { Terminal } from "../terminal.tsx";
 import { closing, demo, features, getStarted, hero, questions, story } from "./content.ts";
@@ -17,10 +17,8 @@ import {
   IntroFallback,
 } from "./hero-intro.tsx";
 import { InlineCode } from "./inline-code.tsx";
-import { Mark } from "./mark.tsx";
+import { docsHref, featuresHref, SiteFooter, SiteHeader } from "./site-chrome.tsx";
 import { Story } from "./story.tsx";
-
-const docsHref = "/docs/";
 
 /** Copies text to the clipboard and reports the result in a live region. */
 function CopyButton({ text, label }: { readonly text: string; readonly label: string }) {
@@ -107,62 +105,6 @@ function Tabs({
         </div>
       ))}
     </div>
-  );
-}
-
-/**
- * Whether the page has scrolled past `marker`, a strip at its top: the header floats as a card from
- * then on. An observer watches the strip, so nothing runs on each scrolled frame.
- */
-function useScrolledPast(marker: { readonly current: HTMLElement | null }) {
-  const [past, setPast] = useState(false);
-  useEffect(() => {
-    const element = marker.current;
-    if (element === null) return undefined;
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry !== undefined) setPast(entry.isIntersecting === false);
-    });
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [marker]);
-  return past;
-}
-
-/** Without JavaScript nothing watches the scroll, so the card floats from the start. */
-const headerFallback =
-  ".landing-header-bar::before{opacity:1!important;transform:none!important;box-shadow:var(--landing-card-shadow-raised)!important}";
-
-/**
- * The header stays at the top of the screen as the page scrolls, as the docs navigation does. At
- * the top of the page it sits flush on the hero; once the page leaves the top, a card pops out
- * behind it.
- */
-function Header() {
-  const marker = useRef<HTMLSpanElement>(null);
-  const floating = useScrolledPast(marker);
-  return (
-    <>
-      <span ref={marker} className="landing-header-marker" aria-hidden="true" />
-      <noscript>
-        <style>{headerFallback}</style>
-      </noscript>
-      <header className="landing-header" data-floating={floating === true ? "true" : "false"}>
-        <div className="landing-header-bar landing-shell">
-          <a href="/" className="landing-wordmark" aria-label="Tack home">
-            <Mark className="landing-mark" />
-            <span>tack</span>
-          </a>
-          <nav aria-label="Main" className="landing-nav">
-            <a href="#demo">Demo</a>
-            <a href="#features">Features</a>
-            <a href={docsHref}>Docs</a>
-          </nav>
-          <a href="#get-started" className="landing-button landing-button-primary">
-            Get started
-          </a>
-        </div>
-      </header>
-    </>
   );
 }
 
@@ -294,21 +236,6 @@ function Closing() {
   );
 }
 
-function Footer() {
-  return (
-    <footer className="landing-footer">
-      <div className="landing-shell landing-footer-row">
-        <a href="/" className="landing-wordmark" aria-label="Tack home">
-          <Mark className="landing-mark" />
-          <span>tack</span>
-        </a>
-        <p>{closing.footerLine}</p>
-        <a href={docsHref}>Docs</a>
-      </div>
-    </footer>
-  );
-}
-
 /** The Markdown twin of the landing page: the same copy, without layout or illustrations. */
 function LandingMarkdown() {
   const walkthrough = demoWalkthrough.map((step) => `$ ${step.command}`).join("\n");
@@ -353,6 +280,8 @@ ${featureList}
 
 ${also}
 
+${features.more.text}: [${featuresHref}](${featuresHref})
+
 ## ${story.heading}
 
 ${story.intro}
@@ -391,7 +320,7 @@ export function Landing() {
       <a href="#main" className="landing-skip">
         Skip to content
       </a>
-      <Header />
+      <SiteHeader page="landing" />
       <main id="main">
         <Hero />
         <AfterHero />
@@ -399,7 +328,7 @@ export function Landing() {
         <Questions />
         <Closing />
       </main>
-      <Footer />
+      <SiteFooter />
     </div>
   );
 }

@@ -159,6 +159,10 @@ export const features = {
       },
     ],
   },
+  /** The link to the page that walks through every feature. */
+  more: {
+    text: "Every feature, step by step",
+  },
 } as const;
 
 /** Getting started: the install command, the first commands and the Node requirement. */
