@@ -1,9 +1,9 @@
 import { motion } from "motion/react";
 import { DraftingSheet, InView, settle } from "../landing/drafting-sheet.tsx";
-import { InlineCode, Proof } from "../landing/inline-code.tsx";
+import { InlineCode } from "../landing/inline-code.tsx";
 import { docsHref, featuresHref, SiteFooter, SiteHeader } from "../landing/site-chrome.tsx";
 import { also, closing, days, limits, opening, steps } from "./content.ts";
-import { stepNumber, Walkthrough } from "./walkthrough.tsx";
+import { CommandChip, stepNumber, Walkthrough } from "./walkthrough.tsx";
 
 const startHref = `${docsHref}getting-started`;
 
@@ -89,7 +89,7 @@ function Beyond() {
                 <p>
                   <InlineCode text={item.text} />
                 </p>
-                <Proof text={item.proof} />
+                <CommandChip text={item.proof} />
               </motion.article>
             ))}
           </div>
@@ -136,7 +136,7 @@ function FeaturesMarkdown() {
     const output =
       item.output === undefined
         ? ""
-        : `\n\n\`\`\`text\n$ ${item.output.command}\n${item.output.text}\n\`\`\``;
+        : `\n\n\`\`\`text\n$ ${item.output.command}\n${item.output.text}\n\`\`\`${item.output.cut === undefined ? "" : `\n\n${item.output.cut}`}`;
     const code =
       item.code === undefined
         ? ""

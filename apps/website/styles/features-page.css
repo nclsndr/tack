@@ -325,7 +325,7 @@
 
 @media (min-width: 800px) {
   .route-plate-grid {
-    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
     gap: 40px;
   }
 }
@@ -389,6 +389,7 @@
 }
 
 .route-page code:not(.proof) {
+  white-space: nowrap;
   color: var(--tack-agent);
   font-family: var(--tack-font-mono);
   font-size: 0.86em;
@@ -487,4 +488,100 @@
 
 .route-closing-actions {
   justify-content: center;
+}
+
+/* Terminal and code windows keep their own line breaks. */
+.route-page pre code:not(.proof) {
+  white-space: inherit;
+}
+
+/* A command chip wraps only between its words, never inside a flag. */
+.route-chip {
+  overflow-wrap: normal;
+}
+
+.route-word {
+  white-space: nowrap;
+}
+
+/* What an excerpt leaves out, and the reader's caption, under their frames. */
+.landing .route-cut {
+  margin-top: 10px !important;
+  color: var(--tack-faint);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.route-reader {
+  margin: 0;
+}
+
+/* The header names the page the reader is on. */
+.landing .landing-nav a[aria-current="page"] {
+  color: var(--tack-heading);
+}
+
+/* Narrow screens: a slip under the header names the step, in place of the rail. It takes no room
+   in the flow and shows once the reader reaches the first step. */
+.route-progress {
+  position: sticky;
+  top: calc(var(--landing-header-height) + 6px);
+  z-index: 50;
+  height: 0;
+  pointer-events: none;
+}
+
+.route-progress-slip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  max-width: 100%;
+  padding: 6px 12px;
+  border: 1px solid color-mix(in srgb, var(--tack-border-strong) 70%, transparent);
+  border-radius: var(--tack-radius-button);
+  background: color-mix(in srgb, var(--tack-surface) 88%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  color: var(--tack-heading);
+  font-size: 14px;
+  line-height: 1.4;
+  opacity: 0;
+  transition: opacity var(--tack-duration-fast) var(--tack-ease);
+}
+
+.route-progress-slip .route-rail-number {
+  color: var(--tack-accent);
+}
+
+.route-progress[data-shown="true"] .route-progress-slip {
+  opacity: 1;
+}
+
+@media (min-width: 1024px) {
+  .route-progress {
+    display: none;
+  }
+}
+
+@media (max-width: 639px) {
+  /* Terminal lines wrap on a phone instead of running off the frame. */
+  .route-evidence .tack-terminal pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .route-evidence .tack-terminal {
+    font-size: 11.5px;
+  }
+
+  /* Each link's agent goes under its path. */
+  .route-links .links-row {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+
+  .route-links .links-agent {
+    flex-basis: 100%;
+    margin-inline-start: 23px;
+  }
 }

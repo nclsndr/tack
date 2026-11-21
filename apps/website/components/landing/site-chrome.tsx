@@ -10,18 +10,29 @@ export const featuresHref = "/features";
 
 /**
  * Whether the page has scrolled past `marker`, a strip at its top: the header floats as a card from
- * then on. An observer watches the strip, so nothing runs on each scrolled frame.
+ * then on. The strip's place is read at most once a frame while the page scrolls, and once at the
+ * start. An observer would miss the scroll the docs router restores after a reload, which leaves
+ * the header flat over the content.
  */
 function useScrolledPast(marker: { readonly current: HTMLElement | null }) {
   const [past, setPast] = useState(false);
   useEffect(() => {
     const element = marker.current;
     if (element === null) return undefined;
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry !== undefined) setPast(entry.isIntersecting === false);
-    });
-    observer.observe(element);
-    return () => observer.disconnect();
+    let frame = 0;
+    const read = () => {
+      frame = 0;
+      setPast(element.getBoundingClientRect().bottom <= 0);
+    };
+    const schedule = () => {
+      if (frame === 0) frame = window.requestAnimationFrame(read);
+    };
+    read();
+    window.addEventListener("scroll", schedule, { passive: true });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+    };
   }, [marker]);
   return past;
 }

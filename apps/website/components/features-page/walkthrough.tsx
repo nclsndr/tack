@@ -1,8 +1,8 @@
 import { motion } from "motion/react";
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { Fragment, useEffect, useRef, useState, type RefObject } from "react";
 import { corners, ease, InView, settle } from "../landing/drafting-sheet.tsx";
 import { Illustration } from "../landing/illustration.tsx";
-import { InlineCode, Proof } from "../landing/inline-code.tsx";
+import { InlineCode } from "../landing/inline-code.tsx";
 import { useScrollFrames } from "../landing/scroll-motion.ts";
 import { Terminal } from "../terminal.tsx";
 import { days, steps, type Step } from "./content.ts";
@@ -124,7 +124,30 @@ function LinksPlate() {
   );
 }
 
-/** A source file the step writes, in the terminal's frame. */
+/**
+ * A command on a proof slip, the landing's monospace chip, that wraps only between words: a flag
+ * such as `--target-root` never breaks after its dashes.
+ */
+export function CommandChip({ text }: { readonly text: string }) {
+  const words = text.split(" ");
+  return (
+    <code className="proof route-chip">
+      {text.startsWith("tack ") ? (
+        <span className="proof-prompt" aria-hidden="true">
+          ${" "}
+        </span>
+      ) : null}
+      {words.map((word, index) => (
+        <Fragment key={index}>
+          {index === 0 ? null : " "}
+          <span className="route-word">{word}</span>
+        </Fragment>
+      ))}
+    </code>
+  );
+}
+
+/** A file of the team's source, in the terminal's frame. */
 function CodeWindow({ file, text }: { readonly file: string; readonly text: string }) {
   if (import.meta.env.SSG_MD === true) return null;
   return (
@@ -149,25 +172,32 @@ function StepEvidence({ step }: { readonly step: Step }) {
   return (
     <div className="route-evidence">
       {step.id === "sync" ? <LinksPlate /> : null}
-      {step.output !== undefined ? (
-        <Terminal
-          title={step.output.cwd}
-          commands={[step.output.command]}
-          output={step.output.text}
-        />
-      ) : null}
       {step.code !== undefined ? <CodeWindow file={step.code.file} text={step.code.text} /> : null}
+      {step.output !== undefined ? (
+        <div>
+          <Terminal
+            title={step.output.cwd}
+            commands={[step.output.command]}
+            output={step.output.text}
+          />
+          {step.output.cut === undefined ? null : <p className="route-cut">{step.output.cut}</p>}
+        </div>
+      ) : null}
       {step.id === "docs" ? (
-        <div className="route-reader">
+        <figure className="route-reader">
           <Illustration
-            name="docs-reader"
+            name="features-reader"
             widths={[640, 1280]}
             sizes="(max-width: 1024px) 100vw, 860px"
-            width={2268}
-            height={1560}
-            alt="Screenshot: the Tack docs reader showing an architecture walkthrough, with its document index, metadata and a figure."
+            width={2560}
+            height={1600}
+            alt="Screenshot: the Tack docs reader on project app, showing the team handbook's Releases page with its contents and a file-tree figure."
           />
-        </div>
+          <figcaption className="route-cut">
+            <code>tack docs serve</code> on this walkthrough's project: the team handbook, read from{" "}
+            <code>~/team</code>.
+          </figcaption>
+        </figure>
       ) : null}
     </div>
   );
@@ -188,7 +218,7 @@ function StepArticle({
 }) {
   return (
     <article id={step.id} className="route-step" aria-labelledby={`${step.id}-title`}>
-      <InView className="route-step-head" amount={0.6}>
+      <InView className="route-step-head" amount={0.3}>
         <motion.span className="route-step-number" data-intro="" variants={settle(0, 6)}>
           {stepNumber(index)}
         </motion.span>
@@ -223,7 +253,7 @@ function StepArticle({
             <ol className="route-commands">
               {step.run.map((line, at) => (
                 <motion.li key={line} data-intro="" variants={settle(0.06 + at * 0.06, 8)}>
-                  <Proof text={line} />
+                  <CommandChip text={line} />
                 </motion.li>
               ))}
             </ol>
@@ -266,8 +296,25 @@ function StepArticle({
 export function Walkthrough() {
   const track = useRef<HTMLDivElement>(null);
   const active = useActiveStep(steps.map((step) => step.id));
+  const at = steps.findIndex((step) => step.id === active);
+  const current = steps[at];
   return (
     <section className="route" aria-label="Walkthrough">
+      {/* On narrow screens, where the rail does not fit, a slip under the header names the step. */}
+      <div
+        className="route-progress"
+        aria-hidden="true"
+        data-shown={current === undefined ? "false" : "true"}
+      >
+        <div className="landing-shell">
+          <span className="route-progress-slip">
+            <span className="route-rail-number">
+              {current === undefined ? "" : `${stepNumber(at)} / ${stepNumber(steps.length - 1)}`}
+            </span>
+            <span>{current?.title.replace(/\.$/u, "")}</span>
+          </span>
+        </div>
+      </div>
       <div ref={track} className="landing-shell route-grid">
         <RouteRail track={track} active={active} />
         <div className="route-steps">
