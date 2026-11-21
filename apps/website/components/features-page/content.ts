@@ -38,6 +38,7 @@ export const intro = {
     "Every coding agent looks for your setup in its own folder, in every project and every worktree. You fix one copy and the others drift.",
   tagline: "Write a skill once. Tack links it wherever your agents look, in every project.",
   facts: ["Local CLI", "No account, no telemetry", "Open source, MIT"],
+  limitsLink: "What Tack does not do ↓",
   indexLabel: "Jump to",
 } as const;
 
@@ -168,7 +169,7 @@ export const lenses = [
       },
       {
         title: "Skills from GitHub, copied into your source.",
-        text: "Tack copies the skills you choose into a source you own and records where they came from. The next sync links them.",
+        text: "Tack copies the skills you choose into a source you own and records where they came from. The next sync links them, unless a skill is opt-in.",
         command: "tack import add github:org/repo --skill pdf --into agent-setup",
       },
       {
@@ -186,7 +187,7 @@ export const lenses = [
       },
       {
         title: "Move the folder, keep the setup.",
-        text: "`tack source relocate` points a registered source at its new folder. It keeps its registration, so every pick stays.",
+        text: "`tack source relocate` points a registered source at its new folder. It keeps its registration, so every pick stays, and the next sync points the links at the new folder.",
       },
     ],
   },
@@ -226,8 +227,8 @@ export const lenses = [
       },
       {
         title: "For you, or for one project.",
-        text: "Link a skill at user level and every project sees it, or link it into one project's own agent folders.",
-        command: "tack sync --user --apply",
+        text: "Pick a skill for yourself with `--user` and every project sees it, or pick it for one project's own agent folders; the next sync links it.",
+        command: "tack pick include review --user",
       },
     ],
   },
@@ -369,7 +370,7 @@ export const lenses = [
     details: [
       {
         title: "Save what you use now.",
-        text: "`tack profile save` copies your current picks into a profile file, after a preview.",
+        text: "`tack profile save` copies the set you use now, defaults and picks, into a profile file, after a preview.",
         command: "tack profile save ~/agent-setup reviewer --project app",
       },
       {
@@ -409,7 +410,7 @@ export const groundRules = {
   rules: [
     {
       title: "Preview first.",
-      text: "Commands that change links print their plan first; `--apply`, or your yes in `tack explore`, writes it. Picks, registrations and settings save at once and link nothing. Only `tack init` links at once, to set Tack up.",
+      text: "Commands that change links, or write into your source, print their plan first; `--apply`, or your yes in `tack explore`, writes it. Picks, registrations and settings save at once and link nothing. Only `tack init` links at once, to set Tack up.",
       command: "tack sync --all",
     },
     {
@@ -432,7 +433,7 @@ export const groundRules = {
     },
     {
       title: "Built for agents too.",
-      text: "Every view ends with the next command to run, and `--json` gives programs a stable contract for status, sync, doctor and upgrade.",
+      text: "Views end with the next command to run, and `--json` gives programs a stable contract for status, sync, doctor and upgrade.",
     },
   ],
   limitsHeading: "What Tack does not do",
