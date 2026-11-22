@@ -146,6 +146,7 @@ it.layer(LiveTestLayer)("tack completion", (completionIt) => {
         "copilot",
         "cursor",
         "gemini",
+        "junie",
         "opencode",
         "pi",
       ]);
@@ -155,11 +156,12 @@ it.layer(LiveTestLayer)("tack completion", (completionIt) => {
         "copilot",
         "cursor",
         "gemini",
+        "junie",
         "opencode",
         "pi",
       ]);
       expect(yield* complete(["adapter", "enable", "claude", "codex", "gemini", "pi"], "")).toEqual(
-        ["cline", "copilot", "cursor", "opencode"],
+        ["cline", "copilot", "cursor", "junie", "opencode"],
       );
       expect(yield* complete(["adapter", "disable", "claude"], "")).toEqual([]);
     }),

@@ -1,6 +1,6 @@
 ---
 title: Get started
-description: Install Tack, set up this machine, register a folder of skills and link it into a project for Claude Code, Codex, Cursor, GitHub Copilot CLI, Gemini CLI, Cline, OpenCode and Pi.
+description: Install Tack, set up this machine, register a folder of skills and link it into a project for Claude Code, Codex, Cursor, GitHub Copilot CLI, Gemini CLI, Cline, Junie, OpenCode and Pi.
 ---
 
 import { Agent, Human } from "../../components/audience.tsx";
@@ -53,7 +53,7 @@ copies them.
 ## 1. Install and set up this machine
 
 `tack init` sets up Tack at once and prints what it did: its state in `~/.tack`, the agents it found
-(Claude Code, Codex, Cursor, GitHub Copilot CLI, Gemini CLI, Cline, OpenCode, Pi) and Tack's own skills linked into each. Running it again changes
+(Claude Code, Codex, Cursor, GitHub Copilot CLI, Gemini CLI, Cline, Junie, OpenCode, Pi) and Tack's own skills linked into each. Running it again changes
 nothing.
 
 <Terminal commands={["npm install --global @tackup/cli", "tack init"]} />
@@ -90,12 +90,16 @@ repository you share, commit the `tack.yaml` that Tack writes, so others get the
 Repeat this section for each folder of skills. Scripts and anything else the flags cannot say go
 into `tack.yaml` by hand; your agent's `manage-tack-sources` skill knows how.
 
-Every agent gets your skills. Commands reach Cline, Cursor, OpenCode and Pi only: Claude Code,
+Every agent gets your skills. Commands reach Cline, Cursor, Junie, OpenCode and Pi only: Claude Code,
 Codex, GitHub Copilot CLI and Gemini CLI have no Markdown commands folder Tack links into, and the
 `tack sync` preview names the agents a selected command does not reach. Cline runs a command as
 `/NAME.md`, extension included. Context is not
 selected unless you pick it, and even then reaches no agent, because no agent has a folder Tack can
 link it into.
+
+Some agents also read another agent's folder. Junie reads Codex's `.agents/skills` as well as its
+own `.junie/skills`, so with both agents set up, Junie lists each skill twice. Junie also loads a
+project's skills and commands only once you trust the project.
 
 ## 3. Link them into a project
 

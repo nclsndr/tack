@@ -153,6 +153,12 @@ describe("sync plan view", () => {
     expect(render({ plan: { ...plan, units: [...plan.units, cline] } }).flatText).toContain(
       "Commands reach cline only: Tack does not link commands for claude, codex. cline runs a command as /NAME.md, extension included.",
     );
+    const junie = { ...cursor, adapter: "junie" };
+    const withJunie = render({ plan: { ...plan, units: [...plan.units, junie] } }).flatText;
+    expect(withJunie).toContain(
+      "Commands reach junie only: Tack does not link commands for claude, codex.",
+    );
+    expect(withJunie).not.toContain("junie runs a command");
     const context = {
       kind: "context",
       name: "conventions",
@@ -174,6 +180,10 @@ describe("sync plan view", () => {
     const { flatText } = render({ plan: onlyContext });
     expect(flatText).toContain("Context reaches no agent: Tack does not link context yet.");
     expect(flatText).not.toContain("Commands reach");
+    // Junie reads AGENTS.md on its own, but Tack links no context for it either.
+    expect(
+      render({ plan: { ...onlyContext, units: [...onlyContext.units, junie] } }).flatText,
+    ).toContain("Context reaches no agent: Tack does not link context yet.");
   });
 
   it("names what a project unit leaves to the user's link", () => {

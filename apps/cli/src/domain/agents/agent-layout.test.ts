@@ -67,6 +67,10 @@ it.each([
   ["copilot", "project-root", "skill", "/work/repo/.github/skills"],
   ["gemini", "user", "skill", "/home/operator/.gemini/skills"],
   ["gemini", "project-root", "skill", "/work/repo/.gemini/skills"],
+  ["junie", "user", "skill", "/home/operator/.junie/skills"],
+  ["junie", "user", "command", "/home/operator/.junie/commands"],
+  ["junie", "project-root", "skill", "/work/repo/.junie/skills"],
+  ["junie", "project-root", "command", "/work/repo/.junie/commands"],
   ["opencode", "user", "skill", "/home/operator/.config/opencode/skills"],
   ["opencode", "user", "command", "/home/operator/.config/opencode/commands"],
   ["opencode", "project-root", "skill", "/work/repo/.opencode/skills"],
@@ -111,6 +115,16 @@ it("places a Pi command as a direct Markdown child of the prompts folder", () =>
   ).toBe("/work/repo/.pi/prompts/review.md");
 });
 
+it("places a Junie command as a Markdown file named after the command", () => {
+  expect(
+    managedLinkDestinationPath({
+      adapter: "junie",
+      address: { kind: "command", name: "review" },
+      target: targets[1],
+    }),
+  ).toBe("/work/repo/.junie/commands/review.md");
+});
+
 it("refuses to place a managed link for a kind the adapter does not deliver", () => {
   expect(() =>
     managedLinkDestinationPath({
@@ -136,6 +150,8 @@ it("lists every folder that may hold managed links for the user and each project
     "/home/ada/.cursor/skills",
     "/home/ada/.cursor/commands",
     "/home/ada/.gemini/skills",
+    "/home/ada/.junie/skills",
+    "/home/ada/.junie/commands",
     "/home/ada/.config/opencode/skills",
     "/home/ada/.config/opencode/commands",
     "/home/ada/.pi/agent/skills",
@@ -148,6 +164,8 @@ it("lists every folder that may hold managed links for the user and each project
     "/work/demo/.cursor/skills",
     "/work/demo/.cursor/commands",
     "/work/demo/.gemini/skills",
+    "/work/demo/.junie/skills",
+    "/work/demo/.junie/commands",
     "/work/demo/.opencode/skills",
     "/work/demo/.opencode/commands",
     "/work/demo/.pi/skills",

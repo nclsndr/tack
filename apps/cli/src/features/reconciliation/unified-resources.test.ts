@@ -503,7 +503,42 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
       }),
   );
 
-  test.effect("links skills and commands into the OpenCode and Pi folders of a project root", () =>
+  test.effect("links skills and commands into Junie's own folders", () =>
+    Effect.gen(function* () {
+      const f = yield* fixture();
+      yield* enableAdapters(f.options, ["junie"]);
+      const entries = [
+        {
+          link: f.path.join(f.home, ".junie", "commands", "review.md"),
+          source: f.path.join(f.source, "commands", "review.md"),
+        },
+        {
+          link: f.path.join(f.home, ".junie", "skills", "review"),
+          source: f.path.join(f.source, "skills", "review"),
+        },
+      ];
+
+      const preview = yield* f.reconcile(false);
+      const units = preview.plan.units.filter((unit) => unit.adapter === "junie");
+      expect(units.map((unit) => unit.delivery)).toEqual([
+        { command: "delivered", skill: "delivered" },
+      ]);
+      expect(
+        units
+          .flatMap((unit) => unit.actions)
+          .flatMap((action) => (action._tag === "link-create" ? [action.destinationPath] : []))
+          .sort(),
+      ).toEqual(entries.map((entry) => entry.link));
+
+      expect((yield* f.reconcile()).partial).toBe(false);
+      for (const entry of entries) {
+        expect(yield* f.fs.readLink(entry.link)).not.toMatch(/^\//);
+        expect(yield* f.fs.realPath(entry.link)).toBe(entry.source);
+      }
+    }),
+  );
+
+  test.effect("links skills and commands into Junie, OpenCode and Pi project folders", () =>
     Effect.gen(function* () {
       const f = yield* fixture();
       const anchor = f.path.join(f.root, "git-common");
@@ -535,7 +570,7 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
         });
 
       const result = yield* syncResources(f.options, {
-        adapterOverride: ["opencode", "pi"],
+        adapterOverride: ["junie", "opencode", "pi"],
         apply: true,
         cwd: projectRoot,
         selector: { _tag: "project", projectName: "app" },
@@ -543,10 +578,12 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
       }).pipe(Effect.provideService(Git, git));
 
       expect(result.partial).toBe(false);
-      expect(result.plan.units.map((unit) => unit.adapter)).toEqual(["opencode", "pi"]);
+      expect(result.plan.units.map((unit) => unit.adapter)).toEqual(["junie", "opencode", "pi"]);
       const command = f.path.join(f.source, "commands", "review.md");
       const skill = f.path.join(f.source, "skills", "review");
       for (const [link, source] of [
+        [f.path.join(projectRoot, ".junie", "commands", "review.md"), command],
+        [f.path.join(projectRoot, ".junie", "skills", "review"), skill],
         [f.path.join(projectRoot, ".opencode", "commands", "review.md"), command],
         [f.path.join(projectRoot, ".opencode", "skills", "review"), skill],
         [f.path.join(projectRoot, ".pi", "prompts", "review.md"), command],

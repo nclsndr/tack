@@ -104,7 +104,7 @@ export const features = {
   agents: {
     title: "Every agent, every project, every worktree.",
     lines: [
-      "One skill folder, linked into Claude Code, Codex, Cursor, Copilot CLI, Gemini CLI, Cline, OpenCode and Pi: for you, and in each project you register, worktrees included.",
+      "One skill folder, linked into Claude Code, Codex, Cursor, Copilot CLI, Gemini CLI, Cline, Junie, OpenCode and Pi: for you, and in each project you register, worktrees included.",
       "Turn on a new agent and one sync links every skill you use. Turn it off and only Tack's links go.",
     ],
     note: "Each agent also gets the `use-tack` skill, so it can run Tack for you.",
@@ -122,6 +122,7 @@ export const features = {
         { agent: "Copilot CLI", path: ".github/skills/review" },
         { agent: "Cursor", path: ".cursor/skills/review" },
         { agent: "Gemini CLI", path: ".gemini/skills/review" },
+        { agent: "Junie", path: ".junie/skills/review" },
         { agent: "OpenCode", path: ".opencode/skills/review" },
         { agent: "Pi", path: ".pi/skills/review" },
       ],

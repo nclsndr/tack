@@ -51,6 +51,14 @@ const agentAdapterTable = {
     projectSkillDirectory: [".gemini", "skills"],
     userSkillDirectory: [".gemini", "skills"],
   },
+  // Junie reads commands from these folders and from their immediate subfolders.
+  junie: {
+    capabilities: ["skill-links", "command-links"],
+    projectCommandDirectory: [".junie", "commands"],
+    userCommandDirectory: [".junie", "commands"],
+    projectSkillDirectory: [".junie", "skills"],
+    userSkillDirectory: [".junie", "skills"],
+  },
   opencode: {
     capabilities: ["skill-links", "command-links"],
     projectCommandDirectory: [".opencode", "commands"],

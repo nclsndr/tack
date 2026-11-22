@@ -115,6 +115,7 @@ it.layer(LiveTestLayer)("tack init", (initIt) => {
             { adapter: "copilot", home: at(".copilot"), found: false },
             { adapter: "cursor", home: at(".cursor"), found: false },
             { adapter: "gemini", home: at(".gemini"), found: false },
+            { adapter: "junie", home: at(".junie"), found: false },
             { adapter: "opencode", home: at(".config/opencode"), found: false },
             { adapter: "pi", home: at(".pi"), found: false },
           ],
@@ -211,6 +212,12 @@ it.layer(LiveTestLayer)("tack init", (initIt) => {
       adapters: ["cline"],
       skills: [".cline/skills"],
     },
+    {
+      name: "Junie by its home folder",
+      homes: [".junie"],
+      adapters: ["junie"],
+      skills: [".junie/skills"],
+    },
   ])("finds $name and links the built-in skills there", (agent) =>
     Effect.gen(function* () {
       const { at, fileSystem, json } = yield* machine(agent.homes);
@@ -235,10 +242,10 @@ it.layer(LiveTestLayer)("tack init", (initIt) => {
         diagnostics: [{ code: "agent-home-not-found", severity: "warning" }],
       });
       expect(envelope.diagnostics[0]?.message).toContain(
-        "it looks for .claude, .cline, Documents/Cline, .codex, .agents, .copilot, .cursor, .gemini, .config/opencode, .pi",
+        "it looks for .claude, .cline, Documents/Cline, .codex, .agents, .copilot, .cursor, .gemini, .junie, .config/opencode, .pi",
       );
       expect(envelope.diagnostics[0]?.message).toContain(
-        "Name yours with --adapter claude, cline, codex, copilot, cursor, gemini, opencode or pi.",
+        "Name yours with --adapter claude, cline, codex, copilot, cursor, gemini, junie, opencode or pi.",
       );
       expect(appliedOf(envelope)).toMatchObject({ state: "created", adaptersEnabled: [] });
       expect(yield* fileSystem.exists(`${state}/state.json`)).toBe(true);

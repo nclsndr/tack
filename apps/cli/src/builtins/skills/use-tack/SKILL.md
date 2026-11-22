@@ -1,6 +1,6 @@
 ---
 name: use-tack
-description: Operate Tack, which manages cross-agent skills, commands, context, docs and scripts. Use for any `tack` command - discover resources, pick and sync them into Claude Code, Codex, Cursor, GitHub Copilot CLI, Gemini CLI, Cline, OpenCode or Pi, attach and search docs, run declared scripts, check health and upgrades. To create or edit a source, use the `manage-tack-sources` skill.
+description: Operate Tack, which manages cross-agent skills, commands, context, docs and scripts. Use for any `tack` command - discover resources, pick and sync them into Claude Code, Codex, Cursor, GitHub Copilot CLI, Gemini CLI, Cline, Junie, OpenCode or Pi, attach and search docs, run declared scripts, check health and upgrades. To create or edit a source, use the `manage-tack-sources` skill.
 metadata:
   tack: |
     version: 1
@@ -99,7 +99,7 @@ built-in skills at the new version.
 
 `tack init` sets up a machine at once, with no preview and no `--apply`: the state, the agents it
 finds in the home (`~/.claude`, `~/.cline` or `~/Documents/Cline`, `~/.codex` or `~/.agents`,
-`~/.copilot`, `~/.cursor`, `~/.gemini`, `~/.config/opencode`, `~/.pi`) and the user links of
+`~/.copilot`, `~/.cursor`, `~/.gemini`, `~/.junie`, `~/.config/opencode`, `~/.pi`) and the user links of
 `sync --user` for them, which on a new machine are the built-in skills. It prints what it wrote.
 `--adapter ID`, repeatable, replaces detection; init never disables an adapter. It lists the
 hand-made entries in those agents' user folders and leaves them untouched, and never touches
@@ -206,6 +206,6 @@ project, or to move theirs away and sync.
 `tack state reset --apply` answers only an explicit request to remove all Tack-managed links and
 state.
 
-Choices accept `skill`, `command` and `context`. Every adapter links skills, Cline, Cursor, OpenCode
-and Pi also link commands, and context has no delivery adapter yet. Scripts run by reference with
+Choices accept `skill`, `command` and `context`. Every adapter links skills, Cline, Cursor, Junie,
+OpenCode and Pi also link commands, and context has no delivery adapter yet. Scripts run by reference with
 `tack script run`, and docs use the attachment workflow.

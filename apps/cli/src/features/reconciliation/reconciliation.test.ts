@@ -120,6 +120,7 @@ it.layer(LiveTestLayer)("reconciliation planning", (planningIt) => {
           path.join(project, ".github", "skills"),
           path.join(project, ".cursor", "skills"),
           path.join(project, ".gemini", "skills"),
+          path.join(project, ".junie", "skills"),
           path.join(project, ".opencode", "skills"),
           path.join(project, ".pi", "skills"),
           path.join(home, ".claude", "skills"),
@@ -128,6 +129,7 @@ it.layer(LiveTestLayer)("reconciliation planning", (planningIt) => {
           path.join(home, ".copilot", "skills"),
           path.join(home, ".cursor", "skills"),
           path.join(home, ".gemini", "skills"),
+          path.join(home, ".junie", "skills"),
           path.join(home, ".config", "opencode", "skills"),
           path.join(home, ".pi", "agent", "skills"),
         ];
@@ -142,6 +144,7 @@ it.layer(LiveTestLayer)("reconciliation planning", (planningIt) => {
           [project, "copilot", skillsOnly],
           [project, "cursor", skillsAndCommands],
           [project, "gemini", skillsOnly],
+          [project, "junie", skillsAndCommands],
           [project, "opencode", skillsAndCommands],
           [project, "pi", skillsAndCommands],
           [home, "claude", skillsOnly],
@@ -150,6 +153,7 @@ it.layer(LiveTestLayer)("reconciliation planning", (planningIt) => {
           [home, "copilot", skillsOnly],
           [home, "cursor", skillsAndCommands],
           [home, "gemini", skillsOnly],
+          [home, "junie", skillsAndCommands],
           [home, "opencode", skillsAndCommands],
           [home, "pi", skillsAndCommands],
         ]);

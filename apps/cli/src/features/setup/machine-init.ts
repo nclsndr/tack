@@ -34,6 +34,7 @@ export const agentHomes = {
   copilot: [".copilot"],
   cursor: [".cursor"],
   gemini: [".gemini"],
+  junie: [".junie"],
   opencode: [".config/opencode"],
   pi: [".pi"],
 } as const satisfies Record<AgentAdapterId, readonly [string, ...Array<string>]>;

@@ -8,8 +8,8 @@ script execution. See the [contributing guide](../../CONTRIBUTING.md) for develo
 ## Adapters
 
 The current adapters are Claude Code (`claude`), Cline (`cline`), Codex (`codex`), GitHub Copilot
-CLI (`copilot`), Cursor (`cursor`), Gemini CLI (`gemini`), OpenCode (`opencode`) and Pi (`pi`). Tack
-links skills to these directories:
+CLI (`copilot`), Cursor (`cursor`), Gemini CLI (`gemini`), Junie (`junie`), OpenCode (`opencode`)
+and Pi (`pi`). Tack links skills to these directories:
 
 | Adapter    | User                        | Project root       |
 | ---------- | --------------------------- | ------------------ |
@@ -19,10 +19,11 @@ links skills to these directories:
 | `copilot`  | `~/.copilot/skills`         | `.github/skills`   |
 | `cursor`   | `~/.cursor/skills`          | `.cursor/skills`   |
 | `gemini`   | `~/.gemini/skills`          | `.gemini/skills`   |
+| `junie`    | `~/.junie/skills`           | `.junie/skills`    |
 | `opencode` | `~/.config/opencode/skills` | `.opencode/skills` |
 | `pi`       | `~/.pi/agent/skills`        | `.pi/skills`       |
 
-Cline, Cursor, OpenCode and Pi also link selected command files, as `<name>.md`, to these
+Cline, Cursor, Junie, OpenCode and Pi also link selected command files, as `<name>.md`, to these
 directories. Claude Code, Codex, Copilot CLI and Gemini CLI currently deliver skills only: Copilot
 CLI reads Markdown commands only from Claude Code's `.claude/commands`, and Gemini CLI reads
 commands only as TOML files.
@@ -31,6 +32,7 @@ commands only as TOML files.
 | ---------- | ----------------------------- | ----------------------- |
 | `cline`    | `~/Documents/Cline/Workflows` | `.clinerules/workflows` |
 | `cursor`   | `~/.cursor/commands`          | `.cursor/commands`      |
+| `junie`    | `~/.junie/commands`           | `.junie/commands`       |
 | `opencode` | `~/.config/opencode/commands` | `.opencode/commands`    |
 | `pi`       | `~/.pi/agent/prompts`         | `.pi/prompts`           |
 
@@ -40,10 +42,14 @@ linked command as `/<name>.md`, extension included, and the sync preview says so
 standard folders only: it does not follow `XDG_CONFIG_HOME` or `OPENCODE_CONFIG_DIR` for OpenCode,
 `PI_CODING_AGENT_DIR` for Pi, `COPILOT_HOME` for Copilot CLI, `GEMINI_CLI_HOME` for Gemini CLI or
 `CLINE_DIR` for Cline. Pi reads the project's `.pi` folders from the folder it starts in, so start
-it at the project root, and it loads project resources only after you trust the project.
+it at the project root, and it loads project resources only after you trust the project. Junie
+also loads a project's skills and commands only once you trust the project, and runs a linked
+command as `/<name>`.
 Several agents also read another agent's folder: OpenCode reads `.claude/skills` and
-`.agents/skills`; Pi, Gemini CLI and Copilot CLI read `.agents/skills`; Copilot CLI and Cline also
-read `.claude/skills`. A skill that the `claude` or `codex` adapter links can then show up twice.
+`.agents/skills`; Pi, Gemini CLI, Copilot CLI and Junie read `.agents/skills`; Copilot CLI and Cline
+also read `.claude/skills`. A skill that the `claude` or `codex` adapter links can then show up
+twice: with both `codex` and `junie` enabled, Junie finds the skill in `.agents/skills` and in
+`.junie/skills`.
 Disabling one adapter removes only its own links, so the agent can still see the skill through
 another one. Zed, Goose and Amp have no adapter: they read `.agents/skills`, so the `codex` adapter
 reaches them. An open agent session can need a restart, or `/reload` in Pi, to see a new link.
@@ -66,8 +72,8 @@ It plans the whole setup, then applies it:
    state this release cannot read fails the command before anything is planned.
 2. **Agents.** It enables the agents whose home folder exists: `claude` from `~/.claude`, `cline`
    from `~/.cline` or `~/Documents/Cline`, `codex` from `~/.codex` or `~/.agents`, `copilot` from
-   `~/.copilot`, `cursor` from `~/.cursor`, `gemini` from `~/.gemini`, `opencode` from
-   `~/.config/opencode`, `pi` from `~/.pi`. The output lists each one as found or
+   `~/.copilot`, `cursor` from `~/.cursor`, `gemini` from `~/.gemini`, `junie` from
+   `~/.junie`, `opencode` from `~/.config/opencode`, `pi` from `~/.pi`. The output lists each one as found or
    not found. `--adapter ID`, repeatable, names the agents instead. It only adds adapters and never
    disables one.
 3. **User links.** It applies the plan `tack sync --user` makes once those agents are enabled. On a

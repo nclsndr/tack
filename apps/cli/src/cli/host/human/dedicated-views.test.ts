@@ -282,7 +282,7 @@ describe("adapter list view", () => {
       style,
     );
     expect(flat(text)).toContain(
-      "Enabled claude, cline, codex, copilot, cursor, gemini, opencode, pi",
+      "Enabled claude, cline, codex, copilot, cursor, gemini, junie, opencode, pi",
     );
     expect(text).not.toContain("Not enabled");
     expect(hints).toEqual(["tack status"]);

@@ -425,9 +425,9 @@ describe("pick", () => {
 describe("adapter", () => {
   it("shows enabled and not enabled adapters", () => {
     const output = render(envelopeOf("adapterList"));
-    expect(linesOf(output)[0]).toBe("tack adapter · 2 of 8 enabled · ✓ success");
+    expect(linesOf(output)[0]).toBe("tack adapter · 2 of 9 enabled · ✓ success");
     expect(output).toMatch(/Enabled\s+codex, cursor/);
-    expect(output).toMatch(/Not enabled\s+claude, cline, copilot, gemini, opencode, pi\n/);
+    expect(output).toMatch(/Not enabled\s+claude, cline, copilot, gemini, junie, opencode, pi\n/);
     expect(hintsIn(output)).toEqual(["tack status"]);
   });
 
@@ -435,7 +435,7 @@ describe("adapter", () => {
     const output = render(envelopeOf("adapterListEmpty"));
     expect(output).toContain("No adapters are enabled, so no skills are delivered.");
     expect(output).toMatch(
-      /Not enabled\s+claude, cline, codex, copilot, cursor, gemini, opencode, pi\n/,
+      /Not enabled\s+claude, cline, codex, copilot, cursor, gemini, junie, opencode,\s+pi\n/,
     );
     expect(hintsIn(output)).toEqual(["tack adapter enable claude"]);
   });

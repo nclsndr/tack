@@ -32,7 +32,8 @@ tack init --adapter claude --adapter cursor # these agents instead of the detect
 state this release cannot read fails it before anything is planned); the adapters to enable, which
 are the agents whose home exists (`claude` from `~/.claude`, `cline` from `~/.cline` or
 `~/Documents/Cline`, `codex` from `~/.codex` or `~/.agents`, `copilot` from `~/.copilot`, `cursor`
-from `~/.cursor`, `gemini` from `~/.gemini`, `opencode` from `~/.config/opencode`, `pi` from `~/.pi`)
+from `~/.cursor`, `gemini` from `~/.gemini`, `junie` from `~/.junie`, `opencode` from
+`~/.config/opencode`, `pi` from `~/.pi`)
 unless `--adapter` names them, never disabling one; and the plan
 `sync --user` makes once they are enabled, which on a new machine links the built-in skills. It also
 lists, as information, the hand-made entries in those agents' user skill and command folders: files,
@@ -144,7 +145,7 @@ return `choice-change`, `choice-removal` and `adapter-settings` payloads.
 `tack sync --project PROJECT` previews without writing.
 `sync --include-optional` adds optional dependency edges; it does not select every opt-in
 skill; inspect the result with `status --include-optional`. `--adapter ID` (`claude`, `cline`,
-`codex`, `copilot`, `cursor`, `gemini`, `opencode` or `pi`) limits reconciliation; repeat it to name
+`codex`, `copilot`, `cursor`, `gemini`, `junie`, `opencode` or `pi`) limits reconciliation; repeat it to name
 several. `--no-adapters` plans docs mounts only, for a project: it cannot be combined with `--adapter`, `--no-docs` or `--user`.
 `--require-capability command-links` blocks every plan unit whose adapter cannot link commands.
 With no enabled adapter, sync reports `no-adapters-enabled` and delivers nothing.
@@ -167,6 +168,7 @@ when none was given), and `resources: null` means `--no-adapters`.
 | `copilot`  | `~/.copilot/skills`         | not delivered                         | `.github/skills`   | not delivered                   |
 | `cursor`   | `~/.cursor/skills`          | `~/.cursor/commands/NAME.md`          | `.cursor/skills`   | `.cursor/commands/NAME.md`      |
 | `gemini`   | `~/.gemini/skills`          | not delivered                         | `.gemini/skills`   | not delivered                   |
+| `junie`    | `~/.junie/skills`           | `~/.junie/commands/NAME.md`           | `.junie/skills`    | `.junie/commands/NAME.md`       |
 | `opencode` | `~/.config/opencode/skills` | `~/.config/opencode/commands/NAME.md` | `.opencode/skills` | `.opencode/commands/NAME.md`    |
 | `pi`       | `~/.pi/agent/skills`        | `~/.pi/agent/prompts/NAME.md`         | `.pi/skills`       | `.pi/prompts/NAME.md`           |
 
@@ -179,9 +181,10 @@ Gemini CLI reads commands only as TOML files. Tack uses only these standard fold
 `XDG_CONFIG_HOME` and `OPENCODE_CONFIG_DIR` for OpenCode, `PI_CODING_AGENT_DIR` for Pi,
 `COPILOT_HOME` for Copilot CLI, `GEMINI_CLI_HOME` for Gemini CLI and `CLINE_DIR` for Cline. Pi
 reads a project's `.pi` folders from the folder it starts in, so start it at the project root, and loads
-them only once the project is trusted. Several agents read other agents' folders too: OpenCode reads
-`.claude/skills` and `.agents/skills`; Pi, Gemini CLI and Copilot CLI read `.agents/skills`; Copilot
-CLI and Cline also read `.claude/skills`. A skill can then appear twice; `adapter disable` removes
+them only once the project is trusted. Junie also loads a project's skills and commands only once
+the project is trusted. Several agents read other agents' folders too: OpenCode reads
+`.claude/skills` and `.agents/skills`; Pi, Gemini CLI, Copilot CLI and Junie read `.agents/skills`; Copilot
+CLI and Cline also read `.claude/skills`. A skill can then appear twice, as in Junie with both `codex` and `junie` enabled; `adapter disable` removes
 only that adapter's links. Zed, Goose and Amp read `.agents/skills`, so the `codex` adapter reaches
 them. An open session may need a restart, or `/reload` in Pi, to see new links. Context has no delivery adapter yet;
 `status` reports such selected resources as undelivered, and the sync text view says which agents a

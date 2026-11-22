@@ -38,6 +38,7 @@ it("finds skills in the documented places only", () => {
       ".github/skills/agent-f/SKILL.md",
       ".gemini/skills/agent-g/SKILL.md",
       ".cline/skills/agent-h/SKILL.md",
+      ".junie/skills/agent-i/SKILL.md",
       ".windsurf/skills/not-searched/SKILL.md",
       "README.md",
     ]),
@@ -48,6 +49,7 @@ it("finds skills in the documented places only", () => {
     ".cursor/skills/agent-c (.cursor/skills)",
     ".gemini/skills/agent-g (.gemini/skills)",
     ".github/skills/agent-f (.github/skills)",
+    ".junie/skills/agent-i (.junie/skills)",
     ".opencode/skills/agent-d (.opencode/skills)",
     ".pi/skills/agent-e (.pi/skills)",
     "skills/.curated/docx (skills)",
@@ -161,6 +163,7 @@ it("asks the remote only for the places it searches", () => {
     ".github/skills",
     ".cursor/skills",
     ".gemini/skills",
+    ".junie/skills",
     ".opencode/skills",
     ".pi/skills",
   ]);
