@@ -190,8 +190,8 @@ export const sharedAgents = {
       agent: "Kilo Code",
       href: "https://github.com/Kilo-Org/kilocode/blob/main/packages/kilo-docs/pages/customize/skills.md",
       folder: ".agents/skills",
-      scope: "Project and user",
-      note: "also `.claude/skills`",
+      scope: "User only",
+      note: "Kilo refuses project links that point outside the project",
     },
     {
       agent: "Letta Code",
