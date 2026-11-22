@@ -94,8 +94,8 @@ export const demo = {
 
 /**
  * The features, one block per lens: agents, team, docs. Each block has a headline, plain lines and
- * one command as its proof. Text in `backticks` shows as inline code. Commands reach Cursor,
- * OpenCode and Pi only, and context reaches no agent, so no line here says otherwise.
+ * one command as its proof. Text in `backticks` shows as inline code. Commands reach Cline,
+ * Cursor, OpenCode and Pi only, and context reaches no agent, so no line here says otherwise.
  */
 export const features = {
   heading: "One copy, linked everywhere.",
@@ -104,7 +104,7 @@ export const features = {
   agents: {
     title: "Every agent, every project, every worktree.",
     lines: [
-      "One skill folder, linked into Claude Code, Codex, Cursor, OpenCode and Pi: for you, and in each project you register, worktrees included.",
+      "One skill folder, linked into Claude Code, Codex, Cursor, Copilot CLI, Gemini CLI, Cline, OpenCode and Pi: for you, and in each project you register, worktrees included.",
       "Turn on a new agent and one sync links every skill you use. Turn it off and only Tack's links go.",
     ],
     note: "Each agent also gets the `use-tack` skill, so it can run Tack for you.",
@@ -117,8 +117,11 @@ export const features = {
       source: "~/skills/review",
       destinations: [
         { agent: "Claude Code", path: ".claude/skills/review" },
+        { agent: "Cline", path: ".cline/skills/review" },
         { agent: "Codex", path: ".agents/skills/review" },
+        { agent: "Copilot CLI", path: ".github/skills/review" },
         { agent: "Cursor", path: ".cursor/skills/review" },
+        { agent: "Gemini CLI", path: ".gemini/skills/review" },
         { agent: "OpenCode", path: ".opencode/skills/review" },
         { agent: "Pi", path: ".pi/skills/review" },
       ],
