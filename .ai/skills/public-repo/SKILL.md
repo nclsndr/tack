@@ -12,7 +12,7 @@ keeps the edit history of PR descriptions, so a later fix does not erase a leak.
 Write every pushed artifact as if a stranger reads it:
 
 - **Neutral paths and names.** Fixtures and examples use invented users and places (`/Users/ada`,
-  `~/code/app`, `team-skills`), never the real machine's home folder, username or folders.
+  `~/code/app`, `skills-source`), never the real machine's home folder, username or folders.
 - **Public references only.** Link public URLs and public PRs. Private repositories, personal
   notes, internal docs and their paths stay out.
 - **Project vocabulary only.** Describe the change in Tack's own terms. The people and agents who
