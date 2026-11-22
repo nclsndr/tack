@@ -639,3 +639,16 @@
   justify-content: center;
   gap: 16px;
 }
+
+/* The install close: the commands in a terminal, at the width of the closing text. */
+.fp-install-commands {
+  width: min(100%, 560px);
+  margin: 0 auto 32px;
+  text-align: start;
+}
+
+.fp-install code:not(.proof, pre code) {
+  color: var(--tack-agent);
+  font-family: var(--tack-font-mono);
+  font-size: 0.86em;
+}

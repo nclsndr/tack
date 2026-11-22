@@ -1,6 +1,15 @@
+import { agentAdapterDescriptors } from "@tackup/cli/core";
 import { describe, expect, it } from "vitest";
 import { makeDemoSession, shellWords } from "../../demo/demo-shell.ts";
-import { groundRules, lenses, previewFigure, profileFigure } from "./content.ts";
+import {
+  agentsFigure,
+  groundRules,
+  install,
+  intro,
+  lenses,
+  previewFigure,
+  profileFigure,
+} from "./content.ts";
 
 const escape = String.fromCharCode(27);
 const plain = (text: string) => text.replaceAll(new RegExp(`${escape}\\[[0-9;]*m`, "g"), "");
@@ -41,5 +50,36 @@ describe("features page commands", () => {
     expect(words.slice(1).join(" ").startsWith(path)).toBe(true);
     for (const flag of words.filter((word) => word.startsWith("--")))
       expect(help).toMatch(new RegExp(`${flag}\\b`, "u"));
+  });
+});
+
+/** The folder a figure row links into: its path without the skill or command it names. */
+const folder = (path: string) => path.split("/").slice(0, -1).join("/");
+
+describe("features page agents", () => {
+  it("draws a skill link for every adapter, in its project skills folder", () => {
+    expect(agentsFigure.links.map((link) => folder(link.path)).toSorted()).toEqual(
+      agentAdapterDescriptors.map((adapter) => adapter.projectSkillDirectory.join("/")).toSorted(),
+    );
+  });
+
+  it("draws a command link for exactly the adapters that take commands", () => {
+    expect(agentsFigure.commands.map((link) => folder(link.path)).toSorted()).toEqual(
+      agentAdapterDescriptors
+        .flatMap((adapter) =>
+          "projectCommandDirectory" in adapter && adapter.projectCommandDirectory !== undefined
+            ? [adapter.projectCommandDirectory.join("/")]
+            : [],
+        )
+        .toSorted(),
+    );
+  });
+});
+
+describe("features page install", () => {
+  it("installs from a checkout and never from npm", () => {
+    expect(intro.facts).toContain("Not on npm yet");
+    expect(install.commands.at(-1)).toBe("bun run install:local");
+    expect(JSON.stringify([intro, install, lenses, groundRules])).not.toContain("npm install");
   });
 });

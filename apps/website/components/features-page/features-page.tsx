@@ -2,13 +2,13 @@ import { motion } from "motion/react";
 import { DraftingSheet, InView, settle } from "../landing/drafting-sheet.tsx";
 import { InlineCode, Proof } from "../landing/inline-code.tsx";
 import { Terminal } from "../terminal.tsx";
-import { docsHref, Footer, getStartedHref, Header } from "../landing/landing.tsx";
+import { docsHref, Footer, Header } from "../landing/landing.tsx";
 import {
   groundRules,
   intro,
   keyDetails,
   lenses,
-  outro,
+  install,
   previewFigure,
   type Detail,
   type Lens,
@@ -212,19 +212,31 @@ function GroundRules() {
   );
 }
 
-/** The close: the way to start and the docs. */
-function Outro() {
+/**
+ * The close: how to install Tack today, from a checkout, since it is not on npm yet. The header's
+ * Get started leads here on this page.
+ */
+function Install() {
   return (
-    <section className="landing-section landing-closing" aria-labelledby="outro-title">
+    <section
+      id={install.id}
+      className="landing-section landing-closing fp-install"
+      aria-labelledby="install-title"
+    >
       <div className="landing-shell">
-        <h2 id="outro-title">{outro.heading}</h2>
-        <p>{outro.text}</p>
+        <h2 id="install-title">{install.heading}</h2>
+        <p>
+          <InlineCode text={install.text} />
+        </p>
+        <div className="fp-install-commands">
+          <Terminal commands={install.commands} title="Install" />
+        </div>
         <div className="fp-outro-actions">
-          <a href={getStartedHref} className="landing-button landing-button-primary">
-            {outro.start}
+          <a href={install.guideHref} className="landing-button landing-button-primary">
+            {install.guide}
           </a>
           <a href={docsHref} className="landing-button">
-            {outro.docs}
+            {install.docs}
           </a>
         </div>
       </div>
@@ -263,9 +275,15 @@ ${groundRules.rules.map(item).join("\n")}
 
 ${groundRules.limits.map(item).join("\n")}
 
-## ${outro.heading}
+## ${install.heading}
 
-${outro.text} [${outro.start}](${getStartedHref}) · [${outro.docs}](${docsHref})
+${install.text}
+
+\`\`\`sh
+${install.commands.join("\n")}
+\`\`\`
+
+[${install.guide}](${install.guideHref}) · [${install.docs}](${docsHref})
 `}
     </>
   );
@@ -279,7 +297,7 @@ export function FeaturesPage() {
       <a href="#main" className="landing-skip">
         Skip to content
       </a>
-      <Header current="features" />
+      <Header current="features" startHref={`#${install.id}`} />
       <main id="main">
         <DraftingSheet>
           <PageHead />
@@ -288,7 +306,7 @@ export function FeaturesPage() {
           ))}
           <GroundRules />
         </DraftingSheet>
-        <Outro />
+        <Install />
       </main>
       <Footer />
     </div>

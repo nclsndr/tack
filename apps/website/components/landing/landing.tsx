@@ -113,8 +113,8 @@ function Tabs({
   );
 }
 
-/** Where the header and the features page send a visitor to start. */
-export const getStartedHref = "/#get-started";
+/** Where the header's Get started sends a visitor by default: the landing's own section. */
+const getStartedHref = "/#get-started";
 
 /**
  * Whether the page has scrolled past `marker`, a strip at its top: the header floats as a card from
@@ -144,7 +144,14 @@ const headerFallback =
  * behind it. It is the site header on the landing and on the features page, so its links name
  * their page and work from either one; on the landing they only scroll.
  */
-export function Header({ current }: { readonly current?: "features" }) {
+export function Header({
+  current,
+  startHref = getStartedHref,
+}: {
+  readonly current?: "features";
+  /** Where Get started leads; the landing's own section unless a page has its own. */
+  readonly startHref?: string;
+}) {
   const marker = useRef<HTMLSpanElement>(null);
   const floating = useScrolledPast(marker);
   return (
@@ -166,7 +173,7 @@ export function Header({ current }: { readonly current?: "features" }) {
             </a>
             <a href={docsHref}>Docs</a>
           </nav>
-          <a href={getStartedHref} className="landing-button landing-button-primary">
+          <a href={startHref} className="landing-button landing-button-primary">
             Get started
           </a>
         </div>

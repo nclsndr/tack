@@ -3,7 +3,7 @@
  * claim, the situation it serves, plain lines, one command as its proof, a small figure, and its
  * features: the first three in view, the rest behind "More". Text in `backticks` shows as inline
  * code. Every `command` and `proof` is a real command path whose flags exist (`content.test.ts`
- * runs each one's help). Commands reach Cursor, OpenCode and Pi only, and context reaches no agent,
+ * runs each one's help). Commands reach Cline, Cursor, OpenCode and Pi only, and context reaches no agent,
  * so no line here says otherwise.
  */
 
@@ -37,9 +37,23 @@ export const intro = {
   problem:
     "Every coding agent looks for your setup in its own folder, in every project and every worktree. You fix one copy and the others drift.",
   tagline: "Write a skill once. Tack links it wherever your agents look, in every project.",
-  facts: ["Local CLI", "No account, no telemetry", "Open source, MIT"],
+  facts: ["Local CLI", "No account, no telemetry", "Open source, MIT", "Not on npm yet"],
   limitsLink: "What Tack does not do ↓",
   indexLabel: "Jump to",
+} as const;
+
+/**
+ * How to install Tack today. It is not published to npm yet, so a visitor installs a checkout of
+ * the repository, as the contributing guide describes.
+ */
+export const install = {
+  id: "install",
+  heading: "Install Tack from a checkout.",
+  text: "Tack is not on npm yet. Clone the repository and install it as your global `tack`; it needs Bun and npm. Then `tack init` sets up your machine.",
+  commands: ["git clone https://github.com/nclsndr/tack.git", "cd tack", "bun run install:local"],
+  guide: "Install guide",
+  guideHref: "https://github.com/nclsndr/tack/blob/main/CONTRIBUTING.md#run-your-changes",
+  docs: "Read the docs",
 } as const;
 
 /** One source with one of each kind, as the README's example shows it. */
@@ -55,18 +69,25 @@ export const sourceFigure = {
   ],
 } as const;
 
-/** One skill folder and the links one sync makes from it in a project, and its commands. */
+/**
+ * One skill folder and the links one sync makes from it in a project, and its commands, by the
+ * project folders of the CLI's adapters (`apps/cli/src/domain/agents/agent-adapter.ts`).
+ */
 export const agentsFigure = {
   source: "~/agent-setup/skills/review",
   links: [
     { path: ".claude/skills/review", agent: "Claude Code" },
+    { path: ".cline/skills/review", agent: "Cline" },
     { path: ".agents/skills/review", agent: "Codex" },
+    { path: ".github/skills/review", agent: "Copilot CLI" },
     { path: ".cursor/skills/review", agent: "Cursor" },
+    { path: ".gemini/skills/review", agent: "Gemini CLI" },
     { path: ".opencode/skills/review", agent: "OpenCode" },
     { path: ".pi/skills/review", agent: "Pi" },
   ],
   commandsLabel: "and the command ship.md, for the agents that take commands",
   commands: [
+    { path: ".clinerules/workflows/ship.md", agent: "Cline" },
     { path: ".cursor/commands/ship.md", agent: "Cursor" },
     { path: ".opencode/commands/ship.md", agent: "OpenCode" },
     { path: ".pi/prompts/ship.md", agent: "Pi" },
@@ -169,7 +190,7 @@ export const lenses = [
       },
       {
         title: "Skills from GitHub, copied into your source.",
-        text: "Tack copies the skills you choose into a source you own and records where they came from. The next sync links them, unless a skill is opt-in.",
+        text: "Tack copies the skills you choose into a source you own and records where they came from. The next sync links them into your projects; at user level a skill is opt-in by default, so it reaches you there only once you pick it.",
         command: "tack import add github:org/repo --skill pdf --into agent-setup",
       },
       {
@@ -197,7 +218,7 @@ export const lenses = [
     when: "You use more than one coding agent, or want to try the next one.",
     claim: "One skill, in every agent's folder.",
     lines: [
-      "Claude Code, Codex, Cursor, OpenCode and Pi each look for skills in their own folder. Tack links one skill folder into each of them.",
+      "Claude Code, Cline, Codex, GitHub Copilot CLI, Cursor, Gemini CLI, OpenCode and Pi each look for skills in their own folder. Tack links one skill folder into each of them.",
       "Edit the skill once and every agent sees the change, because each one reads the same folder.",
     ],
     proof: "tack sync --project app",
@@ -209,7 +230,7 @@ export const lenses = [
       },
       {
         title: "Commands where agents read them.",
-        text: "Cursor, OpenCode and Pi also get your commands, as the same Markdown file; Pi calls them prompt templates. Claude Code and Codex get skills only.",
+        text: "Cline, Cursor, OpenCode and Pi also get your commands, as the same Markdown file; Cline calls them workflows and Pi prompt templates. Claude Code, Codex, Copilot CLI and Gemini CLI get skills only.",
       },
       {
         title: "Your agent can run Tack.",
@@ -223,7 +244,11 @@ export const lenses = [
       },
       {
         title: "Finds the agents you have.",
-        text: "`tack init` enables each agent whose folder exists in your home: `~/.claude`, `~/.codex` or `~/.agents`, `~/.cursor`, `~/.config/opencode`, `~/.pi`.",
+        text: "`tack init` enables each agent whose folder exists in your home: `~/.claude`, `~/.cline` or `~/Documents/Cline`, `~/.codex` or `~/.agents`, `~/.copilot`, `~/.cursor`, `~/.gemini`, `~/.config/opencode`, `~/.pi`.",
+      },
+      {
+        title: "Agents without an adapter.",
+        text: "Zed, Goose and Amp read `.agents/skills`, so the Codex adapter reaches them too.",
       },
       {
         title: "For you, or for one project.",
@@ -268,8 +293,8 @@ export const lenses = [
         command: "tack status --project app",
       },
       {
-        title: "New clones set themselves up.",
-        text: "`tack guide agent-instructions` prints a section for the repository's `AGENTS.md`, so an agent in a fresh clone links the repository's skills before it starts.",
+        title: "Setup steps for the repository's AGENTS.md.",
+        text: "`tack guide agent-instructions` prints a section to add to the repository's `AGENTS.md`. An agent that follows it in a fresh clone links the repository's skills before it starts.",
         command: "tack guide agent-instructions",
       },
     ],
@@ -364,7 +389,7 @@ export const lenses = [
     claim: "The exact same set, for a teammate, a CI runner or a remote agent.",
     lines: [
       "A profile is a file in your source that lists the exact resources a project gets. You review it like any other change.",
-      "Apply it to a teammate's project so everyone gets the same skills, or pack it into one file that sets up a machine without the source.",
+      "Each teammate or runner applies it themselves: `tack profile apply` previews the fixed set at one explicit target, then `--apply` writes it. A bundle carries it to a machine without the source.",
     ],
     proof: "tack profile export agent-setup:reviewer reviewer.tar.gz",
     details: [
@@ -375,7 +400,7 @@ export const lenses = [
       },
       {
         title: "A fixed set.",
-        text: "`tack profile apply` gives a project exactly the profile's list; you name every one of its roots. Ordinary picks cannot change it.",
+        text: "`tack profile apply` previews the profile's exact list at one explicit target: every root of a project with `--target-root`, or a home with `--target-home`. `--apply` writes it, and ordinary picks cannot change it.",
         command: "tack profile apply agent-setup:reviewer --project ci --target-root ~/ci/app",
       },
       {
@@ -462,11 +487,3 @@ export const groundRules = {
   readonly limitsHeading: string;
   readonly limits: ReadonlyArray<Detail>;
 };
-
-/** The page's close. */
-export const outro = {
-  heading: "Set Tack up from the home page.",
-  text: "It has the prompt for your coding agent and the commands to run yourself.",
-  start: "Get started",
-  docs: "Read the docs",
-} as const;
