@@ -332,6 +332,80 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
       }),
   );
   test.effect(
+    "source add and check warn about each folder of a skills collection that is not a skill",
+    () =>
+      Effect.gen(function* () {
+        const { root, state, path, write } = yield* scratch;
+        const flat = path.join(root, "flat");
+        for (const name of ["alpha", "beta", "team/review"])
+          yield* write(
+            `flat/${name}/SKILL.md`,
+            `---\nname: ${path.basename(name)}\ndescription: S\n---\n`,
+          );
+        yield* write("flat/commands/hi.md", "# Hi");
+        const warnings = ["commands", "team"].map((folder) => ({
+          code: "collection-folder-not-skill",
+          severity: "warning",
+          field: "kind",
+          message: expect.stringContaining(`${folder}/ holds no SKILL.md`),
+          candidatePath: path.join(flat, folder),
+        }));
+        const preview = yield* json(root, state, ["source", "add", flat, "--skills", "."]);
+        expect(exitCodeForEnvelope(preview)).toBe(0);
+        expect(preview.plan).toMatchObject({
+          entries: [{ resources: ["alpha", "beta"], findings: warnings }],
+        });
+        const human = (yield* run(root, state, ["source", "add", flat, "--skills", "."]))
+          .split(/\s+/)
+          .join(" ");
+        expect(human).toContain(
+          "warning: collection-folder-not-skill: commands/ holds no SKILL.md",
+        );
+        expect(human).toContain("warning: collection-folder-not-skill: team/ holds no SKILL.md");
+        yield* run(root, state, ["state", "init"]);
+        const applied = yield* json(root, state, [
+          "source",
+          "add",
+          flat,
+          "--skills",
+          ".",
+          "--apply",
+        ]);
+        expect(exitCodeForEnvelope(applied)).toBe(0);
+        expect(applied.applied).toMatchObject({
+          inspection: { counts: { skill: 2, command: 0 }, findings: warnings },
+        });
+        const checked = yield* json(root, state, ["check", flat]);
+        expect(exitCodeForEnvelope(checked)).toBe(0);
+        expect(checked.result).toMatchObject({
+          summary: { errors: 0, warnings: 2 },
+          findings: warnings,
+        });
+      }),
+  );
+  test.effect(
+    "source add registers a skills collection that holds no skill, with the warning",
+    () =>
+      Effect.gen(function* () {
+        const { root, state, path, write } = yield* scratch;
+        const flat = path.join(root, "flat");
+        yield* write("flat/commands/hi.md", "# Hi");
+        yield* run(root, state, ["state", "init"]);
+        const applied = yield* json(root, state, [
+          "source",
+          "add",
+          flat,
+          "--skills",
+          ".",
+          "--apply",
+        ]);
+        expect(exitCodeForEnvelope(applied)).toBe(0);
+        expect(applied.applied).toMatchObject({
+          inspection: { findings: [{ code: "collection-folder-not-skill" }] },
+        });
+      }),
+  );
+  test.effect(
     "source add refuses a tack.yaml that a registered source's walk reaches until it excludes it",
     () =>
       Effect.gen(function* () {

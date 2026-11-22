@@ -34,8 +34,13 @@ folder above it, or import it with `tack import add`. `kind: skill` is refused.
 A collection declares nothing else. Other content beside it is its own source with its own
 `tack.yaml`, such as a docs collection in `~/skills/handbook` beside a skills collection in
 `~/skills`: the skills collection never reads `handbook`, which holds no `SKILL.md`. To keep one
-source, move the skills into `skills/` and use the list form. Group folders at the top of a
-collection are not read: make a group its own collection, or use the list form.
+source, move the skills into `skills/` and use the list form.
+
+A skills collection holds skills only: each folder at its top is a skill and holds `SKILL.md`.
+`tack source add --skills .` and `tack check` warn with `collection-folder-not-skill` for each
+folder there that holds no `SKILL.md`, such as `commands/` or a group folder, and Tack ignores it.
+Add a `SKILL.md` to make it a skill. The warning changes no exit code. Dot, underscore and
+`node_modules` folders and folders with their own `tack.yaml` are not named.
 
 ## List form
 

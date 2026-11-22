@@ -282,7 +282,11 @@ const collectionDeclaration = Effect.fnUntraced(function* (root: string, folders
  */
 export const scaffoldLoadsNothing = (plan: typeof SourceScaffoldPlanSchema.Type) =>
   loadsNothing(
-    plan.entries.map((entry) => ({ resources: entry.resources.length, problems: entry.findings })),
+    plan.entries.map((entry) => ({
+      resources: entry.resources.length,
+      // A warning, such as folders a collection skips, never stops the declaration loading.
+      problems: entry.findings.filter((finding) => finding.severity === "error"),
+    })),
   )
     ? new SourceAddRequestError({
         code: "declaration-loads-nothing",
