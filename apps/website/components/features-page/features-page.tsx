@@ -10,6 +10,7 @@ import {
   lenses,
   install,
   previewFigure,
+  sharedAgents,
   type Detail,
   type Lens,
 } from "./content.ts";
@@ -163,8 +164,46 @@ function LensSection({
             </details>
           )}
         </InView>
+        {lens.id === "agents" ? <SharedAgents /> : null}
       </div>
     </section>
+  );
+}
+
+/**
+ * The agents with no adapter that read a folder one already fills, each linked to its own docs,
+ * with the folder and the scopes it reads.
+ */
+function SharedAgents() {
+  return (
+    <InView as="div" className="fp-shared" amount={0.1}>
+      <motion.h3 id="shared-agents" data-intro="" variants={settle(0, 8)}>
+        {sharedAgents.heading}
+      </motion.h3>
+      <motion.p className="fp-shared-intro" data-intro="" variants={settle(0.06, 8)}>
+        <InlineCode text={sharedAgents.intro} />
+      </motion.p>
+      <motion.ul className="fp-shared-list" data-intro="" variants={settle(0.12, 8)}>
+        {sharedAgents.rows.map((row) => (
+          <li key={row.agent}>
+            <a href={row.href} className="fp-shared-agent">
+              {row.agent}
+            </a>
+            <span className="fp-shared-reach">
+              <code>{row.folder}</code>
+              <span className="fp-shared-scope" data-scope={row.scope}>
+                {row.scope}
+              </span>
+            </span>
+            {"note" in row ? (
+              <span className="fp-shared-note">
+                <InlineCode text={row.note} />
+              </span>
+            ) : null}
+          </li>
+        ))}
+      </motion.ul>
+    </InView>
   );
 }
 
@@ -248,8 +287,14 @@ function Install() {
 function FeaturesMarkdown() {
   const item = (detail: Detail) =>
     `- **${detail.title}** ${detail.text}${detail.command === undefined ? "" : ` \`${detail.command}\``}`;
+  const shared = `### ${sharedAgents.heading}\n\n${sharedAgents.intro}\n\n| Agent | Folder | Reads it at |\n| --- | --- | --- |\n${sharedAgents.rows
+    .map(
+      (row) =>
+        `| [${row.agent}](${row.href}) | \`${row.folder}\` | ${row.scope}${"note" in row ? `, ${row.note}` : ""} |`,
+    )
+    .join("\n")}`;
   const lensText = (lens: Lens, index: number) =>
-    `## ${step(index)} · ${lens.name}: ${lens.claim}\n\nFor when: ${lens.when}\n\n${lens.lines.join(" ")}\n\n\`\`\`sh\n${lens.proof}\n\`\`\`\n\n${lens.details.map(item).join("\n")}`;
+    `## ${step(index)} · ${lens.name}: ${lens.claim}\n\nFor when: ${lens.when}\n\n${lens.lines.join(" ")}\n\n\`\`\`sh\n${lens.proof}\n\`\`\`\n\n${lens.details.map(item).join("\n")}${lens.id === "agents" ? `\n\n${shared}` : ""}`;
   return (
     <>
       {`# ${intro.heading}

@@ -652,3 +652,92 @@
   font-family: var(--tack-font-mono);
   font-size: 0.86em;
 }
+
+/* More agents: the ones without an adapter that read a folder one already fills, ruled off the
+   Agents part as a compact list, three across on a wide screen and one on a phone. */
+.fp-shared {
+  margin-top: 48px;
+  padding: 24px 28px 28px;
+  border: 1px solid var(--tack-border);
+  border-radius: var(--tack-radius-sm);
+  background: rgb(1 20 34 / 0.6);
+}
+
+.landing .fp-shared h3 {
+  color: var(--tack-heading);
+  font-size: 18px;
+}
+
+.landing .fp-shared-intro {
+  max-width: 48em;
+  margin-top: 8px;
+  color: var(--tack-muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.fp-shared-list {
+  display: grid;
+  gap: 14px 32px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fp-shared-list li {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  padding-top: 12px;
+  border-top: 1px solid var(--tack-border);
+}
+
+.landing a.fp-shared-agent {
+  color: var(--tack-heading);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.landing a.fp-shared-agent:hover {
+  color: var(--tack-accent-strong);
+}
+
+.fp-shared-reach {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  font-size: 13px;
+}
+
+.fp-shared-scope {
+  color: var(--tack-muted);
+}
+
+/* Partial reach is marked in brass, so it never reads as full coverage. */
+.fp-shared-scope:not([data-scope="Project and user"]) {
+  color: var(--tack-accent);
+}
+
+.landing .fp-shared-note {
+  color: var(--tack-faint);
+  font-size: 13px;
+}
+
+@media (min-width: 640px) {
+  .fp-shared-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .fp-shared-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 639px) {
+  .fp-shared {
+    padding: 20px 18px 22px;
+  }
+}

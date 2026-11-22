@@ -94,6 +94,157 @@ export const agentsFigure = {
   ],
 } as const;
 
+/** Where an agent without its own adapter reads skills, by the folder a Tack adapter fills. */
+type SharedAgent = {
+  readonly agent: string;
+  /** The vendor's own docs or source that name the folders it reads. */
+  readonly href: string;
+  readonly folder: ".agents/skills" | ".claude/skills";
+  readonly scope: "Project and user" | "Project only" | "User only";
+  readonly note?: string;
+};
+
+/**
+ * Agents without an adapter that still read a folder an adapter fills: `.agents/skills` (the
+ * `codex` adapter) or `.claude/skills` (the `claude` adapter). Only agents whose own docs or source
+ * name the folder are listed. They get skills only; commands need an adapter of their own.
+ */
+export const sharedAgents = {
+  heading: "More agents, through folders they share",
+  intro:
+    "These agents have no adapter of their own, but read skills from a folder one already fills: `.agents/skills`, from the Codex adapter, or `.claude/skills`, from the Claude Code adapter. They get skills, not commands.",
+  rows: [
+    {
+      agent: "Amp",
+      href: "https://ampcode.com/docs/markdown/customize/skills",
+      folder: ".agents/skills",
+      scope: "Project and user",
+      note: "also `.claude/skills`",
+    },
+    {
+      agent: "Antigravity",
+      href: "https://antigravity.google/docs/skills.md",
+      folder: ".agents/skills",
+      scope: "Project only",
+    },
+    {
+      agent: "Auggie",
+      href: "https://docs.augmentcode.com/cli/skills.md",
+      folder: ".agents/skills",
+      scope: "Project and user",
+      note: "also `.claude/skills`",
+    },
+    {
+      agent: "Continue",
+      href: "https://github.com/continuedev/continue/blob/main/extensions/cli/src/util/loadMarkdownSkills.ts",
+      folder: ".claude/skills",
+      scope: "Project only",
+    },
+    {
+      agent: "Crush",
+      href: "https://github.com/charmbracelet/crush#agent-skills",
+      folder: ".agents/skills",
+      scope: "Project and user",
+      note: "also `.claude/skills`",
+    },
+    {
+      agent: "Devin CLI and Devin Desktop (Windsurf)",
+      href: "https://docs.devin.ai/cli/extensibility/skills/overview.md",
+      folder: ".agents/skills",
+      scope: "Project and user",
+    },
+    {
+      agent: "Factory Droid",
+      href: "https://docs.factory.com/harness/skills.md",
+      folder: ".agents/skills",
+      scope: "Project and user",
+    },
+    {
+      agent: "Goose",
+      href: "https://github.com/aaif-goose/goose/blob/main/documentation/docs/guides/context-engineering/using-skills.md",
+      folder: ".agents/skills",
+      scope: "Project and user",
+      note: "also `.claude/skills`",
+    },
+    {
+      agent: "Grok Build",
+      href: "https://docs.x.ai/build/features/skills-plugins-marketplaces",
+      folder: ".agents/skills",
+      scope: "User only",
+    },
+    {
+      agent: "Hermes Agent",
+      href: "https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/skills.md",
+      folder: ".agents/skills",
+      scope: "Project only",
+      note: "after `hermes skills trust`",
+    },
+    {
+      agent: "Junie",
+      href: "https://junie.jetbrains.com/docs/agent-skills.html",
+      folder: ".agents/skills",
+      scope: "Project and user",
+      note: "project in a trusted project",
+    },
+    {
+      agent: "Kilo Code",
+      href: "https://github.com/Kilo-Org/kilocode/blob/main/packages/kilo-docs/pages/customize/skills.md",
+      folder: ".agents/skills",
+      scope: "Project and user",
+      note: "also `.claude/skills`",
+    },
+    {
+      agent: "Letta Code",
+      href: "https://github.com/letta-ai/letta-code/blob/main/src/agent/skills.ts",
+      folder: ".agents/skills",
+      scope: "Project only",
+    },
+    {
+      agent: "Mistral Vibe",
+      href: "https://docs.mistral.ai/vibe/code/cli/skills",
+      folder: ".agents/skills",
+      scope: "Project and user",
+      note: "project in a trusted folder",
+    },
+    {
+      agent: "OpenClaw",
+      href: "https://github.com/openclaw/openclaw/blob/main/docs/tools/skills.md",
+      folder: ".agents/skills",
+      scope: "Project and user",
+    },
+    {
+      agent: "OpenHands",
+      href: "https://docs.openhands.dev/overview/skills.md",
+      folder: ".agents/skills",
+      scope: "Project and user",
+    },
+    {
+      agent: "Qwen Code",
+      href: "https://github.com/QwenLM/qwen-code/blob/main/docs/users/features/skills.md",
+      folder: ".agents/skills",
+      scope: "Project and user",
+    },
+    {
+      agent: "Warp",
+      href: "https://docs.warp.dev/agents/capabilities/skills/",
+      folder: ".agents/skills",
+      scope: "Project and user",
+      note: "also `.claude/skills`",
+    },
+    {
+      agent: "Zed",
+      href: "https://zed.dev/docs/ai/skills.md",
+      folder: ".agents/skills",
+      scope: "Project and user",
+      note: "project in a trusted worktree",
+    },
+  ],
+} as const satisfies {
+  readonly heading: string;
+  readonly intro: string;
+  readonly rows: ReadonlyArray<SharedAgent>;
+};
+
 /** One project, its worktrees, and the same link in each. */
 export const projectFigure = {
   project: "project app · picks review",
@@ -245,10 +396,6 @@ export const lenses = [
       {
         title: "Finds the agents you have.",
         text: "`tack init` enables each agent whose folder exists in your home: `~/.claude`, `~/.cline` or `~/Documents/Cline`, `~/.codex` or `~/.agents`, `~/.copilot`, `~/.cursor`, `~/.gemini`, `~/.config/opencode`, `~/.pi`.",
-      },
-      {
-        title: "Agents without an adapter.",
-        text: "Zed, Goose and Amp read `.agents/skills`, so the Codex adapter reaches them too.",
       },
       {
         title: "For you, or for one project.",

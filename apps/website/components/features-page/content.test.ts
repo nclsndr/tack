@@ -1,4 +1,5 @@
 import { agentAdapterDescriptors } from "@tackup/cli/core";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { makeDemoSession, shellWords } from "../../demo/demo-shell.ts";
 import {
@@ -9,6 +10,7 @@ import {
   lenses,
   previewFigure,
   profileFigure,
+  sharedAgents,
 } from "./content.ts";
 
 const escape = String.fromCharCode(27);
@@ -81,5 +83,35 @@ describe("features page install", () => {
     expect(intro.facts).toContain("Not on npm yet");
     expect(install.commands.at(-1)).toBe("bun run install:local");
     expect(JSON.stringify([intro, install, lenses, groundRules])).not.toContain("npm install");
+  });
+});
+
+describe("features page shared agents", () => {
+  const readme = readFileSync(new URL("../../../cli/README.md", import.meta.url), "utf8");
+  const section = readme.slice(readme.indexOf("### Agents reached through a shared folder"));
+  /** The table rows of the README section, as agent, link, folder and the scopes cell. */
+  const tableRows = section
+    .split("\n")
+    .filter((line) => line.startsWith("| ["))
+    .map((line) => {
+      const cells = line.split("|").map((cell) => cell.trim());
+      const link = /^\[(.+)\]\((.+)\)$/u.exec(cells[1] ?? "");
+      return [link?.[1], link?.[2], cells[2], cells[3]];
+    });
+
+  it("lists the same agents, folders and scopes in the CLI guide as on the page", () => {
+    expect(tableRows).toEqual(
+      sharedAgents.rows.map((row) => [
+        row.agent,
+        row.href,
+        `\`${row.folder}\``,
+        `${row.scope}${"note" in row ? `, ${row.note}` : ""}`,
+      ]),
+    );
+  });
+
+  it("names no agent that has an adapter of its own", () => {
+    const adapterAgents = agentsFigure.links.map((link) => link.agent);
+    for (const row of sharedAgents.rows) expect(adapterAgents).not.toContain(row.agent);
   });
 });
