@@ -90,7 +90,13 @@ it.layer(LiveTestLayer)("tack completion", (completionIt) => {
     Effect.gen(function* () {
       const { complete } = yield* fixture;
 
-      expect(yield* complete(["sync", "--adapter"], "c")).toEqual(["claude", "codex", "cursor"]);
+      expect(yield* complete(["sync", "--adapter"], "c")).toEqual([
+        "claude",
+        "cline",
+        "codex",
+        "copilot",
+        "cursor",
+      ]);
       expect(yield* complete(["catalog", "--kind"], "")).toEqual([
         "skill",
         "command",
@@ -135,21 +141,26 @@ it.layer(LiveTestLayer)("tack completion", (completionIt) => {
 
       expect(yield* complete(["adapter", "enable"], "")).toEqual([
         "claude",
+        "cline",
         "codex",
+        "copilot",
         "cursor",
+        "gemini",
         "opencode",
         "pi",
       ]);
       expect(yield* complete(["adapter", "enable", "claude"], "")).toEqual([
+        "cline",
         "codex",
+        "copilot",
         "cursor",
+        "gemini",
         "opencode",
         "pi",
       ]);
-      expect(yield* complete(["adapter", "enable", "claude", "codex", "pi"], "")).toEqual([
-        "cursor",
-        "opencode",
-      ]);
+      expect(yield* complete(["adapter", "enable", "claude", "codex", "gemini", "pi"], "")).toEqual(
+        ["cline", "copilot", "cursor", "opencode"],
+      );
       expect(yield* complete(["adapter", "disable", "claude"], "")).toEqual([]);
     }),
   );

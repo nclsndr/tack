@@ -110,8 +110,11 @@ it.layer(LiveTestLayer)("tack init", (initIt) => {
           // Codex is found by its skill folder when it has no `.codex` of its own.
           detection: [
             { adapter: "claude", home: at(".claude"), found: true },
+            { adapter: "cline", home: at(".cline"), found: false },
             { adapter: "codex", home: at(".agents"), found: true },
+            { adapter: "copilot", home: at(".copilot"), found: false },
             { adapter: "cursor", home: at(".cursor"), found: false },
+            { adapter: "gemini", home: at(".gemini"), found: false },
             { adapter: "opencode", home: at(".config/opencode"), found: false },
             { adapter: "pi", home: at(".pi"), found: false },
           ],
@@ -189,19 +192,36 @@ it.layer(LiveTestLayer)("tack init", (initIt) => {
     }),
   );
 
-  initIt.effect("finds OpenCode by its config folder and Pi by its home folder", () =>
+  initIt.effect.each([
+    {
+      name: "OpenCode by its config folder and Pi by its home folder",
+      homes: [".config/opencode", ".pi"],
+      adapters: ["opencode", "pi"],
+      skills: [".config/opencode/skills", ".pi/agent/skills"],
+    },
+    {
+      name: "Cline, Copilot CLI and Gemini CLI by their home folders",
+      homes: [".cline", ".copilot", ".gemini"],
+      adapters: ["cline", "copilot", "gemini"],
+      skills: [".cline/skills", ".copilot/skills", ".gemini/skills"],
+    },
+    {
+      name: "the Cline extension by the Documents folder it keeps workflows and rules in",
+      homes: ["Documents/Cline"],
+      adapters: ["cline"],
+      skills: [".cline/skills"],
+    },
+  ])("finds $name and links the built-in skills there", (agent) =>
     Effect.gen(function* () {
-      const { at, fileSystem, json } = yield* machine([".config/opencode", ".pi"]);
+      const { at, fileSystem, json } = yield* machine(agent.homes);
       const envelope = yield* json(["init"]);
       expect(planOf(envelope).adapters).toMatchObject({
-        toEnable: ["opencode", "pi"],
+        toEnable: agent.adapters,
         source: "detected",
       });
-      expect(appliedOf(envelope)).toMatchObject({ adaptersEnabled: ["opencode", "pi"] });
-      expect(yield* fileSystem.readLink(at(".config/opencode/skills/use-tack"))).toContain(
-        "use-tack",
-      );
-      expect(yield* fileSystem.readLink(at(".pi/agent/skills/use-tack"))).toContain("use-tack");
+      expect(appliedOf(envelope)).toMatchObject({ adaptersEnabled: agent.adapters });
+      for (const skills of agent.skills)
+        expect(yield* fileSystem.readLink(at(`${skills}/use-tack`))).toContain("use-tack");
     }),
   );
 
@@ -215,10 +235,10 @@ it.layer(LiveTestLayer)("tack init", (initIt) => {
         diagnostics: [{ code: "agent-home-not-found", severity: "warning" }],
       });
       expect(envelope.diagnostics[0]?.message).toContain(
-        "it looks for .claude, .codex, .agents, .cursor, .config/opencode, .pi",
+        "it looks for .claude, .cline, Documents/Cline, .codex, .agents, .copilot, .cursor, .gemini, .config/opencode, .pi",
       );
       expect(envelope.diagnostics[0]?.message).toContain(
-        "Name yours with --adapter claude, codex, cursor, opencode or pi.",
+        "Name yours with --adapter claude, cline, codex, copilot, cursor, gemini, opencode or pi.",
       );
       expect(appliedOf(envelope)).toMatchObject({ state: "created", adaptersEnabled: [] });
       expect(yield* fileSystem.exists(`${state}/state.json`)).toBe(true);

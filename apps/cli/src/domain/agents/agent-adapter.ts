@@ -18,10 +18,25 @@ const agentAdapterTable = {
     projectSkillDirectory: [".claude", "skills"],
     userSkillDirectory: [".claude", "skills"],
   },
+  // Cline calls commands workflows. Its extension and CLI both read these two workflow folders.
+  cline: {
+    capabilities: ["skill-links", "command-links"],
+    commandLimit: "runs a command as /NAME.md, extension included",
+    projectCommandDirectory: [".clinerules", "workflows"],
+    userCommandDirectory: ["Documents", "Cline", "Workflows"],
+    projectSkillDirectory: [".cline", "skills"],
+    userSkillDirectory: [".cline", "skills"],
+  },
   codex: {
     capabilities: ["skill-links"],
     projectSkillDirectory: [".agents", "skills"],
     userSkillDirectory: [".agents", "skills"],
+  },
+  // Copilot CLI reads Markdown commands only from Claude Code's `.claude/commands`, so it gets none.
+  copilot: {
+    capabilities: ["skill-links"],
+    projectSkillDirectory: [".github", "skills"],
+    userSkillDirectory: [".copilot", "skills"],
   },
   cursor: {
     capabilities: ["skill-links", "command-links"],
@@ -29,6 +44,12 @@ const agentAdapterTable = {
     userCommandDirectory: [".cursor", "commands"],
     projectSkillDirectory: [".cursor", "skills"],
     userSkillDirectory: [".cursor", "skills"],
+  },
+  // Gemini CLI reads commands only as TOML files, and Tack links Markdown untranslated.
+  gemini: {
+    capabilities: ["skill-links"],
+    projectSkillDirectory: [".gemini", "skills"],
+    userSkillDirectory: [".gemini", "skills"],
   },
   opencode: {
     capabilities: ["skill-links", "command-links"],

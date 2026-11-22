@@ -66,7 +66,7 @@ the hand-made entries it leaves alone. It touches nothing else, and a rerun writ
 run it, and report what it did: the agents, the links and the hand-made entries. When the person's
 request already says to run `tack init`, that is step 1's yes: run it, then report what it did. To
 set up only some agents, run `tack init --adapter ID` instead, one `--adapter` per agent (claude,
-codex, cursor, opencode, pi); `tack adapter disable ID` previews dropping one later. Then ask quick or full (see
+cline, codex, copilot, cursor, gemini, opencode, pi); `tack adapter disable ID` previews dropping one later. Then ask quick or full (see
 Mode). Keep the hand-made list for steps 3 and 7.
 
 ## 2. The model (full only)
@@ -130,8 +130,8 @@ each source, such as skills for `~/skills`: step 4's `SOURCE:NAME` picks use tha
 Why: decide which skills reach every project, and which stay out of one.
 
 Run `tack catalog`. Explain: each project gets the default skills of every source; user scope gets
-only Tack's own skills unless you pick more. Commands reach Cursor, OpenCode and Pi only, and no
-agent receives context yet. Ask: which skills do you want everywhere, and which should stay out of a project?
+only Tack's own skills unless you pick more. Commands reach Cline, Cursor, OpenCode and Pi only, and
+no agent receives context yet. Ask: which skills do you want everywhere, and which should stay out of a project?
 List the picks: `tack pick include SOURCE:NAME --user` for everywhere, and
 `tack pick exclude SOURCE:NAME --project PROJECT` to keep one out of a project (register the
 project in step 5 first). They save at once: run them after the yes.
