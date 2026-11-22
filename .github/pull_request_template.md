@@ -1,6 +1,7 @@
 ## Why
 
 <!-- The product intent: what problem or need this serves, and for whom, in plain words. No implementation detail. -->
+<!-- For a product or design change, say how it fits the Vision in STRATEGY.md. -->
 
 ## What
 

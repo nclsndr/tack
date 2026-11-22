@@ -119,6 +119,7 @@ else; a new commit needs no bump. `bun run check` fails when a manifest or the l
 | `apps/website`                 | The landing page and public docs; its [README](apps/website/README.md) explains the layout. |
 | `apps/cli/src/builtins/skills` | The built-in skills that ship with Tack and teach agents to use it.                         |
 | `.ai/skills`                   | Skills for agents that work on this repository.                                             |
+| `STRATEGY.md`                  | The vision: read it before a product or design decision.                                    |
 | `CONTEXT.md`                   | The domain glossary.                                                                        |
 | `AGENTS.md`                    | The project instructions every agent session loads.                                         |
 

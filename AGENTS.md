@@ -4,6 +4,8 @@ Tack is a Bun and Effect monorepo for the `tack` project.
 
 Tack manages explicitly declared, versioned sources of skills, commands, context, scripts and docs, and links the selected resources into supported coding-agent locations without copying them or hiding ownership.
 
+Read the Vision in [STRATEGY.md](STRATEGY.md) before any product or design decision.
+
 - `apps/cli` contains the `tack` executable and CLI-owned behavior.
 - `packages/core` contains the reusable workbench script contract and author-facing helpers.
 - `packages/reader` contains the docs reader and search that `tack docs serve` runs.
