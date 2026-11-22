@@ -332,7 +332,7 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
       }),
   );
   test.effect(
-    "source add and check warn about the folders a skills collection skips and still succeed",
+    "source add and check warn about each folder of a skills collection that is not a skill",
     () =>
       Effect.gen(function* () {
         const { root, state, path, write } = yield* scratch;
@@ -343,22 +343,25 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
             `---\nname: ${path.basename(name)}\ndescription: S\n---\n`,
           );
         yield* write("flat/commands/hi.md", "# Hi");
-        const warning = {
-          code: "collection-folders-skipped",
+        const warnings = ["commands", "team"].map((folder) => ({
+          code: "collection-folder-not-skill",
           severity: "warning",
           field: "kind",
-          message: expect.stringContaining("Tack skips commands/ and team/"),
-        };
+          message: expect.stringContaining(`${folder}/ holds no SKILL.md`),
+          candidatePath: path.join(flat, folder),
+        }));
         const preview = yield* json(root, state, ["source", "add", flat, "--skills", "."]);
         expect(exitCodeForEnvelope(preview)).toBe(0);
         expect(preview.plan).toMatchObject({
-          entries: [{ resources: ["alpha", "beta"], findings: [warning] }],
+          entries: [{ resources: ["alpha", "beta"], findings: warnings }],
         });
         const human = (yield* run(root, state, ["source", "add", flat, "--skills", "."]))
           .split(/\s+/)
           .join(" ");
-        expect(human).toContain("warning: collection-folders-skipped:");
-        expect(human).toContain("Tack skips commands/ and team/");
+        expect(human).toContain(
+          "warning: collection-folder-not-skill: commands/ holds no SKILL.md",
+        );
+        expect(human).toContain("warning: collection-folder-not-skill: team/ holds no SKILL.md");
         yield* run(root, state, ["state", "init"]);
         const applied = yield* json(root, state, [
           "source",
@@ -370,18 +373,18 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
         ]);
         expect(exitCodeForEnvelope(applied)).toBe(0);
         expect(applied.applied).toMatchObject({
-          inspection: { counts: { skill: 2, command: 0 }, findings: [warning] },
+          inspection: { counts: { skill: 2, command: 0 }, findings: warnings },
         });
         const checked = yield* json(root, state, ["check", flat]);
         expect(exitCodeForEnvelope(checked)).toBe(0);
         expect(checked.result).toMatchObject({
-          summary: { errors: 0, warnings: 1 },
-          findings: [warning],
+          summary: { errors: 0, warnings: 2 },
+          findings: warnings,
         });
       }),
   );
   test.effect(
-    "source add registers a skills collection that holds only folders it skips, with the warning",
+    "source add registers a skills collection that holds no skill, with the warning",
     () =>
       Effect.gen(function* () {
         const { root, state, path, write } = yield* scratch;
@@ -398,7 +401,7 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
         ]);
         expect(exitCodeForEnvelope(applied)).toBe(0);
         expect(applied.applied).toMatchObject({
-          inspection: { findings: [{ code: "collection-folders-skipped" }] },
+          inspection: { findings: [{ code: "collection-folder-not-skill" }] },
         });
       }),
   );

@@ -7,7 +7,7 @@ import { isCollection, type SourceDeclaration } from "../../domain/sources/sourc
 import { Source } from "./source.ts";
 import { checkProfilePublications } from "./profile-files.ts";
 import { declarationFileName } from "./declaration-file.ts";
-import { skippedCollectionFolders, skippedFoldersMessage } from "./collection-skipped-folders.ts";
+import { nonSkillCollectionFolders, nonSkillFolderMessage } from "./collection-folders.ts";
 
 /** Inspects a directory through catalog discovery without registration, state or network. */
 export const checkSource = Effect.fnUntraced(function* (sourcePath: string) {
@@ -68,23 +68,19 @@ export const inspectDeclaration = Effect.fnUntraced(function* (
   ]);
   const declarationFile = path.join(canonicalPath, declarationFileName);
   const rows = catalog.declarations?.[registration.id] ?? [];
-  const skipped =
+  const nonSkills =
     isCollection(declaration) && declaration.kind === "skills"
-      ? yield* skippedCollectionFolders(canonicalPath)
+      ? yield* nonSkillCollectionFolders(canonicalPath)
       : [];
-  // The folders a skills collection skips warn on its one entry; they never fail it.
-  const skippedWarnings: ReadonlyArray<SourceFinding> =
-    skipped.length === 0
-      ? []
-      : [
-          {
-            code: "collection-folders-skipped",
-            message: skippedFoldersMessage(skipped),
-            severity: "warning",
-            field: "kind",
-            file: declarationFile,
-          },
-        ];
+  // Each folder of a skills collection that is not a skill warns on its one entry; none fails it.
+  const nonSkillWarnings = nonSkills.map((folder): SourceFinding => ({
+    code: "collection-folder-not-skill",
+    message: nonSkillFolderMessage(folder),
+    severity: "warning",
+    field: "kind",
+    file: declarationFile,
+    candidatePath: path.join(canonicalPath, folder),
+  }));
   return rows.map((row, position) => {
     const key = resourceKinds[row.kind].declarationKey;
     const index = rows.slice(0, position).filter(({ kind }) => kind === row.kind).length;
@@ -120,7 +116,7 @@ export const inspectDeclaration = Effect.fnUntraced(function* (
               : (problem.candidatePath ?? declarationFile),
           ...(problem.candidatePath === undefined ? {} : { candidatePath: problem.candidatePath }),
         })),
-        ...(row.collection === true ? skippedWarnings : []),
+        ...(row.collection === true ? nonSkillWarnings : []),
       ],
     };
   });

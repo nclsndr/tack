@@ -185,43 +185,38 @@ it.layer(LiveTestLayer)("source check", (test) => {
 
   test.effect.each([
     {
-      case: "a commands folder and a group of skills at the top of a skills collection",
-      declaration: "version: 1\nkind: skills\n",
-      files: ["alpha/SKILL.md", "commands/hi.md", "team/review/SKILL.md"],
-      skipped: ["commands", "team"],
-    },
-    {
-      case: "a skill deep below a folder at the top of a skills collection",
-      declaration: "version: 1\nkind: skills\n",
-      files: ["alpha/SKILL.md", "vendor/skills/lint/SKILL.md"],
-      skipped: ["vendor"],
-    },
-    {
-      case: "hidden, draft, plain and other-source folders of a skills collection",
+      case: "each folder at the top of a skills collection that holds no SKILL.md",
       declaration: "version: 1\nkind: skills\n",
       files: [
         "alpha/SKILL.md",
-        ".git/x/SKILL.md",
-        "_drafts/x/SKILL.md",
+        "commands/hi.md",
         "notes/readme.md",
-        "split/tack.yaml",
-        "split/review/SKILL.md",
-        "group/vendor/tack.yaml",
-        "group/vendor/lint/SKILL.md",
-        "notes/.cache/x/SKILL.md",
+        "team/review/SKILL.md",
         "README.md",
       ],
-      // A link to the collection, one back to its own folder and a dangling one end the walk.
-      links: { root: ".", "notes/self": ".", "notes/gone": "missing" },
-      skipped: [],
+      links: { mirror: "notes", gone: "missing" },
+      notSkills: ["commands", "mirror", "notes", "team"],
     },
     {
-      case: "a commands collection, which never reads folders",
+      case: "no hidden, draft, node_modules or other-source folder of a skills collection",
+      declaration: "version: 1\nkind: skills\n",
+      files: [
+        "alpha/SKILL.md",
+        ".git/config",
+        "_drafts/x/SKILL.md",
+        "node_modules/pkg/index.js",
+        "split/tack.yaml",
+        "split/review/SKILL.md",
+      ],
+      notSkills: [],
+    },
+    {
+      case: "no folder of a commands collection, which never reads folders",
       declaration: "version: 1\nkind: commands\n",
       files: ["hi.md", "commands/hi.md", "team/review/SKILL.md"],
-      skipped: [],
+      notSkills: [],
     },
-  ])("warns about $case only when Tack skips them", (row) =>
+  ])("warns about $case", (row) =>
     Effect.gen(function* () {
       const { fs, path, root, write } = yield* folders;
       yield* write("tack.yaml", row.declaration);
@@ -233,21 +228,15 @@ it.layer(LiveTestLayer)("source check", (test) => {
       for (const [link, target] of Object.entries(row.links ?? {}))
         yield* fs.symlink(target, path.join(root, link));
       const report = yield* checkSource(root);
-      const warnings = report.findings.filter((finding) => finding.severity === "warning");
-      expect(warnings).toEqual(
-        row.skipped.length === 0
-          ? []
-          : [
-              {
-                code: "collection-folders-skipped",
-                message: expect.stringContaining(
-                  new Intl.ListFormat("en").format(row.skipped.map((name) => `${name}/`)),
-                ),
-                severity: "warning",
-                field: "kind",
-                file: path.join(root, "tack.yaml"),
-              },
-            ],
+      expect(report.findings.filter((finding) => finding.severity === "warning")).toEqual(
+        row.notSkills.map((folder) => ({
+          code: "collection-folder-not-skill",
+          message: expect.stringContaining(`${folder}/ holds no SKILL.md`),
+          severity: "warning",
+          field: "kind",
+          file: path.join(root, "tack.yaml"),
+          candidatePath: path.join(root, folder),
+        })),
       );
       expect(report.findings.filter((finding) => finding.severity === "error")).toEqual([]);
     }),
@@ -266,7 +255,7 @@ it.layer(LiveTestLayer)("source check", (test) => {
     }),
   );
 
-  test.effect("names the list form and splitting into sources as the fix for skipped folders", () =>
+  test.effect("says a folder that is not a skill is ignored and how to make it one", () =>
     Effect.gen(function* () {
       const { root, write } = yield* folders;
       yield* write("tack.yaml", "version: 1\nkind: skills\n");
@@ -274,7 +263,7 @@ it.layer(LiveTestLayer)("source check", (test) => {
       yield* write("commands/hi.md", "# Hi");
       const [entry] = yield* inspectDeclaration(root, { version: 1, kind: "skills" });
       expect(entry?.findings.map((finding) => finding.message)).toEqual([
-        "This skills collection reads only the skill folders at its top, so Tack skips commands/, which holds what a collection cannot. Declare it with the list form in tack.yaml, a skills or commands entry for each folder, or make it a source of its own with its own tack.yaml.",
+        "commands/ holds no SKILL.md, so it is not a skill, and a skills collection holds skills only: Tack ignores it. Add a SKILL.md to make it a skill.",
       ]);
     }),
   );
