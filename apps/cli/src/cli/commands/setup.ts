@@ -23,7 +23,7 @@ export const initCommand = Command.make(
   ),
 ).pipe(
   Command.withDescription(
-    "Set up this machine and say what was written: the state, the agents found in your home (~/.claude, ~/.codex or ~/.agents, ~/.cursor, ~/.config/opencode, ~/.pi) and their user links, which are the built-in skills on a new machine. Hand-made entries are listed and left alone. Safe to repeat, and the one step after an upgrade",
+    "Set up this machine and say what was written: the state, the agents found in your home (~/.claude, ~/.cline or ~/Documents/Cline, ~/.codex or ~/.agents, ~/.copilot, ~/.cursor, ~/.gemini, ~/.config/opencode, ~/.pi) and their user links, which are the built-in skills on a new machine. Hand-made entries are listed and left alone. Safe to repeat, and the one step after an upgrade",
   ),
   Command.withExamples([
     { command: "tack init" },

@@ -460,6 +460,49 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
       }),
   );
 
+  test.effect(
+    "links skills into the Cline, Copilot and Gemini folders and commands into Cline's workflows only",
+    () =>
+      Effect.gen(function* () {
+        const f = yield* fixture();
+        yield* enableAdapters(f.options, ["cline", "copilot", "gemini"]);
+        const command = f.path.join(f.source, "commands", "review.md");
+        const skill = f.path.join(f.source, "skills", "review");
+        const entries = [
+          { link: f.path.join(f.home, ".cline", "skills", "review"), source: skill },
+          {
+            link: f.path.join(f.home, "Documents", "Cline", "Workflows", "review.md"),
+            source: command,
+          },
+          { link: f.path.join(f.home, ".copilot", "skills", "review"), source: skill },
+          { link: f.path.join(f.home, ".gemini", "skills", "review"), source: skill },
+        ];
+        const added = new Set(["cline", "copilot", "gemini"]);
+
+        const preview = yield* f.reconcile(false);
+        const units = preview.plan.units.filter((unit) => added.has(unit.adapter));
+        expect(units.map((unit) => [unit.adapter, unit.delivery.command])).toEqual([
+          ["cline", "delivered"],
+          ["copilot", "unsupported"],
+          ["gemini", "unsupported"],
+        ]);
+        expect(
+          units
+            .flatMap((unit) => unit.actions)
+            .flatMap((action) => (action._tag === "link-create" ? [action.destinationPath] : []))
+            .sort(),
+        ).toEqual(entries.map((entry) => entry.link).sort());
+
+        expect((yield* f.reconcile()).partial).toBe(false);
+        for (const entry of entries) {
+          expect(yield* f.fs.readLink(entry.link)).not.toMatch(/^\//);
+          expect(yield* f.fs.realPath(entry.link)).toBe(entry.source);
+        }
+        expect(yield* f.fs.exists(f.path.join(f.home, ".copilot", "commands"))).toBe(false);
+        expect(yield* f.fs.exists(f.path.join(f.home, ".gemini", "commands"))).toBe(false);
+      }),
+  );
+
   test.effect("links skills and commands into the OpenCode and Pi folders of a project root", () =>
     Effect.gen(function* () {
       const f = yield* fixture();

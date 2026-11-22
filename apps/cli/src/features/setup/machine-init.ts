@@ -23,13 +23,17 @@ import { withCommandWriter } from "../writer/recovered-writer.ts";
 /**
  * The folders in the operator home that show an agent is used there, the first one the folder its
  * detection names when none exists. They are the folders Tack links into, whatever
- * `CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `XDG_CONFIG_HOME` or `PI_CODING_AGENT_DIR` say, so detection
- * reads the same ones.
+ * `CLAUDE_CONFIG_DIR`, `CLINE_DIR`, `CODEX_HOME`, `COPILOT_HOME`, `GEMINI_CLI_HOME`,
+ * `XDG_CONFIG_HOME` or `PI_CODING_AGENT_DIR` say, so detection reads the same ones. The Cline
+ * extension keeps its workflows and rules under `Documents/Cline` and may never create `.cline`.
  */
 export const agentHomes = {
   claude: [".claude"],
+  cline: [".cline", "Documents/Cline"],
   codex: [".codex", ".agents"],
+  copilot: [".copilot"],
   cursor: [".cursor"],
+  gemini: [".gemini"],
   opencode: [".config/opencode"],
   pi: [".pi"],
 } as const satisfies Record<AgentAdapterId, readonly [string, ...Array<string>]>;

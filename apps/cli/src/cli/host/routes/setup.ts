@@ -22,7 +22,7 @@ const validInitApplication = Schema.decodeUnknownSync(InitApplicationSchema, {
 /** The diagnostic code of a setup that found no agent and was given none. */
 const agentHomeNotFound = "agent-home-not-found";
 
-/** Every adapter `--adapter` accepts, in table order: `claude, codex, cursor, opencode or pi`. */
+/** Every adapter `--adapter` accepts, in table order, such as `claude, codex or cursor`. */
 const adapterChoices = `${agentAdapterIds.slice(0, -1).join(", ")} or ${agentAdapterIds.at(-1)}`;
 
 /**

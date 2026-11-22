@@ -59,6 +59,14 @@ it("derives every directory and destination from one adapter and target layout",
 });
 
 it.each([
+  ["cline", "user", "skill", "/home/operator/.cline/skills"],
+  ["cline", "user", "command", "/home/operator/Documents/Cline/Workflows"],
+  ["cline", "project-root", "skill", "/work/repo/.cline/skills"],
+  ["cline", "project-root", "command", "/work/repo/.clinerules/workflows"],
+  ["copilot", "user", "skill", "/home/operator/.copilot/skills"],
+  ["copilot", "project-root", "skill", "/work/repo/.github/skills"],
+  ["gemini", "user", "skill", "/home/operator/.gemini/skills"],
+  ["gemini", "project-root", "skill", "/work/repo/.gemini/skills"],
   ["opencode", "user", "skill", "/home/operator/.config/opencode/skills"],
   ["opencode", "user", "command", "/home/operator/.config/opencode/commands"],
   ["opencode", "project-root", "skill", "/work/repo/.opencode/skills"],
@@ -75,6 +83,23 @@ it.each([
     expect(resourceDirectory(adapter, target, kind)).toBe(directory);
   },
 );
+
+it.each([
+  ["copilot", "user"],
+  ["copilot", "project-root"],
+  ["gemini", "user"],
+  ["gemini", "project-root"],
+] as const)("leaves %s %s commands undelivered", (adapter, tag) => {
+  const target = targets.find((candidate) => candidate._tag === tag) ?? targets[0];
+
+  expect(resourceDirectory(adapter, target, "command")).toBeUndefined();
+});
+
+it("gives every adapter folders of its own, so no two adapters plan the same link", () => {
+  const folders = agentLinkFolders(targets);
+
+  expect(new Set(folders).size).toBe(folders.length);
+});
 
 it("places a Pi command as a direct Markdown child of the prompts folder", () => {
   expect(
@@ -104,17 +129,25 @@ it("lists every folder that may hold managed links for the user and each project
     ]),
   ).toEqual([
     "/home/ada/.claude/skills",
+    "/home/ada/.cline/skills",
+    "/home/ada/Documents/Cline/Workflows",
     "/home/ada/.agents/skills",
+    "/home/ada/.copilot/skills",
     "/home/ada/.cursor/skills",
     "/home/ada/.cursor/commands",
+    "/home/ada/.gemini/skills",
     "/home/ada/.config/opencode/skills",
     "/home/ada/.config/opencode/commands",
     "/home/ada/.pi/agent/skills",
     "/home/ada/.pi/agent/prompts",
     "/work/demo/.claude/skills",
+    "/work/demo/.cline/skills",
+    "/work/demo/.clinerules/workflows",
     "/work/demo/.agents/skills",
+    "/work/demo/.github/skills",
     "/work/demo/.cursor/skills",
     "/work/demo/.cursor/commands",
+    "/work/demo/.gemini/skills",
     "/work/demo/.opencode/skills",
     "/work/demo/.opencode/commands",
     "/work/demo/.pi/skills",

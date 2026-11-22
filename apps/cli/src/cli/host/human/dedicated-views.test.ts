@@ -1,5 +1,6 @@
 import { Schema } from "effect";
 import { describe, expect, it } from "vitest";
+import { agentAdapterIds } from "../../../domain/agents/agent-adapter.ts";
 import { HelpPayloadSchema } from "../../commands/index.ts";
 import { renderCheck } from "./check.ts";
 import { renderDoctor } from "./doctor.ts";
@@ -275,12 +276,14 @@ describe("adapter list view", () => {
         command: "adapter",
         result: {
           kind: "adapters",
-          enabledAdapters: ["claude", "codex", "cursor", "opencode", "pi"],
+          enabledAdapters: agentAdapterIds,
         },
       }),
       style,
     );
-    expect(flat(text)).toContain("Enabled claude, codex, cursor, opencode, pi");
+    expect(flat(text)).toContain(
+      "Enabled claude, cline, codex, copilot, cursor, gemini, opencode, pi",
+    );
     expect(text).not.toContain("Not enabled");
     expect(hints).toEqual(["tack status"]);
   });

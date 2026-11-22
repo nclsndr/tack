@@ -7,35 +7,46 @@ script execution. See the [contributing guide](../../CONTRIBUTING.md) for develo
 
 ## Adapters
 
-The current adapters are Claude Code (`claude`), Codex (`codex`), Cursor (`cursor`), OpenCode
-(`opencode`) and Pi (`pi`). Tack links skills to these directories:
+The current adapters are Claude Code (`claude`), Cline (`cline`), Codex (`codex`), GitHub Copilot
+CLI (`copilot`), Cursor (`cursor`), Gemini CLI (`gemini`), OpenCode (`opencode`) and Pi (`pi`). Tack
+links skills to these directories:
 
 | Adapter    | User                        | Project root       |
 | ---------- | --------------------------- | ------------------ |
 | `claude`   | `~/.claude/skills`          | `.claude/skills`   |
+| `cline`    | `~/.cline/skills`           | `.cline/skills`    |
 | `codex`    | `~/.agents/skills`          | `.agents/skills`   |
+| `copilot`  | `~/.copilot/skills`         | `.github/skills`   |
 | `cursor`   | `~/.cursor/skills`          | `.cursor/skills`   |
+| `gemini`   | `~/.gemini/skills`          | `.gemini/skills`   |
 | `opencode` | `~/.config/opencode/skills` | `.opencode/skills` |
 | `pi`       | `~/.pi/agent/skills`        | `.pi/skills`       |
 
-Cursor, OpenCode and Pi also link selected command files, as `<name>.md`, to these directories.
-Claude Code and Codex currently deliver skills only.
+Cline, Cursor, OpenCode and Pi also link selected command files, as `<name>.md`, to these
+directories. Claude Code, Codex, Copilot CLI and Gemini CLI currently deliver skills only: Copilot
+CLI reads Markdown commands only from Claude Code's `.claude/commands`, and Gemini CLI reads
+commands only as TOML files.
 
-| Adapter    | User                          | Project root         |
-| ---------- | ----------------------------- | -------------------- |
-| `cursor`   | `~/.cursor/commands`          | `.cursor/commands`   |
-| `opencode` | `~/.config/opencode/commands` | `.opencode/commands` |
-| `pi`       | `~/.pi/agent/prompts`         | `.pi/prompts`        |
+| Adapter    | User                          | Project root            |
+| ---------- | ----------------------------- | ----------------------- |
+| `cline`    | `~/Documents/Cline/Workflows` | `.clinerules/workflows` |
+| `cursor`   | `~/.cursor/commands`          | `.cursor/commands`      |
+| `opencode` | `~/.config/opencode/commands` | `.opencode/commands`    |
+| `pi`       | `~/.pi/agent/prompts`         | `.pi/prompts`           |
 
-Pi calls a command a prompt template. Tack links the original Markdown file and does not translate
-it, so arguments and frontmatter mean what each agent makes of them. Tack uses these standard
-folders only: it does not follow `XDG_CONFIG_HOME` or `OPENCODE_CONFIG_DIR` for OpenCode, or
-`PI_CODING_AGENT_DIR` for Pi. Pi reads the project's `.pi` folders from the folder it starts in, so
-start it at the project root, and it loads project resources only after you trust the project.
-OpenCode also reads `.claude/skills` and `.agents/skills`, and Pi reads `.agents/skills`, so a skill
-that the `claude` or `codex` adapter links can show up twice. Disabling one adapter removes only its
-own links, so the agent can still see the skill through another one. An open
-agent session can need a restart, or `/reload` in Pi, to see a new link.
+Pi calls a command a prompt template and Cline a workflow. Tack links the original Markdown file and
+does not translate it, so arguments and frontmatter mean what each agent makes of them. Cline runs a
+linked command as `/<name>.md`, extension included, and the sync preview says so. Tack uses these
+standard folders only: it does not follow `XDG_CONFIG_HOME` or `OPENCODE_CONFIG_DIR` for OpenCode,
+`PI_CODING_AGENT_DIR` for Pi, `COPILOT_HOME` for Copilot CLI, `GEMINI_CLI_HOME` for Gemini CLI or
+`CLINE_DIR` for Cline. Pi reads the project's `.pi` folders from the folder it starts in, so start
+it at the project root, and it loads project resources only after you trust the project.
+Several agents also read another agent's folder: OpenCode reads `.claude/skills` and
+`.agents/skills`; Pi, Gemini CLI and Copilot CLI read `.agents/skills`; Copilot CLI and Cline also
+read `.claude/skills`. A skill that the `claude` or `codex` adapter links can then show up twice.
+Disabling one adapter removes only its own links, so the agent can still see the skill through
+another one. Zed, Goose and Amp have no adapter: they read `.agents/skills`, so the `codex` adapter
+reaches them. An open agent session can need a restart, or `/reload` in Pi, to see a new link.
 
 Configure enabled adapters as shown below, or use `tack sync --adapter claude --user --apply`
 to select one for a single invocation.
@@ -53,9 +64,10 @@ It plans the whole setup, then applies it:
 
 1. **State.** It creates the state and its `.env` when they are absent and keeps them otherwise. A
    state this release cannot read fails the command before anything is planned.
-2. **Agents.** It enables the agents whose home folder exists: `claude` from `~/.claude`, `codex`
-   from `~/.codex` or `~/.agents`, `cursor` from `~/.cursor`, `opencode` from `~/.config/opencode`,
-   `pi` from `~/.pi`. The output lists each one as found or
+2. **Agents.** It enables the agents whose home folder exists: `claude` from `~/.claude`, `cline`
+   from `~/.cline` or `~/Documents/Cline`, `codex` from `~/.codex` or `~/.agents`, `copilot` from
+   `~/.copilot`, `cursor` from `~/.cursor`, `gemini` from `~/.gemini`, `opencode` from
+   `~/.config/opencode`, `pi` from `~/.pi`. The output lists each one as found or
    not found. `--adapter ID`, repeatable, names the agents instead. It only adds adapters and never
    disables one.
 3. **User links.** It applies the plan `tack sync --user` makes once those agents are enabled. On a
@@ -540,8 +552,8 @@ the namespace flag of the colliding target. A failed reference keeps `--project`
 
 The catalog reports skills, commands, context, scripts, and declared docs. Choices support skills,
 commands, and context. Skills and commands share activation metadata and dependency resolution;
-context is opt-in. Delivery depends on the adapter: every adapter links skills, and Cursor, OpenCode
-and Pi also link commands. Status reports selected resources with no delivery capability as undelivered. Context
+context is opt-in. Delivery depends on the adapter: every adapter links skills, and Cline, Cursor,
+OpenCode and Pi also link commands. Status reports selected resources with no delivery capability as undelivered. Context
 has no delivery adapter yet. Scripts are catalogued and run by exact address, rather than selected; see
 [script execution](#run-tack-scripts) and the [script author guide](../../packages/core/README.md).
 Docs use the separate [attachment workflow](#attach-source-owned-documents).

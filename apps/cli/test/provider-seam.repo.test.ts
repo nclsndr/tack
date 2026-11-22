@@ -12,13 +12,14 @@ const sourceFiles = (directory: string): ReadonlyArray<string> =>
 
 /**
  * Code that names GitHub for a reason that is not an import provider: Tack's own releases and CI
- * live there. Everything else that mentions it is the GitHub adapter or text derived from the
- * registry.
+ * live there, and the GitHub Copilot CLI agent reads skills from `.github/skills`. Everything else
+ * that mentions it is the GitHub adapter or text derived from the registry.
  */
 const namesGithubForOtherReasons = (module: string) =>
   module.startsWith("features/self/") ||
   module.startsWith("domain/self/") ||
-  module === "cli/commands/self.ts";
+  module === "cli/commands/self.ts" ||
+  module === "domain/agents/agent-adapter.ts";
 
 it("names GitHub nowhere outside its adapter, the registry, its other uses and tests", () => {
   const mentions = sourceFiles(sourceRoot)

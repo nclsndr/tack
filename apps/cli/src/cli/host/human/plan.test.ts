@@ -146,6 +146,13 @@ describe("sync plan view", () => {
     expect(render({ plan: { ...plan, units: [...plan.units, cursor] } }).flatText).toContain(
       "Commands reach cursor only: Tack does not link commands for claude, codex.",
     );
+    expect(render({ plan: { ...plan, units: [...plan.units, cursor] } }).flatText).not.toContain(
+      "extension included",
+    );
+    const cline = { ...cursor, adapter: "cline" };
+    expect(render({ plan: { ...plan, units: [...plan.units, cline] } }).flatText).toContain(
+      "Commands reach cline only: Tack does not link commands for claude, codex. cline runs a command as /NAME.md, extension included.",
+    );
     const context = {
       kind: "context",
       name: "conventions",

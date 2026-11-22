@@ -10,6 +10,7 @@ import {
   type ReconciliationConflict,
   type ReconciliationUnitPlan,
 } from "../../../domain/reconciliation/reconciliation-schema.ts";
+import { agentAdapterDescriptor } from "../../../domain/agents/agent-adapter.ts";
 import type { ManagedLinkTarget } from "../../../domain/links/managed-link-schema.ts";
 import { selectedDependencyAddresses } from "../../../domain/choices/dependency-resolution.ts";
 import { collisionExcludeCommands } from "../collision-hints.ts";
@@ -299,8 +300,9 @@ export const unitSections = (
 };
 
 /**
- * Why a selected command or context is missing from an agent's folder: only some adapters link
- * commands, and no adapter links context yet. Nothing is said when every selected kind arrives.
+ * Why a selected command or context is missing from an agent's folder, or arrives degraded: only
+ * some adapters link commands, some agents run a linked command differently, and no adapter links
+ * context yet. Nothing is said when every selected kind arrives as authored.
  */
 const reachLines = (
   plan: typeof ReconciliationCommandPlanSchema.Type,
@@ -323,6 +325,12 @@ const reachLines = (
       ? [
           `Commands reach ${reach.length === 0 ? "no agent here" : `${reach.join(", ")} only`}: Tack does not link commands for ${without.join(", ")}.`,
         ]
+      : []),
+    ...(kinds.has("command") === true
+      ? reach.flatMap((adapter) => {
+          const limit = agentAdapterDescriptor(adapter).commandLimit;
+          return limit === undefined ? [] : [`${adapter} ${limit}.`];
+        })
       : []),
     ...(kinds.has("context") === true
       ? ["Context reaches no agent: Tack does not link context yet."]

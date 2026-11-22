@@ -30,9 +30,10 @@ tack init --adapter claude --adapter cursor # these agents instead of the detect
 
 `init` plans, then applies, in order: the state and its `.env` when absent (it keeps an existing state, and a
 state this release cannot read fails it before anything is planned); the adapters to enable, which
-are the agents whose home exists (`claude` from `~/.claude`, `codex` from `~/.codex` or `~/.agents`,
-`cursor` from `~/.cursor`, `opencode` from `~/.config/opencode`, `pi` from `~/.pi`) unless
-`--adapter` names them, never disabling one; and the plan
+are the agents whose home exists (`claude` from `~/.claude`, `cline` from `~/.cline` or
+`~/Documents/Cline`, `codex` from `~/.codex` or `~/.agents`, `copilot` from `~/.copilot`, `cursor`
+from `~/.cursor`, `gemini` from `~/.gemini`, `opencode` from `~/.config/opencode`, `pi` from `~/.pi`)
+unless `--adapter` names them, never disabling one; and the plan
 `sync --user` makes once they are enabled, which on a new machine links the built-in skills. It also
 lists, as information, the hand-made entries in those agents' user skill and command folders: files,
 folders and links Tack has no record of. It leaves them untouched; one at a built-in's path is that
@@ -142,9 +143,9 @@ return `choice-change`, `choice-removal` and `adapter-settings` payloads.
 
 `tack sync --project PROJECT` previews without writing.
 `sync --include-optional` adds optional dependency edges; it does not select every opt-in
-skill; inspect the result with `status --include-optional`. `--adapter ID` (`claude`, `codex`,
-`cursor`, `opencode` or `pi`) limits reconciliation; repeat it to name several. `--no-adapters` plans
-docs mounts only, for a project: it cannot be combined with `--adapter`, `--no-docs` or `--user`.
+skill; inspect the result with `status --include-optional`. `--adapter ID` (`claude`, `cline`,
+`codex`, `copilot`, `cursor`, `gemini`, `opencode` or `pi`) limits reconciliation; repeat it to name
+several. `--no-adapters` plans docs mounts only, for a project: it cannot be combined with `--adapter`, `--no-docs` or `--user`.
 `--require-capability command-links` blocks every plan unit whose adapter cannot link commands.
 With no enabled adapter, sync reports `no-adapters-enabled` and delivers nothing.
 A project does not link a skill or command that the same adapter links for the user, so agents in
@@ -158,22 +159,31 @@ Apply a preview with the flags that made it: `--apply` alone widens a `--no-adap
 `--adapter`, `--require-capability`, `--include-optional` and `--no-docs` it was made with (absent
 when none was given), and `resources: null` means `--no-adapters`.
 
-| Adapter    | User skills                 | User commands                         | Project skills     | Project commands             |
-| ---------- | --------------------------- | ------------------------------------- | ------------------ | ---------------------------- |
-| `claude`   | `~/.claude/skills`          | not delivered                         | `.claude/skills`   | not delivered                |
-| `codex`    | `~/.agents/skills`          | not delivered                         | `.agents/skills`   | not delivered                |
-| `cursor`   | `~/.cursor/skills`          | `~/.cursor/commands/NAME.md`          | `.cursor/skills`   | `.cursor/commands/NAME.md`   |
-| `opencode` | `~/.config/opencode/skills` | `~/.config/opencode/commands/NAME.md` | `.opencode/skills` | `.opencode/commands/NAME.md` |
-| `pi`       | `~/.pi/agent/skills`        | `~/.pi/agent/prompts/NAME.md`         | `.pi/skills`       | `.pi/prompts/NAME.md`        |
+| Adapter    | User skills                 | User commands                         | Project skills     | Project commands                |
+| ---------- | --------------------------- | ------------------------------------- | ------------------ | ------------------------------- |
+| `claude`   | `~/.claude/skills`          | not delivered                         | `.claude/skills`   | not delivered                   |
+| `cline`    | `~/.cline/skills`           | `~/Documents/Cline/Workflows/NAME.md` | `.cline/skills`    | `.clinerules/workflows/NAME.md` |
+| `codex`    | `~/.agents/skills`          | not delivered                         | `.agents/skills`   | not delivered                   |
+| `copilot`  | `~/.copilot/skills`         | not delivered                         | `.github/skills`   | not delivered                   |
+| `cursor`   | `~/.cursor/skills`          | `~/.cursor/commands/NAME.md`          | `.cursor/skills`   | `.cursor/commands/NAME.md`      |
+| `gemini`   | `~/.gemini/skills`          | not delivered                         | `.gemini/skills`   | not delivered                   |
+| `opencode` | `~/.config/opencode/skills` | `~/.config/opencode/commands/NAME.md` | `.opencode/skills` | `.opencode/commands/NAME.md`    |
+| `pi`       | `~/.pi/agent/skills`        | `~/.pi/agent/prompts/NAME.md`         | `.pi/skills`       | `.pi/prompts/NAME.md`           |
 
-Project paths are relative to each project root. Pi calls a command a prompt template; Tack links
-the same Markdown file and translates nothing, so arguments and frontmatter mean what each agent
-makes of them. Tack uses only these standard folders: it ignores `XDG_CONFIG_HOME` and
-`OPENCODE_CONFIG_DIR` for OpenCode and `PI_CODING_AGENT_DIR` for Pi. Pi reads a project's `.pi`
-folders from the folder it starts in, so start it at the project root, and loads them only once the
-project is trusted. OpenCode also reads `.claude/skills` and `.agents/skills`, and Pi reads
-`.agents/skills`, so a skill can appear twice; `adapter disable` removes only that adapter's links.
-An open session may need a restart, or `/reload` in Pi, to see new links. Context has no delivery adapter yet;
+`copilot` is GitHub Copilot CLI and `gemini` is Gemini CLI. Project paths are relative to each
+project root. Pi calls a command a prompt template and Cline a workflow; Tack links the same
+Markdown file and translates nothing, so arguments and frontmatter mean what each agent makes of
+them. Cline runs a linked command as `/NAME.md`, extension included. Copilot CLI and Gemini CLI get
+no commands: Copilot CLI reads Markdown commands only from Claude Code's `.claude/commands`, and
+Gemini CLI reads commands only as TOML files. Tack uses only these standard folders: it ignores
+`XDG_CONFIG_HOME` and `OPENCODE_CONFIG_DIR` for OpenCode, `PI_CODING_AGENT_DIR` for Pi,
+`COPILOT_HOME` for Copilot CLI, `GEMINI_CLI_HOME` for Gemini CLI and `CLINE_DIR` for Cline. Pi
+reads a project's `.pi` folders from the folder it starts in, so start it at the project root, and loads
+them only once the project is trusted. Several agents read other agents' folders too: OpenCode reads
+`.claude/skills` and `.agents/skills`; Pi, Gemini CLI and Copilot CLI read `.agents/skills`; Copilot
+CLI and Cline also read `.claude/skills`. A skill can then appear twice; `adapter disable` removes
+only that adapter's links. Zed, Goose and Amp read `.agents/skills`, so the `codex` adapter reaches
+them. An open session may need a restart, or `/reload` in Pi, to see new links. Context has no delivery adapter yet;
 `status` reports such selected resources as undelivered, and the sync text view says which agents a
 selected command or context does not reach. Delivering a resource makes it discoverable; agent
 loading behavior is separate. `status --project PROJECT --details` also prints the project's

@@ -31,6 +31,8 @@ const AgentAdapterDestinationsSchema = Schema.Struct({
   userSkillDirectory: AdapterDirectorySchema,
   projectCommandDirectory: Schema.optionalKey(AdapterDirectorySchema),
   userCommandDirectory: Schema.optionalKey(AdapterDirectorySchema),
+  /** How the agent handles a linked command differently from its author's intent, as a clause. */
+  commandLimit: Schema.optionalKey(Schema.String.check(Schema.isMinLength(1))),
 });
 
 /** The strict, code-owned description of one adapter's supported destinations and operations. */
