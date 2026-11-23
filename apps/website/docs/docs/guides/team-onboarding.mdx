@@ -149,8 +149,15 @@ npm install --global @tackup/cli
 tack init
 ```
 
-Clone both repositories, here to `~/code/acme-agent-skills` and `~/code/app`. Register the team
-source:
+Clone both repositories, with your team's URLs in place of these:
+
+```sh
+mkdir -p ~/code
+git clone git@github.com:acme/agent-skills.git ~/code/acme-agent-skills
+git clone git@github.com:acme/app.git ~/code/app
+```
+
+Register the team source:
 
 <Terminal commands={["tack source add ~/code/acme-agent-skills"]} output={teamSourceOutput} />
 
@@ -173,7 +180,8 @@ tack sync --project app --apply
 
 <Terminal commands={["tack status"]} output={statusOutput} />
 
-That is the whole setup. An agent can run it too: with the `AGENTS.md` section, an agent that
+`3 sources` counts the two you added and Tack's built-in one, which holds the skills `tack init`
+linked. That is the whole setup. An agent can run it too: with the `AGENTS.md` section, an agent that
 starts in a fresh clone loads `prepare-tack-checkout` and runs these steps, and
 `tack guide onboarding` walks an agent through a new machine with the teammate.
 
@@ -195,7 +203,8 @@ Two checks catch a broken skill before it reaches a teammate, and both use only 
 Run them on every change to a repository that holds skills.
 
 **Check the files.** `tack check` reads the source as the catalog will, without state, network or
-running any code, and exits with code `1` on an error. Here a skill's `name` no longer matches its
+running any code, and exits with code `1` on an error. On a healthy repository it prints
+`✓ success` and exits `0`. Here someone changed a skill's `name` so that it no longer matches its
 folder:
 
 <Terminal commands={["tack check ."]} output={ciCheckOutput} />
