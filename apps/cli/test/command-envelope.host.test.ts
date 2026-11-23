@@ -29,7 +29,7 @@ const resourcePlan = (result: TackRun) => {
 };
 
 /** Runs `tack --json` in process against the fixture's isolated home and state. */
-const runTack = (
+const hostTack = (
   fixture: CliFixture,
   arguments_: ReadonlyArray<string>,
   cwd: string = fixture.repositoryDirectory,
@@ -71,7 +71,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
             ["adapter", "enable", "cursor"],
             ["sync", "--user", "--apply"],
           ]) {
-            expectSuccess(yield* runTack(fixture, args));
+            expectSuccess(yield* hostTack(fixture, args));
           }
           const statePath = path.join(fixture.stateDirectory, "state.json");
           const before = yield* fs.readFileString(statePath);
@@ -84,8 +84,8 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
               "version: 99\n",
             );
           const code = failure === "missing" ? "source-missing" : "declaration-version-unsupported";
-          const catalog = yield* runTack(fixture, ["catalog"]);
-          const inspected = yield* runTack(fixture, ["source"]);
+          const catalog = yield* hostTack(fixture, ["catalog"]);
+          const inspected = yield* hostTack(fixture, ["source"]);
           for (const result of [catalog, inspected]) {
             expect(result.exitCode).toBe(ChildProcessSpawner.ExitCode(1));
             expect(result.stderr).toBe("");
@@ -161,7 +161,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
             ["sync", "--user"],
             ["sync", "--user"],
           ]) {
-            const result = yield* runTack(fixture, args);
+            const result = yield* hostTack(fixture, args);
             expect(result.exitCode).toBe(ChildProcessSpawner.ExitCode(1));
             expect(envelope(result)).toMatchObject({ classification: "partial" });
           }
@@ -175,7 +175,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
               "version: 1\nskills:\n  - path: skills\n",
             );
           for (const args of [["catalog"], ["source"]])
-            expectSuccess(yield* runTack(fixture, args));
+            expectSuccess(yield* hostTack(fixture, args));
           expect(yield* fs.readFileString(statePath)).toBe(before);
           expect(yield* fs.readLink(path.join(destination, "valid"))).toBe(linkText);
         }),
@@ -184,15 +184,20 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
   cliIt.effect("runs source initialization through one JSON-only host boundary", () =>
     withFixture((fixture) =>
       Effect.gen(function* () {
-        const result = yield* runTack(fixture, ["state", "init"]);
+        const result = yield* hostTack(fixture, ["state", "init"]);
 
         expectSuccess(result);
         expect(envelope(result)).toMatchObject({
           applied: { stateDirectory: fixture.stateDirectory },
           command: "state init",
         });
-        const missingProject = yield* runTack(fixture, ["sync", "--project", "missing"]);
-        const invalidSelector = yield* runTack(fixture, ["sync", "--project", "missing", "--user"]);
+        const missingProject = yield* hostTack(fixture, ["sync", "--project", "missing"]);
+        const invalidSelector = yield* hostTack(fixture, [
+          "sync",
+          "--project",
+          "missing",
+          "--user",
+        ]);
 
         expect(missingProject.exitCode).toBe(ChildProcessSpawner.ExitCode(2));
         expect(envelope(missingProject)).toMatchObject({
@@ -231,7 +236,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
             ["source", "add", fixture.sourceDirectory],
             ["adapter", "enable", "codex"],
           ] satisfies ReadonlyArray<ReadonlyArray<string>>) {
-            expectSuccess(yield* runTack(fixture, args));
+            expectSuccess(yield* hostTack(fixture, args));
           }
 
           for (const args of [
@@ -259,7 +264,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
               fixture.worktreeDirectory,
             ]),
           );
-          const projectAdd = yield* runTack(fixture, [
+          const projectAdd = yield* hostTack(fixture, [
             "project",
             "add",
             "workspace",
@@ -286,7 +291,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
           const stateBeforeReinitialize = yield* fileSystem.readFileString(statePath);
           const dotenvBeforeReinitialize = yield* fileSystem.readFileString(dotenvPath);
           const dotenvModeBeforeReinitialize = (yield* fileSystem.stat(dotenvPath)).mode;
-          const reinitialized = yield* runTack(fixture, ["state", "init"]);
+          const reinitialized = yield* hostTack(fixture, ["state", "init"]);
 
           expectSuccess(reinitialized);
           expect(envelope(reinitialized).applied).toMatchObject({ alreadyInitialized: true });
@@ -300,29 +305,29 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
           const destinationBeforeReadOnly = yield* fileSystem.readFileString(
             fixture.destinationSentinelPath,
           );
-          const sourceInspection = yield* runTack(fixture, ["source"]);
-          const projectInspection = yield* runTack(fixture, ["project"]);
-          const catalog = yield* runTack(fixture, ["catalog"]);
+          const sourceInspection = yield* hostTack(fixture, ["source"]);
+          const projectInspection = yield* hostTack(fixture, ["project"]);
+          const catalog = yield* hostTack(fixture, ["catalog"]);
           // Plans contain units only for selected adapters, so name one to observe the targets.
-          const barePlan = yield* runTack(
+          const barePlan = yield* hostTack(
             fixture,
             ["sync", "--adapter", "codex"],
             fixture.worktreeDirectory,
           );
-          const repeatedBarePlan = yield* runTack(
+          const repeatedBarePlan = yield* hostTack(
             fixture,
             ["sync", "--adapter", "codex"],
             fixture.worktreeDirectory,
           );
-          const projectPlan = yield* runTack(fixture, [
+          const projectPlan = yield* hostTack(fixture, [
             "sync",
             "--adapter",
             "codex",
             "--project",
             "workspace",
           ]);
-          const userPlan = yield* runTack(fixture, ["sync", "--adapter", "codex", "--user"]);
-          const unauthorizedBarePlan = yield* runTack(fixture, [
+          const userPlan = yield* hostTack(fixture, ["sync", "--adapter", "codex", "--user"]);
+          const unauthorizedBarePlan = yield* hostTack(fixture, [
             "sync",
             "--adapter",
             "codex",
@@ -463,8 +468,8 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
               "---\nname: duplicate\ndescription: Duplicate skill\n---\n",
             );
           }
-          const partialCatalog = yield* runTack(fixture, ["catalog"]);
-          const partialPlan = yield* runTack(fixture, [
+          const partialCatalog = yield* hostTack(fixture, ["catalog"]);
+          const partialPlan = yield* hostTack(fixture, [
             "sync",
             "--adapter",
             "codex",
@@ -519,15 +524,15 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
         const statePath = path.join(fixture.stateDirectory, "state.json");
         const sourceDeclaration = path.join(fixture.sourceDirectory, "tack.yaml");
         const destinationPath = path.join(fixture.homeDirectory, "destination.txt");
-        expectSuccess(yield* runTack(fixture, ["state", "init"]));
+        expectSuccess(yield* hostTack(fixture, ["state", "init"]));
         yield* fileSystem.writeFileString(statePath, "{ corrupt");
         yield* fileSystem.writeFileString(destinationPath, "preserve\n");
         const stateBefore = yield* fileSystem.readFileString(statePath);
         const sourceBefore = yield* fileSystem.readFileString(sourceDeclaration);
         const destinationBefore = yield* fileSystem.readFileString(destinationPath);
 
-        const result = yield* runTack(fixture, ["source", "add", fixture.sourceDirectory]);
-        const plan = yield* runTack(fixture, ["sync", "--user"]);
+        const result = yield* hostTack(fixture, ["source", "add", fixture.sourceDirectory]);
+        const plan = yield* hostTack(fixture, ["sync", "--user"]);
 
         for (const failure of [result, plan]) {
           expect(failure.exitCode).toBe(ChildProcessSpawner.ExitCode(3));
@@ -588,10 +593,10 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
             ["adapter", "enable", "cursor", "codex"],
             ["pick", "include", "valid", "--project", "workspace"],
           ] satisfies ReadonlyArray<ReadonlyArray<string>>) {
-            expectSuccess(yield* runTack(fixture, args));
+            expectSuccess(yield* hostTack(fixture, args));
           }
 
-          const choicesBefore = yield* runTack(fixture, ["pick", "--project", "workspace"]);
+          const choicesBefore = yield* hostTack(fixture, ["pick", "--project", "workspace"]);
           const stateBeforeDryRun = yield* fileSystem.readFileString(statePath);
           const cursorSkillDirectory = path.join(fixture.repositoryDirectory, ".cursor", "skills");
           const codexSkillDirectory = path.join(fixture.repositoryDirectory, ".agents", "skills");
@@ -605,7 +610,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
             "--require-capability",
             "skill-links",
           ] as const;
-          const dryRun = yield* runTack(fixture, reconciliationArguments);
+          const dryRun = yield* hostTack(fixture, reconciliationArguments);
 
           expectSuccess(dryRun);
           expect(envelope(dryRun)).toMatchObject({
@@ -645,7 +650,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
           expect(yield* fileSystem.exists(cursorSkillDirectory)).toBe(false);
           expect(yield* fileSystem.exists(codexSkillDirectory)).toBe(false);
 
-          const applied = yield* runTack(fixture, [...reconciliationArguments, "--apply"]);
+          const applied = yield* hostTack(fixture, [...reconciliationArguments, "--apply"]);
           expectSuccess(applied);
           expect(envelope(applied)).toMatchObject({
             applied: {
@@ -664,8 +669,8 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
           }
           expect(yield* fileSystem.exists(codexSkillDirectory)).toBe(false);
 
-          const adaptersAfterOverride = yield* runTack(fixture, ["adapter", "list"]);
-          const choicesAfterOptional = yield* runTack(fixture, ["pick", "--project", "workspace"]);
+          const adaptersAfterOverride = yield* hostTack(fixture, ["adapter", "list"]);
+          const choicesAfterOptional = yield* hostTack(fixture, ["pick", "--project", "workspace"]);
           expectSuccess(adaptersAfterOverride);
           expectSuccess(choicesAfterOptional);
           expect(envelope(adaptersAfterOverride).result).toEqual({
@@ -674,7 +679,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
           });
           expect(envelope(choicesAfterOptional).result).toEqual(envelope(choicesBefore).result);
 
-          const ordinaryApply = yield* runTack(fixture, [
+          const ordinaryApply = yield* hostTack(fixture, [
             "sync",
             "--project",
             "workspace",
@@ -689,7 +694,12 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
             yield* fileSystem.realPath(path.join(fixture.sourceDirectory, "skills", "valid")),
           );
 
-          const idempotent = yield* runTack(fixture, ["sync", "--project", "workspace", "--apply"]);
+          const idempotent = yield* hostTack(fixture, [
+            "sync",
+            "--project",
+            "workspace",
+            "--apply",
+          ]);
           expectSuccess(idempotent);
           expect(resourcePlan(idempotent)).toMatchObject({
             units: [
@@ -699,7 +709,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
           });
 
           const beforeMissingPick = yield* fileSystem.readFileString(statePath);
-          const missing = yield* runTack(fixture, ["pick", "include", "missing", "--user"]);
+          const missing = yield* hostTack(fixture, ["pick", "include", "missing", "--user"]);
           expect(missing.exitCode).toBe(ChildProcessSpawner.ExitCode(2));
           expect(envelope(missing).classification).toBe("invalid-configuration");
           expect(yield* fileSystem.readFileString(statePath)).toBe(beforeMissingPick);
@@ -717,12 +727,12 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
           ["source", "add", fixture.sourceDirectory],
           ["adapter", "enable", "codex", "cursor"],
         ] satisfies ReadonlyArray<ReadonlyArray<string>>) {
-          expectSuccess(yield* runTack(fixture, args));
+          expectSuccess(yield* hostTack(fixture, args));
         }
         const cursorDestinationDirectory = path.join(fixture.homeDirectory, ".cursor", "skills");
         const codexDestinationDirectory = path.join(fixture.homeDirectory, ".agents", "skills");
         const reconcileArguments = ["sync", "--user"] as const;
-        const absent = yield* runTack(fixture, reconcileArguments);
+        const absent = yield* hostTack(fixture, reconcileArguments);
         expectSuccess(absent);
 
         for (const application of ["Cursor", "Codex"]) {
@@ -739,7 +749,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
             "fake application artifact\n",
           );
         }
-        const present = yield* runTack(fixture, reconcileArguments);
+        const present = yield* hostTack(fixture, reconcileArguments);
         expectSuccess(present);
 
         expect(envelope(present).plan).toEqual(envelope(absent).plan);
@@ -769,10 +779,10 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
           ["source", "add", fixture.sourceDirectory],
           ["adapter", "enable", "codex", "cursor"],
         ] satisfies ReadonlyArray<ReadonlyArray<string>>) {
-          expectSuccess(yield* runTack(fixture, args));
+          expectSuccess(yield* hostTack(fixture, args));
         }
 
-        const result = yield* runTack(fixture, ["sync", "--user", "--apply"]);
+        const result = yield* hostTack(fixture, ["sync", "--user", "--apply"]);
 
         expect(result.exitCode).toBe(ChildProcessSpawner.ExitCode(1));
         expect(envelope(result)).toMatchObject({
@@ -819,10 +829,10 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
           ["pick", "include", "private-source:valid", "--user"],
           ["pick", "include", "source:valid", "--user"],
         ] satisfies ReadonlyArray<ReadonlyArray<string>>) {
-          expectSuccess(yield* runTack(fixture, args));
+          expectSuccess(yield* hostTack(fixture, args));
         }
 
-        const result = yield* runTack(fixture, ["sync", "--user", "--apply"]);
+        const result = yield* hostTack(fixture, ["sync", "--user", "--apply"]);
 
         expect(result.exitCode).toBe(ChildProcessSpawner.ExitCode(1));
         expect(envelope(result)).toMatchObject({
@@ -890,7 +900,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
           // The skill is a default for the user too; out of the user's folders, the project links it.
           ["pick", "exclude", "source:valid", "--user"],
         ] satisfies ReadonlyArray<ReadonlyArray<string>>) {
-          expectSuccess(yield* runTack(fixture, args));
+          expectSuccess(yield* hostTack(fixture, args));
         }
         const conflictingDestination = path.join(
           fixture.repositoryDirectory,
@@ -903,7 +913,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
         });
         yield* fileSystem.writeFileString(conflictingDestination, "operator-owned\n");
 
-        const result = yield* runTack(fixture, ["sync", "--project", "workspace", "--apply"]);
+        const result = yield* hostTack(fixture, ["sync", "--project", "workspace", "--apply"]);
 
         expect(result.exitCode).toBe(ChildProcessSpawner.ExitCode(1));
         const output = envelope(result);
@@ -989,10 +999,10 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
             ["pick", "include", "personal", "--user"],
             ["pick", "include", "blocked", "--user"],
           ]) {
-            expectSuccess(yield* runTack(fixture, args));
+            expectSuccess(yield* hostTack(fixture, args));
           }
-          const catalog = envelope(yield* runTack(fixture, ["catalog"]));
-          const status = envelope(yield* runTack(fixture, ["status", "--user"]));
+          const catalog = envelope(yield* hostTack(fixture, ["catalog"]));
+          const status = envelope(yield* hostTack(fixture, ["status", "--user"]));
           const decodeReport = Schema.decodeUnknownSync(CatalogReportSchema, {
             onExcessProperty: "error",
           });
@@ -1024,7 +1034,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
             },
           });
           const detailed = decodeReport(
-            envelope(yield* runTack(fixture, ["catalog", "--details"])).result,
+            envelope(yield* hostTack(fixture, ["catalog", "--details"])).result,
           );
           expect(
             detailed.resources.map((resource) => {
@@ -1051,7 +1061,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
             frontmatter: { metadata: { tack: expect.stringContaining("dependencies:") } },
           });
           const scripts = decodeReport(
-            envelope(yield* runTack(fixture, ["catalog", "--kind", "script"])).result,
+            envelope(yield* hostTack(fixture, ["catalog", "--kind", "script"])).result,
           );
           expect(scripts).toMatchObject({
             complete: true,
@@ -1061,7 +1071,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
           const statePath = path.join(fixture.stateDirectory, "state.json");
           const before = yield* fs.readFileString(statePath);
           for (const kind of ["script"]) {
-            const rejected = yield* runTack(fixture, [
+            const rejected = yield* hostTack(fixture, [
               "pick",
               "include",
               "review",
@@ -1072,7 +1082,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
             expect(rejected.exitCode).toBe(ChildProcessSpawner.ExitCode(2));
             expect(yield* fs.readFileString(statePath)).toBe(before);
           }
-          const reconciled = envelope(yield* runTack(fixture, ["sync", "--user", "--apply"]));
+          const reconciled = envelope(yield* hostTack(fixture, ["sync", "--user", "--apply"]));
           expect(reconciled).toMatchObject({ classification: "success" });
           const destination = path.join(fixture.homeDirectory, ".cursor", "skills");
           expect(yield* fs.realPath(path.join(destination, "valid"))).toBe(
@@ -1087,8 +1097,8 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
               path.join(fixture.homeDirectory, ".cursor", "commands", "review.md"),
             ),
           ).toBe(path.join(fixture.sourceDirectory, "commands", "review.md"));
-          expectSuccess(yield* runTack(fixture, ["pick", "include", "notes.md", "--user"]));
-          const selectedContext = envelope(yield* runTack(fixture, ["status", "--user"]));
+          expectSuccess(yield* hostTack(fixture, ["pick", "include", "notes.md", "--user"]));
+          const selectedContext = envelope(yield* hostTack(fixture, ["status", "--user"]));
           expect(selectedContext).toMatchObject({
             result: {
               namespaces: [
@@ -1103,8 +1113,8 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
               ],
             },
           });
-          expectSuccess(yield* runTack(fixture, ["pick", "exclude", "review", "--user"]));
-          const excluded = envelope(yield* runTack(fixture, ["sync", "--user", "--apply"]));
+          expectSuccess(yield* hostTack(fixture, ["pick", "exclude", "review", "--user"]));
+          const excluded = envelope(yield* hostTack(fixture, ["sync", "--user", "--apply"]));
           expect(excluded).toMatchObject({ classification: "partial" });
           expect(
             yield* fs.exists(path.join(fixture.homeDirectory, ".cursor", "commands", "review.md")),
@@ -1152,7 +1162,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
             ["source", "add", fixture.sourceDirectory],
             ["state", "reset", "--apply"],
           ]) {
-            const result = yield* runTack(fixture, args);
+            const result = yield* hostTack(fixture, args);
             expect(result.exitCode).toBe(ChildProcessSpawner.ExitCode(3));
             expect(envelope(result)).toMatchObject({ classification: "persistence" });
             expect(yield* fs.readFileString(statePath)).toBe(encoded);
