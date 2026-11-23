@@ -18,7 +18,12 @@ const commit = { files: { "skills/pdf/SKILL.md": skillText("pdf") } } as const;
 
 describe("records written before the provider prefix", () => {
   it("list, report local change, check and remove with no edit", async () => {
-    const world = await makeSystemWorld({ declaration: written, files, commits: [commit] });
+    const world = await makeSystemWorld({
+      inProcess: true,
+      declaration: written,
+      files,
+      commits: [commit],
+    });
     const listed = await world.json(["import"]);
     expect(listed.code).toBe(0);
     expect(listed.envelope.result.imports).toMatchObject([
@@ -48,7 +53,12 @@ describe("records written before the provider prefix", () => {
   }, 60_000);
 
   it("report a hand edit as a local change", async () => {
-    const world = await makeSystemWorld({ declaration: written, files, commits: [commit] });
+    const world = await makeSystemWorld({
+      inProcess: true,
+      declaration: written,
+      files,
+      commits: [commit],
+    });
     await Bun.write(join(world.brain, "skills/pdf/SKILL.md"), "edited\n");
     const listed = await world.json(["import"]);
     expect(listed.envelope.result.imports[0].local).toMatchObject({
@@ -63,7 +73,12 @@ describe("a record from a provider this release lacks", () => {
 
   it("keeps import, import remove, status and doctor working on its source", async () => {
     expect(newer).toContain("location: forge:acme/repo");
-    const world = await makeSystemWorld({ declaration: newer, files, commits: [commit] });
+    const world = await makeSystemWorld({
+      inProcess: true,
+      declaration: newer,
+      files,
+      commits: [commit],
+    });
     const listed = await world.json(["import"]);
     expect(listed.code).toBe(0);
     expect(listed.envelope.result.imports).toMatchObject([
@@ -80,7 +95,12 @@ describe("a record from a provider this release lacks", () => {
   }, 60_000);
 
   it("is another location to import add: the verdict names the record", async () => {
-    const world = await makeSystemWorld({ declaration: newer, files, commits: [commit] });
+    const world = await makeSystemWorld({
+      inProcess: true,
+      declaration: newer,
+      files,
+      commits: [commit],
+    });
     const preview = await world.json([
       "import",
       "add",

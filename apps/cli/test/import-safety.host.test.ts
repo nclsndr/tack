@@ -42,7 +42,7 @@ describe("credentials", () => {
   const token = "SEKRET-TOKEN-4f9a1c";
 
   it("never reach tack.yaml, state, output or any file after a credentialed run", async () => {
-    const world = await makeSystemWorld({ commits: [commit] });
+    const world = await makeSystemWorld({ inProcess: true, commits: [commit] });
     // A global git configuration with a helper that would hand out the token, and the usual
     // token variables, tracing and verbose switches: none of it may be read back or printed.
     const config = join(world.root, "gitconfig");
@@ -79,7 +79,7 @@ describe("credentials", () => {
   }, 90_000);
 
   it("in a location are refused by the grammar without being echoed", async () => {
-    const world = await makeSystemWorld({ commits: [commit] });
+    const world = await makeSystemWorld({ inProcess: true, commits: [commit] });
     const location = "https://user:sekret-location-token@github.com/acme/skills";
     const human = await world.run(["import", "add", location]);
     const json = await world.json([
@@ -127,7 +127,7 @@ const subcommandOf = (call: string) => {
 
 describe("offline", () => {
   it("every local command works without git reaching a remote, and import add fails changing nothing", async () => {
-    const world = await makeSystemWorld({ commits: [commit] });
+    const world = await makeSystemWorld({ inProcess: true, commits: [commit] });
     await addProject(world, "demo");
     expect((await world.json(["adapter", "enable", "codex"])).code).toBe(0);
     expect((await world.json(addPdf)).envelope.classification).toBe("success");
@@ -225,8 +225,8 @@ describe("no version control in the destination", () => {
   };
 
   it("behaves the same in a plain directory and in a git working tree, and runs no git there", async () => {
-    const plain = await makeSystemWorld({ commits: [commit] });
-    const tracked = await makeSystemWorld({ commits: [commit] });
+    const plain = await makeSystemWorld({ inProcess: true, commits: [commit] });
+    const tracked = await makeSystemWorld({ inProcess: true, commits: [commit] });
     await git(tracked.brain, ["init", "--quiet", "--initial-branch=main"]);
     await git(tracked.brain, ["add", "-A"]);
     await git(tracked.brain, ["commit", "--quiet", "-m", "personal-brain"]);

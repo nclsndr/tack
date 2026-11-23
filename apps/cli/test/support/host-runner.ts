@@ -151,9 +151,10 @@ export const runTackInProcess = (
   args: ReadonlyArray<string>,
   options: InProcessOptions = {},
 ): Effect.Effect<TackRun> => {
+  const env = isolationChanges(options, options.env);
   const run = runHost({
     args,
-    env: isolationChanges(options, options.env),
+    env,
     // The live environment, which the run's changes above apply to, as a child process sees its own.
     terminal: {
       columns: 80,
@@ -161,9 +162,10 @@ export const runTackInProcess = (
       stdinIsTerminal: false,
       stdoutIsTerminal: false,
     },
-  });
-  return (options.cwd === undefined ? run : inDirectory(options.cwd)(run)).pipe(
+  }).pipe(
     Effect.map(({ exit, stdout, stderr }) => ({ exitCode: exitCodeOf(exit), stdout, stderr })),
+    // Built inside the run's environment and directory: some layers read a variable when built.
     Effect.provide(ApplicationLive),
   );
+  return withProcessEnv(env, options.cwd === undefined ? run : inDirectory(options.cwd)(run));
 };

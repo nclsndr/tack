@@ -71,7 +71,7 @@ const syncRows = async (world: SystemWorld, name: string) => {
 describe("parity with source add", () => {
   /** A world where `other` delivers pdf to demo, and the destination also gets a pdf. */
   const scenario = async (how: "import" | "register") => {
-    const world = await makeSystemWorld({ commits: [pdfCommit] });
+    const world = await makeSystemWorld({ inProcess: true, commits: [pdfCommit] });
     await addSource(world, "other", { pdf: skillText("pdf") });
     await addProject(world, "demo");
     expect((await world.json(["adapter", "enable", "codex"])).code).toBe(0);
@@ -130,6 +130,7 @@ describe("parity with source add", () => {
 describe("reach equals sync", () => {
   it("lists the projects, user decision, and collisions that sync plans after apply", async () => {
     const world = await makeSystemWorld({
+      inProcess: true,
       commits: [
         {
           files: {
@@ -206,7 +207,7 @@ describe("reach equals sync", () => {
 
 describe("delivery after import", () => {
   it("catalogs the skill under the destination and sync links the folder, live for later edits", async () => {
-    const world = await makeSystemWorld({ commits: [pdfCommit] });
+    const world = await makeSystemWorld({ inProcess: true, commits: [pdfCommit] });
     const project = await addProject(world, "demo");
     expect((await world.json(["adapter", "enable", "codex"])).code).toBe(0);
     expect((await world.json([...importPdf, "--apply"])).envelope.classification).toBe("success");
