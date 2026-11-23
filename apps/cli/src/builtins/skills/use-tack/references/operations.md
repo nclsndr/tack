@@ -312,9 +312,10 @@ companion source folders for cross-source profile linkage. Source folders includ
 published profiles and docs figures. Findings have file:line locations; errors exit 1, warnings
 exit 0. Figures, icons and author components use the reader's static rules without running a page. Unknown icons produce `icon-unknown`; misused components produce `component-issue`. Computed props produce
 `figure-not-checked`; unavailable inputs produce `check-path-unavailable`. A folder of skills
-without `tack.yaml` produces the warning `check-not-a-source` and names the command for its
-layout: `tack source add PATH --skills .` for skill folders at its top, `--skills skills` for a
-`skills` folder, and the folder above for a `SKILL.md` at PATH. The
+without `tack.yaml` produces the warning `check-not-a-source` and names the same previews as a bare
+`tack source add PATH`: `--skills .` for skill folders at its top, or one flag per folder named
+after a kind, such as `--skills skills --commands commands`, and the folder above for a `SKILL.md`
+at PATH. The
 `write-reader-figures` skill teaches figure authoring.
 
 `tack docs icons [WORD]` lists the Lucide icons a document may draw with `<Icon name>`, by category,

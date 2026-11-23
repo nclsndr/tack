@@ -4,6 +4,7 @@ import { docsWalkSkips, marksSourceEdge } from "@tackup/reader/source-edges";
 import { declarationFileName } from "../sources/declaration-file.ts";
 import { topLevelSkillFolders } from "./top-level-skills.ts";
 import { oneSkillMessage } from "../sources/source.ts";
+import { layoutCommands } from "../sources/source-scaffold.ts";
 
 export type CheckInput = {
   readonly kind: CheckItem["kind"];
@@ -44,19 +45,22 @@ const skillsLayoutOrFails = Effect.fnUntraced(function* (folder: string) {
     : undefined;
 });
 
-/** What a folder of skills without `tack.yaml` needs, as a remedy and the command it names. */
-const sourceAddRemedy = (
+/**
+ * What a folder of skills without `tack.yaml` needs, as a remedy and the commands it names: the
+ * previews a bare `source add` on the same folder suggests.
+ */
+const sourceAddRemedy = Effect.fnUntraced(function* (
   folder: string,
   layout: "one" | "top" | "skills",
-): Pick<CheckFinding, "remedy" | "next"> => {
-  if (layout === "one") return { remedy: oneSkillMessage(folder) };
-  const declared = layout === "top" ? "." : "skills";
-  const command = ["tack", "source", "add", folder, "--skills", declared];
+) {
+  if (layout === "one") return { remedy: oneSkillMessage(folder) } satisfies Partial<CheckFinding>;
+  const next = yield* layoutCommands(folder);
+  const [first] = next;
   return {
-    remedy: `Run ${command.join(" ")} to preview ${layout === "top" ? "a skills collection" : "its tack.yaml"}, then apply it.`,
-    next: [command],
-  };
-};
+    remedy: `Run ${first?.join(" ")} to preview ${layout === "top" ? "a skills collection" : "its tack.yaml"}, then apply it.`,
+    next,
+  } satisfies Partial<CheckFinding>;
+});
 
 /** Detects paths independently, so one unreadable input cannot suppress the remaining checks. */
 export const discoverCheckInput = Effect.fnUntraced(function* (input: string) {
@@ -87,7 +91,7 @@ export const discoverCheckInput = Effect.fnUntraced(function* (input: string) {
                 file: canonical,
                 line: 1,
                 message: "No tack.yaml: this folder is not a Tack source yet.",
-                ...sourceAddRemedy(canonical, layout),
+                ...(yield* sourceAddRemedy(canonical, layout)),
               },
             ],
           };

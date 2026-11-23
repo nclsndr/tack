@@ -331,6 +331,13 @@ it.layer(LiveTestLayer)("setup hints", (hintIt) => {
       next: "skills",
       remedy: "Run tack source add FOLDER --skills skills to preview its tack.yaml, then apply it.",
     },
+    {
+      layout: "a skills folder beside a commands folder",
+      files: ["skills/review/SKILL.md", "commands/ship.md"],
+      next: "skills --commands commands",
+      remedy:
+        "Run tack source add FOLDER --skills skills --commands commands to preview its tack.yaml, then apply it.",
+    },
   ])("names what to run for a folder of $layout without tack.yaml", ({ files, next, remedy }) =>
     Effect.gen(function* () {
       const { at, json, text } = yield* machine();
@@ -368,6 +375,9 @@ it.layer(LiveTestLayer)("setup hints", (hintIt) => {
         },
       });
       expect(hintsIn(yield* text(["check", at("skills-folder")]))).toEqual(commands);
+      // check and a bare source add on the same folder suggest the same flags.
+      if (next !== undefined)
+        expect((yield* json(["source", "add", at("skills-folder")])).next).toEqual(commands);
     }),
   );
 

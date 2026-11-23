@@ -171,9 +171,9 @@ const keyNamedBy = (name: string) =>
  * The previews that declare what a folder without tack.yaml holds, read from the folders at its top.
  * Skill folders there make it a skills collection, with a source of its own for each commands or
  * docs folder beside them; otherwise each folder named after a kind gets its flag. A placeholder
- * folder remains when neither is found.
+ * folder remains when neither is found. `source add` and `tack check` both suggest these.
  */
-const layoutCommands = Effect.fnUntraced(function* (root: string) {
+export const layoutCommands = Effect.fnUntraced(function* (root: string) {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
   const names = (yield* fs.readDirectory(root))
