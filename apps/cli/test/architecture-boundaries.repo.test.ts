@@ -55,6 +55,29 @@ const layerImports: Readonly<Record<string, ReadonlyArray<string>>> = {
   bootstrap: ["domain", "services", "platform", "features", "cli", "bootstrap"],
 };
 
+/**
+ * The layers that may import each entry of the workspace packages the CLI uses. `domain` imports
+ * none of them. The reader's pure entries hold facts and functions without I/O, so any layer above
+ * `domain` may read them. The entries that read files or start the reader belong to `platform`, which
+ * implements the reader services; `services` names their types only. `@tackup/core` runs scripts, so
+ * only the execution adapter in `platform` imports it. An entry missing here is under no rule yet, so
+ * importing it fails until it is added.
+ */
+const packageImports: Readonly<Record<string, ReadonlyArray<string>>> = {
+  "@tackup/reader/icons": ["services", "platform", "features", "cli", "bootstrap"],
+  "@tackup/reader/search-core": ["services", "platform", "features", "cli", "bootstrap"],
+  "@tackup/reader/source-edges": ["services", "platform", "features", "cli", "bootstrap"],
+  "@tackup/reader/figure-check": ["services", "platform", "bootstrap"],
+  "@tackup/reader/search": ["services", "platform", "bootstrap"],
+  "@tackup/reader/server": ["platform", "bootstrap"],
+  "@tackup/core": ["platform", "bootstrap"],
+  "@tackup/core/script-api": ["platform", "bootstrap"],
+};
+
+/** Whether a specifier names the reader or core package, which `packageImports` rules. */
+const isWorkspacePackage = (specifier: string) =>
+  /^@tackup\/(?:reader|core)(?:\/|$)/.test(specifier);
+
 /** Root modules every layer may read; each is a leaf that imports at most `domain`. */
 const rootModules: ReadonlyArray<string> = ["release.ts", "version.ts"];
 
@@ -128,6 +151,26 @@ describe("CLI architecture boundaries", () => {
     });
 
     expect(violations).toEqual([]);
+  });
+
+  it("imports the reader and core packages only from the layers their rule allows", () => {
+    const violations = productionSourceFiles().flatMap((path) => {
+      const module = modulePath(path);
+      const layer = layerOf(module);
+      return [...new Set(importsOf(path).filter(isWorkspacePackage))].flatMap((specifier) =>
+        layer !== undefined && packageImports[specifier]?.includes(layer) === true
+          ? []
+          : [`${module} -> ${specifier}`],
+      );
+    });
+
+    expect(violations).toEqual([]);
+  });
+
+  it("keeps domain free of the reader and core packages", () => {
+    expect(
+      Object.entries(packageImports).filter(([, layers]) => layers.includes("domain")),
+    ).toEqual([]);
   });
 
   it("keeps the feature folders a directed acyclic graph", () => {
