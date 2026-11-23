@@ -108,6 +108,18 @@ describe("explicit reader configuration", () => {
     await expect(loadReaderConfig(directory)).rejects.toThrow(/absent.tsx/);
   });
 
+  it("reports YAML nested too deeply to parse as malformed", async () => {
+    const directory = await fixture();
+    const depth = 20_000;
+    await writeFile(
+      join(directory, "tack.reader.yaml"),
+      `version: ${"[".repeat(depth)}${"]".repeat(depth)}\n`,
+    );
+    const failure = loadReaderConfig(directory);
+    await expect(failure).rejects.toThrow(ReaderConfigurationError);
+    await expect(failure).rejects.toThrow(/valid YAML/);
+  });
+
   it("treats absent content roots and archive folders as empty until they exist", async () => {
     const directory = await fixture({
       ...valid,
