@@ -17,7 +17,6 @@ import { locateFinding } from "./finding-location.ts";
 import { documentationDetectors, type DocumentationDetector } from "./documentation.ts";
 import { declarationFileName } from "../sources/declaration-file.ts";
 import { unresolvedDependencyEdges } from "../../domain/choices/dependency-resolution.ts";
-import { catalogSelectableEntries } from "../../domain/sources/catalog-schema.ts";
 import { dependencyEdgeFindings } from "./dependency-edges.ts";
 
 /** Checks explicit files/source folders as one stateless authoring scope; never reads StateStore. */
@@ -48,14 +47,7 @@ export const checkPaths = Effect.fnUntraced(function* (
   const sources: ReadonlyArray<DeclaredSourceInspection> =
     snapshot === undefined ? [] : yield* snapshot.sourceInspections;
   const catalog = snapshot === undefined ? undefined : yield* snapshot.catalog;
-  const unresolvedEdges =
-    catalog === undefined
-      ? []
-      : unresolvedDependencyEdges({
-          entries: catalogSelectableEntries(catalog),
-          quarantined: catalog.quarantined,
-          ...(catalog.sources === undefined ? {} : { sources: catalog.sources }),
-        });
+  const unresolvedEdges = catalog === undefined ? [] : unresolvedDependencyEdges(catalog);
   const checks: CheckItem[] = [];
   const findings: CheckFinding[] = [];
   const seen = new Set<string>();

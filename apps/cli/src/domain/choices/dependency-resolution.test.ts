@@ -614,6 +614,17 @@ it("lists every edge, required or optional, that names no single resource, with 
   ]);
 });
 
+it("lists an unresolved edge of a catalog that reports no sources", () => {
+  const edges = unresolvedDependencyEdges({
+    entries: [entry("root", { dependencies: [dependency("absent")] })],
+    quarantined: [],
+  });
+
+  expect(edges.map(({ position, failure }) => [position, failure.reason])).toEqual([
+    [0, "missing"],
+  ]);
+});
+
 it("blocks a dependency on a declared source label that no registered source carries", () => {
   const root = entryIn(
     "root",

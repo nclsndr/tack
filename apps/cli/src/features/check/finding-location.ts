@@ -11,12 +11,11 @@ const indentOf = (line: string) => line.length - line.trimStart().length;
 const isListItem = (line: string) => /^\s*-(\s|$)/.test(line);
 
 /**
- * The lines of the block-list items under the key at line `start`, in order. The list ends at the
- * next key at the key's indentation or less. Only items at the first item's indentation count, so
- * a list nested inside an item is passed over.
+ * The lines of the block-list items under the key at line `start`, indented by `keyIndent`, in
+ * order. The list ends at the next key at the key's indentation or less. Only items at the first
+ * item's indentation count, so a list nested inside an item is passed over.
  */
-const listItemLines = (lines: ReadonlyArray<string>, start: number) => {
-  const keyIndent = indentOf(lines[start] ?? "");
+const listItemLines = (lines: ReadonlyArray<string>, start: number, keyIndent: number) => {
   const end = lines.findIndex(
     (line, index) =>
       index > start &&
@@ -39,7 +38,10 @@ const listItemLines = (lines: ReadonlyArray<string>, start: number) => {
 export const dependencyLine = (text: string, position: number) => {
   const lines = text.split(/\r?\n/);
   const start = lines.findIndex((line) => /^\s*["']?dependencies["']?:/.test(line) === true);
-  return start < 0 ? 1 : (listItemLines(lines, start)[position] ?? start) + 1;
+  const key = lines[start];
+  return key === undefined
+    ? 1
+    : (listItemLines(lines, start, indentOf(key))[position] ?? start) + 1;
 };
 
 /**
@@ -58,7 +60,7 @@ export const locateFinding = Effect.fnUntraced(function* (
     (finding.code === "profile-publication-mismatch" ? "name" : undefined);
   const start = field === undefined ? -1 : lines.findIndex((line) => line.startsWith(`${field}:`));
   const item = finding.field?.match(/^[^.[]+\[(\d+)\]/)?.[1];
-  const itemLines = item === undefined || start < 0 ? [] : listItemLines(lines, start);
+  const itemLines = item === undefined || start < 0 ? [] : listItemLines(lines, start, 0);
   return {
     ...finding,
     line: Math.max(1, (itemLines[Number(item)] ?? start) + 1),

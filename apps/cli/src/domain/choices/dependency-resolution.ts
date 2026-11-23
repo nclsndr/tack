@@ -5,6 +5,7 @@ import type { InitialSelection } from "./selection.ts";
 import {
   SelectableAddressSchema,
   ResourceDependencySchema,
+  catalogSelectableEntries,
   resourceAddressIdentity,
   type CatalogQuarantine,
   type Catalog,
@@ -327,15 +328,11 @@ export type UnresolvedDependencyEdge = {
  * catalog. It reads no selection, so no resource is excluded: what it reports breaks in every
  * namespace. The resolution's own lookup decides each edge.
  */
-export const unresolvedDependencyEdges = ({
-  entries,
-  quarantined,
-  sources = [],
-}: Pick<
-  ResolveDependencyClosureInput,
-  "entries" | "quarantined" | "sources"
->): ReadonlyArray<UnresolvedDependencyEdge> => {
-  const index = indexDependencies(entries, quarantined, sources);
+export const unresolvedDependencyEdges = (
+  catalog: Pick<Catalog, "entries" | "quarantined" | "sources">,
+): ReadonlyArray<UnresolvedDependencyEdge> => {
+  const entries = catalogSelectableEntries(catalog);
+  const index = indexDependencies(entries, catalog.quarantined, catalog.sources ?? []);
   return entries.flatMap((requester) =>
     "dependencies" in requester
       ? requester.dependencies.flatMap((dependency, position) => {
