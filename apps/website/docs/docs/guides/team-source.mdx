@@ -164,7 +164,12 @@ teammate deleted `incident-report`:
 <Terminal commands={["tack sync --all"]} output={removedOutput} />
 
 Apply it with `tack sync --all --apply`. A renamed skill shows up the same way: the old name's links
-go, and the new name's links are created.
+go, with `source-missing`, and the new name's links are created.
+
+A pick names a skill by its name, so a pick on the old name no longer applies after a rename. If you
+had included or excluded the skill, `tack pick` still lists the old name: pick the new name, such as
+`tack pick include incident --project app`, and forget the old one with
+`tack pick remove incident-report --project app`.
 
 ## When the project ignores its links
 
