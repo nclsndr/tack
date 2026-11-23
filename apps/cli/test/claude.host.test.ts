@@ -7,7 +7,7 @@ import { SyncPlanSchema } from "../src/domain/reconciliation/sync-schema.ts";
 import { StatusPayloadSchema } from "../src/domain/status/status-schema.ts";
 import {
   partialEnvelope,
-  runTack,
+  hostTack,
   successfulEnvelope,
   withTackWorld,
 } from "./fixtures/tack-world.ts";
@@ -40,17 +40,17 @@ it.layer(LiveTestLayer)("Claude Code adapter", (claudeIt) => {
             path.join(root, directory, "skills", "valid"),
           );
 
-          successfulEnvelope(yield* runTack(fixture, ["adapter", "enable", "codex", "cursor"]));
+          successfulEnvelope(yield* hostTack(fixture, ["adapter", "enable", "codex", "cursor"]));
           successfulEnvelope(
-            yield* runTack(fixture, ["adapter", "enable", "cursor", "claude", "codex"]),
+            yield* hostTack(fixture, ["adapter", "enable", "cursor", "claude", "codex"]),
           );
-          expect(successfulEnvelope(yield* runTack(fixture, ["adapter", "list"])).result).toEqual({
+          expect(successfulEnvelope(yield* hostTack(fixture, ["adapter", "list"])).result).toEqual({
             kind: "adapters",
             enabledAdapters: allAdapters,
           });
           if (target === "user") {
             for (const args of [["pick", "include", "valid", "--user"]]) {
-              successfulEnvelope(yield* runTack(fixture, args));
+              successfulEnvelope(yield* hostTack(fixture, args));
             }
           }
           const beforeDryRun = yield* fileSystem.readFileString(statePath);
@@ -62,7 +62,7 @@ it.layer(LiveTestLayer)("Claude Code adapter", (claudeIt) => {
             "--require-capability",
             "skill-links",
           ];
-          const dryRun = successfulEnvelope(yield* runTack(fixture, reconcile));
+          const dryRun = successfulEnvelope(yield* hostTack(fixture, reconcile));
           const plan = reconciliationPlan(dryRun.plan);
           expect(plan.units).toMatchObject([
             {
@@ -79,7 +79,7 @@ it.layer(LiveTestLayer)("Claude Code adapter", (claudeIt) => {
             expect(yield* fileSystem.exists(path.dirname(destination))).toBe(false);
           }
 
-          const applied = successfulEnvelope(yield* runTack(fixture, [...reconcile, "--apply"]));
+          const applied = successfulEnvelope(yield* hostTack(fixture, [...reconcile, "--apply"]));
           expect(applied.plan).toEqual(dryRun.plan);
           expect(yield* fileSystem.readLink(claudeDestination)).toBe(
             path.relative(claudeDirectory, source),
@@ -95,18 +95,18 @@ it.layer(LiveTestLayer)("Claude Code adapter", (claudeIt) => {
             expect(yield* fileSystem.exists(path.dirname(destination))).toBe(false);
           }
 
-          successfulEnvelope(yield* runTack(fixture, ["sync", ...selector, "--apply"]));
+          successfulEnvelope(yield* hostTack(fixture, ["sync", ...selector, "--apply"]));
           for (const destination of destinations) {
             expect(yield* fileSystem.realPath(destination)).toBe(source);
           }
           const idempotent = successfulEnvelope(
-            yield* runTack(fixture, ["sync", ...selector, "--apply"]),
+            yield* hostTack(fixture, ["sync", ...selector, "--apply"]),
           );
           expect(reconciliationPlan(idempotent.plan).units).toMatchObject(
             allAdapters.map((adapter) => ({ actions: [], adapter, conflicts: [] })),
           );
           const beforeStatus = yield* fileSystem.readFileString(statePath);
-          const status = successfulEnvelope(yield* runTack(fixture, ["status", ...selector]));
+          const status = successfulEnvelope(yield* hostTack(fixture, ["status", ...selector]));
           expect(
             Schema.decodeUnknownSync(StatusPayloadSchema)(status.result).destinations,
           ).toContainEqual(
@@ -120,28 +120,28 @@ it.layer(LiveTestLayer)("Claude Code adapter", (claudeIt) => {
 
           const sentinel = path.join(claudeDirectory, "operator.txt");
           yield* fileSystem.writeFileString(sentinel, "operator-owned\n");
-          successfulEnvelope(yield* runTack(fixture, ["state", "clean", ...selector, "--apply"]));
+          successfulEnvelope(yield* hostTack(fixture, ["state", "clean", ...selector, "--apply"]));
           for (const destination of destinations) {
             expect(yield* fileSystem.exists(destination)).toBe(false);
           }
           expect(yield* fileSystem.readFileString(sentinel)).toBe("operator-owned\n");
-          successfulEnvelope(yield* runTack(fixture, ["sync", ...selector, "--apply"]));
+          successfulEnvelope(yield* hostTack(fixture, ["sync", ...selector, "--apply"]));
 
           const beforeDisable = yield* fileSystem.readFileString(statePath);
           const disablePlan = successfulEnvelope(
-            yield* runTack(fixture, ["adapter", "disable", "claude"]),
+            yield* hostTack(fixture, ["adapter", "disable", "claude"]),
           );
           expect(yield* fileSystem.readFileString(statePath)).toBe(beforeDisable);
           expect(yield* fileSystem.realPath(claudeDestination)).toBe(source);
           const disabled = successfulEnvelope(
-            yield* runTack(fixture, ["adapter", "disable", "claude", "--apply"]),
+            yield* hostTack(fixture, ["adapter", "disable", "claude", "--apply"]),
           );
           expect(disabled.plan).toEqual(disablePlan.plan);
           expect(yield* fileSystem.exists(claudeDestination)).toBe(false);
           for (const destination of destinations.slice(1)) {
             expect(yield* fileSystem.realPath(destination)).toBe(source);
           }
-          expect(successfulEnvelope(yield* runTack(fixture, ["adapter", "list"])).result).toEqual({
+          expect(successfulEnvelope(yield* hostTack(fixture, ["adapter", "list"])).result).toEqual({
             kind: "adapters",
             enabledAdapters: ["codex", "cursor"],
           });
@@ -159,12 +159,12 @@ it.layer(LiveTestLayer)("Claude Code adapter", (claudeIt) => {
         const destination = path.join(fixture.homeDirectory, ".claude", "skills", "valid");
         yield* fileSystem.makeDirectory(path.dirname(destination), { recursive: true });
         yield* fileSystem.writeFileString(destination, "operator-owned\n");
-        successfulEnvelope(yield* runTack(fixture, ["adapter", "enable", "claude"]));
+        successfulEnvelope(yield* hostTack(fixture, ["adapter", "enable", "claude"]));
         for (const args of [["pick", "include", "valid", "--user"]]) {
-          successfulEnvelope(yield* runTack(fixture, args));
+          successfulEnvelope(yield* hostTack(fixture, args));
         }
 
-        const result = partialEnvelope(yield* runTack(fixture, ["sync", "--user", "--apply"]));
+        const result = partialEnvelope(yield* hostTack(fixture, ["sync", "--user", "--apply"]));
         const plan = reconciliationPlan(result.plan);
         expect(plan.units).toMatchObject([{ adapter: "claude", conflicts: [expect.any(Object)] }]);
         expect(yield* fileSystem.readFileString(destination)).toBe("operator-owned\n");
@@ -183,14 +183,14 @@ it.layer(LiveTestLayer)("Claude Code adapter", (claudeIt) => {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
         const skills = path.join(fixture.primaryRoot, ".claude", "skills");
-        successfulEnvelope(yield* runTack(fixture, ["adapter", "enable", "claude"]));
+        successfulEnvelope(yield* hostTack(fixture, ["adapter", "enable", "claude"]));
         yield* fileSystem.makeDirectory(skills, { recursive: true });
         yield* Effect.acquireRelease(fileSystem.chmod(skills, 0o555), () =>
           Effect.orDie(fileSystem.chmod(skills, 0o755)),
         );
 
         const result = partialEnvelope(
-          yield* runTack(fixture, [
+          yield* hostTack(fixture, [
             "sync",
             "--project",
             "workspace",

@@ -8,7 +8,7 @@ import { decodeState } from "../src/domain/state/state-codec.ts";
 import { managedLinkDestinationPath } from "../src/domain/agents/agent-layout.ts";
 import {
   partialEnvelope,
-  runTack,
+  hostTack,
   successfulEnvelope,
   withTackWorld,
 } from "./fixtures/tack-world.ts";
@@ -24,11 +24,11 @@ it.layer(LiveTestLayer)("project reset and retry", (resetIt) => {
         Effect.gen(function* () {
           const fileSystem = yield* FileSystem.FileSystem;
           const path = yield* Path.Path;
-          successfulEnvelope(yield* runTack(fixture, ["adapter", "enable", "cursor", "codex"]));
+          successfulEnvelope(yield* hostTack(fixture, ["adapter", "enable", "cursor", "codex"]));
           // Picked for the user after the project sync, so the project keeps the link it made.
-          successfulEnvelope(yield* runTack(fixture, reconcile(["--project", "workspace"])));
-          successfulEnvelope(yield* runTack(fixture, ["pick", "include", "valid", "--user"]));
-          successfulEnvelope(yield* runTack(fixture, reconcile(["--user"])));
+          successfulEnvelope(yield* hostTack(fixture, reconcile(["--project", "workspace"])));
+          successfulEnvelope(yield* hostTack(fixture, ["pick", "include", "valid", "--user"]));
+          successfulEnvelope(yield* hostTack(fixture, reconcile(["--user"])));
 
           const managedDestinations = [
             path.join(fixture.primaryRoot, ".agents", "skills", "valid"),
@@ -55,7 +55,7 @@ it.layer(LiveTestLayer)("project reset and retry", (resetIt) => {
           yield* fileSystem.makeDirectory(path.dirname(historyPath), { recursive: true });
           yield* fileSystem.writeFileString(historyPath, "retained run evidence");
 
-          const dryRun = successfulEnvelope(yield* runTack(fixture, ["state", "reset"]));
+          const dryRun = successfulEnvelope(yield* hostTack(fixture, ["state", "reset"]));
           expect(yield* fileSystem.readFileString(statePath)).toBe(beforeDryRun);
           expect(yield* fileSystem.readFileString(historyPath)).toBe("retained run evidence");
           expect(
@@ -64,7 +64,7 @@ it.layer(LiveTestLayer)("project reset and retry", (resetIt) => {
             ),
           ).toEqual([true, true, true, true]);
           const applied = successfulEnvelope(
-            yield* runTack(fixture, ["state", "reset", "--apply"]),
+            yield* hostTack(fixture, ["state", "reset", "--apply"]),
           );
           expect(applied.plan).toEqual(dryRun.plan);
           expect(yield* fileSystem.exists(historyPath)).toBe(false);
@@ -91,7 +91,7 @@ it.layer(LiveTestLayer)("project reset and retry", (resetIt) => {
           expect(yield* fileSystem.readFileString(sourceSkillPath)).toBe(sourceBefore);
 
           for (const selector of [["--project", "workspace"], ["--user"]] as const) {
-            const invalid = yield* runTack(fixture, ["state", "reset", ...selector]);
+            const invalid = yield* hostTack(fixture, ["state", "reset", ...selector]);
             expect(invalid.exitCode).toBe(ChildProcessSpawner.ExitCode(2));
             expect(decodeEnvelope(invalid.stdout)).toMatchObject({
               classification: "invalid-invocation",
@@ -110,11 +110,11 @@ it.layer(LiveTestLayer)("project reset and retry", (resetIt) => {
         Effect.gen(function* () {
           const fileSystem = yield* FileSystem.FileSystem;
           const path = yield* Path.Path;
-          successfulEnvelope(yield* runTack(fixture, ["adapter", "enable", "codex"]));
+          successfulEnvelope(yield* hostTack(fixture, ["adapter", "enable", "codex"]));
           // Picked for the user after the project sync, so the project keeps the link it made.
-          successfulEnvelope(yield* runTack(fixture, reconcile(["--project", "workspace"])));
-          successfulEnvelope(yield* runTack(fixture, ["pick", "include", "valid", "--user"]));
-          successfulEnvelope(yield* runTack(fixture, reconcile(["--user"])));
+          successfulEnvelope(yield* hostTack(fixture, reconcile(["--project", "workspace"])));
+          successfulEnvelope(yield* hostTack(fixture, ["pick", "include", "valid", "--user"]));
+          successfulEnvelope(yield* hostTack(fixture, reconcile(["--user"])));
           const projectDestination = path.join(fixture.primaryRoot, ".agents", "skills", "valid");
           const userDestination = path.join(fixture.homeDirectory, ".agents", "skills", "valid");
           const foreignTarget = path.join(path.dirname(fixture.stateDirectory), "foreign");
@@ -128,8 +128,8 @@ it.layer(LiveTestLayer)("project reset and retry", (resetIt) => {
           const historyPath = path.join(fixture.stateDirectory, "history", "retained.json");
           yield* fileSystem.makeDirectory(path.dirname(historyPath), { recursive: true });
           yield* fileSystem.writeFileString(historyPath, "retained run evidence");
-          const dryRun = partialEnvelope(yield* runTack(fixture, ["state", "reset"]));
-          const applied = partialEnvelope(yield* runTack(fixture, ["state", "reset", "--apply"]));
+          const dryRun = partialEnvelope(yield* hostTack(fixture, ["state", "reset"]));
+          const applied = partialEnvelope(yield* hostTack(fixture, ["state", "reset", "--apply"]));
           expect(applied.plan).toEqual(dryRun.plan);
           expect(yield* fileSystem.exists(userDestination)).toBe(false);
           expect(yield* fileSystem.readLink(projectDestination)).toBe(
@@ -165,7 +165,7 @@ it.layer(LiveTestLayer)("project reset and retry", (resetIt) => {
           ).toEqual([projectDestination]);
 
           const stillBlocked = partialEnvelope(
-            yield* runTack(fixture, [
+            yield* hostTack(fixture, [
               "state",
               "clean",
               "--pending",
@@ -185,7 +185,7 @@ it.layer(LiveTestLayer)("project reset and retry", (resetIt) => {
           expect(yield* fileSystem.exists(historyPath)).toBe(true);
           yield* fileSystem.remove(projectDestination);
           const converged = successfulEnvelope(
-            yield* runTack(fixture, [
+            yield* hostTack(fixture, [
               "state",
               "clean",
               "--pending",

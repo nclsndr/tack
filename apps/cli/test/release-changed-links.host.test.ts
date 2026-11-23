@@ -8,13 +8,13 @@ import { ReconciliationApplyResultSchema } from "../src/domain/reconciliation/re
 import { SyncApplicationSchema, SyncPlanSchema } from "../src/domain/reconciliation/sync-schema.ts";
 import { StatusPayloadSchema } from "../src/domain/status/status-schema.ts";
 import {
-  runTack,
+  hostTack,
   successfulEnvelope,
   withTackWorld,
   type TackWorld,
 } from "./fixtures/tack-world.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
-import { tackProcess } from "./support/tack-process.ts";
+import { runTackInProcess } from "./support/host-runner.ts";
 
 const resourcePlan = (payload: unknown) => {
   const combined = Schema.decodeUnknownSync(SyncPlanSchema)(payload);
@@ -30,7 +30,7 @@ const resourceApplication = (payload: unknown) => {
 
 /** Runs Tack's text view, as an operator reads it, against the fixture's isolated state. */
 const runTackText = (fixture: TackWorld, arguments_: ReadonlyArray<string>) =>
-  tackProcess(arguments_, {
+  runTackInProcess(arguments_, {
     cwd: fixture.primaryRoot,
     env: { NO_COLOR: "1" },
     home: fixture.homeDirectory,
@@ -57,9 +57,9 @@ it.layer(LiveTestLayer)("releasing links changed outside Tack", (releaseIt) => {
             ),
           );
 
-          successfulEnvelope(yield* runTack(fixture, ["adapter", "enable", "claude", "codex"]));
-          successfulEnvelope(yield* runTack(fixture, ["adapter", "enable", "cursor"]));
-          successfulEnvelope(yield* runTack(fixture, ["sync", ...project, "--apply"]));
+          successfulEnvelope(yield* hostTack(fixture, ["adapter", "enable", "claude", "codex"]));
+          successfulEnvelope(yield* hostTack(fixture, ["adapter", "enable", "cursor"]));
+          successfulEnvelope(yield* hostTack(fixture, ["sync", ...project, "--apply"]));
           expect(yield* validRecords).toHaveLength(3);
 
           // The operator moves the skill into the repository and points every agent link at it.
@@ -72,9 +72,9 @@ it.layer(LiveTestLayer)("releasing links changed outside Tack", (releaseIt) => {
             yield* fileSystem.remove(link);
             yield* fileSystem.symlink("../../.ai/skills/valid", link);
           }
-          successfulEnvelope(yield* runTack(fixture, ["pick", "exclude", "valid", ...project]));
+          successfulEnvelope(yield* hostTack(fixture, ["pick", "exclude", "valid", ...project]));
 
-          const preview = successfulEnvelope(yield* runTack(fixture, ["sync", ...project]));
+          const preview = successfulEnvelope(yield* hostTack(fixture, ["sync", ...project]));
           const planned = resourcePlan(preview.plan).units.filter(
             (unit) => unit.actions.length > 0 || unit.conflicts.length > 0,
           );
@@ -106,7 +106,7 @@ it.layer(LiveTestLayer)("releasing links changed outside Tack", (releaseIt) => {
             );
 
           const applied = successfulEnvelope(
-            yield* runTack(fixture, ["sync", ...project, "--apply"]),
+            yield* hostTack(fixture, ["sync", ...project, "--apply"]),
           );
           expect(
             resourceApplication(applied.applied)
@@ -119,11 +119,11 @@ it.layer(LiveTestLayer)("releasing links changed outside Tack", (releaseIt) => {
             expect(yield* fileSystem.realPath(link)).toBe(moved);
           }
 
-          const second = successfulEnvelope(yield* runTack(fixture, ["sync", ...project]));
+          const second = successfulEnvelope(yield* hostTack(fixture, ["sync", ...project]));
           expect(
             resourcePlan(second.plan).units.flatMap((unit) => [...unit.actions, ...unit.conflicts]),
           ).toEqual([]);
-          const status = successfulEnvelope(yield* runTack(fixture, ["status", ...project]));
+          const status = successfulEnvelope(yield* hostTack(fixture, ["status", ...project]));
           expect(
             Schema.decodeUnknownSync(StatusPayloadSchema)(status.result).destinations.filter(
               (destination) => links.includes(destination.destinationPath),

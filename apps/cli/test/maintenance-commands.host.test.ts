@@ -9,7 +9,7 @@ import { StatusPayloadSchema } from "../src/domain/status/status-schema.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
 import {
   partialEnvelope,
-  runTack,
+  hostTack,
   successfulEnvelope,
   withTackWorld,
 } from "./fixtures/tack-world.ts";
@@ -32,8 +32,8 @@ it.layer(LiveTestLayer)("maintenance commands", (maintenanceIt) => {
         Effect.gen(function* () {
           const fileSystem = yield* FileSystem.FileSystem;
           const path = yield* Path.Path;
-          successfulEnvelope(yield* runTack(fixture, ["adapter", "enable", "cursor", "codex"]));
-          successfulEnvelope(yield* runTack(fixture, reconcileProject(["--apply"])));
+          successfulEnvelope(yield* hostTack(fixture, ["adapter", "enable", "cursor", "codex"]));
+          successfulEnvelope(yield* hostTack(fixture, reconcileProject(["--apply"])));
           const codexDestination = adapterDestination("codex", fixture.primaryRoot, path);
           const cursorDestination = adapterDestination("cursor", fixture.primaryRoot, path);
           expect(yield* fileSystem.exists(codexDestination)).toBe(true);
@@ -42,25 +42,25 @@ it.layer(LiveTestLayer)("maintenance commands", (maintenanceIt) => {
           const statePath = path.join(fixture.stateDirectory, "state.json");
           const beforeDryRun = yield* fileSystem.readFileString(statePath);
           const dryRun = successfulEnvelope(
-            yield* runTack(fixture, ["adapter", "disable", "cursor"]),
+            yield* hostTack(fixture, ["adapter", "disable", "cursor"]),
           );
           expect(yield* fileSystem.readFileString(statePath)).toBe(beforeDryRun);
           expect(yield* fileSystem.exists(cursorDestination)).toBe(true);
           const applied = successfulEnvelope(
-            yield* runTack(fixture, ["adapter", "disable", "cursor", "--apply"]),
+            yield* hostTack(fixture, ["adapter", "disable", "cursor", "--apply"]),
           );
           expect(applied.plan).toEqual(dryRun.plan);
           expect(yield* fileSystem.exists(cursorDestination)).toBe(false);
           expect(yield* fileSystem.exists(codexDestination)).toBe(true);
           expect(yield* fileSystem.exists(path.dirname(cursorDestination))).toBe(true);
           expect(yield* fileSystem.exists(path.dirname(codexDestination))).toBe(true);
-          expect(successfulEnvelope(yield* runTack(fixture, ["adapter", "list"])).result).toEqual({
+          expect(successfulEnvelope(yield* hostTack(fixture, ["adapter", "list"])).result).toEqual({
             kind: "adapters",
             enabledAdapters: ["codex"],
           });
 
           // A sync override only narrows the enabled adapters, so it cannot revive a disabled one.
-          const revived = yield* runTack(
+          const revived = yield* hostTack(
             fixture,
             reconcileProject(["--adapter", "cursor", "--apply"]),
           );
@@ -69,7 +69,7 @@ it.layer(LiveTestLayer)("maintenance commands", (maintenanceIt) => {
             diagnostics: [{ code: "adapter-not-enabled" }],
           });
           expect(yield* fileSystem.exists(cursorDestination)).toBe(false);
-          expect(successfulEnvelope(yield* runTack(fixture, ["adapter", "list"])).result).toEqual({
+          expect(successfulEnvelope(yield* hostTack(fixture, ["adapter", "list"])).result).toEqual({
             kind: "adapters",
             enabledAdapters: ["codex"],
           });
@@ -86,22 +86,22 @@ it.layer(LiveTestLayer)("maintenance commands", (maintenanceIt) => {
           const fileSystem = yield* FileSystem.FileSystem;
           const path = yield* Path.Path;
           const outside = fixture.homeDirectory;
-          successfulEnvelope(yield* runTack(fixture, ["adapter", "enable", "cursor", "codex"]));
-          successfulEnvelope(yield* runTack(fixture, reconcileProject(["--apply"])));
+          successfulEnvelope(yield* hostTack(fixture, ["adapter", "enable", "cursor", "codex"]));
+          successfulEnvelope(yield* hostTack(fixture, reconcileProject(["--apply"])));
           const cursorDestination = adapterDestination("cursor", fixture.primaryRoot, path);
           expect(yield* fileSystem.exists(cursorDestination)).toBe(true);
 
           const dryRun = successfulEnvelope(
-            yield* runTack(fixture, ["adapter", "disable", "cursor"], outside),
+            yield* hostTack(fixture, ["adapter", "disable", "cursor"], outside),
           );
           const applied = successfulEnvelope(
-            yield* runTack(fixture, ["adapter", "disable", "cursor", "--apply"], outside),
+            yield* hostTack(fixture, ["adapter", "disable", "cursor", "--apply"], outside),
           );
 
           expect(applied.plan).toEqual(dryRun.plan);
           expect(yield* fileSystem.exists(cursorDestination)).toBe(false);
           expect(
-            successfulEnvelope(yield* runTack(fixture, ["adapter", "list"], outside)).result,
+            successfulEnvelope(yield* hostTack(fixture, ["adapter", "list"], outside)).result,
           ).toEqual({ kind: "adapters", enabledAdapters: ["codex"] });
         }),
       ),
@@ -125,8 +125,8 @@ it.layer(LiveTestLayer)("maintenance commands", (maintenanceIt) => {
             path.join(fixture.sourceDirectory, "tack.yaml"),
             "version: 1\nskills:\n  - path: skills\ncommands:\n  - path: commands\n",
           );
-          successfulEnvelope(yield* runTack(fixture, ["adapter", "enable", "cursor"]));
-          successfulEnvelope(yield* runTack(fixture, reconcileProject(["--apply"])));
+          successfulEnvelope(yield* hostTack(fixture, ["adapter", "enable", "cursor"]));
+          successfulEnvelope(yield* hostTack(fixture, reconcileProject(["--apply"])));
           const commandDestination = path.join(
             fixture.primaryRoot,
             ".cursor",
@@ -138,16 +138,16 @@ it.layer(LiveTestLayer)("maintenance commands", (maintenanceIt) => {
           expect(yield* fileSystem.exists(skillDestination)).toBe(true);
 
           const dryRun = successfulEnvelope(
-            yield* runTack(fixture, ["adapter", "disable", "cursor"]),
+            yield* hostTack(fixture, ["adapter", "disable", "cursor"]),
           );
           const applied = successfulEnvelope(
-            yield* runTack(fixture, ["adapter", "disable", "cursor", "--apply"]),
+            yield* hostTack(fixture, ["adapter", "disable", "cursor", "--apply"]),
           );
 
           expect(applied.plan).toEqual(dryRun.plan);
           expect(yield* fileSystem.exists(commandDestination)).toBe(false);
           expect(yield* fileSystem.exists(skillDestination)).toBe(false);
-          expect(successfulEnvelope(yield* runTack(fixture, ["adapter", "list"])).result).toEqual({
+          expect(successfulEnvelope(yield* hostTack(fixture, ["adapter", "list"])).result).toEqual({
             kind: "adapters",
             enabledAdapters: [],
           });
@@ -163,8 +163,8 @@ it.layer(LiveTestLayer)("maintenance commands", (maintenanceIt) => {
         Effect.gen(function* () {
           const fileSystem = yield* FileSystem.FileSystem;
           const path = yield* Path.Path;
-          successfulEnvelope(yield* runTack(fixture, ["adapter", "enable", "cursor", "codex"]));
-          successfulEnvelope(yield* runTack(fixture, reconcileProject(["--apply"])));
+          successfulEnvelope(yield* hostTack(fixture, ["adapter", "enable", "cursor", "codex"]));
+          successfulEnvelope(yield* hostTack(fixture, reconcileProject(["--apply"])));
           const codexDestination = adapterDestination("codex", fixture.primaryRoot, path);
           const cursorDestination = adapterDestination("cursor", fixture.primaryRoot, path);
           const codexSentinel = path.join(path.dirname(codexDestination), "operator.txt");
@@ -180,13 +180,13 @@ it.layer(LiveTestLayer)("maintenance commands", (maintenanceIt) => {
           const beforeDryRun = yield* fileSystem.readFileString(statePath);
 
           const dryRun = successfulEnvelope(
-            yield* runTack(fixture, ["state", "clean", "--project", "workspace"]),
+            yield* hostTack(fixture, ["state", "clean", "--project", "workspace"]),
           );
           expect(yield* fileSystem.readFileString(statePath)).toBe(beforeDryRun);
           expect(yield* fileSystem.exists(codexDestination)).toBe(true);
           expect(yield* fileSystem.exists(cursorDestination)).toBe(true);
           const applied = successfulEnvelope(
-            yield* runTack(fixture, ["state", "clean", "--project", "workspace", "--apply"]),
+            yield* hostTack(fixture, ["state", "clean", "--project", "workspace", "--apply"]),
           );
           expect(applied.plan).toEqual(dryRun.plan);
           expect(yield* fileSystem.exists(codexDestination)).toBe(false);
@@ -205,7 +205,7 @@ it.layer(LiveTestLayer)("maintenance commands", (maintenanceIt) => {
           expect(after.data.sources).toEqual(before.data.sources);
           expect(managedLinksOf(after.data.links)).toEqual([]);
 
-          successfulEnvelope(yield* runTack(fixture, reconcileProject(["--apply"])));
+          successfulEnvelope(yield* hostTack(fixture, reconcileProject(["--apply"])));
           expect(yield* fileSystem.exists(codexDestination)).toBe(true);
           expect(yield* fileSystem.exists(cursorDestination)).toBe(true);
         }),
@@ -226,11 +226,11 @@ it.layer(LiveTestLayer)("maintenance commands", (maintenanceIt) => {
           yield* writeSkill(fixture.sourceDirectory, "retired");
           for (const name of ["matching", "retired"]) {
             successfulEnvelope(
-              yield* runTack(fixture, ["pick", "include", name, "--project", "workspace"]),
+              yield* hostTack(fixture, ["pick", "include", name, "--project", "workspace"]),
             );
           }
-          successfulEnvelope(yield* runTack(fixture, ["adapter", "enable", "cursor", "codex"]));
-          successfulEnvelope(yield* runTack(fixture, reconcileProject(["--apply"])));
+          successfulEnvelope(yield* hostTack(fixture, ["adapter", "enable", "cursor", "codex"]));
+          successfulEnvelope(yield* hostTack(fixture, reconcileProject(["--apply"])));
 
           yield* writeSkill(fixture.sourceDirectory, "foreign");
           yield* writeSkill(fixture.sourceDirectory, "collision");
@@ -254,7 +254,7 @@ it.layer(LiveTestLayer)("maintenance commands", (maintenanceIt) => {
             "version: 1\nskills:\n  - path: skills\n",
           );
           yield* writeSkill(alternateSource, "collision");
-          successfulEnvelope(yield* runTack(fixture, ["source", "add", alternateSource]));
+          successfulEnvelope(yield* hostTack(fixture, ["source", "add", alternateSource]));
           const unhealthySource = path.join(
             path.dirname(fixture.sourceDirectory),
             "unhealthy-source",
@@ -265,16 +265,16 @@ it.layer(LiveTestLayer)("maintenance commands", (maintenanceIt) => {
             "version: 1\nskills:\n  - path: skills\n",
           );
           yield* writeSkill(unhealthySource, "gone");
-          successfulEnvelope(yield* runTack(fixture, ["source", "add", unhealthySource]));
+          successfulEnvelope(yield* hostTack(fixture, ["source", "add", unhealthySource]));
           yield* fileSystem.remove(unhealthySource, { recursive: true });
 
           for (const name of ["foreign"]) {
             successfulEnvelope(
-              yield* runTack(fixture, ["pick", "include", name, "--project", "workspace"]),
+              yield* hostTack(fixture, ["pick", "include", name, "--project", "workspace"]),
             );
           }
           successfulEnvelope(
-            yield* runTack(fixture, ["pick", "exclude", "retired", "--project", "workspace"]),
+            yield* hostTack(fixture, ["pick", "exclude", "retired", "--project", "workspace"]),
           );
 
           const codexDirectory = path.join(fixture.primaryRoot, ".agents", "skills");
@@ -296,7 +296,7 @@ it.layer(LiveTestLayer)("maintenance commands", (maintenanceIt) => {
           const statePath = path.join(fixture.stateDirectory, "state.json");
           const before = yield* fileSystem.readFileString(statePath);
           const status = partialEnvelope(
-            yield* runTack(fixture, ["status", "--project", "workspace"]),
+            yield* hostTack(fixture, ["status", "--project", "workspace"]),
           );
           expect(yield* fileSystem.readFileString(statePath)).toBe(before);
           // `next` is the list the text view prints under Next: commands, with no registration IDs.

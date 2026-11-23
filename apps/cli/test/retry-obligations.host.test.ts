@@ -8,7 +8,7 @@ import { managedLinkDestinationPath } from "../src/domain/agents/agent-layout.ts
 import {
   partialEnvelope,
   runGit,
-  runTack,
+  hostTack,
   successfulEnvelope,
   withTackWorld,
   type TackWorld,
@@ -24,14 +24,14 @@ const mountDocs = Effect.fnUntraced(function* (fixture: TackWorld) {
     "version: 1\nskills:\n  - path: skills\ndocs:\n  - name: handbook\n    path: knowledge\n",
   );
   const sourceId = (yield* readState(fixture.options)).data.sources?.at(0)?.id ?? "";
-  successfulEnvelope(yield* runTack(fixture, ["adapter", "enable", "codex"]));
+  successfulEnvelope(yield* hostTack(fixture, ["adapter", "enable", "codex"]));
   successfulEnvelope(
-    yield* runTack(fixture, ["docs", "attach", `${sourceId}:handbook`, "--project", "workspace"]),
+    yield* hostTack(fixture, ["docs", "attach", `${sourceId}:handbook`, "--project", "workspace"]),
   );
   successfulEnvelope(
-    yield* runTack(fixture, ["sync", "--no-adapters", "--project", "workspace", "--apply"]),
+    yield* hostTack(fixture, ["sync", "--no-adapters", "--project", "workspace", "--apply"]),
   );
-  successfulEnvelope(yield* runTack(fixture, ["sync", "--project", "workspace", "--apply"]));
+  successfulEnvelope(yield* hostTack(fixture, ["sync", "--project", "workspace", "--apply"]));
   return {
     mountFor: (root: string) => path.join(root, ".tack/docs", sourceId, "handbook"),
     skillFor: (root: string) => path.join(root, ".agents", "skills", "valid"),
@@ -71,11 +71,11 @@ it.layer(LiveTestLayer)("retry settles only obligations", (retryIt) => {
           const stateBefore = yield* fileSystem.readFileString(statePath);
 
           const preview = successfulEnvelope(
-            yield* runTack(fixture, ["state", "clean", "--pending", "--project", "workspace"]),
+            yield* hostTack(fixture, ["state", "clean", "--pending", "--project", "workspace"]),
           );
           expect(yield* fileSystem.readFileString(statePath)).toBe(stateBefore);
           const applied = successfulEnvelope(
-            yield* runTack(fixture, [
+            yield* hostTack(fixture, [
               "state",
               "clean",
               "--pending",
@@ -93,7 +93,9 @@ it.layer(LiveTestLayer)("retry settles only obligations", (retryIt) => {
           expect(applied.plan).toEqual(preview.plan);
           expect(applied.applied).toMatchObject({ actions: [] });
           expect(applied.applied).not.toHaveProperty("docsActions");
-          successfulEnvelope(yield* runTack(fixture, ["docs", "target", "--project", "workspace"]));
+          successfulEnvelope(
+            yield* hostTack(fixture, ["docs", "target", "--project", "workspace"]),
+          );
         }),
       ),
     { timeout: 40_000 },
@@ -115,7 +117,7 @@ it.layer(LiveTestLayer)("retry settles only obligations", (retryIt) => {
           ]);
           const worktree = yield* fileSystem.realPath(fixture.worktreeRoot);
           successfulEnvelope(
-            yield* runTack(fixture, ["project", "refresh", "--project", "workspace", "--apply"]),
+            yield* hostTack(fixture, ["project", "refresh", "--project", "workspace", "--apply"]),
           );
           const { mountFor, skillFor } = yield* mountDocs(fixture);
           const primaryMount = mountFor(fixture.primaryRoot);
@@ -142,7 +144,7 @@ it.layer(LiveTestLayer)("retry settles only obligations", (retryIt) => {
             );
           }
           partialEnvelope(
-            yield* runTack(fixture, ["project", "refresh", "--project", "workspace", "--apply"]),
+            yield* hostTack(fixture, ["project", "refresh", "--project", "workspace", "--apply"]),
           );
           const retained = yield* readState(fixture.options);
           const project = retained.data.projects?.find((entry) => entry.name === "workspace");
@@ -154,7 +156,7 @@ it.layer(LiveTestLayer)("retry settles only obligations", (retryIt) => {
           ).toEqual([worktreeSkill]);
 
           const blockedPreview = partialEnvelope(
-            yield* runTack(fixture, ["state", "clean", "--pending", "--project", "workspace"]),
+            yield* hostTack(fixture, ["state", "clean", "--pending", "--project", "workspace"]),
           );
           expect(planDocsRoots(blockedPreview.plan)).toEqual([worktree]);
 
@@ -162,10 +164,10 @@ it.layer(LiveTestLayer)("retry settles only obligations", (retryIt) => {
           yield* fileSystem.remove(worktreeSkill);
           yield* fileSystem.remove(worktreeMount);
           const preview = successfulEnvelope(
-            yield* runTack(fixture, ["state", "clean", "--pending", "--project", "workspace"]),
+            yield* hostTack(fixture, ["state", "clean", "--pending", "--project", "workspace"]),
           );
           const applied = successfulEnvelope(
-            yield* runTack(fixture, [
+            yield* hostTack(fixture, [
               "state",
               "clean",
               "--pending",
@@ -186,7 +188,9 @@ it.layer(LiveTestLayer)("retry settles only obligations", (retryIt) => {
           expect(docsLinkRoots(managedDocsLinksOf(settled.data.links))).toEqual([
             fixture.primaryRoot,
           ]);
-          successfulEnvelope(yield* runTack(fixture, ["docs", "target", "--project", "workspace"]));
+          successfulEnvelope(
+            yield* hostTack(fixture, ["docs", "target", "--project", "workspace"]),
+          );
         }),
       ),
     { timeout: 60_000 },
@@ -217,7 +221,7 @@ it.layer(LiveTestLayer)("retry settles only obligations", (retryIt) => {
           const canonicalFinalRoot = yield* fileSystem.realPath(finalRoot);
           const sourceId = (yield* readState(fixture.options)).data.sources?.at(0)?.id ?? "";
           successfulEnvelope(
-            yield* runTack(fixture, [
+            yield* hostTack(fixture, [
               "project",
               "add",
               "final-project",
@@ -226,10 +230,10 @@ it.layer(LiveTestLayer)("retry settles only obligations", (retryIt) => {
             ]),
           );
           successfulEnvelope(
-            yield* runTack(fixture, ["pick", "include", "valid", "--project", "final-project"]),
+            yield* hostTack(fixture, ["pick", "include", "valid", "--project", "final-project"]),
           );
           successfulEnvelope(
-            yield* runTack(fixture, [
+            yield* hostTack(fixture, [
               "docs",
               "attach",
               `${sourceId}:handbook`,
@@ -238,7 +242,7 @@ it.layer(LiveTestLayer)("retry settles only obligations", (retryIt) => {
             ]),
           );
           successfulEnvelope(
-            yield* runTack(fixture, [
+            yield* hostTack(fixture, [
               "sync",
               "--no-adapters",
               "--project",
@@ -247,7 +251,7 @@ it.layer(LiveTestLayer)("retry settles only obligations", (retryIt) => {
             ]),
           );
           successfulEnvelope(
-            yield* runTack(fixture, ["sync", "--project", "final-project", "--apply"]),
+            yield* hostTack(fixture, ["sync", "--project", "final-project", "--apply"]),
           );
           const skill = skillFor(canonicalFinalRoot);
           expect(yield* fileSystem.exists(mountFor(canonicalFinalRoot))).toBe(true);
@@ -265,7 +269,7 @@ it.layer(LiveTestLayer)("retry settles only obligations", (retryIt) => {
           yield* fileSystem.makeDirectory(path.dirname(skill), { recursive: true });
           yield* fileSystem.symlink(path.relative(path.dirname(skill), foreign), skill);
           partialEnvelope(
-            yield* runTack(fixture, [
+            yield* hostTack(fixture, [
               "project",
               "refresh",
               "--project",
@@ -280,7 +284,7 @@ it.layer(LiveTestLayer)("retry settles only obligations", (retryIt) => {
 
           yield* fileSystem.remove(skill);
           const retried = successfulEnvelope(
-            yield* runTack(fixture, [
+            yield* hostTack(fixture, [
               "state",
               "clean",
               "--pending",
@@ -311,12 +315,12 @@ it.layer(LiveTestLayer)("retry settles only obligations", (retryIt) => {
           const mount = mountFor(fixture.primaryRoot);
           const skill = skillFor(fixture.primaryRoot);
 
-          successfulEnvelope(yield* runTack(fixture, ["state", "clean", "--pending", "--apply"]));
+          successfulEnvelope(yield* hostTack(fixture, ["state", "clean", "--pending", "--apply"]));
           expect(yield* fileSystem.exists(mount)).toBe(true);
           expect(yield* fileSystem.exists(skill)).toBe(true);
 
           successfulEnvelope(
-            yield* runTack(fixture, ["state", "clean", "--project", "workspace", "--apply"]),
+            yield* hostTack(fixture, ["state", "clean", "--project", "workspace", "--apply"]),
           );
           expect(yield* fileSystem.exists(mount)).toBe(false);
           expect(yield* fileSystem.exists(skill)).toBe(false);

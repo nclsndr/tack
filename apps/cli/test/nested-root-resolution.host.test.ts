@@ -4,7 +4,7 @@ import { Effect, FileSystem, Path, Schema } from "effect";
 import {
   partialEnvelope,
   runGit,
-  runTack,
+  hostTack,
   successfulEnvelope,
   withTackWorld,
 } from "./fixtures/tack-world.ts";
@@ -41,7 +41,7 @@ it.layer(LiveTestLayer)("nested registered roots", (nestedIt) => {
           yield* runGit(fixture.primaryRoot, ["init", innerRoot]);
           yield* fileSystem.makeDirectory(deeper, { recursive: true });
           successfulEnvelope(
-            yield* runTack(fixture, [
+            yield* hostTack(fixture, [
               "project",
               "add",
               "zeta-inner",
@@ -52,16 +52,16 @@ it.layer(LiveTestLayer)("nested registered roots", (nestedIt) => {
 
           for (const cwd of [innerRoot, deeper]) {
             // Nothing is attached, so the docs setup is incomplete rather than failed.
-            const docs = partialEnvelope(yield* runTack(fixture, ["docs", "list"], cwd));
+            const docs = partialEnvelope(yield* hostTack(fixture, ["docs", "list"], cwd));
             // No adapter is enabled, so status is partial only because nothing is delivered.
-            const status = partialEnvelope(yield* runTack(fixture, ["status"], cwd));
+            const status = partialEnvelope(yield* hostTack(fixture, ["status"], cwd));
             expect(status.diagnostics.map(({ code }) => code)).toEqual(["no-adapters-enabled"]);
             const run = successfulEnvelope(
-              yield* runTack(fixture, ["script", "run", "run", "--input-json", "{}"], cwd),
+              yield* hostTack(fixture, ["script", "run", "run", "--input-json", "{}"], cwd),
             );
             const { runId } = decodeRunId(run.result);
             const history = successfulEnvelope(
-              yield* runTack(fixture, ["script", "history", "show", runId], cwd),
+              yield* hostTack(fixture, ["script", "history", "show", runId], cwd),
             );
             expect({
               docs: docs.result,
@@ -87,7 +87,7 @@ it.layer(LiveTestLayer)("nested registered roots", (nestedIt) => {
           }
 
           const outer = partialEnvelope(
-            yield* runTack(fixture, ["docs", "list"], fixture.primaryRoot),
+            yield* hostTack(fixture, ["docs", "list"], fixture.primaryRoot),
           );
           expect(outer.result).toMatchObject({
             project: { name: "workspace", root: fixture.primaryRoot },
