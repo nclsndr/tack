@@ -6,8 +6,7 @@ import { recordFilesOf, type SkillFile } from "../src/features/imports/import-fi
 import { writeImports } from "../src/features/imports/import-write.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import {
-  runProcess,
-  runTack,
+  hostTack,
   successfulEnvelope,
   withTackWorld,
   type TackWorld,
@@ -37,53 +36,20 @@ const snapshot = Effect.fnUntraced(function* (fixture: TackWorld) {
   );
 });
 
+// The doctor command's process-level smoke test is in `doctor.system.test.ts`.
 it.layer(LiveTestLayer)("doctor", (doctorIt) => {
-  doctorIt.effect("reports missing state and skill setup as findings without creating state", () =>
-    Effect.gen(function* () {
-      const fileSystem = yield* FileSystem.FileSystem;
-      const path = yield* Path.Path;
-      const root = yield* fileSystem.makeTempDirectoryScoped({ prefix: "tack-doctor-empty-" });
-      const home = path.join(root, "home");
-      yield* fileSystem.makeDirectory(home, { recursive: true });
-      const entrypoint = path.join(path.resolve("."), "apps", "cli", "src", "main.ts");
-      const result = yield* runProcess("bun", [entrypoint, "--json", "doctor"], {
-        cwd: root,
-        environment: { HOME: home, TACK_STATE_DIR: undefined },
-      });
-      const { envelope, report, exitCode } = doctorOf(result);
-      expect(exitCode).toBe(0);
-      expect(envelope).toMatchObject({ command: "doctor", classification: "success" });
-      expect(outcomeOf(report, "state")).toMatchObject({
-        outcome: "warning",
-        next: ["tack", "init"],
-      });
-      for (const id of [
-        "adapters",
-        "sources",
-        "imports",
-        "projects",
-        "links",
-        "docs",
-        "unregistered-dependency-source",
-      ])
-        expect(outcomeOf(report, id)?.outcome, id).toBe("skipped");
-      expect(report.summary).toMatchObject({ failed: 0, total: 11 });
-      expect(yield* fileSystem.exists(path.join(home, ".tack"))).toBe(false);
-    }).pipe(Effect.scoped),
-  );
-
   doctorIt.effect(
     "is healthy on delivered links, built-in skills included, and changes nothing",
     () =>
       withTackWorld((fixture) =>
         Effect.gen(function* () {
-          successfulEnvelope(yield* runTack(fixture, ["adapter", "enable", "codex"]));
+          successfulEnvelope(yield* hostTack(fixture, ["adapter", "enable", "codex"]));
           successfulEnvelope(
-            yield* runTack(fixture, ["sync", "--project", "workspace", "--apply"]),
+            yield* hostTack(fixture, ["sync", "--project", "workspace", "--apply"]),
           );
-          successfulEnvelope(yield* runTack(fixture, ["sync", "--user", "--apply"]));
+          successfulEnvelope(yield* hostTack(fixture, ["sync", "--user", "--apply"]));
           const before = yield* snapshot(fixture);
-          const { report, exitCode } = doctorOf(yield* runTack(fixture, ["doctor"]));
+          const { report, exitCode } = doctorOf(yield* hostTack(fixture, ["doctor"]));
           expect(exitCode).toBe(0);
           expect(outcomeOf(report, "state")?.outcome).toBe("ok");
           expect(outcomeOf(report, "projects")?.outcome).toBe("ok");
@@ -127,7 +93,7 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
             },
           },
         ]);
-        const quiet = doctorOf(yield* runTack(fixture, ["doctor"])).report;
+        const quiet = doctorOf(yield* hostTack(fixture, ["doctor"])).report;
         expect(outcomeOf(quiet, "imports")).toMatchObject({
           outcome: "ok",
           message: expect.stringContaining("1 imported skill, all present and cataloged"),
@@ -136,10 +102,10 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
           path.join(fixture.sourceDirectory, "skills/pdf/SKILL.md"),
           "---\nname: pdf\ndescription: edited\n---\n",
         );
-        const edited = doctorOf(yield* runTack(fixture, ["doctor"])).report;
+        const edited = doctorOf(yield* hostTack(fixture, ["doctor"])).report;
         expect(outcomeOf(edited, "imports")).toMatchObject({ outcome: "ok" });
         yield* fs.remove(path.join(fixture.sourceDirectory, "skills/pdf"), { recursive: true });
-        const { report } = doctorOf(yield* runTack(fixture, ["doctor"]));
+        const { report } = doctorOf(yield* hostTack(fixture, ["doctor"]));
         expect(outcomeOf(report, "imports")).toMatchObject({
           outcome: "failed",
           subjects: [expect.stringMatching(/:pdf$/)],
@@ -163,7 +129,7 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
         const path = yield* Path.Path;
         yield* fs.remove(path.join(fixture.sourceDirectory, "skills"), { recursive: true });
         yield* fs.writeFileString(path.join(fixture.sourceDirectory, "tack.yaml"), "version: 1\n");
-        const { report, exitCode } = doctorOf(yield* runTack(fixture, ["doctor"]));
+        const { report, exitCode } = doctorOf(yield* hostTack(fixture, ["doctor"]));
         expect(exitCode).toBe(0);
         expect(outcomeOf(report, "sources")).toMatchObject({
           outcome: "warning",
@@ -185,7 +151,7 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
             path.join(fixture.sourceDirectory, "tack.yaml"),
             "version: 1\n",
           );
-          const { report, exitCode } = doctorOf(yield* runTack(fixture, ["doctor"]));
+          const { report, exitCode } = doctorOf(yield* hostTack(fixture, ["doctor"]));
           expect(exitCode).toBe(1);
           expect(outcomeOf(report, "sources")).toMatchObject({
             outcome: "failed",
@@ -210,7 +176,7 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
           path.join(fixture.sourceDirectory, "skills", "broken", "SKILL.md"),
           "no frontmatter",
         );
-        const { report, exitCode } = doctorOf(yield* runTack(fixture, ["doctor"]));
+        const { report, exitCode } = doctorOf(yield* hostTack(fixture, ["doctor"]));
         expect(exitCode).toBe(0);
         const sources = outcomeOf(report, "sources");
         expect(sources).toMatchObject({
@@ -233,7 +199,7 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
           const fs = yield* FileSystem.FileSystem;
           const path = yield* Path.Path;
           successfulEnvelope(
-            yield* runTack(fixture, ["pick", "include", "valid", "--project", "workspace"]),
+            yield* hostTack(fixture, ["pick", "include", "valid", "--project", "workspace"]),
           );
           yield* fs.writeFileString(
             path.join(fixture.sourceDirectory, "tack.yaml"),
@@ -244,7 +210,7 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
             path.join(fixture.sourceDirectory, "skills", "needs-lint", "SKILL.md"),
             "---\nname: needs-lint\ndescription: Needs lint\nmetadata:\n  tack: |\n    version: 1\n    dependencies:\n      - kind: skill\n        name: lint\n        source: missing\n---\n",
           );
-          const { report } = doctorOf(yield* runTack(fixture, ["doctor"]));
+          const { report } = doctorOf(yield* hostTack(fixture, ["doctor"]));
           expect(outcomeOf(report, "unregistered-dependency-source")).toMatchObject({
             outcome: "warning",
             message: expect.stringContaining("tack source add"),
@@ -258,14 +224,14 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        successfulEnvelope(yield* runTack(fixture, ["adapter", "enable", "codex"]));
-        successfulEnvelope(yield* runTack(fixture, ["sync", "--project", "workspace", "--apply"]));
-        successfulEnvelope(yield* runTack(fixture, ["sync", "--user", "--apply"]));
+        successfulEnvelope(yield* hostTack(fixture, ["adapter", "enable", "codex"]));
+        successfulEnvelope(yield* hostTack(fixture, ["sync", "--project", "workspace", "--apply"]));
+        successfulEnvelope(yield* hostTack(fixture, ["sync", "--user", "--apply"]));
         const link = path.join(fixture.primaryRoot, ".agents", "skills", "valid");
         yield* fileSystem.remove(link);
         yield* fileSystem.symlink(fixture.repositoryRoot, link);
         const before = yield* snapshot(fixture);
-        const { envelope, report, exitCode } = doctorOf(yield* runTack(fixture, ["doctor"]));
+        const { envelope, report, exitCode } = doctorOf(yield* hostTack(fixture, ["doctor"]));
         expect(exitCode).toBe(1);
         expect(envelope).toMatchObject({ classification: "domain", status: "failure" });
         expect(envelope.diagnostics).toEqual([
@@ -300,9 +266,9 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
           "version: 1\nskills:\n  - path: skills\ndocs:\n  - name: notes\n    path: notes\n",
         );
         successfulEnvelope(
-          yield* runTack(fixture, ["docs", "--project", "workspace", "attach", "notes"]),
+          yield* hostTack(fixture, ["docs", "--project", "workspace", "attach", "notes"]),
         );
-        const { report, exitCode } = doctorOf(yield* runTack(fixture, ["doctor"]));
+        const { report, exitCode } = doctorOf(yield* hostTack(fixture, ["doctor"]));
         expect(exitCode).toBe(0);
         expect(outcomeOf(report, "docs")).toMatchObject({
           outcome: "warning",
@@ -334,9 +300,9 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
           "version: 1\nskills:\n  - path: skills\ndocs:\n  - name: broken\n    path: broken\n    reader: broken.reader.yaml\n",
         );
         successfulEnvelope(
-          yield* runTack(fixture, ["docs", "--project", "workspace", "attach", "broken"]),
+          yield* hostTack(fixture, ["docs", "--project", "workspace", "attach", "broken"]),
         );
-        const { report, exitCode } = doctorOf(yield* runTack(fixture, ["doctor"]));
+        const { report, exitCode } = doctorOf(yield* hostTack(fixture, ["doctor"]));
         expect(exitCode).toBe(1);
         expect(outcomeOf(report, "docs")).toMatchObject({
           outcome: "failed",
@@ -355,7 +321,7 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
           path.join(fixture.stateDirectory, "state.json"),
           '{"format":99,"data":{}}\n',
         );
-        const { report, exitCode } = doctorOf(yield* runTack(fixture, ["doctor"]));
+        const { report, exitCode } = doctorOf(yield* hostTack(fixture, ["doctor"]));
         expect(exitCode).toBe(1);
         expect(outcomeOf(report, "state")).toMatchObject({
           outcome: "failed",
@@ -375,7 +341,7 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
           path.join(fixture.stateDirectory, "state.json"),
           '{"format":1,',
         );
-        const result = yield* runTack(fixture, ["doctor"]);
+        const result = yield* hostTack(fixture, ["doctor"]);
         expect(Number(result.exitCode)).toBe(3);
         expect(decodeEnvelope(JSON.parse(result.stdout))).toMatchObject({
           classification: "persistence",
