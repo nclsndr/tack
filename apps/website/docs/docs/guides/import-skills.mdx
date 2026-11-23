@@ -1,0 +1,151 @@
+---
+title: Import skills from GitHub
+description: Copy chosen skills from a GitHub repository into a source you own, see where they will reach, and keep track of where they came from.
+---
+
+import { Terminal } from "../../../components/terminal.tsx";
+
+export const listOutput = [
+  "tack import add · preview · ✓ success",
+  "",
+  "  Location  github:anthropics/skills · tracking the default branch",
+  "  Revision  e4bb5d960d87 (resolved now)",
+  "",
+  "Skills found (19)",
+  "  ·  academy-guide          skills/academy-guide",
+  "      Stop and check this skill before finishing any reply to a question about",
+  "      how to use Claude or a Claude product — it recommends matching courses,",
+  "      tutorials, and use cases from Claude Academy (academy.c",
+  "      2 files, 19 KB",
+  "  ·  algorithmic-art        skills/algorithmic-art",
+  "      Creating algorithmic art using p5.js with seeded randomness and",
+  "      interactive parameter exploration. Use this when users request creating",
+  "      art using code, generative art, algorithmic art, flow fields, or",
+  "      4 files, 58 KB",
+  "  …",
+].join("\n");
+
+export const previewOutput = [
+  "tack import add · preview · ✓ success",
+  "",
+  "  Location  github:anthropics/skills · tracking the default branch",
+  "  Revision  e4bb5d960d87 (resolved now)",
+  "  Into      agent-setup:skills · ~/agent-setup/skills",
+  "",
+  "Skills found (19)",
+  "  …",
+  "  ✗  claude-api             skills/claude-api",
+  '      Expected a value with a length of at most 1024 at ["description"]',
+  "      (skill-frontmatter-schema-invalid)",
+  "  …",
+  "  ✓  pdf                    skills/pdf",
+  "      Use this skill whenever the user wants to do anything with PDF files. This",
+  "      includes reading or extracting text/tables from PDFs, combining or merging",
+  "      multiple PDFs into one, splitting PDFs apart, rota",
+  "      12 files, 67 KB, 1 executable",
+  "  …",
+  "",
+  "Will write",
+  "  skills/pdf/  12 files, 67 KB",
+  "  tack.yaml    imports: 1 record added (rest of the file unchanged)",
+  "",
+  "Delivery at the next sync",
+  "  On by default, like every skill in agent-setup.",
+  "  Projects  app, ci · 2 of 2 registered projects",
+  "  User      no · user activation is opt-in",
+  "  Clashes   none",
+  "",
+  "Next",
+  "  tack import add github:anthropics/skills --skill pdf --into \\",
+  "    agent-setup:skills --apply",
+].join("\n");
+
+export const applyOutput = [
+  "tack import add · applied · ✓ success",
+  "",
+  "Imported pdf into agent-setup github:anthropics/skills · tracking the default",
+  "branch · e4bb5d960d87",
+  "  skills/pdf/  12 files",
+  "  tack.yaml    imports: 1 record added",
+  "",
+  "  Nothing is delivered until sync; the new skills follow their source's",
+  "  activation.",
+  "",
+  "Next",
+  "  tack sync --all",
+].join("\n");
+
+export const importsOutput = [
+  "tack import · 1 imported skill · ✓ success",
+  "",
+  "agent-setup:pdf  skills/pdf",
+  "    github:anthropics/skills · tracking the default branch · e4bb5d960d87 ·",
+  "    imported 2026-11-23 · unchanged",
+].join("\n");
+
+# Import skills from GitHub
+
+`tack import add` copies skills you choose from a GitHub repository into a source you own. From then
+on the copy is an ordinary skill of that source: you edit it, commit it and sync it like any other.
+Tack records where it came from in the source's `tack.yaml`, so it can tell later whether you
+changed it. It is the only Tack command that reaches the network.
+
+This guide imports the `pdf` skill from the public repository `anthropics/skills` into
+`~/agent-setup`.
+
+## 1. See what a repository offers
+
+Name the location with its provider, `github:`. Without `--into`, Tack lists the skills it found and
+whether each one would load:
+
+<Terminal commands={["tack import add github:anthropics/skills"]} output={listOutput} />
+
+A location can name a folder, `github:org/repo/folder`, or a branch, tag or full commit,
+`github:org/repo#v1`. A private repository uses your own Git credentials; Tack reads no token.
+
+## 2. Preview the copy
+
+Choose skills with `--skill`, repeatable, or `--all`, and name the source with `--into`. The preview
+marks the chosen skill with `✓` and one that would not load with `✗`, with the reason. It also says
+where the skill will reach at the next sync. The list is cut short here:
+
+<Terminal
+  commands={["tack import add github:anthropics/skills --skill pdf --into agent-setup"]}
+  output={previewOutput}
+/>
+
+`agent-setup` has one skills folder, so `--into agent-setup` picks it. A source with several needs
+the folder too, such as `--into agent-setup:skills`.
+
+## 3. Apply it
+
+<Terminal
+  commands={[
+    "tack import add github:anthropics/skills --skill pdf --into agent-setup:skills --apply",
+  ]}
+  output={applyOutput}
+/>
+
+Tack wrote the folder `skills/pdf` and an `imports` record in `tack.yaml`; it wrote nothing into its
+own state and linked nothing. Commit both in your source, then deliver the skill:
+
+```sh
+tack sync --all
+tack sync --all --apply
+```
+
+## 4. Keep track of it
+
+`tack import` lists every imported skill, its origin, and whether you changed it since:
+
+<Terminal commands={["tack import"]} output={importsOutput} />
+
+To delete an imported skill and its record, preview `tack import remove agent-setup:pdf`, then add
+`--apply`. A skill you changed needs `--force`, and the preview lists what you would lose. The next
+sync removes its links.
+
+## Next
+
+- [Write a skill](./write-a-skill) of your own.
+- [Choose what each project gets](./choose-skills), since an imported skill follows its source's
+  defaults.

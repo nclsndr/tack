@@ -1,0 +1,173 @@
+---
+title: Add a worktree or clone
+description: Give a new Git worktree the same links as the rest of its project, register a separate clone, and let agents do it themselves through AGENTS.md.
+---
+
+import { Terminal } from "../../../components/terminal.tsx";
+
+export const refreshOutput = [
+  "tack project refresh · project app · ✓ success",
+  "",
+  "Preview only: nothing was written. 1 root change, 1 docs link to create, 1 docs",
+  "link unchanged.",
+  "",
+  "Project app 1 root change",
+  "  + add  ~/code/app-hotfix",
+  "",
+  "Docs links",
+  "  · keep    ~/code/app/.tack/docs/e71e644c-e9f8-42ac-   docs handbook · project",
+  "            b638-3b7504635ced/handbook                  app",
+  "  + create  ~/code/app-hotfix/.tack/docs/e71e644c-      docs handbook · project",
+  "            e9f8-42ac-b638-3b7504635ced/handbook        app",
+  "",
+  "Next",
+  "  tack project refresh --apply",
+].join("\n");
+
+export const refreshApplyOutput = [
+  "tack project refresh · project app · ✓ success",
+  "",
+  "Applied: 1 root change, 1 docs link created, 1 docs link unchanged.",
+  "",
+  "Project app 1 root change",
+  "  ✓ applied  add  ~/code/app-hotfix",
+  "",
+  "Docs links",
+  "  · kept     keep    ~/code/app/.tack/docs/e71e644c-    docs handbook · project",
+  "                     e9f8-42ac-b638-3b7504635ced/       app",
+  "                     handbook",
+  "  ✓ applied  create  ~/code/app-hotfix/.tack/docs/      docs handbook · project",
+  "                     e71e644c-e9f8-42ac-b638-           app",
+  "                     3b7504635ced/handbook",
+  "",
+  "Next",
+  "  tack sync --project app",
+  "  tack sync --project app --apply",
+].join("\n");
+
+export const syncOutput = [
+  "tack sync · project app · ✓ success",
+  "",
+  "Nothing was written. 13 changes planned.",
+  "",
+  "selected from the containing root ~/code/app-hotfix",
+  "",
+  "claude → app · ~/code/app · 1 linked for the user",
+  "  skip  skill commit-message  linked for the user",
+  "",
+  "codex → app · ~/code/app · 1 linked for the user",
+  "  skip  skill commit-message  linked for the user",
+  "",
+  "cursor → app · ~/code/app · 1 linked for the user",
+  "  skip  skill commit-message  linked for the user",
+  "",
+  "claude → app · ~/code/app-hotfix · 4 to link, 1 linked for the user",
+  "  create  .claude/skills/                  directory",
+  "  create  .claude/skills/debug-flaky-test  skill debug-flaky-test",
+  "  create  .claude/skills/pr-review         skill pr-review",
+  "  create  .claude/skills/release-notes     skill release-notes",
+  "  create  .claude/skills/triage-issue      skill triage-issue",
+  "  skip    skill commit-message             linked for the user",
+  "",
+  "codex → app · ~/code/app-hotfix · 4 to link, 1 linked for the user",
+  "  create  .agents/skills/                  directory",
+  "  create  .agents/skills/debug-flaky-test  skill debug-flaky-test",
+  "  create  .agents/skills/pr-review         skill pr-review",
+  "  create  .agents/skills/release-notes     skill release-notes",
+  "  create  .agents/skills/triage-issue      skill triage-issue",
+  "  skip    skill commit-message             linked for the user",
+  "",
+  "cursor → app · ~/code/app-hotfix · 5 to link, 1 linked for the user",
+  "  create  .cursor/commands/                directory",
+  "  create  .cursor/skills/                  directory",
+  "  create  .cursor/commands/ship.md         command ship",
+  "  create  .cursor/skills/debug-flaky-test  skill debug-flaky-test",
+  "  create  .cursor/skills/pr-review         skill pr-review",
+  "  create  .cursor/skills/release-notes     skill release-notes",
+  "  create  .cursor/skills/triage-issue      skill triage-issue",
+  "  skip    skill commit-message             linked for the user",
+  "",
+  "Commands reach cursor only: Tack does not link commands for claude, codex.",
+  "",
+  "Docs · project app",
+  "Preview only: nothing was written. 2 docs links unchanged.",
+  "",
+  "Docs links",
+  "  · keep  ~/code/app/.tack/docs/e71e644c-e9f8-42ac-     docs handbook · project",
+  "          b638-3b7504635ced/handbook                    app",
+  "  · keep  ~/code/app-hotfix/.tack/docs/e71e644c-e9f8-   docs handbook · project",
+  "          42ac-b638-3b7504635ced/handbook               app",
+  "",
+  "Next",
+  "  tack sync --apply",
+].join("\n");
+
+# Add a worktree or clone
+
+A project is a Git repository, and Tack links every worktree of it the same way: the picks belong
+to the project, not to a folder. A worktree you add later needs one refresh and one sync.
+
+This guide adds the worktree `~/code/app-hotfix` to the project `app`.
+
+## A new worktree
+
+Create the worktree with Git, then go into it:
+
+```sh
+git -C ~/code/app worktree add ~/code/app-hotfix -b hotfix
+cd ~/code/app-hotfix
+```
+
+`tack project refresh` finds the project from the worktree's Git folder and previews the new root,
+with the docs mounts it gets:
+
+<Terminal commands={["tack project refresh"]} output={refreshOutput} />
+
+<Terminal commands={["tack project refresh --apply"]} output={refreshApplyOutput} />
+
+Inside a registered root, a bare `tack sync` selects its project. The preview creates the new
+worktree's links and leaves the others as they are:
+
+<Terminal commands={["tack sync"]} output={syncOutput} />
+
+Apply it with `tack sync --apply`. When you remove a worktree, `tack project refresh --apply` drops
+its root from the project. `tack doctor` warns about a worktree that refresh has not added yet.
+
+## A separate clone
+
+A clone is a repository of its own, so it is a project of its own. Register it under a new name
+from inside it, then sync it:
+
+```sh
+cd ~/code/app-review
+tack project add app-review
+tack sync --project app-review
+tack sync --project app-review --apply
+```
+
+## Let agents do it
+
+An agent that starts in a fresh worktree can run these steps itself. `tack guide agent-instructions`
+prints a section for the repository's `AGENTS.md`, and where it goes when the repository also has a
+`CLAUDE.md`. With `PROJECT` replaced by the project's name, the section reads:
+
+```md
+<!-- tack-block v1 -->
+
+## Tack
+
+This repository's agent skills and docs come from Tack (project `PROJECT`). Before you work in a
+new clone or worktree, load the `prepare-tack-checkout` skill. Without it, run from the
+repository root: `tack project refresh --apply`, then `tack sync` and `tack sync --apply`. In a
+clone Tack does not know, run `tack project add PROJECT` first. If `tack` is missing, tell the
+user: it installs with `npm install --global @tackup/cli`.
+<!-- /tack-block -->
+```
+
+The section names no path of your machine, so it is safe to commit. The built-in
+`prepare-tack-checkout` skill it names holds the steps above.
+
+## Next
+
+- [Check health](./check-health): `tack doctor` finds worktrees and projects that need a refresh.
+- [Remove a source, a project or Tack](./remove) when a project is done.
