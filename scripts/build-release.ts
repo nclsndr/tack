@@ -1,6 +1,7 @@
 import { cp, mkdir, readdir } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve, sep } from "node:path";
 import { stateFormat } from "../apps/cli/src/domain/state/state-format.ts";
+import { buildCommit, isShippedFile, shippedWorkspaces } from "./build-recipe.ts";
 
 const root = resolve(import.meta.dirname, "..");
 const destination = process.argv[2];
@@ -17,16 +18,7 @@ const manifest: { readonly packageManager: string } = await Bun.file(
 ).json();
 if (manifest.packageManager !== `bun@${Bun.version}`)
   throw new Error(`Release requires ${manifest.packageManager}; running bun@${Bun.version}.`);
-const git = Bun.spawnSync({
-  cmd: ["git", "-C", root, "rev-parse", "--short=7", "HEAD"],
-  stdout: "pipe",
-  stderr: "ignore",
-});
-const commit =
-  process.env["TACK_BUILD_COMMIT"] ??
-  (git.exitCode === 0 ? new TextDecoder().decode(git.stdout).trim() : undefined);
-if (commit === undefined || !/^[0-9a-f]{7,40}$/.test(commit))
-  throw new Error("Set TACK_BUILD_COMMIT to the exported commit's 7–40 character hash.");
+const commit = buildCommit(root, 7);
 const ahead = Number(process.env["TACK_BUILD_AHEAD"] ?? "0");
 if (!Number.isSafeInteger(ahead) || ahead < 0)
   throw new Error("TACK_BUILD_AHEAD must be a nonnegative integer.");
@@ -35,7 +27,7 @@ const copy = async (source: string, target = source) => {
   await mkdir(dirname(join(release, target)), { recursive: true });
   await cp(join(root, source), join(release, target), {
     recursive: true,
-    filter: (path) => !/\.test\.[cm]?[jt]sx?$/.test(path),
+    filter: isShippedFile,
   });
 };
 const run = (args: string[], cwd: string) => {
@@ -82,9 +74,7 @@ run(
 for (const path of [
   "package.json",
   "bun.lock",
-  "apps/cli/package.json",
-  "packages/core/package.json",
-  "packages/reader/package.json",
+  ...shippedWorkspaces.map((workspace) => `${workspace}/package.json`),
   "packages/reader/src",
   "packages/core/src",
   "apps/cli/src/builtins",

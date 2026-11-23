@@ -1,7 +1,8 @@
 import { spawnSync } from "node:child_process";
 import { chmodSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, isAbsolute, join, relative } from "node:path";
+import { dirname, isAbsolute, join } from "node:path";
 import { build, type BuildOptions, type Plugin } from "esbuild";
+import { buildCommit, isShippedFile, shippedWorkspaces } from "./build-recipe.ts";
 import { publishedPackageName as packageName } from "../apps/cli/src/domain/execution/published-name.ts";
 import { scriptApiDeclarations } from "../apps/cli/src/domain/execution/script-api-declarations.ts";
 import { typesStub } from "../apps/cli/src/features/execution/script-types.ts";
@@ -26,7 +27,6 @@ if (output === undefined || isAbsolute(output) === false || existsSync(output) =
   throw new Error("Pass an absolute output directory that does not exist yet.");
 
 const checkout = dirname(import.meta.dirname);
-const workspaces = ["apps/cli", "packages/reader", "packages/core"] as const;
 
 type Manifest = {
   readonly version?: string;
@@ -41,7 +41,7 @@ const git = (args: ReadonlyArray<string>) =>
   spawnSync("git", args, { cwd: checkout, encoding: "utf8" }).stdout.trim();
 
 const version = readManifest(join(checkout, "package.json")).version ?? "0.0.0";
-const commit = git(["rev-parse", "--short=12", "HEAD"]);
+const commit = buildCommit(checkout, 12);
 const ahead = Number.parseInt(git(["rev-list", "--count", "origin/main..HEAD"]) || "0", 10);
 
 /** The version of a dependency installed for one workspace, which the package then pins exactly. */
@@ -57,7 +57,7 @@ const installedVersion = (workspace: string, name: string) => {
 
 /** Every npm dependency of the shipped workspaces, pinned, with the first workspace's version winning. */
 const dependencies = Object.fromEntries(
-  workspaces
+  shippedWorkspaces
     .flatMap((workspace) =>
       Object.keys(readManifest(join(checkout, workspace, "package.json")).dependencies ?? {})
         .filter((name) => name.startsWith("@tackup/") === false)
@@ -117,12 +117,9 @@ await build({
 });
 
 // Rspack compiles the reader's runtime, components and styles from these sources at serve time.
-const readerSources = join(checkout, "packages/reader/src");
-cpSync(readerSources, join(dist, "reader"), {
+cpSync(join(checkout, "packages/reader/src"), join(dist, "reader"), {
   recursive: true,
-  filter: (path) =>
-    /\.(?:browser\.)?test\.tsx?$|\.test-support\.tsx?$/.test(relative(readerSources, path)) ===
-    false,
+  filter: isShippedFile,
 });
 cpSync(join(checkout, "apps/cli/src/builtins"), join(dist, "builtins"), { recursive: true });
 
