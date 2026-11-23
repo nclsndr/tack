@@ -15,6 +15,9 @@ const folders = Effect.gen(function* () {
   return { fs, path, root, write };
 });
 
+/** Deep enough that the YAML parser runs out of stack on nested flow collections. */
+const depth = 20_000;
+
 const findingsOf = (report: Effect.Success<ReturnType<typeof checkSource>>) =>
   report.findings.map(({ code, file }) => ({ code, file }));
 
@@ -42,6 +45,24 @@ it.layer(LiveTestLayer)("source check", (test) => {
       expect(reports.every((report) => Object.values(report.counts).every((n) => n === 0))).toBe(
         true,
       );
+    }),
+  );
+
+  test.effect("reports YAML nested too deeply to parse as malformed, not as a crash", () =>
+    Effect.gen(function* () {
+      const { path, root, write } = yield* folders;
+      const nested = `${"[".repeat(depth)}${"]".repeat(depth)}`;
+      yield* write("deep/tack.yaml", `version: ${nested}\n`);
+      yield* write("skills/tack.yaml", "version: 1\nskills:\n  - path: skills\n");
+      yield* write("skills/skills/deep/SKILL.md", `---\nname: ${nested}\n---\n`);
+      const declaration = yield* checkSource(path.join(root, "deep"));
+      const frontmatter = yield* checkSource(path.join(root, "skills"));
+      expect(findingsOf(declaration)).toEqual([
+        { code: "declaration-malformed", file: path.join(root, "deep", "tack.yaml") },
+      ]);
+      expect(frontmatter.findings.map(({ code }) => code)).toEqual([
+        "skill-frontmatter-yaml-malformed",
+      ]);
     }),
   );
 
