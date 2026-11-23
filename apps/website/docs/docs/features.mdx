@@ -193,9 +193,17 @@ Guide: [Share a fixed set with a profile](./guides/profiles).
 
 Guides: [Check health](./guides/check-health), [Remove a source, a project or Tack](./guides/remove).
 
+## What Tack does not do yet
+
+- **Deliver context.** Tack catalogues context, and `sync` and `status` say so: no agent receives
+  it yet.
+- **Commands for every agent.** Commands reach Cline, Cursor, OpenCode and Pi. Claude Code, Codex,
+  GitHub Copilot CLI and Gemini CLI get skills only.
+- **Deliver without symbolic links.** Every delivery is a symbolic link, with no copy as a fallback.
+  Windows is untested.
+
 ## What Tack does not do
 
-- **Deliver context.** Tack catalogues context; no agent receives it yet.
 - **Pull for you.** Teammates run `git pull`; Tack links what is on disk.
 - **Convert skills.** Every agent gets a link to the same `SKILL.md` folder.
 - **Host anything.** No hosted service and no account: the docs reader runs on your machine.

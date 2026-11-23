@@ -1,7 +1,7 @@
 import { agentAdapterDescriptors } from "@tackup/cli/core";
 import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { lenses, sharedAgents } from "./components/features-page/content.ts";
+import { groundRules, lenses, sharedAgents } from "./components/features-page/content.ts";
 import { makeDemoSession, shellWords } from "./demo/demo-shell.ts";
 import config from "./rspress.config.ts";
 
@@ -110,6 +110,21 @@ describe("features reference", () => {
     const names: ReadonlyArray<string> = lenses.map((lens) => lens.name);
     expect(headings.filter((heading) => heading !== undefined && names.includes(heading))).toEqual(
       names,
+    );
+  });
+
+  it("lists what Tack does not do yet and does not do, as the features page does", () => {
+    const section = (heading: string) =>
+      text
+        .split(`## ${heading}\n`)[1]
+        ?.split("\n## ")[0]
+        ?.split("\n")
+        .flatMap((line) => /^- \*\*(.+?)\*\*/u.exec(line)?.[1] ?? []);
+    expect(section(groundRules.notYetHeading)).toEqual(
+      groundRules.notYet.map((limit) => limit.title),
+    );
+    expect(section(groundRules.limitsHeading)).toEqual(
+      groundRules.limits.map((limit) => limit.title),
     );
   });
 
