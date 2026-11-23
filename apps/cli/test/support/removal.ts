@@ -4,7 +4,7 @@ import { runManagedRemoval } from "../../src/features/removal/removal.ts";
 import type { RemovalRequest } from "../../src/domain/reconciliation/removal-schema.ts";
 
 /** Previews one removal request through the production preview path, without writing state. */
-export const planRemoval = (stateOptions: StateOptions, request: RemovalRequest) =>
+export const planRemovalAt = (stateOptions: StateOptions, request: RemovalRequest) =>
   runManagedRemoval(stateOptions, request, false).pipe(Effect.map((execution) => execution.plan));
 
 /** Removes one project root, retaining it in the removing lifecycle until cleanup settles. */

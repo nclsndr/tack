@@ -1,11 +1,11 @@
 import { Context, Effect, type FileSystem, Option, type Path } from "effect";
 import { readState, type StateOptions } from "../../services/state-store.ts";
 import { type State } from "../../domain/state/state-schema.ts";
-import { resolveCatalogFromInspections, type Catalog } from "../sources/catalog.ts";
-import { inspectSourcesFromState } from "../sources/source.ts";
-import { inspectProjectsFromState } from "../projects/project.ts";
+import { resolveCatalog, type Catalog } from "../sources/catalog.ts";
+import { inspectSources } from "../sources/source.ts";
+import { inspectProjects } from "../projects/project.ts";
 
-type SourceInspections = ReturnType<typeof inspectSourcesFromState>;
+type SourceInspections = ReturnType<typeof inspectSources>;
 
 /**
  * One state document as a command decoded it, with what is derived from it. Each derived value is
@@ -27,7 +27,7 @@ export type CommandSnapshot = {
     Effect.Services<SourceInspections> | FileSystem.FileSystem | Path.Path
   >;
   /** The registered projects and their roots, inspected once. */
-  readonly projectInspections: ReturnType<typeof inspectProjectsFromState>;
+  readonly projectInspections: ReturnType<typeof inspectProjects>;
 };
 
 /**
@@ -39,7 +39,7 @@ export const makeCommandSnapshot = Effect.fnUntraced(function* (
   state: State,
   previous?: CommandSnapshot,
 ) {
-  const projectInspections = yield* Effect.cached(inspectProjectsFromState(state));
+  const projectInspections = yield* Effect.cached(inspectProjects(state));
   if (previous !== undefined && previous.state.data.sources === state.data.sources)
     return {
       state,
@@ -47,10 +47,8 @@ export const makeCommandSnapshot = Effect.fnUntraced(function* (
       catalog: previous.catalog,
       projectInspections,
     } satisfies CommandSnapshot;
-  const sourceInspections = yield* Effect.cached(inspectSourcesFromState(state));
-  const catalog = yield* Effect.cached(
-    sourceInspections.pipe(Effect.flatMap(resolveCatalogFromInspections)),
-  );
+  const sourceInspections = yield* Effect.cached(inspectSources(state));
+  const catalog = yield* Effect.cached(sourceInspections.pipe(Effect.flatMap(resolveCatalog)));
   return { state, sourceInspections, catalog, projectInspections } satisfies CommandSnapshot;
 });
 

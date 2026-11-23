@@ -1,13 +1,13 @@
 import { bareSkillText, declare, writeUnder } from "../../../test/support/source-tree.ts";
-import { resolveCatalog, setSkillChoice } from "../../../test/support/snapshot-helpers.ts";
+import { resolveCatalogAt, setSkillChoice } from "../../../test/support/snapshot-helpers.ts";
 
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, PlatformError, Schema } from "effect";
 import { CatalogQuarantineSchema } from "../../domain/sources/catalog-schema.ts";
 import { LiveTestLayer, provideTestFileSystem } from "../../../test/support/live-test-layer.ts";
 import { initializeState, readState, type StateOptions } from "../../services/state-store.ts";
-import { registerSource, inspectSourcesFromState } from "./source.ts";
-import { resolveCatalogFromInspections } from "./catalog.ts";
+import { registerSource, inspectSources } from "./source.ts";
+import { resolveCatalog } from "./catalog.ts";
 
 const withSource = <A, E, R>(
   use: (fixture: { root: string; options: StateOptions }) => Effect.Effect<A, E, R>,
@@ -49,7 +49,7 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
         const result = yield* registerSource(options, { sourcePath: root });
         expect(Object.keys(result.registration).sort()).toEqual(["canonicalPath", "id"]);
         expect((yield* readState(options)).format).toBe(1);
-        expect(yield* resolveCatalog(options)).toMatchObject({
+        expect(yield* resolveCatalogAt(options)).toMatchObject({
           entries: [],
           quarantined: [],
           unhealthySources: [],
@@ -74,7 +74,7 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
           yield* write(root, "scripts/run.ts");
           yield* write(root, "private/skills/personal/SKILL.md", bareSkillText("personal"));
           yield* registerSource(options, { sourcePath: root });
-          const catalog = yield* resolveCatalog(options);
+          const catalog = yield* resolveCatalogAt(options);
           expect(identities(catalog)).toEqual([
             "shared/command/review",
             "shared/context/note.md",
@@ -100,7 +100,7 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
         yield* write(root, "private/skills/parent/SKILL.md", bareSkillText("parent"));
         yield* write(root, "unknown/ignored/SKILL.md", bareSkillText("ignored"));
         yield* registerSource(options, { sourcePath: root });
-        const catalog = yield* resolveCatalog(options);
+        const catalog = yield* resolveCatalogAt(options);
         // context/tack.yaml makes the declared context folder another source, so it is refused.
         expect(identities(catalog)).toEqual([
           "shared/command/review",
@@ -128,7 +128,7 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
             path.join(root, "commands", "escape.md"),
           );
           yield* registerSource(options, { sourcePath: root });
-          const catalog = yield* resolveCatalog(options);
+          const catalog = yield* resolveCatalogAt(options);
           expect(identities(catalog)).toEqual(["shared/command/real"]);
           expect(catalog.quarantined.map((entry) => entry.code)).toEqual([
             "resource-boundary-violation",
@@ -142,7 +142,7 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
         yield* write(root, "private/private", "ordinary file");
         yield* write(root, "private/commands/review.md", "review");
         yield* registerSource(options, { sourcePath: root });
-        const catalog = yield* resolveCatalog(options);
+        const catalog = yield* resolveCatalogAt(options);
         expect(identities(catalog)).toEqual([]);
         expect(catalog.quarantined).toEqual([]);
       }),
@@ -156,7 +156,7 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
         const blocked = yield* write(root, "context/blocked.md");
         yield* write(root, "context/healthy.md");
         yield* registerSource(options, { sourcePath: root });
-        const catalog = yield* provideTestFileSystem(resolveCatalog(options), {
+        const catalog = yield* provideTestFileSystem(resolveCatalogAt(options), {
           ...fs,
           access: (target, accessOptions) =>
             target === blocked
@@ -186,9 +186,9 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
           yield* write(other, "commands/valid.md", "other valid");
           yield* registerSource(options, { sourcePath: root });
           yield* registerSource(options, { sourcePath: other });
-          const inspections = yield* inspectSourcesFromState(yield* readState(options));
-          const first = yield* resolveCatalogFromInspections(inspections);
-          expect(yield* resolveCatalogFromInspections([...inspections].reverse())).toEqual(first);
+          const inspections = yield* inspectSources(yield* readState(options));
+          const first = yield* resolveCatalog(inspections);
+          expect(yield* resolveCatalog([...inspections].reverse())).toEqual(first);
           expect(identities(first)).toEqual(["shared/command/valid", "shared/command/valid"]);
           expect(
             first.quarantined.filter((entry) => entry.code === "resource-address-duplicate"),
@@ -213,12 +213,12 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
           yield* write(root, "private", "not an area");
           yield* write(root, "commands/review.md", "review");
           yield* registerSource(options, { sourcePath: root });
-          const files = yield* resolveCatalog(options);
+          const files = yield* resolveCatalogAt(options);
           expect(identities(files)).toEqual(["shared/command/review"]);
           expect(files.quarantined).toEqual([]);
           yield* fs.remove(path.join(root, "private"));
           yield* fs.symlink(path.join(root, "missing"), path.join(root, "private"));
-          const links = yield* resolveCatalog(options);
+          const links = yield* resolveCatalogAt(options);
           expect(identities(links)).toEqual(["shared/command/review"]);
         }),
       ),
@@ -242,7 +242,7 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
           });
           const before = yield* readState(options);
           yield* write(root, "tack.yaml", "version: 99");
-          const failed = yield* resolveCatalog(options);
+          const failed = yield* resolveCatalogAt(options);
           expect(failed.entries).toEqual([]);
           expect(failed.unhealthySources).toMatchObject([
             {
@@ -252,7 +252,7 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
           ]);
           expect(yield* readState(options)).toEqual(before);
           yield* write(root, "tack.yaml", declare("skills:", "  - path: skills"));
-          expect(identities(yield* resolveCatalog(options))).toEqual(["shared/skill/valid"]);
+          expect(identities(yield* resolveCatalogAt(options))).toEqual(["shared/skill/valid"]);
         }),
       ),
   );
@@ -266,7 +266,7 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
         yield* write(root, "commands/review.md", "review");
         yield* write(root, "skills/valid/SKILL.md", bareSkillText("valid"));
         yield* registerSource(options, { sourcePath: root });
-        const catalog = yield* provideTestFileSystem(resolveCatalog(options), {
+        const catalog = yield* provideTestFileSystem(resolveCatalogAt(options), {
           ...fs,
           readDirectory: (target) =>
             target === path.join(root, "skills")
@@ -302,7 +302,7 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
         yield* write(root, "skills/valid/SKILL.md", bareSkillText("valid"));
         yield* write(root, "tack.yaml", encoded);
         yield* registerSource(options, { sourcePath: root }).pipe(Effect.ignore);
-        const catalog = yield* resolveCatalog(options);
+        const catalog = yield* resolveCatalogAt(options);
         expect(identities(catalog)).toEqual([]);
         expect(catalog.entries).toEqual([]);
       }),

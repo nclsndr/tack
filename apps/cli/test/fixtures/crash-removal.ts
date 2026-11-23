@@ -4,7 +4,7 @@ import { SecureRandom } from "effect/crypto";
 import { withRecoveredWriter } from "../../src/features/writer/recovered-writer.ts";
 import { Destination } from "../../src/services/destination.ts";
 import { applyRemovalWithWriter } from "../../src/features/removal/removal-apply.ts";
-import { planRemovalFromState } from "../../src/features/removal/removal-plan.ts";
+import { planRemoval } from "../../src/features/removal/removal-plan.ts";
 import { makeDestinationService } from "../../src/platform/filesystem/destination-observation.ts";
 import { makeStateStoreService } from "../../src/platform/state/state.ts";
 import { readState, StateStore } from "../../src/services/state-store.ts";
@@ -68,7 +68,7 @@ const program = Effect.gen(function* () {
   };
   const work = Effect.gen(function* () {
     const state = yield* readState(options);
-    const plan = yield* planRemovalFromState(state, {
+    const plan = yield* planRemoval(state, {
       scope: {
         _tag: "selected-targets",
         targets: [{ _tag: "project-root", canonicalPath: projectRoot, projectName }],

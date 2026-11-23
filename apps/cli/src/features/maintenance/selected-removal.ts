@@ -7,14 +7,14 @@ import {
 import { sortAndDedupeBy } from "../../domain/identity/ordering.ts";
 import {
   selectionEcho,
-  selectTargetsFromState,
+  selectTargets,
   type ManagedTarget,
   type SelectionEcho,
 } from "../projects/project.ts";
 import { projectLifecycle, type TargetSelector } from "../../domain/projects/project-schema.ts";
 import { runManagedRemoval, type RemovalExecution } from "../removal/removal.ts";
 import { applyRemovalWithWriter } from "../removal/removal-apply.ts";
-import { planRemovalFromState } from "../removal/removal-plan.ts";
+import { planRemoval } from "../removal/removal-plan.ts";
 import {
   RemovalPlanSchema,
   type RemovalPlan,
@@ -62,7 +62,7 @@ const selectedRequest = Effect.fnUntraced(function* (
   mode: "clean" | "retry",
   options: SelectedRemovalOptions,
 ) {
-  const selection = yield* selectTargetsFromState(state, stateOptions, {
+  const selection = yield* selectTargets(state, stateOptions, {
     cwd: options.cwd,
     selector: options.selector,
   });
@@ -128,9 +128,7 @@ const runSelectedRemoval = (
     plan: ({ state }) =>
       selectedRequest(state, stateOptions, mode, options).pipe(
         Effect.flatMap(({ request, selection }) =>
-          planRemovalFromState(state, request).pipe(
-            Effect.map((plan) => ({ plan, selection, state })),
-          ),
+          planRemoval(state, request).pipe(Effect.map((plan) => ({ plan, selection, state }))),
         ),
       ),
     applyPlan: (writer, prepared) => applyRemovalWithWriter(writer, prepared.plan),

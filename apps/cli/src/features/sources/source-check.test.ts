@@ -3,7 +3,7 @@ import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { bareSkillText } from "../../../test/support/source-tree.ts";
-import { resolveCatalogFromInspections } from "./catalog.ts";
+import { resolveCatalog } from "./catalog.ts";
 import { checkSource, inspectDeclaration } from "./source-check.ts";
 import { Source } from "./source.ts";
 
@@ -119,7 +119,7 @@ it.layer(LiveTestLayer)("source check", (test) => {
         yield* write(file, text);
       const source = yield* (yield* Source).validate(root);
       const registration = { id: "00000000-0000-4000-8000-000000000000", canonicalPath: root };
-      const catalog = yield* resolveCatalogFromInspections([
+      const catalog = yield* resolveCatalog([
         { status: "healthy", registration, declaration: source.declaration },
       ]);
       const counted = (catalog.declarations?.[registration.id] ?? []).map((row) => row.resources);

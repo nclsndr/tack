@@ -1,7 +1,7 @@
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "../../../../../test/support/live-test-layer.ts";
-import { mutateState } from "../../../../../test/support/state-fixture.ts";
+import { mutateStateFixture } from "../../../../../test/support/state-fixture.ts";
 import type { ResourceAddress } from "../../../../domain/sources/catalog-schema.ts";
 import { enableAdapters } from "../../../../features/reconciliation/agent.ts";
 import { registerSource } from "../../../../features/sources/source.ts";
@@ -50,7 +50,7 @@ const workspace = Effect.fnUntraced(function* () {
     (entry) => entry.title === "review",
   )?.address;
   if (review?.kind !== "skill") throw new Error("Missing review fixture.");
-  yield* mutateState(options, (state) => ({
+  yield* mutateStateFixture(options, (state) => ({
     ...state,
     data: {
       ...state.data,
@@ -169,7 +169,7 @@ it.layer(LiveTestLayer)("explorer destinations", (test) => {
       const registration = (yield* readState(options)).data.sources.find(
         (item) => item.canonicalPath === source,
       );
-      yield* mutateState(options, (state) => ({
+      yield* mutateStateFixture(options, (state) => ({
         ...state,
         data: {
           ...state.data,

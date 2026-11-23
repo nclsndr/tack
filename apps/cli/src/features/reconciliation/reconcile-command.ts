@@ -8,7 +8,7 @@ import { sortAndDedupeBy } from "../../domain/identity/ordering.ts";
 import {
   linkTargetsOf,
   selectionEcho,
-  selectTargetsFromState,
+  selectTargets,
   type SelectionEcho,
 } from "../projects/project.ts";
 import { type TargetSelector } from "../../domain/projects/project-schema.ts";
@@ -58,7 +58,7 @@ export const prepareReconciliation = Effect.fnUntraced(function* (
   snapshot: CommandSnapshot,
 ) {
   const { state } = snapshot;
-  const selection = yield* selectTargetsFromState(state, stateOptions, {
+  const selection = yield* selectTargets(state, stateOptions, {
     cwd: options.cwd,
     selector: options.selector,
   });

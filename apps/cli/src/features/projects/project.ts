@@ -28,7 +28,7 @@ import {
   type DirectoryCheck,
 } from "./project-observation.ts";
 import {
-  mutateStateEffect,
+  mutateState,
   StateBusyError,
   StateConfigurationError,
   StateCorruptError,
@@ -262,7 +262,7 @@ export const registerProject = Effect.fn("projects.registerProject")(function* (
   | StateStorageError,
   Destination | FileSystem.FileSystem | Git | Path.Path | StateStore
 > {
-  return yield* mutateStateEffect(stateOptions, (state) =>
+  return yield* mutateState(stateOptions, (state) =>
     Effect.gen(function* (): Effect.fn.Return<
       StateMutation<RegisterProjectResult>,
       | GitCommandError
@@ -514,7 +514,7 @@ const inspectProject = Effect.fnUntraced(function* (
 });
 
 /** Inspects registered projects and roots from one validated state snapshot. */
-export const inspectProjectsFromState = Effect.fnUntraced(function* (state: State) {
+export const inspectProjects = Effect.fnUntraced(function* (state: State) {
   return yield* Effect.forEach(projectRootsFrom(state), (project) => inspectProject(project));
 });
 
@@ -760,7 +760,7 @@ const targetUser = (canonicalPath: string): ManagedTarget => ({
 });
 
 /** Resolves bare, project, user, and all target selectors against one state snapshot. */
-export const selectTargetsFromState = Effect.fnUntraced(function* (
+export const selectTargets = Effect.fnUntraced(function* (
   state: State,
   stateOptions: StateOptions,
   options: SelectTargetsOptions,
@@ -854,7 +854,7 @@ export const selectTargetsFromState = Effect.fnUntraced(function* (
         ...(removing === undefined ? {} : removing),
       });
     }
-    const selected = yield* selectTargetsFromState(state, stateOptions, {
+    const selected = yield* selectTargets(state, stateOptions, {
       ...options,
       selector: { _tag: "project", projectName: containing.projectName },
     });

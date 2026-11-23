@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import type { StateOptions } from "../../services/state-store.ts";
 import { previewOrApply, type PreviewOrApplied } from "../writer/recovered-writer.ts";
 import { applyRemovalWithWriter } from "./removal-apply.ts";
-import { planRemovalFromState } from "./removal-plan.ts";
+import { planRemoval } from "./removal-plan.ts";
 import type {
   RemovalPlan,
   RemovalRequest,
@@ -21,7 +21,7 @@ export const runManagedRemoval = Effect.fnUntraced(function* (
 ) {
   const execution: RemovalExecution = yield* previewOrApply(stateOptions, {
     apply,
-    plan: ({ state }) => planRemovalFromState(state, request),
+    plan: ({ state }) => planRemoval(state, request),
     applyPlan: (writer, plan) => applyRemovalWithWriter(writer, plan),
   });
   return execution;

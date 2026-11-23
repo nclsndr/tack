@@ -19,7 +19,7 @@ import {
   ManagedLinkEvidenceSchema,
   ManagedLinkTargetSchema,
 } from "../links/managed-link-schema.ts";
-import { compareCodeUnits } from "../identity/ordering.ts";
+import { isInCodeUnitOrder, isSortedUnique, sortedUnique } from "../identity/ordering.ts";
 import {
   ReportedPendingRemovalCollectionSchema,
   ReportedPendingRemovalSchema,
@@ -112,14 +112,10 @@ export const StatusProjectSchema = Schema.Struct({
   lifecycle: ProjectLifecycleSchema,
   name: ProjectNameSchema,
   roots: Schema.Array(StatusProjectRootSchema).check(
-    Schema.makeFilter((roots) => {
-      const paths = roots.map((root) => root.path);
-      const sorted = [...paths].sort(compareCodeUnits);
-      return new Set(paths).size === paths.length &&
-        paths.every((path, index) => path === sorted[index])
-        ? []
-        : ["Status project roots must use unique canonical code-unit ordering."];
-    }),
+    sortedUnique(
+      (root) => root.path,
+      "Status project roots must use unique canonical code-unit ordering.",
+    ),
   ),
 });
 
@@ -163,17 +159,10 @@ export const StatusNamespaceSchema = Schema.Struct({
       )
         ? []
         : ["Status namespace choices must belong to the reported namespace."]),
-      ...(choiceIdentities.every(
-        (choiceIdentity, index) =>
-          choiceIdentity === [...choiceIdentities].sort(compareCodeUnits)[index],
-      )
+      ...(isInCodeUnitOrder(choiceIdentities)
         ? []
         : ["Status namespace choices must use deterministic ordering."]),
-      ...(new Set(desiredIdentities).size === desiredIdentities.length &&
-      desiredIdentities.every(
-        (desiredIdentity, index) =>
-          desiredIdentity === [...desiredIdentities].sort(compareCodeUnits)[index],
-      )
+      ...(isSortedUnique(desiredIdentities)
         ? []
         : ["Desired status addresses must use unique canonical ordering."]),
       ...(choiceNamespaceIdentity(namespace.selection.namespace) === identity
@@ -290,14 +279,10 @@ export const StatusReportSchema = Schema.Struct({
   /** The concise catalog report `catalog` returns for the same sources. */
   catalog: CatalogReportSchema,
   destinations: Schema.Array(StatusDestinationSchema).check(
-    Schema.makeFilter((destinations) => {
-      const paths = destinations.map((destination) => destination.destinationPath);
-      const sorted = [...paths].sort(compareCodeUnits);
-      return new Set(paths).size === paths.length &&
-        paths.every((path, index) => path === sorted[index])
-        ? []
-        : ["Status destinations must use unique canonical code-unit ordering."];
-    }),
+    sortedUnique(
+      (destination) => destination.destinationPath,
+      "Status destinations must use unique canonical code-unit ordering.",
+    ),
   ),
   enabledAdapters: EnabledAdaptersSchema,
   imports: StatusImportsSchema,
@@ -407,14 +392,10 @@ export const StatusPayloadSchema = Schema.Struct({
   ...StatusReportSchema.fields,
   catalog: StatusCatalogCountsSchema,
   destinations: Schema.Array(StatusPayloadDestinationSchema).check(
-    Schema.makeFilter((destinations) => {
-      const paths = destinations.map((destination) => destination.destinationPath);
-      const sorted = [...paths].sort(compareCodeUnits);
-      return new Set(paths).size === paths.length &&
-        paths.every((path, index) => path === sorted[index])
-        ? []
-        : ["Status destinations must use unique canonical code-unit ordering."];
-    }),
+    sortedUnique(
+      (destination) => destination.destinationPath,
+      "Status destinations must use unique canonical code-unit ordering.",
+    ),
   ),
 });
 

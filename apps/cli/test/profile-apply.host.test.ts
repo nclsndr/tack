@@ -7,7 +7,7 @@ import { SecureRandom } from "effect/crypto";
 import { provideTestFileSystem } from "./support/live-test-layer.ts";
 import { runStatus } from "../src/features/status/status.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
-import { mutateState } from "./support/state-fixture.ts";
+import { mutateStateFixture } from "./support/state-fixture.ts";
 import { readState } from "../src/services/state-store.ts";
 import { Source, makeSourceService, registerSource } from "../src/features/sources/source.ts";
 import { runProfileApply } from "../src/features/profiles/profile-apply.ts";
@@ -53,7 +53,7 @@ it.layer(LiveTestLayer)("exact profile application", (test) => {
   test.effect("treats explicit docs intent and target recovery as existing selection", () =>
     Effect.gen(function* () {
       const { options, request, run, sourceId, path, project } = yield* fixture;
-      yield* mutateState(options, (state) => ({
+      yield* mutateStateFixture(options, (state) => ({
         ...state,
         data: {
           ...state.data,
@@ -73,7 +73,7 @@ it.layer(LiveTestLayer)("exact profile application", (test) => {
         sourceDirectoryPath: path.join(project, "source"),
         target: { _tag: "project-root" as const, projectName: "ci", canonicalPath: project },
       };
-      yield* mutateState(options, (state) => ({
+      yield* mutateStateFixture(options, (state) => ({
         ...state,
         data: { ...state.data, journal: [{ _tag: "create", link: agentLink(evidence) }] },
       }));
@@ -124,7 +124,7 @@ it.layer(LiveTestLayer)("exact profile application", (test) => {
       const { fs, path, root, options, request, run } = yield* fixture;
       yield* run(runProfileApply(options, request));
       yield* fs.makeDirectory(path.join(root, "another-root"));
-      yield* mutateState(options, (state) => ({
+      yield* mutateStateFixture(options, (state) => ({
         ...state,
         data: {
           ...state.data,
@@ -414,7 +414,7 @@ it.layer(LiveTestLayer)("exact profile application", (test) => {
     () =>
       Effect.gen(function* () {
         const { fs, path, root, project, options, request, run, sourceId } = yield* fixture;
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -433,7 +433,7 @@ it.layer(LiveTestLayer)("exact profile application", (test) => {
         expect((yield* run(runProfileApply(options, request))).plan.refused).toBe(true);
         expect(yield* readState(options)).toEqual(before);
         yield* fs.makeDirectory(path.join(root, "second"));
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {
             ...state.data,

@@ -1,5 +1,5 @@
 import { managedLinksOf } from "../../domain/links/link-record-schema.ts";
-import { expectWriterGuarded, mutateState } from "../../../test/support/state-fixture.ts";
+import { expectWriterGuarded, mutateStateFixture } from "../../../test/support/state-fixture.ts";
 import { LiveTestLayer, provideTestFileSystem } from "../../../test/support/live-test-layer.ts";
 import { faultyFileSystem, platformTestError, stallAt } from "../../../test/support/faults.ts";
 import { expect, it } from "@effect/vitest";
@@ -173,7 +173,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
         yield* initializeState(options);
         const entry = catalogEntry("skill", source);
         const managed = evidence("cursor", targetUser(home), entry);
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: { ...state.data, managedLinks: [managed] },
         }));
@@ -195,7 +195,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
           managedLinks: [managed],
           namespaces: reconciliationNamespaces([namespaceResolution([])], [targetUser(home)]),
         });
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: { ...state.data, managedLinks: [managed] },
         }));
@@ -223,7 +223,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
         yield* fileSystem.symlink(changedText, destination);
         yield* initializeState(options);
         const managed = evidence("cursor", targetUser(home), catalogEntry("skill", source));
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: { ...state.data, managedLinks: [managed] },
         }));
@@ -262,7 +262,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
         yield* fileSystem.symlink(path.relative(path.dirname(destination), elsewhere), destination);
         yield* initializeState(options);
         const managed = evidence("cursor", targetUser(home), catalogEntry("skill", source));
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: { ...state.data, managedLinks: [managed] },
         }));
@@ -307,7 +307,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
           }
           yield* initializeState(options);
           const managed = evidence("cursor", targetUser(home), catalogEntry("skill", source));
-          yield* mutateState(options, (state) => ({
+          yield* mutateStateFixture(options, (state) => ({
             ...state,
             data: { ...state.data, managedLinks: [managed] },
           }));
@@ -373,7 +373,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
         const oldEntry = catalogEntry("moving", oldSource);
         const newEntry = catalogEntry("moving", newSource);
         const oldEvidence = evidence("cursor", targetUser(home), oldEntry);
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: { ...state.data, managedLinks: [oldEvidence] },
         }));
@@ -495,7 +495,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
         const sharedEntry = catalogEntry("skill", sharedSource, "shared");
         const privateEntry = catalogEntry("skill", privateSource, "private");
         const managed = evidence("cursor", targetUser(home), oldEntry);
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: { ...state.data, managedLinks: [managed] },
         }));
@@ -535,7 +535,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
         yield* initializeState(options);
         const entry = catalogEntry("skill", source);
         const managed = evidence("cursor", targetUser(home), entry);
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: { ...state.data, managedLinks: [managed] },
         }));
@@ -575,7 +575,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
         const oldEntry = catalogEntry("moving", oldSource);
         const newEntry = catalogEntry("moving", newSource);
         const managed = evidence("cursor", targetUser(home), oldEntry);
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: { ...state.data, managedLinks: [managed] },
         }));
@@ -750,7 +750,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
         yield* initializeState(options);
         const entry = catalogEntry("skill", source);
         const managed = evidence("cursor", targetUser(home), entry);
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: { ...state.data, managedLinks: [managed] },
         }));
@@ -939,7 +939,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
         yield* initializeState(options);
         const entry = catalogEntry("skill", source);
         const managed = evidence("cursor", targetUser(home), entry);
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: { ...state.data, managedLinks: [managed] },
         }));
@@ -1010,7 +1010,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
           throw new Error("Expected a link-create plan.");
         }
         yield* fileSystem.symlink(path.relative(path.dirname(destination), source), destination);
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: { ...state.data, reconciliationJournal: { action: preparedAction } },
         }));
@@ -1044,7 +1044,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
         const oldEntry = catalogEntry("moving", oldSource);
         const newEntry = catalogEntry("moving", newSource);
         const previous = evidence("cursor", targetUser(home), oldEntry);
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {
             ...state.data,

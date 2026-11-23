@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import { LiveTestLayer } from "../../../../test/support/live-test-layer.ts";
 import { bundleFixture } from "../../../../test/support/bundle-fixture.ts";
 import { profileFixture } from "../../../../test/support/profile-fixture.ts";
-import { mutateState } from "../../../../test/support/state-fixture.ts";
+import { mutateStateFixture } from "../../../../test/support/state-fixture.ts";
 import { readState } from "../../../services/state-store.ts";
 import type { Invocation } from "../../commands/index.ts";
 import { profileRoutes } from "./profiles.ts";
@@ -114,7 +114,7 @@ it.layer(LiveTestLayer)("profile routes", (test) => {
       );
       yield* world.write("source/commands/ship.md", "---\ndescription: Ship it\n---\nShip.\n");
       yield* world.write("source/ci.yaml", "version: 1\nname: ci\nmembers: [notes, ship]\n");
-      yield* mutateState(world.options, (state) => ({
+      yield* mutateStateFixture(world.options, (state) => ({
         ...state,
         data: { ...state.data, enabledAdapters: ["claude"] },
       }));
@@ -287,7 +287,7 @@ it.layer(LiveTestLayer)("profile routes", (test) => {
   test.effect("saves the effective user picks into a profile and refuses an invalid save", () =>
     Effect.gen(function* () {
       const world = yield* profileFixture;
-      yield* mutateState(world.options, (state) => ({
+      yield* mutateStateFixture(world.options, (state) => ({
         ...state,
         data: {
           ...state.data,
@@ -349,7 +349,7 @@ it.layer(LiveTestLayer)("profile routes", (test) => {
       const world = yield* profileFixture;
       // The route reads the process working directory; register it as a root of the fixture project.
       const cwd = yield* world.fs.realPath(world.path.resolve("."));
-      yield* mutateState(world.options, (state) => ({
+      yield* mutateStateFixture(world.options, (state) => ({
         ...state,
         data: {
           ...state.data,

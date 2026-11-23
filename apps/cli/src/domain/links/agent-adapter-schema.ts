@@ -1,7 +1,7 @@
 import { Schema } from "effect";
 
 import { agentAdapterIds } from "../agents/agent-adapter.ts";
-import { compareCodeUnits } from "../identity/ordering.ts";
+import { sortedUnique } from "../identity/ordering.ts";
 
 /** The built-in agent adapters supported by Tack, the keys of the adapter table. */
 export const AgentAdapterIdSchema = Schema.Literals(agentAdapterIds);
@@ -43,14 +43,9 @@ export const AgentAdapterDescriptorSchema = Schema.Struct({
 
 /** The persisted canonical enabled-adapter collection. */
 export const EnabledAdaptersSchema = Schema.Array(AgentAdapterIdSchema).check(
-  Schema.makeFilter((adapters) => {
-    const sorted = [...adapters].sort(compareCodeUnits);
-    return [
-      ...(new Set(adapters).size === adapters.length ? [] : ["Enabled adapters must be unique."]),
-      ...(adapters.every((adapter, index) => adapter === sorted[index])
-        ? []
-        : ["Enabled adapters must use canonical code-unit ordering."]),
-    ];
+  sortedUnique((adapter) => adapter, {
+    duplicate: "Enabled adapters must be unique.",
+    unordered: "Enabled adapters must use canonical code-unit ordering.",
   }),
 );
 

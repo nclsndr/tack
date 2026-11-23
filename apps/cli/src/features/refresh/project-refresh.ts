@@ -19,7 +19,7 @@ import {
   type ManagedLinkTarget,
 } from "../../domain/links/managed-link-schema.ts";
 import { applyRemovalWithWriter } from "../removal/removal-apply.ts";
-import { planRemovalFromState } from "../removal/removal-plan.ts";
+import { planRemoval } from "../removal/removal-plan.ts";
 import type { RemovalResult } from "../../domain/reconciliation/removal-schema.ts";
 import {
   isNotFound,
@@ -463,7 +463,7 @@ const planCommand = Effect.fnUntraced(function* (
   const removals =
     targets.length === 0
       ? []
-      : [yield* planRemovalFromState(projected, { scope: { _tag: "retry-targets", targets } })];
+      : [yield* planRemoval(projected, { scope: { _tag: "retry-targets", targets } })];
   // Docs reconcile runs after the removals, so it plans against the docs evidence they leave.
   const removedDocs = new Set(
     removals.flatMap((removal) =>

@@ -1,6 +1,6 @@
 import { writeUnder, bareSkillText, tackMetadata } from "../../../test/support/source-tree.ts";
 import { managedLinksOf } from "../../domain/links/link-record-schema.ts";
-import { mutateState } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { SecureRandom } from "effect/crypto";
@@ -65,7 +65,7 @@ const agreementFixture = Effect.fnUntraced(function* () {
   yield* initializeState(options);
   yield* registerSource(options, { sourcePath: source });
   yield* enableAdapters(options, ["claude", "codex", "cursor"]);
-  yield* mutateState(options, (state) => ({
+  yield* mutateStateFixture(options, (state) => ({
     ...state,
     data: {
       ...state.data,
@@ -179,7 +179,7 @@ it.layer(LiveTestLayer)("status agrees with the reconciliation planner", (agreem
     () =>
       Effect.gen(function* () {
         const f = yield* agreementFixture();
-        yield* mutateState(f.options, (state) => ({
+        yield* mutateStateFixture(f.options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -228,7 +228,7 @@ it.layer(LiveTestLayer)("status agrees with the reconciliation planner", (agreem
             destinationPath,
           );
         }
-        yield* mutateState(f.options, (state) => {
+        yield* mutateStateFixture(f.options, (state) => {
           const leadAddress = managedLinksOf(state.data.links).find(
             (evidence) => evidence.address.name === "lead",
           )?.address;
@@ -283,7 +283,7 @@ it.layer(LiveTestLayer)("status agrees with the reconciliation planner", (agreem
         f.path.relative(f.path.dirname(oldDestination), oldEvidence.sourceDirectoryPath),
         oldDestination,
       );
-      yield* mutateState(f.options, (state) => {
+      yield* mutateStateFixture(f.options, (state) => {
         const current = managedLinksOf(state.data.links);
         const registrationId = current[0]?.sourceRegistrationId ?? "";
         return {
@@ -331,7 +331,7 @@ it.layer(LiveTestLayer)("status agrees with the reconciliation planner", (agreem
           selector: { _tag: "project", projectName: "workspace" },
         } as const;
         const stale = f.path.join(f.root, "stale");
-        yield* mutateState(f.options, (state) => ({
+        yield* mutateStateFixture(f.options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -382,7 +382,7 @@ it.layer(LiveTestLayer)("status agrees with the reconciliation planner", (agreem
         const helper = (yield* f.status(user)).destinations
           .filter((destination) => destination.evidence?.address.name === "helper")
           .map((destination) => destination.destinationPath);
-        yield* mutateState(f.options, (state) => {
+        yield* mutateStateFixture(f.options, (state) => {
           const addresses = sortAndDedupeBy(
             managedLinksOf(state.data.links)
               .map((evidence) => evidence.address)

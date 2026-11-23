@@ -1,11 +1,11 @@
 import { bareSkillText, declare } from "../../../test/support/source-tree.ts";
-import { resolveCatalog } from "../../../test/support/snapshot-helpers.ts";
+import { resolveCatalogAt } from "../../../test/support/snapshot-helpers.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { initializeState, readState, type StateOptions } from "../../services/state-store.ts";
 
-import { inspectSourcesFromState, registerSource } from "./source.ts";
+import { inspectSources, registerSource } from "./source.ts";
 import { declaredSkillsFolders } from "./resource-declarations.ts";
 import { inspectDeclaration } from "./source-check.ts";
 
@@ -40,16 +40,16 @@ const withSource = <A, E, R>(
 const catalogOf = (fixture: Fixture) =>
   Effect.gen(function* () {
     yield* registerSource(fixture.options, { sourcePath: fixture.root }).pipe(Effect.ignore);
-    return yield* resolveCatalog(fixture.options);
+    return yield* resolveCatalogAt(fixture.options);
   });
 
-const resources = (catalog: Effect.Success<ReturnType<typeof resolveCatalog>>) =>
+const resources = (catalog: Effect.Success<ReturnType<typeof resolveCatalogAt>>) =>
   catalog.entries
     .filter((entry) => entry.origin !== "builtin")
     .map(({ address }) => `${address.kind}/${address.name}`)
     .sort();
 
-const quarantines = (catalog: Effect.Success<ReturnType<typeof resolveCatalog>>) =>
+const quarantines = (catalog: Effect.Success<ReturnType<typeof resolveCatalogAt>>) =>
   catalog.quarantined.map(({ code, candidateKind }) => `${candidateKind ?? "-"}:${code}`).sort();
 
 it.layer(LiveTestLayer)("source resource declarations", (test) => {
@@ -95,7 +95,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
           );
           yield* registerSource(fixture.options, { sourcePath: fixture.root });
           yield* fs.writeFileString(path.join(fixture.root, "tack.yaml"), declare());
-          const catalog = yield* resolveCatalog(fixture.options);
+          const catalog = yield* resolveCatalogAt(fixture.options);
           expect(resources(catalog)).toEqual([]);
           expect(catalog.unhealthySources).toMatchObject([
             { issue: { code: "declaration-resources-undeclared" } },
@@ -290,7 +290,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
             const fs = yield* FileSystem.FileSystem;
             const path = yield* Path.Path;
             yield* registerSource(fixture.options, { sourcePath: fixture.root });
-            expect(resources(yield* resolveCatalog(fixture.options))).toEqual([
+            expect(resources(yield* resolveCatalogAt(fixture.options))).toEqual([
               "skill/adhd",
               "skill/kept",
             ]);
@@ -305,7 +305,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
               path.join(fixture.root, "skills/_archive/broken/SKILL.md"),
               "no frontmatter",
             );
-            const catalog = yield* resolveCatalog(fixture.options);
+            const catalog = yield* resolveCatalogAt(fixture.options);
             expect(resources(catalog)).toEqual(["skill/kept"]);
             expect(catalog.quarantined).toEqual([]);
           }),
@@ -847,7 +847,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
     withSource(declare("name: bare"), { "notes/readme.md": "# hi" }, (fixture) =>
       Effect.gen(function* () {
         yield* registerSource(fixture.options, { sourcePath: fixture.root });
-        const inspections = yield* inspectSourcesFromState(yield* readState(fixture.options));
+        const inspections = yield* inspectSources(yield* readState(fixture.options));
         const inspection = inspections.find(
           ({ registration }) => registration.canonicalPath === fixture.root,
         );
@@ -856,7 +856,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
           warnings: [{ code: "source-declares-no-resources" }],
         });
         expect(JSON.stringify(inspection)).toContain("manage-tack-sources");
-        expect(resources(yield* resolveCatalog(fixture.options))).toEqual([]);
+        expect(resources(yield* resolveCatalogAt(fixture.options))).toEqual([]);
       }),
     ),
   );
@@ -868,7 +868,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
       (fixture) =>
         Effect.gen(function* () {
           yield* registerSource(fixture.options, { sourcePath: fixture.root });
-          const inspections = yield* inspectSourcesFromState(yield* readState(fixture.options));
+          const inspections = yield* inspectSources(yield* readState(fixture.options));
           expect(inspections.flatMap((inspection) => inspection.warnings ?? [])).toEqual([]);
         }),
     ),
@@ -1028,7 +1028,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
       (fixture) =>
         Effect.gen(function* () {
           yield* registerSource(fixture.options, { sourcePath: fixture.root });
-          const inspections = yield* inspectSourcesFromState(yield* readState(fixture.options));
+          const inspections = yield* inspectSources(yield* readState(fixture.options));
           const inspection = inspections.find(
             (candidate) => candidate.registration.canonicalPath === fixture.root,
           );
@@ -1397,7 +1397,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
     withSource(declare(`kind: ${row.kind}`), row.files, (fixture) =>
       Effect.gen(function* () {
         yield* registerSource(fixture.options, { sourcePath: fixture.root });
-        const inspections = yield* inspectSourcesFromState(yield* readState(fixture.options));
+        const inspections = yield* inspectSources(yield* readState(fixture.options));
         expect(
           inspections.find(({ registration }) => registration.canonicalPath === fixture.root),
         ).toMatchObject({ status: "healthy" });

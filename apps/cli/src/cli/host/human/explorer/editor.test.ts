@@ -1,7 +1,7 @@
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "../../../../../test/support/live-test-layer.ts";
-import { mutateState } from "../../../../../test/support/state-fixture.ts";
+import { mutateStateFixture } from "../../../../../test/support/state-fixture.ts";
 import type { ChoiceNamespace } from "../../../../domain/choices/choice-schema.ts";
 import { enableAdapters } from "../../../../features/reconciliation/agent.ts";
 import { registerSource } from "../../../../features/sources/source.ts";
@@ -60,7 +60,7 @@ const workspace = Effect.fnUntraced(function* (adapters: ReadonlyArray<"claude">
   yield* initializeState(options);
   yield* registerSource(options, { sourcePath: source });
   if (adapters.length > 0) yield* enableAdapters(options, adapters);
-  yield* mutateState(options, (state) => ({
+  yield* mutateStateFixture(options, (state) => ({
     ...state,
     data: {
       ...state.data,
@@ -144,7 +144,7 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
       const extraRegistration = sources.find((item) => item.canonicalPath === extra);
       const address = (name: string, sourceRegistrationId = registration?.id ?? "") =>
         ({ kind: "skill", name, sourceRegistrationId }) as const;
-      yield* mutateState(options, (state) => ({
+      yield* mutateStateFixture(options, (state) => ({
         ...state,
         data: {
           ...state.data,

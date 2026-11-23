@@ -17,7 +17,7 @@ import { makeBundleFileCollector } from "../src/features/profiles/bundle-files.t
 import type { ProfilePlanFinding } from "../src/domain/profiles/profile-schema.ts";
 import { nodeGzip } from "../src/platform/compression/compression.ts";
 import { registerSource } from "../src/features/sources/source.ts";
-import { mutateState } from "./support/state-fixture.ts";
+import { mutateStateFixture } from "./support/state-fixture.ts";
 
 const lowId = "00000000-0000-4000-8000-000000000001";
 const highId = "00000000-0000-4000-8000-000000000002";
@@ -41,7 +41,7 @@ it.layer(LiveTestLayer)("bundle export completeness", (test) => {
         "source/ci.yaml",
         "version: 1\nname: ci\ndepends-on: [team]\nmembers: [style, {kind: skill, name: lint, source: team}]\n",
       );
-      yield* mutateState(f.options, (state) => ({
+      yield* mutateStateFixture(f.options, (state) => ({
         ...state,
         data: {
           ...state.data,

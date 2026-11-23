@@ -6,7 +6,7 @@ import {
   type AgentAdapterId,
 } from "../../domain/links/agent-adapter-schema.ts";
 import { applyRemovalWithWriter } from "../removal/removal-apply.ts";
-import { planRemovalFromState } from "../removal/removal-plan.ts";
+import { planRemoval } from "../removal/removal-plan.ts";
 import {
   RemovalPlanSchema,
   RemovalResultSchema,
@@ -59,7 +59,7 @@ const decodeAdapter = (candidate: unknown) =>
 
 const planFromState = Effect.fnUntraced(function* (state: State, adapter: AgentAdapterId) {
   const expectedEnabledAdapters = state.data.enabledAdapters;
-  const removal = yield* planRemovalFromState(state, {
+  const removal = yield* planRemoval(state, {
     cause: "adapter-disable",
     scope: { _tag: "adapter", adapter },
   });

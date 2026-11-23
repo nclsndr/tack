@@ -1,5 +1,5 @@
 import { withStateFixture } from "../../../test/support/state-fixture.ts";
-import { resolveCatalog } from "../../../test/support/snapshot-helpers.ts";
+import { resolveCatalogAt } from "../../../test/support/snapshot-helpers.ts";
 import type { CatalogEntry, SkillCatalogEntry } from "../../domain/sources/catalog-schema.ts";
 import { LiveTestLayer, provideTestFileSystem } from "../../../test/support/live-test-layer.ts";
 import { faultyFileSystem, platformTestError } from "../../../test/support/faults.ts";
@@ -77,7 +77,7 @@ it.layer(LiveTestLayer)("skill catalog", (sourceIt) => {
         const stateBefore = yield* fileSystem.readFileString(statePath);
         const skillBefore = yield* fileSystem.readFileString(skillPath);
 
-        const catalog = yield* resolveCatalog(options);
+        const catalog = yield* resolveCatalogAt(options);
 
         expect(names(catalog)).toEqual(["alpha", "parent", "zeta"]);
         expect(
@@ -108,7 +108,7 @@ it.layer(LiveTestLayer)("skill catalog", (sourceIt) => {
         );
         yield* registerSource(options, { sourcePath });
 
-        const catalog = yield* resolveCatalog(options);
+        const catalog = yield* resolveCatalogAt(options);
         const defaultSkill = skillEntries(catalog).find(
           (entry) => entry.address.name === "default-skill",
         );
@@ -237,7 +237,7 @@ it.layer(LiveTestLayer)("skill catalog", (sourceIt) => {
         );
         yield* registerSource(options, { sourcePath });
 
-        const catalog = yield* resolveCatalog(options);
+        const catalog = yield* resolveCatalogAt(options);
 
         expect(names(catalog)).toEqual(["valid"]);
         expect(
@@ -293,7 +293,7 @@ it.layer(LiveTestLayer)("skill catalog", (sourceIt) => {
         );
         yield* registerSource(options, { sourcePath });
 
-        const catalog = yield* resolveCatalog(options);
+        const catalog = yield* resolveCatalogAt(options);
 
         expect(catalog.entries).toEqual([]);
         expect(catalog.quarantined.map((entry) => entry.code)).toEqual([
@@ -323,7 +323,7 @@ it.layer(LiveTestLayer)("skill catalog", (sourceIt) => {
         yield* registerSource(options, { sourcePath: firstSource });
         yield* registerSource(options, { sourcePath: secondSource });
 
-        const catalog = yield* resolveCatalog(options);
+        const catalog = yield* resolveCatalogAt(options);
 
         expect(catalog.quarantined.map((entry) => entry.code)).toEqual([
           "skill-frontmatter-schema-invalid",
@@ -349,7 +349,7 @@ it.layer(LiveTestLayer)("skill catalog", (sourceIt) => {
           yield* registerSource(options, { sourcePath: firstSource });
           yield* registerSource(options, { sourcePath: privateSource });
 
-          const catalog = yield* resolveCatalog(options);
+          const catalog = yield* resolveCatalogAt(options);
 
           expect(names(catalog)).toEqual(["independent", "duplicate"]);
           expect(
@@ -382,7 +382,7 @@ it.layer(LiveTestLayer)("skill catalog", (sourceIt) => {
         yield* fileSystem.remove(sourcePath, { recursive: true });
         yield* fileSystem.remove(secondSourcePath, { recursive: true });
 
-        const catalog = yield* resolveCatalog(options);
+        const catalog = yield* resolveCatalogAt(options);
 
         expect(catalog.entries).toEqual([]);
         expect(catalog.quarantined).toEqual([]);
@@ -456,7 +456,7 @@ it.layer(LiveTestLayer)("skill catalog", (sourceIt) => {
           stat: (candidate) =>
             candidate === statErrorPath ? platformTestError("stat") : undefined,
         });
-        const catalog = yield* provideTestFileSystem(resolveCatalog(options), {
+        const catalog = yield* provideTestFileSystem(resolveCatalogAt(options), {
           ...faulty,
           realPath: (candidate) =>
             candidate === outsideSkillPath
@@ -503,7 +503,7 @@ it.layer(LiveTestLayer)("skill catalog", (sourceIt) => {
         const canonicalSkills = path.join(yield* fileSystem.realPath(sourcePath), "skills");
 
         const catalog = yield* provideTestFileSystem(
-          resolveCatalog(options),
+          resolveCatalogAt(options),
           yield* faultyFileSystem({
             readDirectory: (candidate) =>
               candidate === canonicalSkills ? platformTestError("readDirectory") : undefined,

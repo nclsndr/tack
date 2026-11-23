@@ -13,7 +13,7 @@ import {
 import { readState } from "../../services/state-store.ts";
 import { applyImport, previewImport } from "./import.ts";
 import { inspectImports, observeImports } from "./import-inspect.ts";
-import { inspectSourcesFromState } from "../sources/source.ts";
+import { inspectSources } from "../sources/source.ts";
 import { readImportsSection } from "./imports-section.ts";
 
 const commit = {
@@ -267,7 +267,7 @@ it.layer(LiveTestLayer)("import recovery", (test) => {
     withImportWorld({ declaration, files, commits: [commit] }, (world) =>
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
-        const inspections = yield* inspectSourcesFromState(yield* readState(world.options));
+        const inspections = yield* inspectSources(yield* readState(world.options));
         yield* fileSystem.remove(`${world.root}/tack.yaml`);
         const observed = yield* observeImports(inspections);
         expect(observed.imports).toEqual([]);

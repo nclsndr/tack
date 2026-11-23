@@ -8,7 +8,7 @@ import type {
 } from "../../services/import-remote.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
 import { SkillNameSchema } from "../../domain/sources/catalog-schema.ts";
-import { resolveCatalogFromInspections } from "../sources/catalog.ts";
+import { resolveCatalog } from "../sources/catalog.ts";
 import { type DiscoveredSkillFolder, unsafeRelativePath } from "./import-discovery.ts";
 import { isTextBytes, writeSkillFiles, type SkillFile } from "./import-files.ts";
 import { sanitizeForDisplay } from "./import-location.ts";
@@ -112,7 +112,7 @@ const catalogVerdict = (identity: SkillIdentity, files: ReadonlyArray<SkillFile>
       yield* writeSkillFiles(path.join(sourcePath, "skills", directoryName), files).pipe(
         Effect.orDie,
       );
-      const catalog = yield* resolveCatalogFromInspections([
+      const catalog = yield* resolveCatalog([
         {
           status: "healthy",
           declaration: { version: 1, skills: [{ path: "skills" }] },

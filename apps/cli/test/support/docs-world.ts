@@ -11,7 +11,7 @@ import type { State } from "../../src/domain/state/state-schema.ts";
 import { registerSource } from "../../src/features/sources/source.ts";
 import { initializeState, type StateOptions } from "../../src/services/state-store.ts";
 import { syncDocs } from "./reconciliation.ts";
-import { mutateState } from "./state-fixture.ts";
+import { mutateStateFixture } from "./state-fixture.ts";
 
 /** The temporary world of a docs test. */
 export type DocsWorld = {
@@ -38,7 +38,7 @@ export const withDocsWorld = <A, E, R>(use: (world: DocsWorld) => Effect.Effect<
     yield* initializeState(options);
     const roots = [path.join(root, "project-a"), path.join(root, "project-b")];
     for (const directory of roots) yield* fs.makeDirectory(directory);
-    yield* mutateState(options, (state) => ({
+    yield* mutateStateFixture(options, (state) => ({
       ...state,
       data: {
         ...state.data,

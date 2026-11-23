@@ -1,6 +1,6 @@
 import { writeUnder, seedSource, profileSourceFiles, bareSkillText } from "./source-tree.ts";
 import { Effect, FileSystem, Path } from "effect";
-import { mutateState } from "./state-fixture.ts";
+import { mutateStateFixture } from "./state-fixture.ts";
 import { initializeState } from "../../src/services/state-store.ts";
 import { registerSource } from "../../src/features/sources/source.ts";
 import { Git } from "../../src/services/git.ts";
@@ -36,7 +36,7 @@ export const profileFixture = Effect.gen(function* () {
   );
   yield* initializeState(options);
   const registered = yield* registerSource(options, { sourcePath: source });
-  yield* mutateState(options, (state) => ({
+  yield* mutateStateFixture(options, (state) => ({
     ...state,
     data: {
       ...state.data,

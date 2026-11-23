@@ -6,10 +6,7 @@ import {
 } from "../../src/features/choices/choice.ts";
 import { readInvocationSnapshot } from "../../src/features/snapshot/command-snapshot.ts";
 import { inspectSourcesWithDeclarations as declarationsOf } from "../../src/features/sources/catalog.ts";
-import {
-  inspectProjectsFromState,
-  selectTargetsFromState,
-} from "../../src/features/projects/project.ts";
+import { inspectProjects, selectTargets } from "../../src/features/projects/project.ts";
 import { publicSourceInspection } from "../../src/features/sources/source.ts";
 import {
   readState,
@@ -41,11 +38,11 @@ export const listSkillChoices = (
 ) => readState(options).pipe(Effect.flatMap((state) => listSkillChoicesOf(state, namespace)));
 
 /** Resolves the catalog of the state that `options` names, read once. */
-export const resolveCatalog = (options: StateOptions) =>
+export const resolveCatalogAt = (options: StateOptions) =>
   readInvocationSnapshot(options).pipe(Effect.flatMap((snapshot) => snapshot.catalog));
 
 /** Inspects the sources of the state that `options` names, read once. */
-export const inspectSources = (options: StateOptions) =>
+export const inspectSourcesAt = (options: StateOptions) =>
   readInvocationSnapshot(options).pipe(
     Effect.flatMap((snapshot) => snapshot.sourceInspections),
     Effect.map((inspections) => inspections.map(publicSourceInspection)),
@@ -53,17 +50,14 @@ export const inspectSources = (options: StateOptions) =>
 
 /** Inspects the sources with the declarations each contributes, from one catalog resolution. */
 export const inspectSourcesWithDeclarations = (options: StateOptions) =>
-  resolveCatalog(options).pipe(Effect.map(declarationsOf));
+  resolveCatalogAt(options).pipe(Effect.map(declarationsOf));
 
 /** Selects targets from the state that `options` names, read once. */
-export const selectTargets = (
+export const selectTargetsAt = (
   options: StateOptions,
-  selection: Parameters<typeof selectTargetsFromState>[2],
-) =>
-  readState(options).pipe(
-    Effect.flatMap((state) => selectTargetsFromState(state, options, selection)),
-  );
+  selection: Parameters<typeof selectTargets>[2],
+) => readState(options).pipe(Effect.flatMap((state) => selectTargets(state, options, selection)));
 
 /** Inspects the projects of the state that `options` names, read once. */
-export const inspectProjects = (options: StateOptions) =>
-  readState(options).pipe(Effect.flatMap(inspectProjectsFromState));
+export const inspectProjectsAt = (options: StateOptions) =>
+  readState(options).pipe(Effect.flatMap(inspectProjects));

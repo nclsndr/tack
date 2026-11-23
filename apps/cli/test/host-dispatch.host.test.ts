@@ -1,4 +1,4 @@
-import { mutateState } from "./support/state-fixture.ts";
+import { mutateStateFixture } from "./support/state-fixture.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, PlatformError, Predicate, Schema } from "effect";
@@ -1133,7 +1133,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
           projectName: "workspace",
         },
       });
-      yield* mutateState(options, (state) => ({
+      yield* mutateStateFixture(options, (state) => ({
         ...state,
         data: {
           ...state.data,

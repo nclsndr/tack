@@ -1,7 +1,7 @@
 import { bareSkillText } from "../../../test/support/source-tree.ts";
 import {
   inspectSourcesWithDeclarations,
-  resolveCatalog,
+  resolveCatalogAt,
 } from "../../../test/support/snapshot-helpers.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
@@ -174,7 +174,7 @@ it.layer(LiveTestLayer)("declaration facts", (test) => {
       },
       ({ options }) =>
         Effect.gen(function* () {
-          const catalog = yield* resolveCatalog(options);
+          const catalog = yield* resolveCatalogAt(options);
           const declared = catalog.entries
             .filter((entry) => entry.origin !== "builtin")
             .map(

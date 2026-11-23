@@ -1,7 +1,7 @@
 import { requireDefaultSelection } from "../../domain/profiles/profile-application.ts";
 import { Effect, Path, Schema } from "effect";
 import { docsSettingsFor, withDocsSettings } from "../../domain/state/state-intent.ts";
-import { mutateStateEffect, type StateOptions } from "../../services/state-store.ts";
+import { mutateState, type StateOptions } from "../../services/state-store.ts";
 import { type State } from "../../domain/state/state-schema.ts";
 import { makeCommandSnapshot, readInvocationSnapshot } from "../snapshot/command-snapshot.ts";
 import { observeDestination } from "../../services/destination.ts";
@@ -86,7 +86,7 @@ export const attachDocs = Effect.fn("docs.attachDocs")(function* (
   selector: DocsSelector,
   request: DocsResourceRequest,
 ) {
-  return yield* mutateStateEffect(options, (state) =>
+  return yield* mutateState(options, (state) =>
     Effect.gen(function* () {
       const projectName = yield* selectDocsProjectName(state, selector);
       yield* requireDefaultSelection(state, { _tag: "project", projectName });
@@ -115,7 +115,7 @@ export const detachDocs = Effect.fn("docs.detachDocs")(function* (
   selector: DocsSelector,
   request: DocsResourceRequest,
 ) {
-  return yield* mutateStateEffect(options, (state) =>
+  return yield* mutateState(options, (state) =>
     Effect.gen(function* () {
       const projectName = yield* selectDocsProjectName(state, selector);
       yield* requireDefaultSelection(state, { _tag: "project", projectName });
@@ -157,7 +157,7 @@ export const configureDocs = Effect.fn("docs.configureDocs")(function* (
         (error) => new DocsError({ code: "docs-destination-invalid", message: error.message }),
       ),
     );
-  return yield* mutateStateEffect(options, (state) =>
+  return yield* mutateState(options, (state) =>
     Effect.gen(function* () {
       const projectName = yield* selectDocsProjectName(state, selector);
       yield* requireDefaultSelection(state, { _tag: "project", projectName });

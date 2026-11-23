@@ -10,7 +10,7 @@ import { resolveStateDirectory, type StateOptions } from "../../services/state-s
 import { type State } from "../../domain/state/state-schema.ts";
 import { readInvocationSnapshot, resolveInvocationCatalog } from "../snapshot/command-snapshot.ts";
 import { isEntryOfKind, resourceAddressIdentity } from "../../domain/sources/catalog-schema.ts";
-import { resolveContainingRoot, selectTargetsFromState } from "../projects/project.ts";
+import { resolveContainingRoot, selectTargets } from "../projects/project.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
 import {
   runFailure,
@@ -72,7 +72,7 @@ const resolveRunTarget = Effect.fnUntraced(function* (
   const selector = request.selector;
   if (selector._tag !== "bare") {
     const projectName = selector._tag === "project" ? selector.projectName : undefined;
-    const selection = yield* selectTargetsFromState(state, stateOptions, {
+    const selection = yield* selectTargets(state, stateOptions, {
       cwd: path.resolve("."),
       selector,
     }).pipe(

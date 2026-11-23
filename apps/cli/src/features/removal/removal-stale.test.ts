@@ -1,7 +1,7 @@
 import { managedLinksOf, pendingRemovalsOf } from "../../domain/links/link-record-schema.ts";
 import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
-import { planRemoval, retryPendingRemovals } from "../../../test/support/removal.ts";
+import { planRemovalAt, retryPendingRemovals } from "../../../test/support/removal.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import type { ProfileApplication } from "../../domain/profiles/profile-application.ts";
@@ -59,7 +59,7 @@ it.layer(LiveTestLayer)("removal against state that moved on", (test) => {
   test.effect("leaves projects alone when the project a plan removes is already gone", () =>
     Effect.gen(function* () {
       const { options } = yield* linkedWorld;
-      const plan = yield* planRemoval(options, {
+      const plan = yield* planRemovalAt(options, {
         cause: "project-removal",
         scope: { _tag: "project", projectName: "project" },
       });
@@ -78,7 +78,7 @@ it.layer(LiveTestLayer)("removal against state that moved on", (test) => {
   test.effect("leaves a destination an interrupted apply left prepared during a reset", () =>
     Effect.gen(function* () {
       const { fs, options, destination, evidence } = yield* linkedWorld;
-      const plan = yield* planRemoval(options, { cause: "clean", scope: { _tag: "reset" } });
+      const plan = yield* planRemovalAt(options, { cause: "clean", scope: { _tag: "reset" } });
       yield* mutateStateFixture(options, (state) => ({
         ...state,
         data: {

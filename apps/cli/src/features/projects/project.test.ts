@@ -1,11 +1,11 @@
-import { inspectProjects, selectTargets } from "../../../test/support/snapshot-helpers.ts";
+import { inspectProjectsAt, selectTargetsAt } from "../../../test/support/snapshot-helpers.ts";
 import {
   fakeGit,
   notARepositoryError,
   outsideRepositoryGit,
 } from "../../../test/support/fake-git.ts";
 import { faultyFileSystem, platformTestError } from "../../../test/support/faults.ts";
-import { mutateState, withStateFixture } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture, withStateFixture } from "../../../test/support/state-fixture.ts";
 import { LiveTestLayer, provideTestFileSystem } from "../../../test/support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
@@ -26,7 +26,7 @@ import { readState, type StateOptions } from "../../services/state-store.ts";
 
 /** Persists cleanup obligations at the given destinations, as earlier maintenance would. */
 const persistPendingRemovals = (options: StateOptions, targets: ReadonlyArray<ManagedLinkTarget>) =>
-  mutateState(options, (state) => ({
+  mutateStateFixture(options, (state) => ({
     ...state,
     data: {
       ...state.data,
@@ -199,7 +199,7 @@ it.layer(LiveTestLayer)("project registration and targeting", (projectIt) => {
             path.join(feature, ".claude", "skills", "notes.md"),
             "notes\n",
           );
-          yield* mutateState(options, (state) => ({
+          yield* mutateStateFixture(options, (state) => ({
             ...state,
             data: { ...state.data, enabledAdapters: ["claude"] },
           }));
@@ -267,7 +267,7 @@ it.layer(LiveTestLayer)("project registration and targeting", (projectIt) => {
         yield* registerProject(options, { name: "project", repositoryCwd: projectRoot }).pipe(
           Effect.provideService(Git, git),
         );
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -291,7 +291,7 @@ it.layer(LiveTestLayer)("project registration and targeting", (projectIt) => {
           name: "project",
           repositoryCwd: projectRoot,
         }).pipe(Effect.provideService(Git, git));
-        const inspections = yield* inspectProjects(options);
+        const inspections = yield* inspectProjectsAt(options);
         expect((yield* readState(options)).data.projects?.[0]).toHaveProperty("choices");
         expect(repeated.project).not.toHaveProperty("choices");
         expect(repeated.project).not.toHaveProperty("docs");
@@ -483,8 +483,8 @@ it.layer(LiveTestLayer)("project registration and targeting", (projectIt) => {
         }).pipe(Effect.provideService(Git, git));
         yield* fileSystem.remove(secondRoot, { recursive: true });
 
-        const inspection = yield* inspectProjects(options);
-        const projectSelection = yield* selectTargets(options, {
+        const inspection = yield* inspectProjectsAt(options);
+        const projectSelection = yield* selectTargetsAt(options, {
           cwd: outside,
           selector: { _tag: "project", projectName: "project" },
           userTarget: path.join(root, "user-home"),
@@ -492,12 +492,12 @@ it.layer(LiveTestLayer)("project registration and targeting", (projectIt) => {
         yield* persistPendingRemovals(options, [
           { _tag: "user", canonicalPath: path.join(root, "pending-user") },
         ]);
-        const bareSelection = yield* selectTargets(options, {
+        const bareSelection = yield* selectTargetsAt(options, {
           cwd: firstRoot,
           selector: { _tag: "bare" },
           userTarget: path.join(root, "user-home"),
         });
-        const allSelection = yield* selectTargets(options, {
+        const allSelection = yield* selectTargetsAt(options, {
           cwd: outside,
           selector: { _tag: "all" },
           userTarget: path.join(root, "user-home"),
@@ -556,30 +556,30 @@ it.layer(LiveTestLayer)("project registration and targeting", (projectIt) => {
           },
           { _tag: "user", canonicalPath: path.join(root, "pending-user") },
         ]);
-        const project = yield* selectTargets(options, {
+        const project = yield* selectTargetsAt(options, {
           cwd: outside,
           selector: { _tag: "project", projectName: "project" },
           userTarget: userHome,
         });
-        const user = yield* selectTargets(options, {
+        const user = yield* selectTargetsAt(options, {
           cwd: outside,
           selector: { _tag: "user" },
           userTarget: userHome,
         });
-        const pendingOnly = yield* selectTargets(options, {
+        const pendingOnly = yield* selectTargetsAt(options, {
           cwd: outside,
           selector: { _tag: "project", projectName: "other" },
           userTarget: userHome,
         });
         const bareError = yield* Effect.flip(
-          selectTargets(options, {
+          selectTargetsAt(options, {
             cwd: outside,
             selector: { _tag: "bare" },
             userTarget: userHome,
           }),
         );
         const missingProject = yield* Effect.flip(
-          selectTargets(options, {
+          selectTargetsAt(options, {
             cwd: outside,
             selector: { _tag: "project", projectName: "missing" },
             userTarget: userHome,
@@ -633,13 +633,13 @@ it.layer(LiveTestLayer)("project registration and targeting", (projectIt) => {
         yield* fileSystem.remove(fileRoot, { recursive: true });
         yield* fileSystem.writeFileString(fileRoot, "replacement");
 
-        const inspection = yield* inspectProjects(options);
-        const selection = yield* selectTargets(options, {
+        const inspection = yield* inspectProjectsAt(options);
+        const selection = yield* selectTargetsAt(options, {
           cwd: activeRoot,
           selector: { _tag: "bare" },
           userTarget: path.join(root, "user-home"),
         });
-        const projectSelection = yield* selectTargets(options, {
+        const projectSelection = yield* selectTargetsAt(options, {
           cwd: path.join(root, "outside"),
           selector: { _tag: "project", projectName: "project" },
           userTarget: path.join(root, "user-home"),
@@ -691,7 +691,7 @@ it.layer(LiveTestLayer)("project registration and targeting", (projectIt) => {
         const canonicalSelectedRoot = yield* fileSystem.realPath(selectedRoot);
         const canonicalUnrelatedAnchor = yield* fileSystem.realPath(unrelatedAnchor);
         const canonicalUnrelatedRoot = yield* fileSystem.realPath(unrelatedRoot);
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -716,11 +716,11 @@ it.layer(LiveTestLayer)("project registration and targeting", (projectIt) => {
               ? Effect.die("unrelated project observation")
               : fileSystem.realPath(candidate),
         });
-        const project = yield* selectTargets(options, {
+        const project = yield* selectTargetsAt(options, {
           cwd: root,
           selector: { _tag: "project", projectName: "selected" },
         }).pipe(Effect.provideService(FileSystem.FileSystem, failUnrelatedObservation));
-        const user = yield* selectTargets(options, {
+        const user = yield* selectTargetsAt(options, {
           cwd: root,
           selector: { _tag: "user" },
           userTarget: path.join(root, "user"),
@@ -753,7 +753,7 @@ it.layer(LiveTestLayer)("project registration and targeting", (projectIt) => {
         yield* fileSystem.symlink(anchor, anchorAlias);
         yield* fileSystem.symlink(projectRoot, rootAlias);
 
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -767,9 +767,9 @@ it.layer(LiveTestLayer)("project registration and targeting", (projectIt) => {
           },
         }));
 
-        const inspection = yield* inspectProjects(options);
+        const inspection = yield* inspectProjectsAt(options);
         const missingCwdError = yield* Effect.flip(
-          selectTargets(options, {
+          selectTargetsAt(options, {
             cwd: missingCwd,
             selector: { _tag: "bare" },
           }),
@@ -784,7 +784,7 @@ it.layer(LiveTestLayer)("project registration and targeting", (projectIt) => {
         yield* fileSystem.makeDirectory(storageCwd, { recursive: true });
         const storageError = yield* Effect.flip(
           provideTestFileSystem(
-            selectTargets(options, {
+            selectTargetsAt(options, {
               cwd: storageCwd,
               selector: { _tag: "bare" },
             }),
@@ -802,7 +802,7 @@ it.layer(LiveTestLayer)("project registration and targeting", (projectIt) => {
           ],
         });
         const inaccessibleRoot = yield* provideTestFileSystem(
-          inspectProjects(options),
+          inspectProjectsAt(options),
           yield* faultyFileSystem({
             realPath: (candidate) =>
               candidate === rootAlias ? platformTestError("realPath", candidate) : undefined,
@@ -841,7 +841,7 @@ it.layer(LiveTestLayer)("project registration and targeting", (projectIt) => {
           repositoryCwd: outer,
         }).pipe(Effect.provideService(Git, git));
 
-        const selection = yield* selectTargets(options, {
+        const selection = yield* selectTargetsAt(options, {
           cwd: inner,
           selector: { _tag: "bare" },
           userTarget: path.join(root, "user-home"),
@@ -872,7 +872,7 @@ it.layer(LiveTestLayer)("project registration and targeting", (projectIt) => {
         yield* fileSystem.makeDirectory(outside, { recursive: true });
         yield* fileSystem.symlink(deeper, alias);
         // "a-outer" sorts first by name, so a first-match scan would claim the inner root.
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {
             ...state.data,

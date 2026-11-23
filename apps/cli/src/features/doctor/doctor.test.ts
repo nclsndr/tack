@@ -1,4 +1,4 @@
-import { mutateState } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
@@ -47,7 +47,7 @@ const docsWorld = Effect.gen(function* () {
   yield* initializeState(options);
   const root = path.join(home, "project");
   yield* fs.makeDirectory(root);
-  yield* mutateState(options, (state) => ({
+  yield* mutateStateFixture(options, (state) => ({
     ...state,
     data: {
       ...state.data,

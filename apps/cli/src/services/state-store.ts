@@ -231,7 +231,7 @@ export const withStateCheckpointWriter = Effect.fnUntraced(function* <A, E, R>(
 });
 
 /** Runs an effectful validated state transition under the exclusive state lock. */
-export const mutateStateEffect = Effect.fnUntraced(function* <A, E, R>(
+export const mutateState = Effect.fnUntraced(function* <A, E, R>(
   options: StateOptions,
   mutate: StateMutator<A, E, R>,
 ) {

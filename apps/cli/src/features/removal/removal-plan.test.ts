@@ -9,7 +9,7 @@ import type { ProjectRecord } from "../../domain/projects/project-schema.ts";
 import { Destination } from "../../services/destination.ts";
 import { type DestinationObservation } from "../../domain/reconciliation/destination-observation-schema.ts";
 import type { ManagedLinkEvidence } from "../../domain/links/managed-link-schema.ts";
-import { planRemovalFromState } from "./removal-plan.ts";
+import { planRemoval } from "./removal-plan.ts";
 import type { RemovalRequest, RemovalScope } from "../../domain/reconciliation/removal-schema.ts";
 import { prepareRemovalState } from "./removal-apply.ts";
 
@@ -137,9 +137,9 @@ const requests: ReadonlyArray<readonly [string, RemovalRequest, (state: State) =
 for (const [name, request, transition] of requests) {
   it.effect(`plans the same ${name} cleanup before and after its prepare transition`, () =>
     Effect.gen(function* () {
-      const plan = yield* planRemovalFromState(state, request);
+      const plan = yield* planRemoval(state, request);
       const prepared = prepareRemovalState(transition(state), plan);
-      const replanned = yield* planRemovalFromState(prepared, {
+      const replanned = yield* planRemoval(prepared, {
         cause: plan.cause,
         scope: plan.scope,
       });
@@ -164,10 +164,10 @@ for (const scope of [
 ] satisfies ReadonlyArray<RemovalScope>) {
   it.effect(`plans the same ${scope._tag} cleanup from persisted equivalent ordering`, () =>
     Effect.gen(function* () {
-      const plan = yield* planRemovalFromState(state, { scope });
+      const plan = yield* planRemoval(state, { scope });
       const stored = yield* roundTrip(state);
 
-      expect(yield* planRemovalFromState(stored, { scope })).toEqual(plan);
+      expect(yield* planRemoval(stored, { scope })).toEqual(plan);
     }).pipe(Effect.provideService(Destination, destinations), Effect.provide(world)),
   );
 }
@@ -180,7 +180,7 @@ it.effect("orders docs removal evidence by code units, not locale", () =>
       destinationPath: `/project/docs/${name}`,
       sourceDirectoryPath: `/source/docs/${name}`,
     });
-    const plan = yield* planRemovalFromState(
+    const plan = yield* planRemoval(
       runtimeFixture({ version: 1, data: { docsManagedLinks: [link("a"), link("Z")] } }),
       { cause: "reset", scope: { _tag: "reset" } },
     );

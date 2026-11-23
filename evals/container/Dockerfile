@@ -12,6 +12,7 @@ COPY apps/cli/src apps/cli/src
 COPY packages/core/src packages/core/src
 COPY packages/reader/src packages/reader/src
 COPY scripts/build-release.ts scripts/build-release.ts
+COPY scripts/build-recipe.ts scripts/build-recipe.ts
 ARG TACK_COMMIT
 RUN TACK_BUILD_COMMIT=$TACK_COMMIT bun scripts/build-release.ts /release
 

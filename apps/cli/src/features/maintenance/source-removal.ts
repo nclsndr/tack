@@ -22,7 +22,7 @@ import { compareCodeUnits } from "../../domain/identity/ordering.ts";
 import type { State, StateProject } from "../../domain/state/state-schema.ts";
 import type { StateCheckpointWriter, StateOptions } from "../../services/state-store.ts";
 import { applyRemovalWithWriter } from "../removal/removal-apply.ts";
-import { planRemovalFromState } from "../removal/removal-plan.ts";
+import { planRemoval } from "../removal/removal-plan.ts";
 import type { CommandSnapshot } from "../snapshot/command-snapshot.ts";
 import { previewOrApply } from "../writer/recovered-writer.ts";
 
@@ -204,7 +204,7 @@ const planFromSnapshot = Effect.fnUntraced(function* (
   const inspections = yield* snapshot.sourceInspections;
   const inspection = yield* resolveRemovedSource(inspections, reference);
   const id = inspection.registration.id;
-  const removal = yield* planRemovalFromState(state, {
+  const removal = yield* planRemoval(state, {
     cause: "clean",
     scope: { _tag: "source", sourceRegistrationId: id },
   });

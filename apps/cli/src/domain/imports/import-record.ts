@@ -1,5 +1,5 @@
 import { Result, Schema } from "effect";
-import { compareCodeUnits } from "../identity/ordering.ts";
+import { compareCodeUnits, sortedUnique } from "../identity/ordering.ts";
 import { sha256 } from "../identity/portable.ts";
 import { RecordLocationSchema, TransportSchema } from "./providers/provider-schema.ts";
 
@@ -8,13 +8,9 @@ const hexDigest = (length: number) =>
     Schema.isBetweenLength(length, length),
   );
 
-const filesAreSortedAndUnique = Schema.makeFilter(
-  (files: ReadonlyArray<{ readonly path: string }>) =>
-    files.every(
-      (file, index) => index === 0 || compareCodeUnits(files[index - 1]?.path ?? "", file.path) < 0,
-    )
-      ? []
-      : ["The files must be unique and sorted by path."],
+const filesAreSortedAndUnique = sortedUnique(
+  (file: { readonly path: string }) => file.path,
+  "The files must be unique and sorted by path.",
 );
 
 const NonEmptyString = Schema.String.check(Schema.isMinLength(1));

@@ -1,5 +1,5 @@
 import { declare, skillText } from "../../../test/support/source-tree.ts";
-import { resolveCatalog } from "../../../test/support/snapshot-helpers.ts";
+import { resolveCatalogAt } from "../../../test/support/snapshot-helpers.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Result } from "effect";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
@@ -31,7 +31,7 @@ const manualCopy = (
     const fileSystem = yield* FileSystem.FileSystem;
     const own = <T extends { readonly sourcePath: string }>(items: ReadonlyArray<T>) =>
       items.filter((item) => item.sourcePath === world.root);
-    const before = yield* resolveCatalog(world.options);
+    const before = yield* resolveCatalogAt(world.options);
     for (const [relative, content] of Object.entries(files)) {
       const target = `${world.root}/${folder}/${name}/${relative}`;
       yield* fileSystem.makeDirectory(target.split("/").slice(0, -1).join("/"), {
@@ -39,7 +39,7 @@ const manualCopy = (
       });
       yield* fileSystem.writeFileString(target, content);
     }
-    const after = yield* resolveCatalog(world.options);
+    const after = yield* resolveCatalogAt(world.options);
     const loaded = own(after.entries).filter(
       (entry) =>
         entry.address.kind === "skill" && entry.directoryPath === `${world.root}/${folder}/${name}`,
@@ -228,7 +228,7 @@ it.layer(LiveTestLayer)("import verdicts equal the destination's catalog", (test
             world.options,
             importRequest({ into: "personal-brain", skills: ["creator"] }),
           );
-          const catalog = yield* resolveCatalog(world.options);
+          const catalog = yield* resolveCatalogAt(world.options);
           const skills = catalog.entries
             .filter((entry) => entry.sourcePath === world.root && entry.address.kind === "skill")
             .map((entry) => entry.address.name)

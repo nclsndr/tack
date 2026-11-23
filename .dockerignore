@@ -18,6 +18,7 @@
 !scripts/
 !scripts/package.json
 !scripts/build-release.ts
+!scripts/build-recipe.ts
 !evals/
 !evals/container/
 !evals/container/**

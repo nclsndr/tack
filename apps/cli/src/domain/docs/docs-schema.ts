@@ -7,7 +7,7 @@ import { NextCommandsSchema } from "../hints/next-commands.ts";
 import { ProjectNameSchema } from "../projects/project-schema.ts";
 import { SkillNameSchema, resourceAddressIdentity } from "../sources/catalog-schema.ts";
 import { SourceRegistrationIdSchema } from "../sources/source-schema.ts";
-import { compareCodeUnits } from "../identity/ordering.ts";
+import { compareCodeUnits, sortedUnique } from "../identity/ordering.ts";
 import {
   PendingRemovalCauseSchema,
   PendingRemovalLastResultSchema,
@@ -160,19 +160,9 @@ export type DocsPendingRemoval = typeof DocsPendingRemovalSchema.Type;
 
 /** The docs removals a command reports: unique by destination, in code-unit order. */
 export const DocsPendingRemovalsSchema = Schema.Array(DocsPendingRemovalSchema).check(
-  Schema.makeFilter((pending) => {
-    const destinations = pending.map((item) => item.evidence.destinationPath);
-    return [
-      ...(new Set(destinations).size === destinations.length
-        ? []
-        : ["Docs pending removals must be unique by destination path."]),
-      ...(destinations.every(
-        (destination, index) =>
-          index === 0 || compareCodeUnits(destinations[index - 1] ?? "", destination) <= 0,
-      )
-        ? []
-        : ["Docs pending removals must use canonical code-unit ordering."]),
-    ];
+  sortedUnique((item) => item.evidence.destinationPath, {
+    duplicate: "Docs pending removals must be unique by destination path.",
+    unordered: "Docs pending removals must use canonical code-unit ordering.",
   }),
 );
 

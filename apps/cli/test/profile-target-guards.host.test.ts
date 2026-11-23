@@ -5,13 +5,13 @@ import { runProfileApply } from "../src/features/profiles/profile-apply.ts";
 import { readState } from "../src/services/state-store.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { profileFixture } from "./support/profile-fixture.ts";
-import { mutateState } from "./support/state-fixture.ts";
+import { mutateStateFixture } from "./support/state-fixture.ts";
 
 it.layer(LiveTestLayer)("profile target guards", (test) => {
   test.effect("saved user picks need --force before a user profile replaces them", () =>
     Effect.gen(function* () {
       const { options, request, run, home, sourceId } = yield* profileFixture;
-      yield* mutateState(options, (state) => ({
+      yield* mutateStateFixture(options, (state) => ({
         ...state,
         data: {
           ...state.data,
@@ -47,7 +47,7 @@ it.layer(LiveTestLayer)("profile target guards", (test) => {
   test.effect("a prepared recovery of another context refuses a profile here", () =>
     Effect.gen(function* () {
       const { options, request, run, home, project, source, sourceId } = yield* profileFixture;
-      yield* mutateState(options, (state) => ({
+      yield* mutateStateFixture(options, (state) => ({
         ...state,
         data: {
           ...state.data,

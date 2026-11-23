@@ -1,5 +1,5 @@
-import { resolveCatalog } from "../../../test/support/snapshot-helpers.ts";
-import { mutateState } from "../../../test/support/state-fixture.ts";
+import { resolveCatalogAt } from "../../../test/support/snapshot-helpers.ts";
+import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
 import { allDocsSettings } from "../../domain/state/state-intent.ts";
 import { expect, it } from "@effect/vitest";
 import { chmodSync } from "node:fs";
@@ -90,7 +90,7 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
             "version: 1\ndocs:\n  - name: handbook\n    path: notes\n  - name: broken\n    path: missing\n",
           );
           yield* registerSource(options, { sourcePath });
-          const catalog = yield* resolveCatalog(options);
+          const catalog = yield* resolveCatalogAt(options);
           expect(catalog.entries.filter((entry) => entry.address.kind === "docs")).toHaveLength(2);
           expect(catalog.quarantined).toMatchObject([
             { address: { kind: "docs", name: "broken" } },
@@ -162,7 +162,7 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
           const path = yield* Path.Path;
           const thirdRoot = path.join(root, "project-c");
           yield* fs.makeDirectory(thirdRoot);
-          yield* mutateState(options, (state) => ({
+          yield* mutateStateFixture(options, (state) => ({
             ...state,
             data: {
               ...state.data,
@@ -363,7 +363,7 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
         yield* syncDocsReport(options, { projectName: "demo", apply: true });
         const evidence = docsEvidence(yield* readState(options))[0];
         if (evidence === undefined) return yield* Effect.die("Expected owned docs evidence");
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -393,7 +393,7 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
         ).toBe(true);
         yield* detachDocs(options, { projectName: "demo" }, docsRequest(resource));
         yield* fs.remove(evidence.destinationPath);
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: { ...state.data, journal: [{ _tag: "remove", link: docsLink(evidence) }] },
         }));
@@ -463,7 +463,7 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
             path.join(source, "tack.yaml"),
             "version: 1\nskills:\n  - path: skills\ndocs:\n  - name: handbook\n    path: knowledge\n  - name: malformed\n    path: ../outside\n  - name: duplicate\n    path: knowledge\n  - name: duplicate\n    path: knowledge\n",
           );
-          const catalog = yield* resolveCatalog(options);
+          const catalog = yield* resolveCatalogAt(options);
           expect(catalog.unhealthySources).toEqual([]);
           expect(catalog.entries.map((entry) => entry.address.name).sort()).toEqual([
             "example",
@@ -517,7 +517,7 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
         ).toMatchObject({ code: "bare-target-requires-registered-root" });
         const otherRoot = path.join(root, "other");
         yield* fs.makeDirectory(otherRoot);
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -773,7 +773,7 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
           expect(
             (yield* resolveProjectDocs(options, { projectName: "demo" })).issues,
           ).toMatchObject([{ message: "The registered source is unavailable." }]);
-          yield* mutateState(options, (state) => ({
+          yield* mutateStateFixture(options, (state) => ({
             ...state,
             data: { ...state.data, sources: [] },
           }));
@@ -803,7 +803,7 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
         yield* fs.remove(current);
         yield* fs.makeDirectory(path.dirname(old), { recursive: true });
         yield* fs.symlink(path.relative(path.dirname(old), path.join(source, "knowledge")), old);
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -843,7 +843,7 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
           const fs = yield* FileSystem.FileSystem;
           const path = yield* Path.Path;
           yield* fs.writeFileString(path.join(source, "tack.yaml"), "version: 1\ndocs: invalid\n");
-          expect((yield* resolveCatalog(options)).quarantined).toMatchObject([
+          expect((yield* resolveCatalogAt(options)).quarantined).toMatchObject([
             { code: "declaration-invalid" },
           ]);
           yield* fs.symlink(root, path.join(source, "escape"));
@@ -852,7 +852,7 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
             path.join(source, "tack.yaml"),
             "version: 1\ndocs:\n  - name: escape\n    path: escape\n  - name: file\n    path: file\n  - name: INVALID\n    path: knowledge\n  - name: handbook\n    path: knowledge\n    reader: custom.yaml\n",
           );
-          const catalog = yield* resolveCatalog(options);
+          const catalog = yield* resolveCatalogAt(options);
           expect(catalog.quarantined).toHaveLength(3);
           expect(catalog.entries).toMatchObject([
             {
@@ -861,7 +861,7 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
             },
           ]);
           yield* fs.remove(path.join(source, "tack.yaml"));
-          const missing = yield* resolveCatalog(options);
+          const missing = yield* resolveCatalogAt(options);
           expect(missing.entries).toEqual([]);
           expect(missing.unhealthySources).toMatchObject([
             { issue: { code: "declaration-missing" }, registration: { canonicalPath: source } },
@@ -890,7 +890,7 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
           if (evidence === undefined) return yield* Effect.die("Expected docs evidence");
           yield* fs.remove(evidence.destinationPath);
           yield* fs.makeDirectory(evidence.destinationPath);
-          yield* mutateState(options, (state) => ({
+          yield* mutateStateFixture(options, (state) => ({
             ...state,
             data: {
               ...state.data,
@@ -910,7 +910,7 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
           const root = roots[0] ?? "";
           yield* fs.rename(path.join(root, ".tack"), path.join(root, "redirected"));
           yield* fs.symlink("redirected", path.join(root, ".tack"));
-          yield* mutateState(options, (state) => ({
+          yield* mutateStateFixture(options, (state) => ({
             ...state,
             data: { ...state.data, journal: [{ _tag: "create", link: docsLink(evidence) }] },
           }));
@@ -940,7 +940,7 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
         const deeper = path.join(inner, "deeper");
         yield* fs.makeDirectory(deeper, { recursive: true });
         // "demo" sorts before "nested", so a first-match scan would claim the nested root.
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -1155,7 +1155,7 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
           const blockedRoot = roots[0] ?? "";
           yield* fs.rename(path.join(blockedRoot, ".tack"), path.join(blockedRoot, "redirected"));
           yield* fs.symlink("redirected", path.join(blockedRoot, ".tack"));
-          yield* mutateState(options, (state) => ({
+          yield* mutateStateFixture(options, (state) => ({
             ...state,
             data: { ...state.data, journal: [{ _tag: "create", link: docsLink(evidence) }] },
           }));

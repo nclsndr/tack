@@ -1,4 +1,4 @@
-import { resolveCatalog } from "../../../test/support/snapshot-helpers.ts";
+import { resolveCatalogAt } from "../../../test/support/snapshot-helpers.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
@@ -40,7 +40,7 @@ it.layer(LiveTestLayer)("source resource identity", (test) => {
           path.join(team, "private", "skills", "secret", "SKILL.md"),
           "---\nname: secret\ndescription: Secret\n---\n",
         );
-        const catalog = yield* resolveCatalog(options);
+        const catalog = yield* resolveCatalogAt(options);
         expect(catalog.entries.map((entry) => entry.address.name)).toEqual(["review", "review"]);
         expect(catalog.quarantined).toEqual([]);
       }),

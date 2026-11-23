@@ -24,7 +24,7 @@ import { managedLinkDestinationPath } from "../../domain/agents/agent-layout.ts"
 import type { RemovalScope } from "../../domain/reconciliation/removal-schema.ts";
 import { ProjectRecordSchema } from "../../domain/projects/project-schema.ts";
 import {
-  planRemoval,
+  planRemovalAt,
   removeProject,
   removeProjectRoot,
   retryPendingRemovals,
@@ -167,7 +167,7 @@ it.layer(LiveTestLayer)("removal lifecycle", (removalIt) => {
           },
         }));
 
-        const plan = yield* planRemoval(options, {
+        const plan = yield* planRemovalAt(options, {
           scope: rootScope(canonicalRoot),
           cause: "root-removal",
         });
@@ -1026,7 +1026,7 @@ it.layer(LiveTestLayer)("removal lifecycle", (removalIt) => {
           yield* fs.remove(replaced.destinationPath);
           yield* fs.makeDirectory(replaced.destinationPath);
 
-          const plan = yield* planRemoval(world.options, { scope: scopeOf(world) });
+          const plan = yield* planRemovalAt(world.options, { scope: scopeOf(world) });
 
           // Apply refuses the replaced mount, so the preview reports it as a conflict up front.
           expect(plan.docsActions).toEqual([

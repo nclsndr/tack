@@ -4,8 +4,8 @@ import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { initializeState, readState, type StateOptions } from "../../services/state-store.ts";
 import { catalogReport } from "../../domain/sources/catalog-report.ts";
-import { resolveCatalogFromInspections } from "../sources/catalog.ts";
-import { inspectSourcesFromState, registerSource } from "../sources/source.ts";
+import { resolveCatalog } from "../sources/catalog.ts";
+import { inspectSources, registerSource } from "../sources/source.ts";
 import { observeImportsDisplay } from "./import-display.ts";
 import { recordFilesOf, type SkillFile } from "./import-files.ts";
 import type { ImportRecord } from "../../domain/imports/import-record.ts";
@@ -34,7 +34,7 @@ const record = (path: string, files: ReadonlyArray<SkillFile>): ImportRecord => 
   };
 };
 
-type Sources = Effect.Success<ReturnType<typeof inspectSourcesFromState>>;
+type Sources = Effect.Success<ReturnType<typeof inspectSources>>;
 
 /** A registered source declaring `skills`, with one authored skill and the given imported ones. */
 export const withImportedSource = <A, E, R>(
@@ -72,7 +72,7 @@ export const withImportedSource = <A, E, R>(
         newFolders: [],
       })),
     );
-    const inspections = yield* inspectSourcesFromState(yield* readState(options));
+    const inspections = yield* inspectSources(yield* readState(options));
     return yield* use({ root, options, inspections });
   }).pipe(Effect.scoped);
 
@@ -80,7 +80,7 @@ it.layer(LiveTestLayer)("import display", (test) => {
   test.effect("counts an unchanged import, tags it in the catalog and reports details", () =>
     withImportedSource(["pdf"], ({ inspections }) =>
       Effect.gen(function* () {
-        const catalog = yield* resolveCatalogFromInspections(inspections);
+        const catalog = yield* resolveCatalog(inspections);
         const display = yield* observeImportsDisplay(inspections, catalog);
         const [source] = [...display.bySource.values()];
         expect(source).toEqual({
@@ -122,7 +122,7 @@ it.layer(LiveTestLayer)("import display", (test) => {
         const path = yield* Path.Path;
         yield* fs.writeFileString(path.join(root, "skills/pdf/notes/a.md"), "edited\n");
         yield* fs.remove(path.join(root, "skills/docx"), { recursive: true });
-        const catalog = yield* resolveCatalogFromInspections(inspections);
+        const catalog = yield* resolveCatalog(inspections);
         const display = yield* observeImportsDisplay(inspections, catalog);
         const [source] = [...display.bySource.values()];
         expect(source).toMatchObject({ total: 2, locallyChanged: 1, missing: 1 });
@@ -145,7 +145,7 @@ it.layer(LiveTestLayer)("import display", (test) => {
           path.join(root, "tack.yaml"),
           yaml.replace("imports:", "imports: []\nold:"),
         );
-        const catalog = yield* resolveCatalogFromInspections(inspections);
+        const catalog = yield* resolveCatalog(inspections);
         const display = yield* observeImportsDisplay(inspections, catalog);
         const [source] = [...display.bySource.values()];
         expect(source).toMatchObject({ total: 0, invalid: true, stagingLeftOver: true });

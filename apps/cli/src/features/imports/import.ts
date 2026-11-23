@@ -4,8 +4,8 @@ import { withStateCheckpointWriter, type StateOptions } from "../../services/sta
 import { type State } from "../../domain/state/state-schema.ts";
 import { readInvocationSnapshot } from "../snapshot/command-snapshot.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
-import { resolveCatalogFromInspections } from "../sources/catalog.ts";
-import { inspectSourcesFromState } from "../sources/source.ts";
+import { resolveCatalog } from "../sources/catalog.ts";
+import { inspectSources } from "../sources/source.ts";
 import { analyzeCandidates, loadSkillFiles } from "./import-candidates.ts";
 import {
   destinationChoices,
@@ -190,7 +190,7 @@ const run = Effect.fnUntraced(function* (
       parsed.failure.next,
     );
   const location = parsed.success;
-  const inspections = yield* inspectSourcesFromState(state);
+  const inspections = yield* inspectSources(state);
   if (mode === "apply" && request.into === undefined)
     return yield* importFailure(
       "import-destination-required",
@@ -238,8 +238,7 @@ const run = Effect.fnUntraced(function* (
 
   const destination =
     destinationResult._tag === "resolved" ? destinationResult.destination : undefined;
-  const catalog =
-    destination === undefined ? undefined : yield* resolveCatalogFromInspections(inspections);
+  const catalog = destination === undefined ? undefined : yield* resolveCatalog(inspections);
   const records = destination === undefined ? [] : yield* readRecords(destination);
   // A refusal's commands stay beside its candidate: the candidate's verdict is public plan data.
   const judged: ReadonlyArray<Judged> =

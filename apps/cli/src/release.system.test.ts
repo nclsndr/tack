@@ -66,6 +66,7 @@ it("builds a movable release from a clean export and runs its complete flow", as
     "package.json",
     "bun.lock",
     "scripts/build-release.ts",
+    "scripts/build-recipe.ts",
     "apps/cli/package.json",
     "apps/cli/src",
     "packages/core/package.json",

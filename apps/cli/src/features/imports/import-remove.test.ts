@@ -1,5 +1,5 @@
 import { declare, skillText } from "../../../test/support/source-tree.ts";
-import { resolveCatalog } from "../../../test/support/snapshot-helpers.ts";
+import { resolveCatalogAt } from "../../../test/support/snapshot-helpers.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, Exit, FileSystem, Result } from "effect";
 import { vi } from "vitest";
@@ -13,7 +13,7 @@ import {
   withImportWorld,
   type ImportWorld,
 } from "../../../test/support/import-world.ts";
-import { mutateStateEffect, readState } from "../../services/state-store.ts";
+import { mutateState, readState } from "../../services/state-store.ts";
 
 import { agentLink } from "../../domain/links/link-record-schema.ts";
 import { registerSource } from "../sources/source.ts";
@@ -158,7 +158,7 @@ it.layer(LiveTestLayer)("import remove", (test) => {
           "imports",
         );
         expect(yield* fileSystem.readFileString(world.statePath)).toBe(stateBefore);
-        const catalog = yield* resolveCatalog(world.options);
+        const catalog = yield* resolveCatalogAt(world.options);
         expect(
           catalog.entries.some(
             (entry) => entry.sourcePath === world.root && entry.address.name === "pdf",
@@ -227,7 +227,7 @@ it.layer(LiveTestLayer)("import remove", (test) => {
           await rename(`${world.root}/skills/pdf`, `${world.root}/skills/tools/pdf`);
         });
         expect((yield* localOf(world, "personal-brain:pdf"))?.local.state).toBe("missing");
-        const catalog = yield* resolveCatalog(world.options);
+        const catalog = yield* resolveCatalogAt(world.options);
         expect(
           catalog.entries.some(
             (entry) =>
@@ -249,7 +249,7 @@ it.layer(LiveTestLayer)("import remove", (test) => {
       Effect.gen(function* () {
         yield* importPdf(world);
         const registrationId = (yield* readState(world.options)).data.sources[0]?.id ?? "";
-        yield* mutateStateEffect(world.options, (state) =>
+        yield* mutateState(world.options, (state) =>
           Effect.succeed({
             state: {
               ...state,

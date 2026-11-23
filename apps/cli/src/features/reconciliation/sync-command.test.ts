@@ -1,7 +1,7 @@
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
-import { mutateState } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
 import { initializeState, type StateOptions } from "../../services/state-store.ts";
 import { attachDocs } from "../docs/docs.ts";
 import { enableAdapters } from "./agent.ts";
@@ -35,7 +35,7 @@ it.layer(LiveTestLayer)("combined sync", (test) => {
         environment: { TACK_STATE_DIR: path.join(root, "state") },
       };
       yield* initializeState(options);
-      yield* mutateState(options, (state) => ({
+      yield* mutateStateFixture(options, (state) => ({
         ...state,
         data: {
           ...state.data,
@@ -94,7 +94,7 @@ it.layer(LiveTestLayer)("combined sync", (test) => {
       expect(linksOnly.plan.docs).toEqual([]);
 
       // A docs mount that owes its removal is reported for the synced project, unless docs are left out.
-      yield* mutateState(options, (state) => ({
+      yield* mutateStateFixture(options, (state) => ({
         ...state,
         data: {
           ...state.data,

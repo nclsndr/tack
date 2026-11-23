@@ -1,6 +1,6 @@
 import { isMinimalRecoveryState } from "../src/features/removal/removal-apply.ts";
 import { pendingRemovalsOf } from "../src/domain/links/link-record-schema.ts";
-import { mutateState } from "./support/state-fixture.ts";
+import { mutateStateFixture } from "./support/state-fixture.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, Fiber, FileSystem, Path, Stream } from "effect";
@@ -71,7 +71,7 @@ const interruptResetAt = Effect.fnUntraced(function* (
   remainingThreshold: number,
 ) {
   const evidence = yield* interruptionEvidence(fixture);
-  yield* mutateState(fixture.options, (state) => ({
+  yield* mutateStateFixture(fixture.options, (state) => ({
     ...state,
     data: { ...state.data, managedLinks: evidence },
   }));

@@ -4,7 +4,7 @@ import {
   setSkillChoice,
 } from "../../../test/support/snapshot-helpers.ts";
 import {
-  mutateState,
+  mutateStateFixture,
   withStateFixture,
   type StateFixture,
 } from "../../../test/support/state-fixture.ts";
@@ -98,7 +98,7 @@ const withFixture = <A, E, R>(use: (fixture: StateFixture) => Effect.Effect<A, E
     Effect.gen(function* () {
       const path = yield* Path.Path;
       const { options, root } = fixture;
-      yield* mutateState(options, (state) => ({
+      yield* mutateStateFixture(options, (state) => ({
         ...state,
         data: {
           ...state.data,
@@ -295,7 +295,7 @@ it.layer(LiveTestLayer)("namespace choices", (choiceIt) => {
     withFixture(({ options, statePath }) =>
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {
             ...state.data,

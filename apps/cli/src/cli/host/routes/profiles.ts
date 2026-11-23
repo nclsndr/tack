@@ -9,7 +9,7 @@ import {
   runProfileSaveSelection,
 } from "../../../features/profiles/profile-copy.ts";
 import { readInvocationSnapshot } from "../../../features/snapshot/command-snapshot.ts";
-import { selectTargetsFromState } from "../../../features/projects/project.ts";
+import { selectTargets } from "../../../features/projects/project.ts";
 import { runProfileApply } from "../../../features/profiles/profile-apply.ts";
 import { cwdOrCurrent } from "./route.ts";
 import { Effect } from "effect";
@@ -66,7 +66,7 @@ export const profileRoutes: RoutesFor<
         let projectName = invocation.projectName;
         if (invocation.input !== "user" && projectName === undefined) {
           const snapshot = yield* readInvocationSnapshot(options);
-          const selection = yield* selectTargetsFromState(snapshot.state, options, {
+          const selection = yield* selectTargets(snapshot.state, options, {
             cwd: yield* cwdOrCurrent(undefined),
             selector: { _tag: "bare" },
           });

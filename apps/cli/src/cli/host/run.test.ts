@@ -2,7 +2,7 @@ import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Ref, Schema, Sink, Stdio, Stream } from "effect";
 import { vi } from "vitest";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
-import { mutateState } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
 import { Git } from "../../services/git.ts";
 import { PublicEnvelopeSchema } from "./public-outcome.ts";
 import { runCli } from "./run.ts";
@@ -95,13 +95,16 @@ it.layer(LiveTestLayer)("CLI host", (test) => {
       yield* setUp;
       yield* tack(["sync", "--project", "demo", "--apply"]);
       // The mount's removal is owed, as after a removal that could not finish.
-      yield* mutateState({ environment: { TACK_STATE_DIR: `${root}/state` } }, (current) => ({
-        ...current,
-        data: {
-          ...current.data,
-          links: current.data.links.map((record) => ({ ...record, removal: { cause: "clean" } })),
-        },
-      }));
+      yield* mutateStateFixture(
+        { environment: { TACK_STATE_DIR: `${root}/state` } },
+        (current) => ({
+          ...current,
+          data: {
+            ...current.data,
+            links: current.data.links.map((record) => ({ ...record, removal: { cause: "clean" } })),
+          },
+        }),
+      );
       const preview = yield* tack(["sync", "--project", "demo"]);
       expect(preview).toMatchObject({
         classification: "partial",

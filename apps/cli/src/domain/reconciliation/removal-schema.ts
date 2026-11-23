@@ -22,20 +22,12 @@ import { managedLinkDestinationPath } from "../agents/agent-layout.ts";
 import { ProjectNameSchema, ReportedProjectRecordSchema } from "../projects/project-schema.ts";
 import { SourceRegistrationIdSchema } from "../sources/source-schema.ts";
 import { DestinationObservationSchema } from "./destination-observation-schema.ts";
-import { compareCodeUnits } from "../identity/ordering.ts";
+import { isSortedUnique, sortedUnique } from "../identity/ordering.ts";
 
 const SelectedRemovalTargetsSchema = Schema.Array(ManagedLinkTargetSchema).check(
-  Schema.makeFilter((targets) => {
-    const identities = targets.map((target) => managedLinkTargetIdentity(target));
-    const sorted = [...identities].sort(compareCodeUnits);
-    return [
-      ...(new Set(identities).size === identities.length
-        ? []
-        : ["Selected removal targets must be unique."]),
-      ...(identities.every((identity, index) => identity === sorted[index])
-        ? []
-        : ["Selected removal targets must use canonical code-unit ordering."]),
-    ];
+  sortedUnique((target) => managedLinkTargetIdentity(target), {
+    duplicate: "Selected removal targets must be unique.",
+    unordered: "Selected removal targets must use canonical code-unit ordering.",
   }),
 );
 
@@ -78,35 +70,15 @@ const RemovalActionSchema = Schema.Union([
   }),
 ]);
 
-const sortedUniqueKeys = (values: ReadonlyArray<string>) => {
-  const sorted = [...values].sort(compareCodeUnits);
-  return (
-    new Set(values).size === values.length &&
-    values.every((value, index) => value === sorted[index])
-  );
-};
-
 const actionEvidenceDestinationMatches = (action: typeof RemovalActionSchema.Type) =>
   action.destinationPath === managedLinkDestinationPath(action.evidence) &&
   (action._tag !== "blocked" || action.observation.destinationPath === action.destinationPath);
-
-// Planning sorts evidence by this destination identity, which orders resource kind before name.
-const sortedEvidence = (values: ReadonlyArray<typeof ManagedLinkEvidenceSchema.Type>) =>
-  sortedUniqueKeys(values.map(managedLinkDestinationIdentity));
-
-const sortedProjects = (values: ReadonlyArray<typeof ReportedProjectRecordSchema.Type>) => {
-  const sorted = [...values].sort((left, right) => compareCodeUnits(left.name, right.name));
-  return (
-    new Set(values.map((project) => project.name)).size === values.length &&
-    values.every((project, index) => project === sorted[index])
-  );
-};
 
 /** A deterministic, JSON-safe removal-only plan. */
 const RemovalPlanFieldsSchema = Schema.Struct({
   actions: Schema.Array(RemovalActionSchema).check(
     Schema.makeFilter((actions) => [
-      ...(sortedUniqueKeys(actions.map((action) => action.destinationPath))
+      ...(isSortedUnique(actions.map((action) => action.destinationPath))
         ? []
         : ["Removal actions must use unique code-unit ordered destinations."]),
       ...(actions.every(actionEvidenceDestinationMatches)
@@ -116,8 +88,10 @@ const RemovalPlanFieldsSchema = Schema.Struct({
   ),
   cause: PendingRemovalCauseSchema,
   expectedManagedLinks: ManagedLinkEvidenceCollectionSchema.check(
-    Schema.makeFilter((evidence) =>
-      sortedEvidence(evidence) ? [] : ["Removal evidence must use deterministic ordering."],
+    // Planning sorts evidence by this destination identity, which orders resource kind before name.
+    sortedUnique(
+      managedLinkDestinationIdentity,
+      "Removal evidence must use deterministic ordering.",
     ),
   ),
   /** The docs mounts the plan removes, each observed as a removal or as the conflict apply refuses. */
@@ -126,9 +100,7 @@ const RemovalPlanFieldsSchema = Schema.Struct({
   expectedProject: Schema.optionalKey(ReportedProjectRecordSchema),
   expectedProjects: Schema.optionalKey(
     Schema.Array(ReportedProjectRecordSchema).check(
-      Schema.makeFilter((projects) =>
-        sortedProjects(projects) ? [] : ["Removal projects must use deterministic ordering."],
-      ),
+      sortedUnique((project) => project.name, "Removal projects must use deterministic ordering."),
     ),
   ),
   finalizeProject: Schema.Boolean,

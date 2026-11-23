@@ -1,6 +1,6 @@
 import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
-import { selectTargets } from "../../../test/support/snapshot-helpers.ts";
+import { selectTargetsAt } from "../../../test/support/snapshot-helpers.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { initializeState } from "../../services/state-store.ts";
@@ -34,7 +34,7 @@ it.layer(LiveTestLayer)("user target selection", (test) => {
         },
       }));
       const userTarget = (home: string) =>
-        selectTargets(
+        selectTargetsAt(
           { ...options, homeDirectory: home },
           { cwd: root, selector: { _tag: "user" } },
         ).pipe(Effect.map((selection) => selection.targets));
@@ -43,14 +43,14 @@ it.layer(LiveTestLayer)("user target selection", (test) => {
       const missing = path.join(root, "missing-home");
       expect(yield* userTarget(missing)).toEqual([{ _tag: "user", canonicalPath: missing }]);
       // An explicit user target wins over the operator home.
-      const explicit = yield* selectTargets(
+      const explicit = yield* selectTargetsAt(
         { ...options, homeDirectory: missing },
         { cwd: root, selector: { _tag: "user" }, userTarget: linkedHome },
       );
       expect(explicit.targets).toEqual([{ _tag: "user", canonicalPath: realHome }]);
       // Without a home or a user target there is no user target to select.
       expect(
-        yield* Effect.flip(selectTargets(options, { cwd: root, selector: { _tag: "user" } })),
+        yield* Effect.flip(selectTargetsAt(options, { cwd: root, selector: { _tag: "user" } })),
       ).toMatchObject({
         _tag: "StateConfigurationError",
         message: "The operator home directory is unavailable.",
@@ -82,7 +82,7 @@ it.layer(LiveTestLayer)("user target selection", (test) => {
         },
       }));
       const error = yield* Effect.flip(
-        selectTargets(options, { cwd: path.join(leaving, "inside"), selector: { _tag: "bare" } }),
+        selectTargetsAt(options, { cwd: path.join(leaving, "inside"), selector: { _tag: "bare" } }),
       );
       expect(error).toMatchObject({
         _tag: "TargetSelectionError",

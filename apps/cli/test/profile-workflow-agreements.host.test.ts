@@ -6,7 +6,7 @@ import { expect, it } from "@effect/vitest";
 import { Effect } from "effect";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { profileFixture } from "./support/profile-fixture.ts";
-import { mutateState } from "./support/state-fixture.ts";
+import { mutateStateFixture } from "./support/state-fixture.ts";
 import { readState } from "../src/services/state-store.ts";
 import { runProfileApply } from "../src/features/profiles/profile-apply.ts";
 import { runBundleApply } from "../src/features/profiles/bundle-apply.ts";
@@ -49,7 +49,7 @@ it.layer(LiveTestLayer)("profile workflow agreements", (test) => {
             });
             expect(exported.exported, JSON.stringify(exported.plan.findings)).toBe(true);
             yield* f.fs.rename(f.source, f.source + "-unavailable");
-            yield* mutateState(f.options, (state) => ({
+            yield* mutateStateFixture(f.options, (state) => ({
               ...state,
               data: { ...state.data, sources: [] },
             }));
