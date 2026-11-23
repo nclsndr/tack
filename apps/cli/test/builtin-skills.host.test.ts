@@ -33,7 +33,7 @@ it("requires a global choice for ordinary skills and preserves dependency select
     "global-default",
     "metadata:\n  tack: |\n    version: 1\n    activation: opt-in\n    user-activation: default\n",
   );
-  await run(["source", "add", source]);
+  await run(["source", "add", source, "--apply"]);
   await run(["sync", "--user", "--apply"]);
   expect(existsSync(link("review"))).toBe(false);
   expect(existsSync(link("git"))).toBe(false);
@@ -60,7 +60,7 @@ it.each(locations)(
     const { run, addSkill, link } = await builtinWorld("in-process", base);
     await run(["sync", "--user", "--apply"]);
     const source = addSkill("use-tack");
-    await run(["source", "add", source]);
+    await run(["source", "add", source, "--apply"]);
     const { resources, ...rest } = decodeCatalog((await run(["catalog"])).result);
     expect(rest).toEqual({ complete: true, issues: [] });
     const names = resources.map(({ address }) => address.name).sort();
@@ -95,7 +95,7 @@ it.each(locations)(
   async (side, base) => {
     const { run, addSkill } = await builtinWorld("in-process", base);
     const source = addSkill("use-tack");
-    await run(["source", "add", source]);
+    await run(["source", "add", source, "--apply"]);
     const { resources } = decodeCatalog((await run(["catalog"])).result);
     const paths = resources.map(({ sourcePath }) => sourcePath);
     expect(paths).toEqual(

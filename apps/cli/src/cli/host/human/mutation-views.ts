@@ -1,5 +1,9 @@
 import { Option, Schema } from "effect";
-import { sourceCheckLines, renderSourceScaffold } from "./source-authoring.ts";
+import {
+  renderSourceRegistrationPlan,
+  renderSourceScaffold,
+  sourceCheckLines,
+} from "./source-authoring.ts";
 import type { DocsResourceReference } from "../../../domain/docs/docs-schema.ts";
 import type { SelectableAddress } from "../../../domain/sources/catalog-schema.ts";
 import {
@@ -104,8 +108,6 @@ const failureHints = (envelope: PublicEnvelope): ReadonlyArray<string> =>
   envelope.diagnostics.flatMap((diagnostic): ReadonlyArray<string> => {
     const details = Option.fromNullishOr(diagnostic.details);
     switch (diagnostic.code) {
-      case "state-not-initialized":
-        return [commandLine("init")];
       case "registration-not-found":
         return [commandLine("source-list")];
       case "project-not-found":
@@ -350,6 +352,8 @@ export const mutationViews: HumanViewRegistry = {
   "state init": initView,
   "project add": projectAddView,
   "source add": (envelope, style) =>
-    renderSourceScaffold(envelope, style) ?? sourceRegistrationView(envelope, style),
+    renderSourceScaffold(envelope, style) ??
+    renderSourceRegistrationPlan(envelope, style) ??
+    sourceRegistrationView(envelope, style),
   "source relocate": sourceRelocateView,
 };

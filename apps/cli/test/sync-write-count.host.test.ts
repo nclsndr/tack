@@ -80,7 +80,7 @@ const fixture = (skillCount: number, withDocs = false) =>
         return { output: stdout, stateWrites };
       });
     yield* tack(["state", "init"]);
-    yield* tack(["source", "add", source]);
+    yield* tack(["source", "add", source, "--apply"]);
     yield* tack(["adapter", "enable", "claude"]);
     yield* tack(["project", "add", "p1", "--repository-cwd", projectRoot]);
     if (withDocs) yield* tack(["docs", "attach", "handbook", "--project", "p1"]);

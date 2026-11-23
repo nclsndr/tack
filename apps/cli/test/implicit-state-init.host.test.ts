@@ -30,15 +30,15 @@ it("initializes default state once after a valid mutation and guards explicit st
   const state = join(home, ".tack", "state.json");
   expect((await run(["catalog"])).exitCode).not.toBe(0);
   expect(await lstat(state).catch(() => undefined)).toBeUndefined();
-  expect((await run(["source", "add", join(root, "missing")])).exitCode).not.toBe(0);
+  expect((await run(["source", "add", join(root, "missing"), "--apply"])).exitCode).not.toBe(0);
   expect(await lstat(state).catch(() => undefined)).toBeUndefined();
 
-  const typo = await run(["--state-dir", explicit, "source", "add", source]);
+  const typo = await run(["--state-dir", explicit, "source", "add", source, "--apply"]);
   expect(typo.envelope.classification).toBe("invalid-configuration");
   expect(JSON.stringify(typo.envelope.diagnostics)).toContain("state init");
   expect(await lstat(explicit).catch(() => undefined)).toBeUndefined();
 
-  const first = await run(["source", "add", source]);
+  const first = await run(["source", "add", source, "--apply"]);
   expect(first.envelope.classification, JSON.stringify(first)).toBe("success");
   expect(first.envelope.diagnostics).toContainEqual(
     expect.objectContaining({ code: "state-initialized" }),

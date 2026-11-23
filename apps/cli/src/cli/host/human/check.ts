@@ -22,7 +22,10 @@ export const renderCheck: HumanView = (envelope, style) => {
       `${style.path(finding.file)}:${finding.line}: ${finding.severity} ${finding.code}: ${finding.message}`,
       ...(finding.remedy === undefined ? [] : [`  Fix: ${finding.remedy}`]),
     ]),
-    ["Write files, run tack check with the relevant paths, and repeat until clean."],
+    // A clean report has nothing left to repeat for.
+    report.findings.length === 0
+      ? []
+      : ["Write files, run tack check with the relevant paths, and repeat until clean."],
     hintLines(envelope.next, style),
   );
 };

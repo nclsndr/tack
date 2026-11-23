@@ -76,7 +76,7 @@ const fixture = async () => {
   expect((await run(["state", "init"])).exitCode).toBe(0);
   const ids: Record<string, string> = {};
   for (const [label, directory] of Object.entries(sources)) {
-    const added = await run(["source", "add", directory]);
+    const added = await run(["source", "add", directory, "--apply"]);
     expect(added.exitCode).toBe(0);
     ids[label] = decodeRegistration(added.envelope.applied).registration.id;
   }

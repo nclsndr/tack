@@ -132,12 +132,10 @@ export const checkOutput = [
   "  script: 0",
   "  docs: 0",
   "",
-  "",
-  "Write files, run tack check with the relevant paths, and repeat until clean.",
 ].join("\n");
 
 export const applyOutput = [
-  "tack profile apply · ! partial",
+  "tack profile apply · ✓ success",
   "",
   "Fixed profile agent-setup:reviewer · preview",
   "Target: ~/ci/app",
@@ -159,8 +157,6 @@ export const applyOutput = [
   "skill release-notes: claude → .claude/skills/release-notes",
   "skill release-notes: codex → .agents/skills/release-notes",
   "skill release-notes: cursor → .cursor/skills/release-notes",
-  "command ship: claude cannot deliver command links",
-  "command ship: codex cannot deliver command links",
   "command ship: cursor → .cursor/commands/ship.md",
   "skill debug-flaky-test: claude → .claude/skills/debug-flaky-test",
   "skill debug-flaky-test: codex → .agents/skills/debug-flaky-test",
@@ -172,6 +168,12 @@ export const applyOutput = [
   "skill triage-issue: codex → .agents/skills/triage-issue",
   "skill triage-issue: cursor → .cursor/skills/triage-issue",
   "docs handbook: project docs mounts",
+  "",
+  "Skipped for claude",
+  "  command ship: Tack does not link commands for claude",
+  "",
+  "Skipped for codex",
+  "  command ship: Tack does not link commands for codex",
   "",
   "claude → ci · 4 to link, 1 linked for the user",
   "  create  .claude/skills/                  directory",
@@ -247,7 +249,7 @@ export const exportOutput = [
 ].join("\n");
 
 export const bundleOutput = [
-  "tack profile apply-bundle · ! partial",
+  "tack profile apply-bundle · ✓ success",
   "",
   "Fixed profile bundle-4rukma6s3bex3chjr9gni7jbzyfshyj9t4zx81sjn520qwzn7v:reviewer · intent retained",
   "Verified bundle: b5044c91d6bc16cd64118b144cad0706848defdabe3d204db892d7e062a08cb0",
@@ -298,8 +300,8 @@ Commit the profile and the `tack.yaml`, and push them, as for any change to the 
   output={applyOutput}
 />
 
-The preview is `partial` because Claude Code and Codex take no commands, so `ship` reaches Cursor
-only. Apply it:
+Claude Code and Codex take no commands, so the preview lists `ship` as skipped for them: it reaches
+Cursor only. Apply it:
 
 ```sh
 tack profile apply agent-setup:reviewer --project ci --target-root ~/ci/app --apply
@@ -322,11 +324,11 @@ tack profile apply agent-setup:reviewer --project ci --target-root ~/ci/app --fo
 
 ### When an agent cannot take a member
 
-A partial result is not an error, but it exits with code `1`: `--apply` writes every link it can and
-still exits `1`, and `tack doctor` fails its `profiles` check for as long as an enabled agent cannot
-take a member. Here Claude Code and Codex cannot take the command `ship`. On a machine where that
-matters, such as a CI runner, leave commands out of the profile, or enable only agents that take
-every member.
+A member an enabled agent cannot take is skipped for that agent, not failed. Here Claude Code and
+Codex cannot take the command `ship`: the apply lists it under `Skipped for claude` and
+`Skipped for codex`, links it for Cursor, and exits `0`. `tack doctor` passes its `profiles` check
+and names the skipped member in a note. A CI runner whose only agent takes no commands can hold
+the same profile.
 
 ## 3. Carry it to another machine
 
@@ -379,8 +381,8 @@ tack profile apply-bundle ~/reviewer.tar.gz --project ci --target-root ~/app --a
   output={bundleOutput}
 />
 
-The result is `partial`, and the command exits with code `1`, because this bundle holds the command
-`ship` and Claude Code takes no commands; every skill is linked. See
+Every skill is linked. This bundle holds the command `ship` and Claude Code takes no commands, so
+the result lists `ship` under `Skipped for claude` and still exits `0`. See
 [When an agent cannot take a member](#when-an-agent-cannot-take-a-member).
 
 The bundle's sources get labels that start with `bundle-`, so they never mix with a source of the

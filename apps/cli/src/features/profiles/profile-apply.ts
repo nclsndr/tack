@@ -8,7 +8,10 @@ import {
   type ProfileApplication,
 } from "../../domain/profiles/profile-application.ts";
 import { ProfilePlanFindingSchema } from "../../domain/profiles/profile-schema.ts";
-import { profileDelivery } from "../../domain/profiles/profile-delivery.ts";
+import {
+  profileDelivery,
+  ProfileDeliverySkipSchema,
+} from "../../domain/profiles/profile-delivery.ts";
 import { readRegisteredProfile, type RegisteredProfile } from "./profile-reference.ts";
 import {
   makeCommandSnapshot,
@@ -48,7 +51,11 @@ export const profileApplyPlanFields = {
   required: Schema.Array(ResourceAddressSchema),
   findings: Schema.Array(ProfilePlanFindingSchema),
   refused: Schema.Boolean,
-  delivery: Schema.Struct({ notes: Schema.Array(Schema.String), incomplete: Schema.Boolean }),
+  delivery: Schema.Struct({
+    notes: Schema.Array(Schema.String),
+    skipped: Schema.Array(ProfileDeliverySkipSchema),
+    incomplete: Schema.Boolean,
+  }),
   effects: Schema.Array(Schema.String),
   application: Schema.optionalKey(ProfileApplicationSchema),
 };
@@ -87,7 +94,7 @@ export const planProfileApply = Effect.fnUntraced(function* (
     existing: boundary.existing,
     direct: [],
     required: [],
-    delivery: { notes: [], incomplete: false },
+    delivery: { notes: [], skipped: [], incomplete: false },
     effects: [],
   };
   const loaded =
@@ -136,7 +143,7 @@ export const planProfileApply = Effect.fnUntraced(function* (
       ...inventory,
       findings,
       application,
-      delivery: { notes: omissionNotes, incomplete: false },
+      delivery: { notes: omissionNotes, skipped: [], incomplete: false },
       refused: true,
     } satisfies ProfileApplyPlan;
   const staged = yield* makeCommandSnapshot(

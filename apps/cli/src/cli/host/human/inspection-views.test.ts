@@ -76,9 +76,9 @@ const capture = Effect.gen(function* () {
   yield* record("adapterListEmpty", "adapter");
   yield* record("projectInspectEmpty", "project");
   yield* record("docsListNoProject", "docs", "--project", "nope");
-  yield* invoke("source", "add", handbook);
-  yield* invoke("source", "add", guide);
-  yield* invoke("source", "add", broken);
+  yield* invoke("source", "add", handbook, "--apply");
+  yield* invoke("source", "add", guide, "--apply");
+  yield* invoke("source", "add", broken, "--apply");
   yield* invoke("project", "add", "workspace", "--repository-cwd", directory("project"));
   yield* record("projectInspect", "project");
   yield* invoke("pick", "include", "handbook:review", "--project", "workspace");

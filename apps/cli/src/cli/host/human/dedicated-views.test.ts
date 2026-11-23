@@ -23,6 +23,32 @@ describe("check view", () => {
       renderCheck(envelopeOf({ command: "check", result: { kind: "other" } }), plainStyle),
     ).toBe(undefined);
   });
+
+  const finding = {
+    code: "skill-name-mismatch",
+    severity: "error",
+    file: "/home/me/source/skills/lint/SKILL.md",
+    line: 2,
+    message: "The skill folder name must equal name.",
+  } as const;
+  it.each([
+    { findings: [], loop: false },
+    { findings: [finding], loop: true },
+  ])("asks to repeat until clean only while findings remain: $loop", ({ findings, loop }) => {
+    const text = renderCheck(
+      envelopeOf({
+        command: "check",
+        result: {
+          kind: "check-report",
+          checks: [{ kind: "source", path: "/home/me/source", details: [] }],
+          findings,
+          summary: { checked: 1, errors: findings.length, warnings: 0 },
+        },
+      }),
+      plainStyle,
+    );
+    expect(text?.includes("repeat until clean")).toBe(loop);
+  });
 });
 
 describe("doctor view", () => {

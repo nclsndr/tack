@@ -47,7 +47,7 @@ it("starts from an empty directory and writes one format 1 file that status read
 
   await run(["state", "init"]);
   await run(["adapter", "enable", "claude"]);
-  await run(["source", "add", source]);
+  await run(["source", "add", source, "--apply"]);
   await run(["project", "add", "demo"], project);
   await run(["pick", "include", "pdf", "--project", "demo"]);
   await run(["docs", "attach", "handbook", "--project", "demo"]);

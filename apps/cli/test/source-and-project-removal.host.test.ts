@@ -90,8 +90,8 @@ const withRemovalWorld = <A, E, R>(
       return registrationOf(decodeEnvelope(stdout).applied).registration.id;
     };
     yield* tack(["state", "init"]);
-    const brainId = idOf((yield* tack(["source", "add", brain])).stdout);
-    const toolsId = idOf((yield* tack(["source", "add", tools])).stdout);
+    const brainId = idOf((yield* tack(["source", "add", brain, "--apply"])).stdout);
+    const toolsId = idOf((yield* tack(["source", "add", tools, "--apply"])).stdout);
     yield* tack(["project", "add", "demo", "--repository-cwd", repository]);
     yield* tack(["adapter", "enable", "codex"]);
     return yield* use({
@@ -356,7 +356,7 @@ it.layer(LiveTestLayer)("source and project removal", (removalIt) => {
             path.join(extra, "skills", "x", "SKILL.md"),
             "---\nname: x\ndescription: X\n---\n",
           );
-          yield* tack(["source", "add", extra]);
+          yield* tack(["source", "add", extra, "--apply"]);
           expect((yield* run(tack, ["source", "remove", "extra"])).envelope).toMatchObject({
             plan: { profileApplications: [], dependants: [] },
           });
@@ -385,8 +385,9 @@ it.layer(LiveTestLayer)("source and project removal", (removalIt) => {
               "---\nname: x\ndescription: X\n---\n",
             );
             ids.push(
-              registrationOf(decodeEnvelope((yield* tack(["source", "add", twin])).stdout).applied)
-                .registration.id,
+              registrationOf(
+                decodeEnvelope((yield* tack(["source", "add", twin, "--apply"])).stdout).applied,
+              ).registration.id,
             );
           }
           const before = yield* readState(options);

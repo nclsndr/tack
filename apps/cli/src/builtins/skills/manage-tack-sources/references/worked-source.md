@@ -158,7 +158,7 @@ need distinct `name` values before that label can qualify references.
 
 Create the files before registration. The kind flags of `source add` declare whole folders only,
 so this layout, with scripts, patterns and `depends-on`, is written by hand, and `source add`
-registers each `tack.yaml` as it is. Check each source before registration, repair local findings,
+previews each `tack.yaml` as it is; `--apply` registers it. Check each source before registration, repair local findings,
 then initialize state if absent. Use absolute paths for the three source directories:
 
 ```sh
@@ -167,9 +167,10 @@ tack check /absolute/path/audit-tools
 tack check /absolute/path/quality-tools
 # Fix local findings and repeat the checks until clean.
 tack init # if Tack is not set up; it writes at once
-tack source add /absolute/path/base-skills
-tack source add /absolute/path/audit-tools
-tack source add /absolute/path/quality-tools
+tack source add /absolute/path/base-skills # preview; read it, then add --apply
+tack source add /absolute/path/base-skills --apply
+tack source add /absolute/path/audit-tools --apply
+tack source add /absolute/path/quality-tools --apply
 tack source
 tack catalog --details
 tack doctor

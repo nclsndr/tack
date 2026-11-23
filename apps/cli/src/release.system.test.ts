@@ -270,7 +270,7 @@ export default defineScript({
       scratch,
     ).code,
   ).toBe(0);
-  expect(json(invoke(["source", "add", source]))["classification"]).toBe("success");
+  expect(json(invoke(["source", "add", source, "--apply"]))["classification"]).toBe("success");
   const projectAdd = invoke(["project", "add", "demo"], project);
   expect(json(projectAdd)["classification"], projectAdd.stdout).toBe("success");
   const script = json(invoke(["script", "run", "check", "--user", "--input-json", "{}"]));

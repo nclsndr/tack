@@ -18,7 +18,8 @@ the installed `tack`, from the root of the checkout:
 
 1. Check Tack with `tack --version` and `tack doctor`. When `tack` is missing, install this checkout
    with `bun run install:local`, as [CONTRIBUTING.md](CONTRIBUTING.md#run-your-changes) describes.
-2. Run `tack source`. When no `tack-repo` source is listed, run `tack source add "$PWD"`. Register
+2. Run `tack source`. When no `tack-repo` source is listed, run `tack source add "$PWD"`, read the
+   preview, then run it with `--apply`. Register
    one checkout only: each checkout of this repository is another `tack-repo` source, and the skill
    names then clash.
 3. Run `tack project`. When no project holds this checkout, run `tack project add tack`. After you

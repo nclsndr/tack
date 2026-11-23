@@ -44,7 +44,7 @@ const fixture = Effect.gen(function* () {
   /** The human view of a command, as an operator reads it. */
   const human = (arguments_: ReadonlyArray<string>) => run([], arguments_);
   yield* tack(["state", "init"]);
-  yield* tack(["source", "add", source]);
+  yield* tack(["source", "add", source, "--apply"]);
   yield* tack(["project", "add", "workspace", "--repository-cwd", projectRoot]);
   return { fileSystem, human, path, projectRoot, root, source, tack };
 });
@@ -103,7 +103,7 @@ it.layer(LiveTestLayer)("structured partial causes", (causesIt) => {
         path.join(twin, "skills", "valid", "SKILL.md"),
         skillText("valid", { tack: ["activation: default"], body: "" }),
       );
-      yield* tack(["source", "add", twin]);
+      yield* tack(["source", "add", twin, "--apply"]);
       yield* tack(["adapter", "enable", "claude"]);
 
       const status = yield* tack(["status", "--project", "workspace"]);
@@ -163,6 +163,8 @@ it.layer(LiveTestLayer)("structured partial causes", (causesIt) => {
             {
               code: "no-adapters-enabled",
               details: { subject: { enabledAdapters: [] } },
+              message:
+                "No agent adapter is enabled, so nothing is delivered. Run `tack init` to enable the agents found in this home, or `tack adapter enable <adapter>` to enable one.",
               severity: "warning",
             },
           ],

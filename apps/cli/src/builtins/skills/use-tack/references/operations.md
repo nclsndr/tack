@@ -60,7 +60,8 @@ nothing, so it works before `init`. A topic it does not have fails with `guide-t
 ```sh
 tack check /absolute/path/to/source
 tack init # if the machine is not set up
-tack source add /absolute/path/to/source  # a source that has tack.yaml
+tack source add /absolute/path/to/source  # preview a source that has tack.yaml
+tack source add /absolute/path/to/source --apply  # register it
 tack source add /absolute/path/to/folder --skills skills --docs handbook  # preview its tack.yaml
 tack source add /absolute/path/to/skills --skills .  # skill folders at its top: a collection
 tack project add PROJECT --repository-cwd /absolute/path/to/repository
@@ -68,7 +69,9 @@ tack catalog --details
 ```
 
 `tack state init` creates state and an operator-owned `.env` without overwriting existing files,
-and nothing else; `init` uses it. Projects are Git repositories; registration records the repository
+and nothing else; `init` uses it. Without state, the first `source add`, `project add` or other
+registration initializes the default state and enables the agents found in the home, and its
+`state-initialized` note names them; run `tack init` to link the built-in skills too. Projects are Git repositories; registration records the repository
 and its reachable non-bare worktrees. `project add` registers at once, with no preview, and lists, as
 information, the hand-made entries in the enabled agents' project skill and command folders of every
 worktree; `project refresh` lists them for the worktrees it adds. Both leave them untouched. `tack adapter enable claude codex cursor` adds adapters to the
@@ -310,9 +313,10 @@ companion source folders for cross-source profile linkage. Source folders includ
 published profiles and docs figures. Findings have file:line locations; errors exit 1, warnings
 exit 0. Figures, icons and author components use the reader's static rules without running a page. Unknown icons produce `icon-unknown`; misused components produce `component-issue`. Computed props produce
 `figure-not-checked`; unavailable inputs produce `check-path-unavailable`. A folder of skills
-without `tack.yaml` produces the warning `check-not-a-source` and names the command for its
-layout: `tack source add PATH --skills .` for skill folders at its top, `--skills skills` for a
-`skills` folder, and the folder above for a `SKILL.md` at PATH. The
+without `tack.yaml` produces the warning `check-not-a-source` and names the same previews as a bare
+`tack source add PATH`: `--skills .` for skill folders at its top, or one flag per folder named
+after a kind, such as `--skills skills --commands commands`, and the folder above for a `SKILL.md`
+at PATH. The
 `write-reader-figures` skill teaches figure authoring.
 
 `tack docs icons [WORD]` lists the Lucide icons a document may draw with `<Icon name>`, by category,

@@ -254,7 +254,9 @@ it.layer(LiveTestLayer)("maintenance commands", (maintenanceIt) => {
             "version: 1\nskills:\n  - path: skills\n",
           );
           yield* writeSkill(alternateSource, "collision");
-          successfulEnvelope(yield* hostTack(fixture, ["source", "add", alternateSource]));
+          successfulEnvelope(
+            yield* hostTack(fixture, ["source", "add", alternateSource, "--apply"]),
+          );
           const unhealthySource = path.join(
             path.dirname(fixture.sourceDirectory),
             "unhealthy-source",
@@ -265,7 +267,9 @@ it.layer(LiveTestLayer)("maintenance commands", (maintenanceIt) => {
             "version: 1\nskills:\n  - path: skills\n",
           );
           yield* writeSkill(unhealthySource, "gone");
-          successfulEnvelope(yield* hostTack(fixture, ["source", "add", unhealthySource]));
+          successfulEnvelope(
+            yield* hostTack(fixture, ["source", "add", unhealthySource, "--apply"]),
+          );
           yield* fileSystem.remove(unhealthySource, { recursive: true });
 
           for (const name of ["foreign"]) {

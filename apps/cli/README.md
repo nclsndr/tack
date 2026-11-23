@@ -134,6 +134,13 @@ other root flags.
 `state init` creates the state directory, a `state.json` file, and an operator-owned `.env` file,
 and nothing else; `init` runs it first. It does not overwrite existing state or `.env` files.
 
+On a machine without state, the first command that registers something, such as `source add` or
+`project add`, initializes the default state itself and enables the agents it finds in the home, as
+`init` does. Its `state-initialized` note names them; it links nothing, so run `init` to link the
+built-in skills. A `source add` preview writes nothing and says what its `--apply` initializes.
+`adapter enable` enables only the adapters it names. With `--state-dir` or `TACK_STATE_DIR`, absent
+state is refused with `state-not-initialized`, so a mistyped directory is never created.
+
 ### Guides for agents
 
 `tack guide onboarding` prints the onboarding guide of the running version: how an agent sets up
@@ -520,7 +527,8 @@ contract are ready. Commands are recursive `.md` files with portable basename id
 optional frontmatter.
 
 ```sh
-tack source add /path/to/my-source
+tack source add /path/to/my-source   # preview registering a source that has tack.yaml
+tack source add /path/to/my-source --apply   # register it
 tack source add /path/to/folder --skills skills --docs handbook   # preview its tack.yaml
 tack source add /path/to/skills --skills .   # skill folders at its top: preview a collection
 tack source
@@ -552,8 +560,9 @@ folders to resolve external profile members. Declaration validation errors stop 
 inspection, while other explicit inputs continue. Resources, published profiles and source-owned
 docs use one combined file:line report, without state or execution.
 
-`source add` registers an existing declaration immediately, reporting counts, issues and a
-`tack check` hint. For a folder without `tack.yaml`, name what it holds with `--skills`,
+`source add` previews registering an existing declaration: the name the source would take, its
+counts and issues, and any state its `--apply` would set up. `--apply` registers it and adds a
+`tack check` hint when the check found issues. For a folder without `tack.yaml`, name what it holds with `--skills`,
 `--commands`, `--context` and `--docs`, each a repeatable path inside the source. It previews the
 `tack.yaml` it would write, one folder entry per flag with docs named after their folder, the name
 the source would take, and what each entry finds: resource names, counts and problems.
@@ -1314,8 +1323,11 @@ refuse a complete export. The built-in profile skill contains worked support exa
 `profile inspect-bundle FILE` reads its inventory. `tack check FILE` validates archive safety,
 manifest integrity and actual projected profile linkage offline without state or original sources.
 Profile docs use the same effective inventory for mounts, list/search/serve and writing-target
-lookup. Unsupported adapter delivery remains partial on retry/sync/status and fails doctor until
-all enabled adapters support the fixed inventory. Context and scripts keep their informational roles.
+lookup. A member an enabled adapter cannot take, such as a command for Claude Code, is skipped for
+that adapter (`delivery.skipped` in the apply plan) and still reaches every adapter that takes it;
+apply, retry and sync stay successful, and doctor notes the skip. Delivery with no enabled adapter
+remains partial on retry/sync/status and fails doctor. Context and scripts keep their informational
+roles.
 
 `profile apply-bundle FILE --project NAME --target-root ROOT` previews the same complete-target
 contract as source apply. `--apply` retains content under the explicit state directory, registers

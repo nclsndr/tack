@@ -43,7 +43,7 @@ const facts: ReadonlyArray<readonly [command: string, fact: string]> = [
   ["tack source add ~/skills --skills .", "2 skills"],
   ["tack source add ~/team-docs --commands commands --docs handbook", "1 command"],
   ["tack check ~/skills", "skill: 2"],
-  ["tack sync --project app", "7 changes planned"],
+  ["tack sync --project app", "11 changes planned"],
   ["tack sync --project api --apply", "0 failed"],
   ["tack status --project app", "7 linked, 0 need attention"],
   ["cd ~/skills && git pull --ff-only", "ship/SKILL.md"],

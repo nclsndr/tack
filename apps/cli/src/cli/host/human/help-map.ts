@@ -61,8 +61,8 @@ export const operationMap: ReadonlyArray<MapGroup> = [
       {
         operations: ["source add"],
         usage: "source add <path>",
-        mode: "conditional",
-        summary: "register now; preview a missing tack.yaml, --apply creates it",
+        mode: "plan",
+        summary: "preview registering a source, and any tack.yaml it needs; --apply writes",
       },
       {
         operations: ["project add"],

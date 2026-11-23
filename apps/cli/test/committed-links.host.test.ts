@@ -44,7 +44,7 @@ const clones = Effect.fnUntraced(function* () {
       run(arguments_, pipe).pipe(Effect.map(({ stdout }) => stdout));
     expect((yield* json(["state", "init"])).status).toBe("success");
     expect((yield* json(["adapter", "enable", "claude"])).status).toBe("success");
-    expect((yield* json(["source", "add", at(name)])).status).toBe("success");
+    expect((yield* json(["source", "add", at(name), "--apply"])).status).toBe("success");
     expect((yield* json(["project", "add", "app", "--repository-cwd", at(name)])).status).toBe(
       "success",
     );

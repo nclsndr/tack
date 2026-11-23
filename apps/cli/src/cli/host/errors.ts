@@ -216,6 +216,8 @@ const previewSync = invocation("sync");
 const update = invocation("upgrade");
 
 /** The command that initializes the exact state directory a missing state file belongs to. */
+const setUpMachine = ["tack", "init"];
+
 const initializeState = (statePath: string) => [
   "tack",
   "--state-dir",
@@ -419,9 +421,13 @@ export const errorRegistry: ErrorRegistry = {
   StateNotInitializedError: {
     classification: "invalid-configuration",
     code: "state-not-initialized",
+    details: (error) => safeFields(error, ["explicitDirectory"]),
+    // The default directory is set up by init; a named one is initialized as it is, never guessed.
     message: (error) =>
-      `Tack state is absent at ${error.statePath}. Run \`${argvLine(initializeState(error.statePath))}\` to initialize this exact directory.`,
-    next: (error) => [initializeState(error.statePath)],
+      error.explicitDirectory
+        ? `Tack state is absent at ${error.statePath}. Run \`${argvLine(initializeState(error.statePath))}\` to initialize this exact directory.`
+        : `Tack is not set up on this machine: there is no state at ${error.statePath}. Run \`${argvLine(setUpMachine)}\` to set it up.`,
+    next: (error) => [error.explicitDirectory ? initializeState(error.statePath) : setUpMachine],
   },
   StateStorageError: {
     classification: "persistence",

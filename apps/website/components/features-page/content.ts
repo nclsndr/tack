@@ -296,7 +296,7 @@ export const previewFigure = {
   command: "tack sync --project app",
   output: `tack sync · project app · ✓ success
 
-Nothing was written. 2 changes planned.
+Nothing was written. 4 changes planned.
 
 claude → app · 1 to link
   create  .claude/skills/        directory

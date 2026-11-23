@@ -114,7 +114,7 @@ it.each<Stop>([
     await writeFile(document, "# Handbook\n\nOriginal content.\n");
     for (const args of [
       ["state", "init"],
-      ["source", "add", source],
+      ["source", "add", source, "--apply"],
       ["project", "add", "demo", "--repository-cwd", project],
       ["docs", "attach", "handbook", "--project", "demo"],
       ["docs", "configure", "--project", "demo", "--default", "handbook"],

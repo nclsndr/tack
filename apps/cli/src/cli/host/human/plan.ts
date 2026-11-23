@@ -222,9 +222,11 @@ export const repeatedByRows: ReadonlySet<string> = new Set([
   "selection-collision",
 ]);
 
-/** The changes one unit plans: links to create, adopt, remove, forget or release. */
-export const workOf = ({ summary }: ReconciliationUnitPlan) =>
-  summary.create + summary.adopt + summary.remove + summary.retire + summary.release;
+/**
+ * The changes one unit plans: every action, the directories it creates with the links it creates,
+ * adopts, removes, forgets or releases. Apply reports one outcome per action, so both count the same.
+ */
+export const workOf = ({ actions }: ReconciliationUnitPlan) => actions.length;
 
 /** The items of one unit that need the operator: conflicts, collisions and blocked actions. */
 export const attentionOf = ({ summary }: ReconciliationUnitPlan) =>

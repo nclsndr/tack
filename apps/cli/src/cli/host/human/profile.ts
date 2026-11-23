@@ -4,7 +4,11 @@ import type { Style } from "./style.ts";
 import type { HumanView } from "./render.ts";
 import { ProfileApplyPlanSchema } from "../../../features/profiles/profile-apply.ts";
 import { BundleApplyPlanSchema } from "../../../features/profiles/bundle-apply.ts";
-import { deliveryMemberName } from "../../../domain/profiles/profile-delivery.ts";
+import {
+  deliveryMemberName,
+  skipNote,
+  type ProfileDeliverySkip,
+} from "../../../domain/profiles/profile-delivery.ts";
 import type { ResourceAddress } from "../../../domain/sources/catalog-schema.ts";
 import { bundleSourceLabel } from "../../../domain/bundles/bundle-registration.ts";
 import { DocsLinkApplicationSchema, DocsLinkPlanSchema } from "../../../domain/docs/docs-schema.ts";
@@ -161,6 +165,20 @@ const withBundleLabels = (
   };
 };
 
+/** One section per agent that cannot take some members: each member, and why it is skipped. */
+const skippedSections = (
+  skipped: ReadonlyArray<ProfileDeliverySkip>,
+  members: ReadonlyArray<ResourceAddress>,
+  targets: ReadonlyArray<string>,
+  style: Style,
+): ReadonlyArray<ReadonlyArray<string>> =>
+  [...new Set(skipped.map((skip) => skip.adapter))].map((adapter) => [
+    `Skipped for ${adapter}`,
+    ...skipped
+      .filter((skip) => skip.adapter === adapter)
+      .map((skip) => `  ${labelledNote(skipNote(skip), members, targets, style)}`),
+  ]);
+
 /** Renders fixed intent, physical destinations and the ownership-safe delivery diff. */
 export const renderProfileApply: HumanView = (envelope, base) => {
   const decoded = decodeApplyPlan(envelope.plan);
@@ -170,6 +188,9 @@ export const renderProfileApply: HumanView = (envelope, base) => {
     report.kind === "profile-apply" || report.bundle === undefined
       ? base
       : withBundleLabels(base, report.sources, report.bundle.identity);
+  const members = [...report.direct, ...report.required];
+  // A skipped member is listed under its agent, not among the delivery notes.
+  const skipNotes = new Set(report.delivery.skipped.map(skipNote));
   return sections(
     headerLines(envelope, undefined, style),
     [
@@ -192,9 +213,10 @@ export const renderProfileApply: HumanView = (envelope, base) => {
       `Required dependencies (${report.required.length})`,
       ...report.required.map((address) => `  ${addressText(address, style)}`),
     ],
-    report.delivery.notes.map((note) =>
-      labelledNote(note, [...report.direct, ...report.required], report.targets, style),
-    ),
+    report.delivery.notes
+      .filter((note) => skipNotes.has(note) === false)
+      .map((note) => labelledNote(note, members, report.targets, style)),
+    ...skippedSections(report.delivery.skipped, members, report.targets, style),
     ...deliverySections(envelope, style),
     report.findings.map((finding) => `${finding.code}: ${finding.message}`),
     [

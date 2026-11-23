@@ -135,8 +135,8 @@ it(
       );
       const runs = [
         ["state", "init"],
-        ["source", "add", source],
-        ["source", "add", source],
+        ["source", "add", source, "--apply"],
+        ["source", "add", source, "--apply"],
         ["adapter", "enable", "claude"],
         ["pick", "include", "review", "--user"],
         ["pick", "remove", "review", "--user"],

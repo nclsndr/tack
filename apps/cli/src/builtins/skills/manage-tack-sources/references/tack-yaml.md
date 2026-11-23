@@ -154,7 +154,9 @@ from the folder's top: `--skills .` for skill folders there, plus a source of it
 `--skills skills --context context`. A folder that a registered
 source's skills, commands or context walk reaches, or that holds one of its declared paths, fails
 with `declaration-inside-source`: its new `tack.yaml` would take the folder out of that source.
-Exclude the folder there first, as the message says. When every entry has a problem and finds no
+Exclude the folder there first, as the message says. A preview in which a declared resource cannot
+be read, such as a command whose frontmatter does not parse, is partial and lists each error under
+Problems with its file; `--apply` still registers the source. When every entry has a problem and finds no
 resource, as with `--skills guide.md` on a Markdown file, the source would load nothing: the
 preview is partial with `declaration-loads-nothing` and offers no `--apply`, and `--apply` fails
 with the same code. Name other folders, then preview again.

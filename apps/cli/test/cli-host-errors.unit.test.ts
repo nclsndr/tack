@@ -610,13 +610,25 @@ const cases: ReadonlyArray<Case> = [
     details: { statePath: "/state/s.json" },
   },
   {
-    error: new StateNotInitializedError({ statePath: "/state/s.json" }),
+    error: new StateNotInitializedError({ statePath: "/state/s.json", explicitDirectory: true }),
     classification: "invalid-configuration",
     code: "state-not-initialized",
     message:
       "Tack state is absent at /state/s.json. Run `tack --state-dir /state state init` to initialize this exact directory.",
     details: { statePath: "/state/s.json" },
     next: [["tack", "--state-dir", "/state", "state", "init"]],
+  },
+  {
+    error: new StateNotInitializedError({
+      statePath: "/home/.tack/state.json",
+      explicitDirectory: false,
+    }),
+    classification: "invalid-configuration",
+    code: "state-not-initialized",
+    message:
+      "Tack is not set up on this machine: there is no state at /home/.tack/state.json. Run `tack init` to set it up.",
+    details: { statePath: "/home/.tack/state.json" },
+    next: [["tack", "init"]],
   },
   {
     error: new StateStorageError({ message: "raw", operation: "rename", path: "/state/s.json" }),

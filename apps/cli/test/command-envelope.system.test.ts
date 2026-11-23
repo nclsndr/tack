@@ -56,6 +56,7 @@ it.layer(LiveTestLayer)("command envelope at the process boundary", (cliIt) => {
           "source",
           "add",
           fixture.sourceDirectory,
+          "--apply",
         ]);
         yield* holder.kill();
 
@@ -192,7 +193,7 @@ it.layer(LiveTestLayer)("command envelope at the process boundary", (cliIt) => {
         };
         for (const command of [
           ["state", "init"],
-          ["source", "add", fixture.sourceDirectory],
+          ["source", "add", fixture.sourceDirectory, "--apply"],
           ["adapter", "enable", "codex"],
           ["sync", "--user"],
           ["sync", "--user", "--apply"],

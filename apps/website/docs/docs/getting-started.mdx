@@ -84,8 +84,8 @@ of its own, such as `tack source add ~/skills/commands --commands .` or
 `tack source add ~/skills/handbook --docs .`. When you run `tack source add` on a folder without
 any flag, Tack reads the top of the folder and names the commands that fit what it finds there.
 
-A folder that already has a `tack.yaml` registers at once, such as a team repository you cloned:
-`tack source add ~/code/acme-agent-skills`. Without one, name its folders as above. In a
+A folder that already has a `tack.yaml`, such as a team repository you cloned, previews too:
+`tack source add ~/code/acme-agent-skills`, then the same command with `--apply`. Without one, name its folders as above. In a
 repository you share, commit the `tack.yaml` that Tack writes, so others get the same source.
 Repeat this section for each folder of skills. Scripts and anything else the flags cannot say go
 into `tack.yaml` by hand; your agent's `manage-tack-sources` skill knows how.

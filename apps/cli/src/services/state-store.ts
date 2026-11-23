@@ -1,5 +1,6 @@
 import { Context, Effect, Schema } from "effect";
 import type { State } from "../domain/state/state-schema.ts";
+import type { AgentAdapterId } from "../domain/links/agent-adapter-schema.ts";
 
 /** Inputs that the application boundary resolves before operating on Tack state. */
 export type StateOptions = {
@@ -8,7 +9,19 @@ export type StateOptions = {
   readonly homeDirectory?: string;
   /** Told what persisting during this invocation did; the host installs one per invocation. */
   readonly observer?: StateObserver;
+  /**
+   * The adapters a state that the first mutation initializes starts with: the agents found in the
+   * operator home, as `tack init` finds them. Left out, the new state enables none.
+   */
+  readonly initialAdapters?: Effect.Effect<ReadonlyArray<AgentAdapterId>>;
 };
+
+/**
+ * Whether the first mutation may initialize absent state: only the default state directory is
+ * created on demand, so a mistyped explicit one is never.
+ */
+export const stateAutoInitializes = (options: StateOptions) =>
+  options.environment["TACK_STATE_DIR"] === undefined;
 
 /** Reports an invalid effective-state configuration before filesystem access. */
 export class StateConfigurationError extends Schema.TaggedError<StateConfigurationError>()(
@@ -37,10 +50,13 @@ export class StateCorruptError extends Schema.TaggedError<StateCorruptError>()(
   },
 ) {}
 
-/** Reports a state-dependent operation before explicit initialization. */
+/**
+ * Reports a state-dependent operation before explicit initialization. `explicitDirectory` says
+ * whether `--state-dir` or `TACK_STATE_DIR` named the directory, rather than the default one.
+ */
 export class StateNotInitializedError extends Schema.TaggedError<StateNotInitializedError>()(
   "StateNotInitializedError",
-  { statePath: Schema.String },
+  { statePath: Schema.String, explicitDirectory: Schema.Boolean },
 ) {}
 
 /** Reports a failed filesystem operation on Tack-owned state. */
@@ -66,13 +82,22 @@ export class StateMutationError extends Schema.TaggedError<StateMutationError>()
 export type StateObserver = {
   /** Called after every write that replaced, created or deleted the state document. */
   readonly wrote: () => void;
-  /** Records the state directory this invocation initialized by its first mutation. */
-  readonly initialized: (stateDirectory: string) => void;
+  /**
+   * Records the state directory this invocation initialized by its first mutation, and the
+   * adapters `StateOptions.initialAdapters` enabled in it, absent when the options named none.
+   */
+  readonly initialized: (
+    stateDirectory: string,
+    enabledAdapters?: ReadonlyArray<AgentAdapterId>,
+  ) => void;
 };
 
 /** The notices one invocation collected, as values for its envelope. */
 export type StateNotices = {
-  readonly initializedPath?: string;
+  readonly initialized?: {
+    readonly stateDirectory: string;
+    readonly enabledAdapters?: ReadonlyArray<AgentAdapterId>;
+  };
 };
 
 /**
@@ -81,17 +106,18 @@ export type StateNotices = {
  * command ends.
  */
 export const makeStateNoticeCollector = (onWrite: () => void = () => undefined) => {
-  let initializedPath: string | undefined;
+  let initialized: StateNotices["initialized"];
   return {
     sink: {
       wrote: onWrite,
-      initialized: (stateDirectory) => {
-        initializedPath = stateDirectory;
+      initialized: (stateDirectory, enabledAdapters) => {
+        initialized = {
+          stateDirectory,
+          ...(enabledAdapters === undefined ? {} : { enabledAdapters }),
+        };
       },
     } satisfies StateObserver,
-    collected: (): StateNotices => ({
-      ...(initializedPath === undefined ? {} : { initializedPath }),
-    }),
+    collected: (): StateNotices => (initialized === undefined ? {} : { initialized }),
   };
 };
 

@@ -1,4 +1,5 @@
 import { profileDefinitionsCheck } from "./profile-definitions.ts";
+import { skipNote } from "../../domain/profiles/profile-delivery.ts";
 import { Effect, Path } from "effect";
 import { listScriptHistory } from "../execution/execution.ts";
 import { runStatus } from "../status/status.ts";
@@ -136,14 +137,24 @@ export const runDoctor = Effect.fn("doctor.runDoctor")(function* (
             ? []
             : [...entry.profile.issues, ...entry.profile.delivery.issues],
         );
+        // A member an enabled agent cannot take is a note, not a failure.
+        const skipped = [
+          ...new Set(
+            status.namespaces.flatMap((entry) =>
+              (entry.profile?.delivery.skipped ?? []).map(skipNote),
+            ),
+          ),
+        ];
         return [
           {
             id: "profiles" as const,
             outcome: profiles.length === 0 ? ("ok" as const) : ("failed" as const),
             message:
-              profiles.length === 0
-                ? "Retained profile inventories are resolved."
-                : profiles.join(" "),
+              profiles.length > 0
+                ? profiles.join(" ")
+                : skipped.length === 0
+                  ? "Retained profile inventories are resolved."
+                  : `Retained profile inventories are resolved. Skipped where an agent cannot take them: ${skipped.join("; ")}.`,
           },
           yield* profileDefinitionsCheck(snapshot),
           adaptersCheck(status, nextWith),

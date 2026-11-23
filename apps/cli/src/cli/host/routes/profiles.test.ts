@@ -105,6 +105,48 @@ it.layer(LiveTestLayer)("profile routes", (test) => {
     }),
   );
 
+  test.effect("applies a member an enabled agent cannot take as skipped, not partial", () =>
+    Effect.gen(function* () {
+      const world = yield* profileFixture;
+      yield* world.write(
+        "source/tack.yaml",
+        "version: 2\nname: tools\nskills: [{path: skills}]\ncommands: [{path: commands}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
+      );
+      yield* world.write("source/commands/ship.md", "---\ndescription: Ship it\n---\nShip.\n");
+      yield* world.write("source/ci.yaml", "version: 1\nname: ci\nmembers: [notes, ship]\n");
+      yield* mutateState(world.options, (state) => ({
+        ...state,
+        data: { ...state.data, enabledAdapters: ["claude"] },
+      }));
+      const outcome = yield* world.run(
+        outcomeOf(
+          profileRoutes["profile-apply"].run(
+            applyInvocation(world, { apply: true }),
+            world.options,
+          ),
+        ),
+      );
+      expect(outcome).toMatchObject({
+        classification: "success",
+        plan: {
+          delivery: {
+            incomplete: false,
+            skipped: [
+              {
+                member: `command ${world.sourceId}:ship`,
+                adapter: "claude",
+                reason: "Tack does not link commands for claude",
+              },
+            ],
+          },
+        },
+      });
+      expect(
+        yield* world.fs.readLink(world.path.join(world.project, ".claude/skills/notes")),
+      ).toContain("notes");
+    }),
+  );
+
   test.effect("checks every applied docs action before calling a profile apply complete", () =>
     Effect.gen(function* () {
       const world = yield* profileFixture;

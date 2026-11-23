@@ -53,7 +53,7 @@ const refusal = (file: string, findings: ProfileApplyPlan["findings"]): BundleAp
   existing: [],
   direct: [],
   required: [],
-  delivery: { notes: [], incomplete: false },
+  delivery: { notes: [], skipped: [], incomplete: false },
   effects: [],
   findings,
   refused: true,
