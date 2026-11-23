@@ -1,0 +1,217 @@
+---
+title: Choose what each project gets
+description: Include or exclude a skill for one project or for yourself, see every choice, and preview the links they make.
+---
+
+import { Terminal } from "../../../components/terminal.tsx";
+
+export const excludeOutput = [
+  "tack pick exclude · project app · ✓ success",
+  "",
+  "Set skill incident-report to exclude for project app.",
+  "",
+  "Next",
+  "  tack sync --project app",
+].join("\n");
+
+export const excludeSyncOutput = [
+  "tack sync · project app · ✓ success",
+  "",
+  "Nothing was written. 3 changes planned.",
+  "",
+  "claude → app · 1 to remove",
+  "  remove  .claude/skills/incident-report  skill incident-report · deselected",
+  "",
+  "codex → app · 1 to remove",
+  "  remove  .agents/skills/incident-report  skill incident-report · deselected",
+  "",
+  "cursor → app · 1 to remove",
+  "  remove  .cursor/skills/incident-report  skill incident-report · deselected",
+  "",
+  "Commands reach cursor only: Tack does not link commands for claude, codex.",
+  "",
+  "Preview only: nothing was written. There are no docs links to reconcile.",
+  "",
+  "Next",
+  "  tack sync --project app --apply",
+].join("\n");
+
+export const pickListOutput = [
+  "tack pick · 2 choices · ✓ success",
+  "",
+  "Project app 2 choices",
+  "  − exclude  skill incident-report",
+  "  + include  skill triage-issue",
+  "",
+  "Next",
+  "  tack sync --project app",
+].join("\n");
+
+export const userPickOutput = [
+  "tack pick include · the user namespace · ✓ success",
+  "",
+  "Set skill commit-message to include for the user namespace.",
+  "",
+  "Next",
+  "  tack sync --user",
+].join("\n");
+
+export const userSyncOutput = [
+  "tack sync · all projects and user · ✓ success",
+  "",
+  "Nothing was written. 6 changes planned.",
+  "",
+  "claude → app · 1 to remove, 1 linked for the user",
+  "  remove  .claude/skills/commit-message  skill commit-message · linked-for-user",
+  "  skip    skill commit-message           linked for the user",
+  "",
+  "codex → app · 1 to remove, 1 linked for the user",
+  "  remove  .agents/skills/commit-message  skill commit-message · linked-for-user",
+  "  skip    skill commit-message           linked for the user",
+  "",
+  "cursor → app · 1 to remove, 1 linked for the user",
+  "  remove  .cursor/skills/commit-message  skill commit-message · linked-for-user",
+  "  skip    skill commit-message           linked for the user",
+  "",
+  "claude → user · 1 to link",
+  "  create  .claude/skills/commit-message  skill commit-message",
+  "",
+  "codex → user · 1 to link",
+  "  create  .agents/skills/commit-message  skill commit-message",
+  "",
+  "cursor → user · 1 to link",
+  "  create  .cursor/skills/commit-message  skill commit-message",
+  "",
+  "Commands reach cursor only: Tack does not link commands for claude, codex.",
+  "",
+  "Preview only: nothing was written. There are no docs links to reconcile.",
+  "",
+  "Next",
+  "  tack sync --all --apply",
+].join("\n");
+
+export const statusOutput = [
+  "tack status · project app · ✓ success",
+  "",
+  "Destinations 13 linked, 0 need attention",
+  "  linked  codex   app:.agents/skills/debug-flaky-test  skill debug-flaky-test",
+  "  linked  codex   app:.agents/skills/pr-review         skill pr-review",
+  "  linked  codex   app:.agents/skills/release-notes     skill release-notes",
+  "  linked  codex   app:.agents/skills/triage-issue      skill triage-issue",
+  "  linked  claude  app:.claude/skills/debug-flaky-test  skill debug-flaky-test",
+  "  linked  claude  app:.claude/skills/pr-review         skill pr-review",
+  "  linked  claude  app:.claude/skills/release-notes     skill release-notes",
+  "  linked  claude  app:.claude/skills/triage-issue      skill triage-issue",
+  "  linked  cursor  app:.cursor/commands/ship.md         command ship",
+  "  linked  cursor  app:.cursor/skills/debug-flaky-test  skill debug-flaky-test",
+  "  linked  cursor  app:.cursor/skills/pr-review         skill pr-review",
+  "  linked  cursor  app:.cursor/skills/release-notes     skill release-notes",
+  "  linked  cursor  app:.cursor/skills/triage-issue      skill triage-issue",
+  "",
+  "  Adapters  claude, codex, cursor",
+  "  Sources   3 sources, all healthy",
+  "  Catalog   13 resources",
+  "  Projects  app (1 root)",
+  "  State     ~/.tack",
+  "",
+  "Project app",
+  "  selected skill    commit-message, release-notes, debug-flaky-test, pr-review,",
+  "                    triage-issue",
+  "  selected command  ship",
+  "  choices           −skill incident-report +skill triage-issue",
+  "  not delivered     skill commit-message → claude, codex, cursor (linked for the",
+  "                    user instead)",
+  "  not delivered     command ship → claude, codex (adapter cannot deliver this",
+  "                    kind)",
+  "",
+  "For .gitignore in project app",
+  "  One line per link Tack keeps in this repository. A link is a file to Git, so a",
+  "  line has no trailing /. A new skill needs its own line.",
+  "/.agents/skills/debug-flaky-test",
+  "/.agents/skills/pr-review",
+  "/.agents/skills/release-notes",
+  "/.agents/skills/triage-issue",
+  "/.claude/skills/debug-flaky-test",
+  "/.claude/skills/pr-review",
+  "/.claude/skills/release-notes",
+  "/.claude/skills/triage-issue",
+  "/.cursor/commands/ship.md",
+  "/.cursor/skills/debug-flaky-test",
+  "/.cursor/skills/pr-review",
+  "/.cursor/skills/release-notes",
+  "/.cursor/skills/triage-issue",
+].join("\n");
+
+# Choose what each project gets
+
+Every project starts with the skills and commands its sources turn on by default. A pick changes
+that for one target: one project with `--project`, or your user folders with `--user`. A pick saves
+at once and links nothing; `tack sync` then previews the links it calls for.
+
+| Command                                           | What it does                                            |
+| ------------------------------------------------- | ------------------------------------------------------- |
+| `tack pick include triage-issue --project app`    | Selects a skill for one project, even an opt-in one     |
+| `tack pick exclude incident-report --project app` | Keeps a default skill out of one project                |
+| `tack pick include commit-message --user`         | Links a skill into your user folders, for every project |
+| `tack pick remove incident-report --project app`  | Forgets the pick, so the source's default applies again |
+| `tack pick remove commit-message --user`          | Forgets a user pick                                     |
+| `tack pick`                                       | Lists every pick, for each project and for you          |
+
+## Keep a skill out of a project
+
+The project `app` gets `incident-report` from the team source, but it has no use for it. Exclude it:
+
+<Terminal commands={["tack pick exclude incident-report --project app"]} output={excludeOutput} />
+
+The sync preview removes its links, with the reason `deselected`:
+
+<Terminal commands={["tack sync --project app"]} output={excludeSyncOutput} />
+
+Apply it with `tack sync --project app --apply`. Excluding a skill that another selected skill
+requires blocks that skill too, and the preview names the blocker.
+
+## Add an opt-in skill to a project
+
+An opt-in skill reaches a project only once you include it, as
+[Write a skill](./write-a-skill#4-link-it) shows for `triage-issue`. See every pick at once:
+
+<Terminal commands={["tack pick"]} output={pickListOutput} />
+
+## Use a skill everywhere
+
+A skill you want in every repository belongs in your user folders, such as `~/.claude/skills`.
+Every agent loads it in every project, registered or not:
+
+<Terminal commands={["tack pick include commit-message --user"]} output={userPickOutput} />
+
+`tack sync --all` previews your user folders and every project together. A project does not keep a
+link of its own to a skill your user folders already hold, so each agent lists it once: the preview
+removes those project links with the reason `linked-for-user`.
+
+<Terminal commands={["tack sync --all"]} output={userSyncOutput} />
+
+Apply it with `tack sync --all --apply`. To undo it, run `tack pick remove commit-message --user`:
+the next `tack sync --all` removes the user links and links the skill back into each project that
+selects it.
+
+Some agents read only project folders, or only user folders, so a user pick does not reach every
+agent; [Agent support](../agent-support#agents-reached-through-a-shared-folder) marks them.
+
+## See what a project gets
+
+`tack status --details` lists every link, what each agent gets and why, and the lines for
+`.gitignore` when the project ignores its links:
+
+<Terminal commands={["tack status --project app --details"]} output={statusOutput} />
+
+## Browse in the terminal
+
+`tack explore --project app` opens the explorer: every resource with its state in the project, such
+as `● default`, `● included` or `○ opt-in`. Stage picks and docs with `i`, `x` and `a`, review the
+sync, then confirm. It needs an interactive terminal; agents use `tack catalog`, `tack pick` and
+`tack status` instead.
+
+## Next
+
+- [Add a worktree or clone](./worktrees): picks belong to the project, so every worktree follows.
+- [Share a fixed set with a profile](./profiles) when picks should not change at all.

@@ -1,0 +1,393 @@
+---
+title: Share a fixed set with a profile
+description: Save the skills, commands and docs a project uses as a profile, apply exactly that set to another project, and carry it to a machine without the source in one bundle.
+---
+
+import { Terminal } from "../../../components/terminal.tsx";
+
+export const saveOutput = [
+  "tack profile save · ✓ success",
+  "",
+  "Copy daily selection → profile · preview",
+  "~/agent-setup/profiles/reviewer.yaml",
+  "",
+  "Built-in skills omitted. Release-owned skills are always delivered and locked; profiles do not control them.",
+  "",
+  "skill commit-message · user, project app",
+  "skill release-notes · project app",
+  "command ship · project app",
+  "skill debug-flaky-test · project app",
+  "skill pr-review · project app",
+  "skill triage-issue · project app",
+  "docs handbook · project app",
+  "",
+  "+ skill commit-message",
+  "+ skill release-notes",
+  "+ command ship",
+  "+ skill debug-flaky-test",
+  "+ skill pr-review",
+  "+ skill triage-issue",
+  "+ docs handbook",
+  "",
+  "--- profile before",
+  "(new file)",
+  "+++ profile after",
+  "version: 1",
+  "name: reviewer",
+  "members:",
+  "  - kind: skill",
+  "    name: commit-message",
+  "    source: acme",
+  "  - kind: skill",
+  "    name: release-notes",
+  "    source: acme",
+  "  - kind: command",
+  "    name: ship",
+  "  - kind: skill",
+  "    name: debug-flaky-test",
+  "  - kind: skill",
+  "    name: pr-review",
+  "  - kind: skill",
+  "    name: triage-issue",
+  "  - kind: docs",
+  "    name: handbook",
+  "depends-on:",
+  "  - acme",
+  "",
+  "",
+  "--- tack.yaml before",
+  "version: 1",
+  "skills:",
+  "  - path: skills",
+  "commands:",
+  "  - path: commands",
+  "scripts:",
+  "  - name: todo-report",
+  "    path: scripts/todo-report.ts",
+  "    description: List the TODO comments in the project.",
+  "docs:",
+  "  - name: handbook",
+  "    path: handbook",
+  "",
+  "+++ tack.yaml after",
+  "version: 2",
+  "skills:",
+  "  - path: skills",
+  "commands:",
+  "  - path: commands",
+  "scripts:",
+  "  - name: todo-report",
+  "    path: scripts/todo-report.ts",
+  "    description: List the TODO comments in the project.",
+  "docs:",
+  "  - name: handbook",
+  "    path: handbook",
+  "",
+  "profiles:",
+  "  - name: reviewer",
+  "    path: profiles/reviewer.yaml",
+  "",
+  "",
+  "Save changes only the source profile/publication. Daily choices and links remain independent.",
+].join("\n");
+
+export const checkOutput = [
+  "tack check · ✓ success",
+  "",
+  "Checks 5 · errors 0 · warnings 0",
+  "",
+  "source ~/agent-setup",
+  "  skill: 3",
+  "  command: 1",
+  "  context: 0",
+  "  script: 1",
+  "  docs: 1",
+  "",
+  "profile ~/agent-setup/profiles/reviewer.yaml",
+  "  Structure: valid · Source linkage: complete",
+  "  Direct members (7)",
+  "  skill acme:commit-message",
+  "  skill acme:release-notes",
+  "  command agent-setup:ship",
+  "  skill agent-setup:debug-flaky-test",
+  "  skill agent-setup:pr-review",
+  "  skill agent-setup:triage-issue",
+  "  docs agent-setup:handbook",
+  "  Required dependencies (0)",
+  "",
+  "docs ~/agent-setup/handbook/on-call.md",
+  "  Figures (0)",
+  "  Icons (0)",
+  "  Author components (0)",
+  "",
+  "docs ~/agent-setup/handbook/release-process.md",
+  "  Figures (0)",
+  "  Icons (0)",
+  "  Author components (0)",
+  "",
+  "source ~/code/acme-agent-skills",
+  "  skill: 3",
+  "  command: 0",
+  "  context: 0",
+  "  script: 0",
+  "  docs: 0",
+  "",
+  "",
+  "Write files, run tack check with the relevant paths, and repeat until clean.",
+].join("\n");
+
+export const applyOutput = [
+  "tack profile apply · ! partial",
+  "",
+  "Fixed profile agent-setup:reviewer · preview",
+  "Target: ~/ci/app",
+  "Existing selection: none (computed defaults do not count)",
+  "",
+  "Direct members (7)",
+  "  skill commit-message",
+  "  skill release-notes",
+  "  command ship",
+  "  skill debug-flaky-test",
+  "  skill pr-review",
+  "  skill triage-issue",
+  "  docs handbook",
+  "Required dependencies (0)",
+  "",
+  "skill commit-message: claude → .claude/skills/commit-message",
+  "skill commit-message: codex → .agents/skills/commit-message",
+  "skill commit-message: cursor → .cursor/skills/commit-message",
+  "skill release-notes: claude → .claude/skills/release-notes",
+  "skill release-notes: codex → .agents/skills/release-notes",
+  "skill release-notes: cursor → .cursor/skills/release-notes",
+  "command ship: claude cannot deliver command links",
+  "command ship: codex cannot deliver command links",
+  "command ship: cursor → .cursor/commands/ship.md",
+  "skill debug-flaky-test: claude → .claude/skills/debug-flaky-test",
+  "skill debug-flaky-test: codex → .agents/skills/debug-flaky-test",
+  "skill debug-flaky-test: cursor → .cursor/skills/debug-flaky-test",
+  "skill pr-review: claude → .claude/skills/pr-review",
+  "skill pr-review: codex → .agents/skills/pr-review",
+  "skill pr-review: cursor → .cursor/skills/pr-review",
+  "skill triage-issue: claude → .claude/skills/triage-issue",
+  "skill triage-issue: codex → .agents/skills/triage-issue",
+  "skill triage-issue: cursor → .cursor/skills/triage-issue",
+  "docs handbook: project docs mounts",
+  "",
+  "claude → ci · 4 to link, 1 linked for the user",
+  "  create  .claude/skills/                  directory",
+  "  create  .claude/skills/debug-flaky-test  skill debug-flaky-test",
+  "  create  .claude/skills/pr-review         skill pr-review",
+  "  create  .claude/skills/release-notes     skill release-notes",
+  "  create  .claude/skills/triage-issue      skill triage-issue",
+  "  skip    skill commit-message             linked for the user",
+  "",
+  "codex → ci · 4 to link, 1 linked for the user",
+  "  create  .agents/skills/                  directory",
+  "  create  .agents/skills/debug-flaky-test  skill debug-flaky-test",
+  "  create  .agents/skills/pr-review         skill pr-review",
+  "  create  .agents/skills/release-notes     skill release-notes",
+  "  create  .agents/skills/triage-issue      skill triage-issue",
+  "  skip    skill commit-message             linked for the user",
+  "",
+  "cursor → ci · 5 to link, 1 linked for the user",
+  "  create  .cursor/commands/                directory",
+  "  create  .cursor/skills/                  directory",
+  "  create  .cursor/commands/ship.md         command ship",
+  "  create  .cursor/skills/debug-flaky-test  skill debug-flaky-test",
+  "  create  .cursor/skills/pr-review         skill pr-review",
+  "  create  .cursor/skills/release-notes     skill release-notes",
+  "  create  .cursor/skills/triage-issue      skill triage-issue",
+  "  skip    skill commit-message             linked for the user",
+  "",
+  "Docs links",
+  "  + create  ~/ci/app/.tack/docs/e71e644c-e9f8-42ac-     docs handbook · project",
+  "            b638-3b7504635ced/handbook                  ci",
+  "",
+  "Ambient user instructions and release-owned skills remain outside this target's profile control.",
+].join("\n");
+
+export const fixedOutput = [
+  "tack pick include · ✗ domain",
+  "",
+  "Problems",
+  "  ✗ This context has a fixed profile application. Choose a separate",
+  "    daily-selection context or explicitly reapply the profile.",
+  "    error profile-fixed-context",
+].join("\n");
+
+export const exportOutput = [
+  "tack profile export · ✓ success",
+  "",
+  "Content snapshot agent-setup:reviewer · exported",
+  "~/reviewer.tar.gz",
+  "",
+  "Bundle version 1 · b5044c91d6bc16cd64118b144cad0706848defdabe3d204db892d7e062a08cb0",
+  "Profile reviewer · defining source source-1",
+  "Source source-0 · acme",
+  "  source requirement acme → source-0",
+  "  source requirement agent-setup → source-1",
+  "  direct skill commit-message · commit-message",
+  "  direct skill release-notes · release-notes",
+  "Source source-1 · agent-setup",
+  "  source requirement acme → source-0",
+  "  source requirement agent-setup → source-1",
+  "  direct command ship · commands/ship.md",
+  "  direct skill debug-flaky-test · skills/debug-flaky-test",
+  "  direct skill pr-review · skills/pr-review",
+  "  direct skill triage-issue · skills/triage-issue",
+  "  direct docs handbook · handbook",
+  "",
+  "Exact payload (20 files/directories)",
+  "  dir  755 0 B sources/source-0/commit-message · sha256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "  file 644 191 B sources/source-0/commit-message/SKILL.md · sha256 feb4de2bace337b030f636a8a6d9da8cb8542f76ce4514092df96438f48ab07e",
+  "  …",
+  "",
+  "Content only: no sender state, installed links, ownership, execution history or automatic setup.",
+  "Known sensitive paths are refused; arbitrary authored text is not certified secret-free. Checksums establish integrity, not publisher authenticity.",
+].join("\n");
+
+export const bundleOutput = [
+  "tack profile apply-bundle · ! partial",
+  "",
+  "Fixed profile bundle-4rukma6s3bex3chjr9gni7jbzyfshyj9t4zx81sjn520qwzn7v:reviewer · intent retained",
+  "Verified bundle: b5044c91d6bc16cd64118b144cad0706848defdabe3d204db892d7e062a08cb0",
+  "Retained source bundle-2xlqyp1qwpj6y6jgofkbu9ph8m2q95x2dm55ysmwlbtzvjzqmg · from acme · ~/.tack/bundles/b5044c91d6bc16cd64118b144cad0706848defdabe3d204db892d7e062a08cb0/sources/source-0",
+  "Retained source bundle-4rukma6s3bex3chjr9gni7jbzyfshyj9t4zx81sjn520qwzn7v · from agent-setup · ~/.tack/bundles/b5044c91d6bc16cd64118b144cad0706848defdabe3d204db892d7e062a08cb0/sources/source-1",
+  "Target: ~/app",
+  "Existing selection: none (computed defaults do not count)",
+  "…",
+].join("\n");
+
+# Share a fixed set with a profile
+
+Picks drift: each teammate includes and excludes what suits them. A profile is a file in a source
+that lists the exact skills, commands and docs a project gets. You review it like any other change,
+and whoever applies it gets that set and nothing else, until they apply another one.
+
+This guide saves what the project `app` uses as the profile `reviewer`, applies it to the project
+`ci`, then carries it in one file to a CI runner that has never seen the sources.
+
+## 1. Save what you use
+
+`tack profile save` previews the profile file it would write from what a project uses now, its
+defaults and picks, and the change to the source's `tack.yaml`, which moves to version 2 to
+publish it:
+
+<Terminal
+  commands={["tack profile save ~/agent-setup reviewer --project app"]}
+  output={saveOutput}
+/>
+
+Apply it with the same command and `--apply`. It writes only the profile and its entry in
+`tack.yaml`; the picks and links of `app` stay as they are. Built-in skills are never members:
+every machine gets them anyway.
+
+Then check the profile, with every source its members come from:
+
+<Terminal commands={["tack check ~/agent-setup ~/code/acme-agent-skills"]} output={checkOutput} />
+
+Commit the profile and the `tack.yaml`, and push them, as for any change to the source.
+
+## 2. Apply it to a project
+
+`tack profile apply` previews the profile's exact list at one explicit target. Here the project
+`ci` is a separate clone of the repository at `~/ci/app`, registered with `tack project add ci`:
+
+<Terminal
+  commands={["tack profile apply agent-setup:reviewer --project ci --target-root ~/ci/app"]}
+  output={applyOutput}
+/>
+
+The preview is `partial` because Claude Code and Codex take no commands, so `ship` reaches Cursor
+only. Apply it:
+
+```sh
+tack profile apply agent-setup:reviewer --project ci --target-root ~/ci/app --apply
+```
+
+Repeat `--target-root` for every worktree of the project. A project that already has picks or
+links needs `--force` to replace them. From now on the project's set is fixed: a pick is refused,
+a new skill in one of its sources does not reach it, and `tack status` and `tack doctor` name the
+profile.
+
+<Terminal commands={["tack pick include incident-report --project ci"]} output={fixedOutput} />
+
+To change the set, edit the profile and commit it, then apply it again. The project already holds
+the profile, so the new apply stops with `profile-existing-selection` until you add `--force`:
+
+```sh
+tack profile apply agent-setup:reviewer --project ci --target-root ~/ci/app --force
+tack profile apply agent-setup:reviewer --project ci --target-root ~/ci/app --force --apply
+```
+
+### When an agent cannot take a member
+
+A partial result is not an error, but it exits with code `1`: `--apply` writes every link it can and
+still exits `1`, and `tack doctor` fails its `profiles` check for as long as an enabled agent cannot
+take a member. Here Claude Code and Codex cannot take the command `ship`. On a machine where that
+matters, such as a CI runner, leave commands out of the profile, or enable only agents that take
+every member.
+
+## 3. Carry it to another machine
+
+A CI runner or a container may have no copy of your sources. `tack profile export` packs the
+profile's files into one `.tar.gz` with a checksum for each. It previews first; `--apply` writes
+it, and never over an existing file. The list of files is cut short here:
+
+<Terminal
+  commands={["tack profile export agent-setup:reviewer reviewer.tar.gz --apply"]}
+  output={exportOutput}
+/>
+
+Docs and scripts travel only once the source says what they need: an entry under `bundle-support`
+in `tack.yaml`. Without one, the preview stops with `profile-bundle-incomplete` and names the
+resource. Docs with no files outside their folder need an empty list:
+
+```yaml
+bundle-support:
+  - kind: docs
+    name: handbook
+    complete: true
+    files: []
+    prerequisites: []
+```
+
+On the other machine, read the bundle before you apply it, and validate it:
+
+```sh
+tack profile inspect-bundle reviewer.tar.gz
+tack check reviewer.tar.gz
+```
+
+Then set Tack up, register the repository and apply the bundle. No source is registered and
+nothing is fetched: Tack keeps the bundle's files in its state and links them. A runner usually has
+no agent folder for `tack init` to find, so name the agent; a bare `tack init` there stops with
+`agent-home-not-found`.
+
+```sh
+tack init --adapter claude
+cd ~/app
+tack project add ci
+tack profile apply-bundle ~/reviewer.tar.gz --project ci --target-root ~/app
+tack profile apply-bundle ~/reviewer.tar.gz --project ci --target-root ~/app --apply
+```
+
+<Terminal
+  commands={[
+    "tack profile apply-bundle ~/reviewer.tar.gz --project ci --target-root ~/app --apply",
+  ]}
+  output={bundleOutput}
+/>
+
+The result is `partial`, and the command exits with code `1`, because this bundle holds the command
+`ship` and Claude Code takes no commands; every skill is linked. See
+[When an agent cannot take a member](#when-an-agent-cannot-take-a-member).
+
+The bundle's sources get labels that start with `bundle-`, so they never mix with a source of the
+same name on that machine. No script, hook or installer in a bundle runs while it is applied.
+
+## Next
+
+- `tack profile adopt agent-setup:reviewer --project app` copies a profile's members into ordinary
+  picks once, for a project you want to keep editing.
+- The built-in `author-tack-profiles` skill holds the full profile and bundle format.

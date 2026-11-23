@@ -1,0 +1,215 @@
+---
+title: Write a skill
+description: Write a new skill in a registered source, check it, choose whether it is on by default or opt-in, and link it into your projects.
+---
+
+import { Terminal } from "../../../components/terminal.tsx";
+
+export const checkErrorOutput = [
+  "tack check · ✗ domain",
+  "",
+  "Checks 2 · errors 1 · warnings 0",
+  "",
+  "source ~/agent-setup",
+  "  skill: 2",
+  "  command: 1",
+  "  context: 0",
+  "  script: 0",
+  "  docs: 1",
+  "",
+  "docs ~/agent-setup/handbook/release-process.md",
+  "  Figures (0)",
+  "  Icons (0)",
+  "  Author components (0)",
+  "",
+  "",
+  "~/agent-setup/skills/triage-issue/SKILL.md:1: error skill-name-mismatch: The SKILL.md name must match its directory basename.",
+  "",
+  "Write files, run tack check with the relevant paths, and repeat until clean.",
+].join("\n");
+
+export const checkOutput = [
+  "tack check · ✓ success",
+  "",
+  "Checks 2 · errors 0 · warnings 0",
+  "",
+  "source ~/agent-setup",
+  "  skill: 3",
+  "  command: 1",
+  "  context: 0",
+  "  script: 0",
+  "  docs: 1",
+  "",
+  "docs ~/agent-setup/handbook/release-process.md",
+  "  Figures (0)",
+  "  Icons (0)",
+  "  Author components (0)",
+  "",
+  "",
+  "Write files, run tack check with the relevant paths, and repeat until clean.",
+].join("\n");
+
+export const syncNothingOutput = [
+  "tack sync · project app · ✓ success",
+  "",
+  "Nothing was written. No change is planned. Everything is up to date.",
+  "",
+  "claude → app · up to date",
+  "",
+  "codex → app · up to date",
+  "",
+  "cursor → app · up to date",
+  "",
+  "Commands reach cursor only: Tack does not link commands for claude, codex.",
+  "",
+  "Preview only: nothing was written. There are no docs links to reconcile.",
+].join("\n");
+
+export const pickOutput = [
+  "tack pick include · project app · ✓ success",
+  "",
+  "Set skill triage-issue to include for project app.",
+  "",
+  "Next",
+  "  tack sync --project app",
+].join("\n");
+
+export const syncOutput = [
+  "tack sync · project app · ✓ success",
+  "",
+  "Nothing was written. 3 changes planned.",
+  "",
+  "claude → app · 1 to link",
+  "  create  .claude/skills/triage-issue  skill triage-issue",
+  "",
+  "codex → app · 1 to link",
+  "  create  .agents/skills/triage-issue  skill triage-issue",
+  "",
+  "cursor → app · 1 to link",
+  "  create  .cursor/skills/triage-issue  skill triage-issue",
+  "",
+  "Commands reach cursor only: Tack does not link commands for claude, codex.",
+  "",
+  "Preview only: nothing was written. There are no docs links to reconcile.",
+  "",
+  "Next",
+  "  tack sync --project app --apply",
+].join("\n");
+
+# Write a skill
+
+A skill is a folder that holds a `SKILL.md`. Write it inside a skills folder that a registered
+source declares, and Tack catalogues it at once. A new skill needs one sync to get its links; an
+edit to a skill that is already linked needs none, because every link points at your folder.
+
+This guide adds the skill `triage-issue` to the source `~/agent-setup`, whose `tack.yaml` declares
+`skills: [{ path: skills }]`, and links it into the project `app`.
+
+## 1. Write the file
+
+Create `~/agent-setup/skills/triage-issue/SKILL.md`. The frontmatter needs a `name`, equal to the
+folder's name, and a `description` that tells the agent when to use it:
+
+```markdown
+---
+name: triage-issue
+description: Label a new issue, find a duplicate, and ask for the missing reproduction steps.
+---
+
+# Triage an issue
+
+Search for a duplicate first. Then label the issue and ask for what is missing to reproduce it.
+```
+
+## 2. Check it
+
+`tack check` reads the source as the catalog will, without changing anything:
+
+<Terminal commands={["tack check ~/agent-setup"]} output={checkOutput} />
+
+It reports each problem by file and line. Had the frontmatter said `name: triage-issues`, one letter
+off the folder's name, the check would fail like this:
+
+<Terminal commands={["tack check ~/agent-setup"]} output={checkErrorOutput} />
+
+Fix the file and check again until it is clean.
+
+A skill that fails the check is quarantined: the rest of the source keeps working, and
+`tack catalog` lists the problem.
+
+## 3. Choose who gets it
+
+A skill without Tack metadata is on by default in every project, and opt-in at user level. To make
+it opt-in for projects too, add `metadata.tack` to the frontmatter. The whole file now reads:
+
+```markdown
+---
+name: triage-issue
+description: Label a new issue, find a duplicate, and ask for the missing reproduction steps.
+metadata:
+  tack: |
+    version: 1
+    activation: opt-in
+---
+
+# Triage an issue
+
+Search for a duplicate first. Then label the issue and ask for what is missing to reproduce it.
+```
+
+| Setting           | Applies to                                         | When omitted  |
+| ----------------- | -------------------------------------------------- | ------------- |
+| `activation`      | Every project                                      | `default`     |
+| `user-activation` | Your user folders                                  | `opt-in`      |
+| `projects`        | Limits `activation: default` to the named projects | every project |
+| `dependencies`    | Skills or commands it needs, selected with it      | none          |
+
+A dependency names a `kind` and a `name`. Here `triage-issue` needs `pr-review` from the same
+source, so including `triage-issue` in a project selects `pr-review` too:
+
+```yaml
+metadata:
+  tack: |
+    version: 1
+    activation: opt-in
+    dependencies:
+      - kind: skill
+        name: pr-review
+```
+
+A dependency in another source also names its `source`, and that source must be listed in your
+`tack.yaml` under `depends-on`. If a project excludes `pr-review`, the sync preview reports
+`triage-issue` as blocked and names the pick that lifts it.
+
+## 4. Link it
+
+An opt-in skill reaches no project yet, so the sync plans nothing:
+
+<Terminal commands={["tack sync --project app"]} output={syncNothingOutput} />
+
+Include it in the project. A pick saves at once and links nothing:
+
+<Terminal commands={["tack pick include triage-issue --project app"]} output={pickOutput} />
+
+Then preview the sync and apply it:
+
+<Terminal commands={["tack sync --project app"]} output={syncOutput} />
+
+```sh
+tack sync --project app --apply
+```
+
+A skill that is on by default skips the pick: `tack sync --all` previews its links in every project.
+
+## 5. Edit it
+
+Edit `SKILL.md` or add files to the skill's folder at any time. Every agent reads the change
+through its link, with no sync. An open agent session can need a restart to load it again.
+
+In a source you share through Git, commit and push the new skill. Your teammates pull it and run
+`tack sync`, as [Get a teammate's new skill](./team-source) shows.
+
+## Next
+
+- [Choose what each project gets](./choose-skills): include, exclude and user-level picks.
+- [Import skills from GitHub](./import-skills) to start from someone else's skill.

@@ -1,0 +1,130 @@
+---
+title: Add a document
+description: Find the verified folder to write a new document into, write it, check it and find it with docs search, without a sync.
+---
+
+import { Terminal } from "../../../components/terminal.tsx";
+
+export const targetOutput = [
+  "tack docs target · project app · ✓ success",
+  "",
+  "Verified writing target",
+  "  mount           ~/code/app/.tack/docs/e71e644c-e9f8-42ac-b638-3b7504635ced/",
+  "                  handbook",
+  "  resource        handbook",
+  "  source          agent-setup",
+  "  docs directory  ~/agent-setup/handbook",
+  "  project root    ~/code/app",
+].join("\n");
+
+export const configureOutput = [
+  "tack docs configure · app · ✓ success",
+  "",
+  "Docs settings saved for project app.",
+  "",
+  "  attached  handbook",
+  "  default   handbook",
+].join("\n");
+
+export const checkOutput = [
+  "tack check · ✓ success",
+  "",
+  "Checks 1 · errors 0 · warnings 0",
+  "",
+  "docs ~/agent-setup/handbook/on-call.md",
+  "  Figures (0)",
+  "  Icons (0)",
+  "  Author components (0)",
+  "",
+  "",
+  "Write files, run tack check with the relevant paths, and repeat until clean.",
+].join("\n");
+
+export const searchOutput = [
+  "tack docs search · app · ✓ success",
+  "",
+  "  Query     handover",
+  "  Project   app · ~/code/app",
+  "  Results   1 hit, within the limit of 10",
+  "  Coverage  complete",
+  "",
+  "Hits",
+  "  1. On-call",
+  "     on-call.md · handbook",
+  "     type guide · status active · tags operations",
+  "     ~/agent-setup/handbook/on-call.md:13",
+  "       Handover",
+].join("\n");
+
+# Add a document
+
+A new document needs no sync. The docs mount in a project is a link to the source's folder, so a
+file you write through it lands in the source, and search and the reader see it at once.
+
+This guide adds `on-call.md` to the `handbook` docs of `~/agent-setup`, attached to the project
+`app` as in [Link docs into a project](./link-docs).
+
+## 1. Find where to write
+
+`tack docs target` returns the verified folder for new documents: the mount in the project and the
+source folder it points to. It refuses a mount that is missing, redirected or not Tack's.
+
+<Terminal commands={["tack docs target --project app"]} output={targetOutput} />
+
+With one attached docs resource, that is the target. With several, name the default once, or pass
+`--name handbook` each time:
+
+<Terminal
+  commands={["tack docs configure --project app --default handbook"]}
+  output={configureOutput}
+/>
+
+## 2. Write the file
+
+Write the file into the mount, or straight into `~/agent-setup/handbook`: it is the same folder.
+Start with frontmatter, so search and the reader can filter it:
+
+```markdown
+---
+title: On-call
+type: guide
+status: active
+tags: [operations]
+---
+
+# On-call
+
+The on-call engineer answers pages within fifteen minutes and writes an incident report for every
+outage that users noticed.
+
+## Handover
+
+Hand over on Monday at 10:00 with the open incidents and anything still flaky.
+```
+
+An agent writes docs the same way: it runs `tack docs target`, then writes into the mount. Tack
+creates no document itself and never touches their Git history.
+
+## 3. Check it
+
+`tack check` reads a document's figures, icons and components without a browser, and reports each
+problem by line. Pass the file, or the whole source:
+
+<Terminal commands={["tack check ~/agent-setup/handbook/on-call.md"]} output={checkOutput} />
+
+## 4. Find it
+
+<Terminal commands={['tack docs search "handover" --project app']} output={searchOutput} />
+
+When `tack docs serve` is running, the reader shows the new page as soon as you save it.
+
+## 5. Commit it
+
+The document lives in the source. Commit it there, such as in `~/agent-setup`, and push it if the
+source is shared: every project that attaches `handbook` gets it with the next `git pull`.
+
+## Next
+
+- The built-in `write-reader-figures` skill teaches your agent to add architecture maps, file trees,
+  walkthroughs and charts that `tack check` validates.
+- [Share a fixed set with a profile](./profiles), docs included.

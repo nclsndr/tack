@@ -1,0 +1,179 @@
+---
+title: Remove a source, a project or Tack
+description: Unregister a source or a project with every link Tack made for it, or remove Tack's links and state entirely, and keep your files.
+---
+
+import { Terminal } from "../../../components/terminal.tsx";
+
+export const sourcePreviewOutput = [
+  "tack source remove · source acme · ✓ success",
+  "",
+  "Preview only: nothing was written. 6 to remove, registration to remove.",
+  "",
+  "Source  acme ~/code/acme-agent-skills",
+  "",
+  "Actions",
+  "  − remove  ~/code/app/.agents/skills/commit-message   skill commit-message ·",
+  "                                                       codex",
+  "  − remove  ~/code/app/.agents/skills/incident-report  skill incident-report ·",
+  "                                                       codex",
+  "  − remove  ~/code/app/.agents/skills/release-notes    skill release-notes ·",
+  "                                                       codex",
+  "  − remove  ~/code/app/.claude/skills/commit-message   skill commit-message ·",
+  "                                                       claude",
+  "  − remove  ~/code/app/.claude/skills/incident-report  skill incident-report ·",
+  "                                                       claude",
+  "  − remove  ~/code/app/.claude/skills/release-notes    skill release-notes ·",
+  "                                                       claude",
+  "",
+  "Next",
+  "  tack source remove acme --apply",
+].join("\n");
+
+export const projectPreviewOutput = [
+  "tack project remove · project app · ✓ success",
+  "",
+  "Preview only: nothing was written. 4 to remove.",
+  "",
+  "Actions",
+  "  − remove  ~/code/app/.agents/skills/debug-flaky-test  skill debug-flaky-test ·",
+  "                                                        codex",
+  "  − remove  ~/code/app/.agents/skills/pr-review         skill pr-review · codex",
+  "  − remove  ~/code/app/.claude/skills/debug-flaky-test  skill debug-flaky-test ·",
+  "                                                        claude",
+  "  − remove  ~/code/app/.claude/skills/pr-review         skill pr-review · claude",
+  "",
+  "Registration of 1 project app is removed once all its cleanup settles.",
+  "",
+  "Next",
+  "  tack project remove app --apply",
+].join("\n");
+
+export const projectApplyOutput = [
+  "tack project remove · project app · ✓ success",
+  "",
+  "Applied: 4 removed, project registration removed.",
+].join("\n");
+
+export const resetOutput = [
+  "tack state reset · all managed state · ✓ success",
+  "",
+  "Preview only: nothing was written. 14 to remove.",
+  "",
+  "Scope  every managed link and retained cleanup obligation",
+  "",
+  "Actions",
+  "  − remove  ~/.agents/skills/author-tack-profiles       skill",
+  "                                                        author-tack-profiles ·",
+  "                                                        codex · user",
+  "  − remove  ~/.agents/skills/manage-tack-sources        skill",
+  "                                                        manage-tack-sources ·",
+  "                                                        codex · user",
+  "  − remove  ~/.agents/skills/prepare-tack-checkout      skill",
+  "                                                        prepare-tack-checkout ·",
+  "                                                        codex · user",
+  "  − remove  ~/.agents/skills/use-tack                   skill use-tack · codex ·",
+  "                                                        user",
+  "  − remove  ~/.agents/skills/write-reader-figures       skill",
+  "                                                        write-reader-figures ·",
+  "                                                        codex · user",
+  "  − remove  ~/.claude/skills/author-tack-profiles       skill",
+  "                                                        author-tack-profiles ·",
+  "                                                        claude · user",
+  "  − remove  ~/.claude/skills/manage-tack-sources        skill",
+  "                                                        manage-tack-sources ·",
+  "                                                        claude · user",
+  "  − remove  ~/.claude/skills/prepare-tack-checkout      skill",
+  "                                                        prepare-tack-checkout ·",
+  "                                                        claude · user",
+  "  − remove  ~/.claude/skills/use-tack                   skill use-tack · claude",
+  "                                                        · user",
+  "  − remove  ~/.claude/skills/write-reader-figures       skill",
+  "                                                        write-reader-figures ·",
+  "                                                        claude · user",
+  "  − remove  ~/code/app/.agents/skills/debug-flaky-test  skill debug-flaky-test ·",
+  "                                                        codex · project app",
+  "  − remove  ~/code/app/.agents/skills/pr-review         skill pr-review · codex",
+  "                                                        · project app",
+  "  − remove  ~/code/app/.claude/skills/debug-flaky-test  skill debug-flaky-test ·",
+  "                                                        claude · project app",
+  "  − remove  ~/code/app/.claude/skills/pr-review         skill pr-review · claude",
+  "                                                        · project app",
+  "",
+  "Next",
+  "  tack state reset --apply",
+].join("\n");
+
+# Remove a source, a project or Tack
+
+Removing is a preview first, like every change to links. Tack removes only the links it made and
+its own records. It never deletes a source folder, a repository or a file you made.
+
+This guide uses a machine with Claude Code and Codex, the sources `agent-setup` and `acme`, and the
+project `app`.
+
+## Remove a source
+
+`tack source remove` names the source by its label. The preview lists every link Tack made for its
+skills and commands, in every project and in your user folders, its docs mounts, and the picks and
+docs attachments that name it:
+
+<Terminal commands={["tack source remove acme"]} output={sourcePreviewOutput} />
+
+Apply it with `tack source remove acme --apply`. The folder `~/code/acme-agent-skills` stays; delete
+it yourself if you no longer want it.
+
+A source whose folder is gone has no label: use its ID from `tack source`. The preview also names
+any registered source that still lists the removed one under `depends-on`, because the skills that
+need it stop working.
+
+A project that runs a fixed profile with members from the source keeps the profile: the preview
+marks it `! keep` and lists the members that no longer resolve, and `tack doctor` then fails its
+`profiles` check. Apply a profile without those members first, with `--force`, or remove that
+project.
+
+To keep a source but stop one project from using it, exclude its skills there instead, as
+[Choose what each project gets](./choose-skills) shows.
+
+## Remove a project
+
+`tack project remove` previews removing the links in every worktree of the project, its docs mounts,
+its picks and its docs attachments:
+
+<Terminal commands={["tack project remove app"]} output={projectPreviewOutput} />
+
+<Terminal commands={["tack project remove app --apply"]} output={projectApplyOutput} />
+
+The repository and its worktrees stay as they are. A single worktree you deleted leaves through
+`tack project refresh --apply` instead.
+
+## Remove an agent
+
+`tack adapter disable` removes every link of one agent; see
+[Add or turn off an agent](./agents#turn-an-agent-off).
+
+## Leave Tack
+
+`tack state reset` previews removing every link Tack made, at user level and in every project,
+then all of its state: sources, projects, picks and script history. Your source folders and
+repositories stay.
+
+<Terminal commands={["tack state reset"]} output={resetOutput} />
+
+Apply it with `tack state reset --apply`, then uninstall the package with the package manager that
+installed it, such as `npm uninstall --global @tackup/cli`.
+
+Two things stay. `~/.tack/.env` keeps the script secrets you put there: delete it yourself. The
+agent folders Tack created, such as an empty `~/.agents/skills`, stay too, and a later `tack init`
+treats a folder like `~/.agents` as a sign that the agent is installed.
+
+## When a link cannot be removed
+
+Tack never removes a link by force. When it cannot remove one safely, such as a link whose parent
+folder was replaced, the link stays on record as a pending removal: `tack status`, `tack sync` and
+`tack doctor` report it, and `tack state clean --pending --project app` previews another attempt.
+A project with a pending removal stays registered until it settles.
+
+## Next
+
+- [Check health](./check-health) after a removal.

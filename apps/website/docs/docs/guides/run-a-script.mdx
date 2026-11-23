@@ -1,0 +1,254 @@
+---
+title: Run a script
+description: Declare a TypeScript script in a source, give it editor types, run it by name in a project with arguments and secrets, and read its history.
+---
+
+import { Terminal } from "../../../components/terminal.tsx";
+
+export const typesOutput = [
+  "tack types · ✓ success",
+  "",
+  "  Source  ~/agent-setup",
+  "",
+  "Plan",
+  "  create  ~/agent-setup/tack-env.d.ts",
+  "  create  ~/agent-setup/tsconfig.json",
+  "",
+  "Next",
+  "  tack types /Users/ada/agent-setup --apply",
+].join("\n");
+
+export const showOutput = [
+  "tack script show · ✓ success",
+  "",
+  "  Script       todo-report",
+  "  Description  List the TODO comments in the project.",
+  "  File         /Users/ada/agent-setup/scripts/todo-report.ts",
+  "",
+  "Arguments",
+  "  --tag <string>    default TODO  The marker to look for",
+  "  --limit <number>  default 10    How many comments to list",
+  "",
+  "Secrets",
+  "  ISSUE_TOKEN  from TACK_ISSUE_TOKEN",
+  "",
+  "Next",
+  "  tack script run todo-report",
+].join("\n");
+
+export const missingOutput = [
+  "tack script run · ✗ invalid-configuration",
+  "",
+  "  Run           b2c29747-8dc8-49bc-8471-57e25e2fe606",
+  "  Outcome       ✗ secret_missing at preflight stage (invalid-configuration)",
+  "  Finalization  not started",
+  "  History       full record saved",
+  "",
+  "Logs",
+  "  0 of 0 events kept, 0 B observed",
+  "  Not truncated; the limits are 10000 events and 10 MiB.",
+  "",
+  "Problems",
+  "  ✗ One or more declared secrets are missing or empty.",
+  "    error secret_missing ·",
+  '    {"stage":"preflight","outcome":{"names":["ISSUE_TOKEN"]}}',
+  "",
+  "Next",
+  "  tack script history show b2c29747-8dc8-49bc-8471-57e25e2fe606",
+].join("\n");
+
+export const runOutput = [
+  "Found 2 TODO comments; token <redacted>",
+  "tack script run · ✓ success",
+  "",
+  "  Run           c38776d1-2bf5-4415-9645-2e9e239da693",
+  "  Outcome       ✓ success at output stage",
+  "  Message       The script completed.",
+  "  Finalization  complete",
+  "  History       full record saved",
+  "",
+  "Value",
+  "  {",
+  '    "count": 2,',
+  '    "comments": [',
+  '      "src/cart.ts:1 // TODO: round prices once, at checkout"',
+  "    ]",
+  "  }",
+  "",
+  "Logs",
+  "  1 of 1 event kept, 39 B observed (script 1)",
+  "  Not truncated; the limits are 10000 events and 10 MiB.",
+  "",
+  "Next",
+  "  tack script history show c38776d1-2bf5-4415-9645-2e9e239da693",
+].join("\n");
+
+export const invalidOutput = [
+  "tack script run · ✗ invalid-configuration",
+  "",
+  "  Run           0dea185c-4685-4c2b-946d-49e1f9ef2f56",
+  "  Outcome       ✗ invalid_args at preflight stage (invalid-configuration)",
+  "  Finalization  not started",
+  "  History       full record saved",
+  "",
+  "Logs",
+  "  0 of 0 events kept, 0 B observed",
+  "  Not truncated; the limits are 10000 events and 10 MiB.",
+  "",
+  "Problems",
+  "  ✗ Unknown argument --colour. Arguments: --tag, --limit.",
+  '    --limit must be a number, got "many".',
+  "    error invalid_args · stage preflight",
+  "",
+  "Next",
+  "  tack script history show 0dea185c-4685-4c2b-946d-49e1f9ef2f56",
+].join("\n");
+
+export const historyOutput = [
+  "tack script history · ✓ success",
+  "",
+  "Runs 1-3 of 3, newest first.",
+  "Page: limit 20, offset 0.",
+  "",
+  "  ✗ invalid_args (invalid-configuration)  0dea185c-4685-4c2b-946d-49e1f9ef2f56",
+  "    script todo-report",
+  "    2026-11-23 00:16:30 → 00:16:30 UTC",
+  "  ✓ success  c38776d1-2bf5-4415-9645-2e9e239da693  script todo-report",
+  "    2026-11-23 00:16:27 → 00:16:27 UTC",
+  "  ✗ secret_missing (invalid-configuration)  b2c29747-8dc8-49bc-8471-57e25e2fe606",
+  "    script todo-report",
+  "    2026-11-23 00:16:24 → 00:16:24 UTC",
+  "",
+  "Next",
+  "  tack script history show 0dea185c-4685-4c2b-946d-49e1f9ef2f56",
+].join("\n");
+
+# Run a script
+
+A script is a TypeScript file in a source that you, or your agent, run by name in any registered
+project. Each run gets a fresh worker, only the secrets the script declares, and a record in the
+history. Scripts are never linked into agent folders, so they need no sync.
+
+This guide adds the script `todo-report` to `~/agent-setup` and runs it in the project `app`.
+
+## 1. Write the script
+
+A script default-exports one `defineScript` definition. Tack provides the `@tackup/cli` import when
+it runs the script: never install it in the source.
+
+```ts
+// ~/agent-setup/scripts/todo-report.ts
+import { defineScript } from "@tackup/cli";
+
+export default defineScript({
+  args: {
+    tag: { type: "string", default: "TODO", description: "The marker to look for" },
+    limit: { type: "number", default: 10, description: "How many comments to list" },
+  },
+  secrets: ["ISSUE_TOKEN"],
+  run: async ({ args, secrets, fs, log }) => {
+    const files = await fs.list("src/**/*.ts");
+    const found: string[] = [];
+    for (const file of files) {
+      const lines = (await fs.read(file)).split("\n");
+      lines.forEach((line, index) => {
+        if (line.includes(args.tag)) found.push(`${file}:${index + 1} ${line.trim()}`);
+      });
+    }
+    log.info(`Found ${found.length} ${args.tag} comments; token ${secrets.ISSUE_TOKEN}`);
+    return { count: found.length, comments: found.slice(0, args.limit) };
+  },
+});
+```
+
+The `run` function gets the checked `args`, the declared `secrets`, a `log`, `fs` and `exec` that
+work from the project's root, and a `fail` for an error the person should read. This script logs its
+token only to show that Tack hides it.
+
+## 2. Declare it
+
+Add the script to the source's `tack.yaml` by hand, with a name, its path and a description:
+
+```yaml
+scripts:
+  - name: todo-report
+    path: scripts/todo-report.ts
+    description: List the TODO comments in the project.
+```
+
+Run `tack check ~/agent-setup` to confirm it is catalogued.
+
+## 3. Give your editor the types
+
+`tack types` previews the types of the script API this Tack provides, and a `tsconfig.json` when
+the source has none. Run it from the source folder:
+
+<Terminal commands={["tack types"]} output={typesOutput} />
+
+Apply it with `tack types --apply`, commit both files, and run it again after you upgrade Tack.
+
+## 4. Look before you run
+
+`tack script show` loads the script in a worker, without running it, and prints its arguments and
+secrets:
+
+<Terminal commands={["tack script show todo-report"]} output={showOutput} />
+
+## 5. Give it its secret
+
+A declared secret comes from `TACK_<NAME>`: the environment of the command, or else the `.env` file
+in Tack's state folder, `~/.tack/.env`. Without it the run stops before the script starts:
+
+<Terminal commands={["tack script run todo-report --project app"]} output={missingOutput} />
+
+Open `~/.tack/.env` in your editor and add a line for the secret. `tack init` created the file, and
+only you can read it:
+
+```text
+TACK_ISSUE_TOKEN=example-token-123
+```
+
+For one run, or on a CI runner, set it in the environment instead. A value there wins over the file:
+
+```sh
+TACK_ISSUE_TOKEN=example-token-123 tack script run todo-report --project app
+```
+
+## 6. Run it
+
+Pass the script's arguments after `--`. The script's log lines come first, on standard error, then
+the result. The token shows as `<redacted>` in logs, results and history:
+
+<Terminal
+  commands={["tack script run todo-report --project app -- --limit 1"]}
+  output={runOutput}
+/>
+
+Tack checks every argument before the script runs, and reports every problem at once:
+
+<Terminal
+  commands={["tack script run todo-report --project app -- --limit many --colour red"]}
+  output={invalidOutput}
+/>
+
+`--input-json '{"limit":1}'` passes the same arguments as JSON, and `--timeout 30000` stops a run
+after 30 seconds and waits for its cleanup.
+
+A run has one folder to work in. Once the project has several worktrees, `--project app` stops with
+`run_target_not_unique`: name the worktree with `--root ~/code/app` instead, or run the script from
+inside the worktree with no target flag.
+
+## 7. Read the history
+
+Every run, failed or not, is on record with its input, logs and outcome:
+
+<Terminal commands={["tack script history"]} output={historyOutput} />
+
+`tack script history show RUN_ID` prints one run in full. `tack script history clear` previews
+deleting the records, and `--apply` deletes them.
+
+## Next
+
+- The built-in `manage-tack-sources` skill holds the full script reference: every argument type,
+  `exec`, `fs` and outcome.
+- [Share a fixed set with a profile](./profiles), which can carry scripts to another machine.

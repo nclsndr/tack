@@ -1,0 +1,209 @@
+---
+title: Features
+description: Everything Tack does, in the six parts of the features page - sources, agents, projects, docs, scripts and profiles - with the command for each and every agent Tack reaches.
+---
+
+# Features
+
+Tack keeps your skills, commands, docs and scripts in folders you own and links them wherever your
+coding agents look. This page lists every feature in the six parts of the
+[features page](/features), with the command that shows it. The [guides](./guides/add-a-source)
+walk through each task from start to end.
+
+## Sources
+
+**Write it once, in a folder you own.** A source is a folder with a `tack.yaml`, under your own
+version control. It holds skills, commands, context, docs and scripts. Tack reads it where it is and
+moves nothing. Keep it in a Git repository and your team shares it: each teammate clones it and
+registers it, and edits arrive with their own `git pull`.
+
+| Feature                    | What it does                                                                                                                                     | Command                                                          |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| Set up the machine         | Creates Tack's state, enables the agents it finds in your home and links the built-in skills. Safe to repeat, and the one step after an upgrade. | `tack init`                                                      |
+| Register a source          | Registers a folder that has a `tack.yaml` at once.                                                                                               | `tack source add ~/agent-setup`                                  |
+| Draft a `tack.yaml`        | Name the folders that hold each kind. Tack previews the `tack.yaml` it would write; `--apply` writes it and registers the source.                | `tack source add ~/agent-setup --skills skills`                  |
+| Collections                | A folder of skill folders, of commands or of docs registers as one collection with `--skills .`, `--commands .` or `--docs .`.                   | `tack source add ~/skills --skills .`                            |
+| Import from GitHub         | Copies the skills you choose into a source you own and records where they came from. The only command that reaches the network.                  | `tack import add github:org/repo --skill pdf --into agent-setup` |
+| Dependencies               | A skill can declare the skills and commands it needs, in its own source or in a source its source depends on. Selecting it brings them along.    |                                                                  |
+| Context, catalogued        | Rules and notes in a source show in `tack catalog` and can be picked, but no agent receives context yet.                                         |                                                                  |
+| Check before use           | Reads sources, profiles, bundles and docs without state, network or running your code, and reports each problem by file and line.                | `tack check ~/agent-setup`                                       |
+| Move the folder            | Points a registered source at its new folder. Every pick stays, and the next sync points the links at the new folder.                            | `tack source relocate ID PATH`                                   |
+| See what the sources offer | Lists every skill, command, context item, script and docs resource, with its source.                                                             | `tack catalog`                                                   |
+
+Guides: [Add a source](./guides/add-a-source), [Get a teammate's new skill](./guides/team-source),
+[Write a skill](./guides/write-a-skill), [Import skills from GitHub](./guides/import-skills),
+[Move an existing setup into Tack](./guides/migrate), [Onboard a team](./guides/team-onboarding).
+
+## Agents
+
+**One skill, in every agent's folder.** Each coding agent looks for skills in its own folder. Tack
+links one skill folder into each of them, so an edit reaches every agent at once.
+
+Tack has an adapter for eight agents. `tack init` enables each one whose folder exists in your
+home; `tack adapter enable` adds one later. Every adapter links skills. Cline, Cursor, OpenCode and
+Pi also link commands, as the same Markdown file: Cline calls them workflows and runs one as
+`/NAME.md`, and Pi calls them prompt templates. Claude Code, Codex, GitHub Copilot CLI and Gemini
+CLI get skills only.
+
+| Agent (adapter)                | Project skills     | User skills                 | Project commands        | User commands                 |
+| ------------------------------ | ------------------ | --------------------------- | ----------------------- | ----------------------------- |
+| Claude Code (`claude`)         | `.claude/skills`   | `~/.claude/skills`          | none                    | none                          |
+| Cline (`cline`)                | `.cline/skills`    | `~/.cline/skills`           | `.clinerules/workflows` | `~/Documents/Cline/Workflows` |
+| Codex (`codex`)                | `.agents/skills`   | `~/.agents/skills`          | none                    | none                          |
+| GitHub Copilot CLI (`copilot`) | `.github/skills`   | `~/.copilot/skills`         | none                    | none                          |
+| Cursor (`cursor`)              | `.cursor/skills`   | `~/.cursor/skills`          | `.cursor/commands`      | `~/.cursor/commands`          |
+| Gemini CLI (`gemini`)          | `.gemini/skills`   | `~/.gemini/skills`          | none                    | none                          |
+| OpenCode (`opencode`)          | `.opencode/skills` | `~/.config/opencode/skills` | `.opencode/commands`    | `~/.config/opencode/commands` |
+| Pi (`pi`)                      | `.pi/skills`       | `~/.pi/agent/skills`        | `.pi/prompts`           | `~/.pi/agent/prompts`         |
+
+`tack init` finds an agent by its home folder: `~/.claude`, `~/.cline` or `~/Documents/Cline`,
+`~/.codex` or `~/.agents`, `~/.copilot`, `~/.cursor`, `~/.gemini`, `~/.config/opencode` and `~/.pi`.
+
+Several agents also read another agent's folder. OpenCode reads `.claude/skills` and
+`.agents/skills`; Pi, Gemini CLI and Copilot CLI read `.agents/skills`; Copilot CLI and Cline also
+read `.claude/skills`. A skill that the Claude Code or Codex adapter links can then show up twice
+in those agents. An open agent session can need a restart, or `/reload` in Pi, to see a new link.
+
+| Feature                  | What it does                                                                                                              | Command                           |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| Add an agent             | Enables an adapter; the next sync links every skill you already use into its folder.                                      | `tack adapter enable opencode pi` |
+| Turn an agent off        | Previews removing the adapter's links. Tack removes only the links it made.                                               | `tack adapter disable cursor`     |
+| For you or for a project | A pick with `--user` reaches every project through your home folders; a pick with `--project` reaches one project.        | `tack pick include review --user` |
+| Your agent runs Tack     | Every enabled agent gets the built-in skills, `use-tack` among them. The onboarding guide gives an agent the setup steps. | `tack guide onboarding`           |
+
+### More agents, through folders they share
+
+These agents have no adapter of their own, but their own docs or source say they read skills from a
+folder an adapter already fills: `.agents/skills`, from the Codex adapter, or `.claude/skills`, from
+the Claude Code adapter. Enable that adapter and they get your skills. They get skills only;
+commands reach an agent only through its own adapter. "Project and user" means the agent reads the
+project folder and the one in your home.
+
+| Agent                                                                                                                | Folder           | Reads it at                                                          |
+| -------------------------------------------------------------------------------------------------------------------- | ---------------- | -------------------------------------------------------------------- |
+| [Amp](https://ampcode.com/docs/markdown/customize/skills)                                                            | `.agents/skills` | Project and user, also `.claude/skills`                              |
+| [Antigravity](https://antigravity.google/docs/skills.md)                                                             | `.agents/skills` | Project only                                                         |
+| [Auggie](https://docs.augmentcode.com/cli/skills.md)                                                                 | `.agents/skills` | Project and user, also `.claude/skills`                              |
+| [Continue](https://github.com/continuedev/continue/blob/main/extensions/cli/src/util/loadMarkdownSkills.ts)          | `.claude/skills` | Project only                                                         |
+| [Crush](https://github.com/charmbracelet/crush#agent-skills)                                                         | `.agents/skills` | Project and user, also `.claude/skills`                              |
+| [Devin CLI and Devin Desktop (Windsurf)](https://docs.devin.ai/cli/extensibility/skills/overview.md)                 | `.agents/skills` | Project and user                                                     |
+| [Factory Droid](https://docs.factory.com/harness/skills.md)                                                          | `.agents/skills` | Project and user                                                     |
+| [Goose](https://github.com/aaif-goose/goose/blob/main/documentation/docs/guides/context-engineering/using-skills.md) | `.agents/skills` | Project and user, also `.claude/skills`                              |
+| [Grok Build](https://docs.x.ai/build/features/skills-plugins-marketplaces)                                           | `.agents/skills` | User only                                                            |
+| [Hermes Agent](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/skills.md)    | `.agents/skills` | Project only, after `hermes skills trust`                            |
+| [Junie](https://junie.jetbrains.com/docs/agent-skills.html)                                                          | `.agents/skills` | Project and user, project in a trusted project                       |
+| [Kilo Code](https://github.com/Kilo-Org/kilocode/blob/main/packages/kilo-docs/pages/customize/skills.md)             | `.agents/skills` | User only, Kilo refuses project links that point outside the project |
+| [Letta Code](https://github.com/letta-ai/letta-code/blob/main/src/agent/skills.ts)                                   | `.agents/skills` | Project only                                                         |
+| [Mistral Vibe](https://docs.mistral.ai/vibe/code/cli/skills)                                                         | `.agents/skills` | Project and user, project in a trusted folder                        |
+| [OpenClaw](https://github.com/openclaw/openclaw/blob/main/docs/tools/skills.md)                                      | `.agents/skills` | Project and user                                                     |
+| [OpenHands](https://docs.openhands.dev/overview/skills.md)                                                           | `.agents/skills` | Project and user                                                     |
+| [Qwen Code](https://github.com/QwenLM/qwen-code/blob/main/docs/users/features/skills.md)                             | `.agents/skills` | Project and user                                                     |
+| [Warp](https://docs.warp.dev/agents/capabilities/skills/)                                                            | `.agents/skills` | Project and user, also `.claude/skills`                              |
+| [Zed](https://zed.dev/docs/ai/skills.md)                                                                             | `.agents/skills` | Project and user, project in a trusted worktree                      |
+
+An agent marked "Project only" sees your skills only through a project's links, and one marked
+"User only" only through the links in your home, so pick a skill with `--user` for it. Vendors move
+these folders often: read the agent's own docs before you rely on one.
+
+[Agent support](./agent-support) puts every agent in one table, with what it gets for a project and
+for you. Guides: [Add or turn off an agent](./guides/agents),
+[Choose what each project gets](./guides/choose-skills).
+
+## Projects
+
+**Each project picks its own. Every worktree follows.** Register a Git repository once and Tack
+finds its worktrees. Include or exclude skills for that project, and every worktree gets the same
+links. `tack sync --all` previews the changes for every project and for you before it writes.
+
+| Feature                   | What it does                                                                                                                          | Command                                      |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Register a project        | Records the Git repository in the current folder and every worktree it has, so `--project app` works from any folder. Writes no link. | `tack project add app`                       |
+| Pick for one project      | Includes or excludes a resource for one project. An explicit pick always wins over the skill's default.                               | `tack pick include review --project app`     |
+| Preview, then link        | Plans every link the picks call for; `--apply` writes them.                                                                           | `tack sync --project app`                    |
+| New worktree, same setup  | After you add a worktree, refresh the project and the next sync links it like the others.                                             | `tack project refresh --project app --apply` |
+| Browse and pick           | Lists every resource with its state in the project, in the terminal. Stage picks and docs, review the sync, then apply.               | `tack explore --project app`                 |
+| Skills that choose        | A skill can be on by default or opt-in, and can limit its default to named projects.                                                  |                                              |
+| Every link, accounted for | Shows each link's health. A file you made by hand is listed and left alone. `--details` prints the lines for `.gitignore`.            | `tack status --project app`                  |
+| Setup for `AGENTS.md`     | Prints a section for the repository's `AGENTS.md`, so an agent in a fresh clone links the repository's skills before it starts.       | `tack guide agent-instructions`              |
+
+Guides: [Choose what each project gets](./guides/choose-skills), [Add a worktree or clone](./guides/worktrees).
+
+## Docs
+
+**Docs your agents can search and you can read.** Attach a source's docs to a project, then sync:
+every worktree gets them under `.tack/docs`, as links to the one copy you maintain. Agents search
+them from the terminal. You read them in a local reader that reloads when you save.
+
+| Feature           | What it does                                                                                                                                                    | Command                                            |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Attach docs       | Attaches a source's docs to a project; the next `sync` mounts them in every worktree.                                                                           | `tack docs attach handbook --project app`          |
+| Search            | Each hit names its file and the lines it came from, without starting a server.                                                                                  | `tack docs search "release process" --project app` |
+| A local reader    | One view of every attached source, with search, metadata filters and an Open in editor menu for Zed, Cursor and VSCode.                                         | `tack docs serve --project app`                    |
+| Where to write    | Gives an agent the verified folder to write new documents into.                                                                                                 | `tack docs target --project app`                   |
+| Copy with sources | The reader copies a passage as rendered text with its source lines, as raw Markdown, or as references only.                                                     |                                                    |
+| Figures           | Docs can draw architecture maps, systems, schemas, file trees, walkthroughs and charts; the built-in `write-reader-figures` skill teaches agents to write them. |                                                    |
+| Checked like code | Reads a document's figures and components without a browser and reports each issue by line.                                                                     | `tack check docs/architecture.mdx`                 |
+
+Guides: [Link docs into a project](./guides/link-docs), [Add a document](./guides/write-a-document).
+
+## Scripts
+
+**Scripts, run by name, with only the secrets they declare.** Declare a TypeScript script in your
+source and run it by name in any registered project. Each run gets a fresh worker and only the
+secrets the script declares, and leaves a history.
+
+| Feature              | What it does                                                                                             | Command                                                  |
+| -------------------- | -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Run by name          | Runs a declared script in a project; its arguments follow `--`.                                          | `tack script run report --project app -- --repo org/app` |
+| See before you run   | Prints a script's arguments and secrets. It loads the script but never runs it.                          | `tack script show report`                                |
+| Secrets, redacted    | Values come from `TACK_<NAME>` in Tack's `.env` or your environment. Logs and results show `<redacted>`. |                                                          |
+| Every run, on record | History keeps each run's input, logs and outcome until you clear it.                                     | `tack script history`                                    |
+| Typed in your editor | Writes the script API's types into the source, from the Tack you run.                                    | `tack types ~/agent-setup --apply`                       |
+| Stops on time        | `--timeout` interrupts a run and waits for its cleanup.                                                  | `tack script run report --project app --timeout 30000`   |
+
+Guide: [Run a script](./guides/run-a-script).
+
+## Profiles
+
+**The exact same set, for a teammate, a CI runner or a remote agent.** A profile is a file in your
+source that lists the exact resources a project gets. You review it like any other change. Each
+teammate or runner applies it themselves, and a bundle carries it to a machine without the source.
+
+| Feature            | What it does                                                                                                        | Command                                                                         |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Save what you use  | Copies the set you use now, defaults and picks, into a profile file, after a preview.                               | `tack profile save ~/agent-setup reviewer --project app`                        |
+| A fixed set        | Previews the profile's exact list at one explicit target; `--apply` writes it, and ordinary picks cannot change it. | `tack profile apply agent-setup:reviewer --project ci --target-root ~/ci/app`   |
+| One file to carry  | Previews, then packs the profile's files into one `.tar.gz` with checksums. No code, hook or installer runs.        | `tack profile export agent-setup:reviewer reviewer.tar.gz`                      |
+| Look inside        | Reads a bundle's inventory before you apply it; `tack check` validates it.                                          | `tack profile inspect-bundle reviewer.tar.gz`                                   |
+| A fresh machine    | Links the same set on a CI runner or in a container, without the original source and without fetching anything.     | `tack profile apply-bundle reviewer.tar.gz --project ci --target-root ~/ci/app` |
+| Visible everywhere | `tack status` and `tack doctor` show the profile a project runs, with its links.                                    |                                                                                 |
+
+Guide: [Share a fixed set with a profile](./guides/profiles).
+
+## Under everything
+
+| Rule                       | What it means                                                                                                                                                                                                                        | Command            |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------ |
+| Preview first              | Commands that change links, or write into your source, print their plan first; `--apply`, or your yes in `tack explore`, writes it. Picks, registrations and settings save at once and link nothing. Only `tack init` links at once. | `tack sync --all`  |
+| Each problem names its fix | Checks the whole machine; every problem ends with the command that fixes it.                                                                                                                                                         | `tack doctor`      |
+| Leave without a trace      | `tack state reset --apply` removes every link Tack made and its state. Your files stay.                                                                                                                                              | `tack state reset` |
+| Links, never copies        | Tack records every link it makes and removes only those. Files it did not make stay where they are.                                                                                                                                  |                    |
+| Local and quiet            | Tack calls no model and has no telemetry. It reaches the network only for `tack import add`.                                                                                                                                         |                    |
+| Built for agents too       | Views end with the next command to run, and `--json` gives programs a stable contract for status, sync, doctor and upgrade.                                                                                                          |                    |
+
+Guides: [Check health](./guides/check-health), [Remove a source, a project or Tack](./guides/remove).
+
+## What Tack does not do yet
+
+- **Deliver context.** Tack catalogues context, and `sync` and `status` say so: no agent receives
+  it yet.
+- **Commands for every agent.** Commands reach Cline, Cursor, OpenCode and Pi. Claude Code, Codex,
+  GitHub Copilot CLI and Gemini CLI get skills only.
+- **Deliver without symbolic links.** Every delivery is a symbolic link, with no copy as a fallback.
+  Windows is untested.
+
+## What Tack does not do
+
+- **Pull for you.** Teammates run `git pull`; Tack links what is on disk.
+- **Convert skills.** Every agent gets a link to the same `SKILL.md` folder.
+- **Host anything.** No hosted service and no account: the docs reader runs on your machine.

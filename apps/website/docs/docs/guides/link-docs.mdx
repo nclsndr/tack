@@ -1,0 +1,183 @@
+---
+title: Link docs into a project
+description: Declare a folder of docs in a source, attach it to a project, mount it in every worktree, then search it and read it in the local reader.
+---
+
+import { Terminal } from "../../../components/terminal.tsx";
+
+export const attachOutput = [
+  "tack docs attach · app · ✓ success",
+  "",
+  "Docs attach saved for project app; it has 1 attached resource.",
+  "",
+  "  attached  handbook",
+  "",
+  "Next",
+  "  tack sync --no-adapters --project app",
+].join("\n");
+
+export const syncOutput = [
+  "tack sync · project app · ✓ success",
+  "",
+  "Preview only: nothing was written. 1 docs link to create.",
+  "",
+  "Docs links",
+  "  + create  ~/code/app/.tack/docs/e71e644c-e9f8-42ac-   docs handbook · project",
+  "            b638-3b7504635ced/handbook                  app",
+  "",
+  "Next",
+  "  tack sync --project app --no-adapters --apply",
+].join("\n");
+
+export const applyOutput = [
+  "tack sync · project app · ✓ success",
+  "",
+  "Applied: 1 docs link created.",
+  "",
+  "Docs links",
+  "  ✓ applied  create  ~/code/app/.tack/docs/e71e644c-    docs handbook · project",
+  "                     e9f8-42ac-b638-3b7504635ced/       app",
+  "                     handbook",
+].join("\n");
+
+export const docsOutput = [
+  "tack docs · project app · ✓ success",
+  "",
+  "  root             ~/code/app",
+  "  destination      default",
+  "  default writing  none set",
+  "",
+  "Attached docs 1 resource",
+  "  ✓ available  handbook",
+  "    source                  agent-setup",
+  "    source path             ~/agent-setup",
+  "    docs                    ~/agent-setup/handbook",
+  "    reader config (source)  ~/agent-setup/tack.yaml",
+  "",
+  "  documents  1",
+  "  coverage   complete",
+  "",
+  "Mounts managed writing links",
+  "  ✓ mounted  handbook",
+  "    path  ~/code/app/.tack/docs/e71e644c-e9f8-42ac-b638-3b7504635ced/handbook",
+  "",
+  "Next",
+  "  tack docs target --project app",
+].join("\n");
+
+export const searchOutput = [
+  "tack docs search · app · ✓ success",
+  "",
+  "  Query     hotfix",
+  "  Project   app · ~/code/app",
+  "  Results   1 hit, within the limit of 10",
+  "  Coverage  complete",
+  "",
+  "Hits",
+  "  1. Release process",
+  "     release-process.md · handbook",
+  "     type guide · status active · tags release",
+  "     ~/agent-setup/handbook/release-process.md:13",
+  "       Hotfixes",
+  "     ~/agent-setup/handbook/release-process.md:15",
+  "       A hotfix branches from the last tag and is released the same day.",
+].join("\n");
+
+export const serveOutput = [
+  "tack docs serve · app · ✓ success",
+  "",
+  "Reader ready",
+  "  URL      http://127.0.0.1:4173",
+  "  Project  app",
+  "  Root     ~/code/app",
+  "",
+  "Serving the attached docs in the foreground until interrupted.",
+].join("\n");
+
+# Link docs into a project
+
+Docs live in a source, like skills. Attach them to a project and every worktree of the project gets
+a link to them under `.tack/docs`, so your agents read and search the same files you edit. You read
+them in a local reader.
+
+This guide links the `handbook` folder of `~/agent-setup` into the project `app`.
+
+## 1. Declare the docs
+
+A source declares each docs folder by name in its `tack.yaml`. `tack source add --docs handbook`
+writes this entry for you, as [Add a source](./add-a-source) shows; in an existing `tack.yaml`, add
+it by hand:
+
+```yaml
+docs:
+  - name: handbook
+    path: handbook
+```
+
+Any Markdown or MDX file in the folder is a document. Frontmatter such as `title`, `type`, `status`
+and `tags` shows in search hits and in the reader's filters:
+
+```markdown
+---
+title: Release process
+type: guide
+status: active
+tags: [release]
+---
+```
+
+## 2. Attach and mount
+
+Attach the docs to the project. Like a pick, this saves at once and links nothing:
+
+<Terminal commands={["tack docs attach handbook --project app"]} output={attachOutput} />
+
+`--no-adapters` limits the sync to docs, so the preview shows only the mount:
+
+<Terminal commands={["tack sync --project app --no-adapters"]} output={syncOutput} />
+
+<Terminal commands={["tack sync --project app --no-adapters --apply"]} output={applyOutput} />
+
+A plain `tack sync --project app` plans the docs mounts and the agent links together. The path
+holds the source's registration ID, so two sources can each have a `handbook`.
+
+The mount is a link to a folder on your machine, and its path differs on every machine, so Git shows
+`.tack/` as untracked. Ignore it in the repository's `.gitignore`; `tack status --details` does not
+list it among the lines it prints for agent links:
+
+```text
+/.tack/
+```
+
+## 3. See what is attached
+
+<Terminal commands={["tack docs --project app"]} output={docsOutput} />
+
+## 4. Search
+
+`tack docs search` reads every attached document without starting a server. Each hit names the
+file and the lines it came from, so an agent can open the exact passage:
+
+<Terminal commands={['tack docs search "hotfix" --project app']} output={searchOutput} />
+
+Narrow it with `--type`, `--status`, `--tag` and `--limit`.
+
+## 5. Read in the browser
+
+`tack docs serve` starts the reader and opens it in your browser. It shows every attached source in
+one view, with search and metadata filters, and reloads when you save a file. It runs until you
+press Ctrl+C.
+
+<Terminal commands={["tack docs serve --project app"]} output={serveOutput} />
+
+`--port` picks the port, and `--no-open` keeps the browser closed.
+
+## Detach
+
+`tack docs detach handbook --project app` forgets the attachment. The next
+`tack sync --project app --no-adapters --apply` removes the mounts; your docs stay where they are.
+
+## Next
+
+- [Add a document](./write-a-document) through the mount.
+- The built-in `write-reader-figures` skill teaches your agent to draw figures in docs.

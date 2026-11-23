@@ -1,0 +1,185 @@
+---
+title: Get a teammate's new skill
+description: Pull a team source after a teammate adds a skill, see what changed and link the new skill into your projects.
+---
+
+import { Terminal } from "../../../components/terminal.tsx";
+
+export const statusOutput = [
+  "tack status · project app · ! partial",
+  "",
+  "Destinations 13 linked, 3 need attention",
+  "  missing  codex   app:.agents/skills/release-notes  skill release-notes",
+  "  missing  claude  app:.claude/skills/release-notes  skill release-notes",
+  "  missing  cursor  app:.cursor/skills/release-notes  skill release-notes",
+  "",
+  "  Adapters  claude, codex, cursor",
+  "  Sources   3 sources, all healthy",
+  "  Catalog   12 resources",
+  "  Projects  app (1 root)",
+  "  State     ~/.tack",
+  "",
+  "Next",
+  "  tack sync --project app",
+  "  tack sync --project app --apply",
+].join("\n");
+
+export const syncOutput = [
+  "tack sync · all projects and user · ✓ success",
+  "",
+  "Nothing was written. 3 changes planned.",
+  "",
+  "claude → app · 1 to link",
+  "  create  .claude/skills/release-notes  skill release-notes",
+  "",
+  "codex → app · 1 to link",
+  "  create  .agents/skills/release-notes  skill release-notes",
+  "",
+  "cursor → app · 1 to link",
+  "  create  .cursor/skills/release-notes  skill release-notes",
+  "",
+  "claude → user · up to date",
+  "",
+  "codex → user · up to date",
+  "",
+  "cursor → user · up to date",
+  "",
+  "Commands reach cursor only: Tack does not link commands for claude, codex.",
+  "",
+  "Preview only: nothing was written. There are no docs links to reconcile.",
+  "",
+  "Next",
+  "  tack sync --all --apply",
+].join("\n");
+
+export const applyOutput = [
+  "tack sync · all projects and user · ✓ success",
+  "",
+  "Applied 6 units: 3 actions applied, 0 failed, 0 skipped.",
+  "",
+  "claude → app · 1 to link",
+  "  applied  create  .claude/skills/release-notes  skill release-notes",
+  "",
+  "codex → app · 1 to link",
+  "  applied  create  .agents/skills/release-notes  skill release-notes",
+  "",
+  "cursor → app · 1 to link",
+  "  applied  create  .cursor/skills/release-notes  skill release-notes",
+  "",
+  "claude → user · up to date",
+  "",
+  "codex → user · up to date",
+  "",
+  "cursor → user · up to date",
+  "",
+  "Commands reach cursor only: Tack does not link commands for claude, codex.",
+  "",
+  "Applied. There are no docs links to reconcile.",
+].join("\n");
+
+export const removedOutput = [
+  "tack sync · all projects and user · ✓ success",
+  "",
+  "Nothing was written. 2 changes planned.",
+  "",
+  "claude → app · 1 to remove",
+  "  remove  .claude/skills/incident-report  skill acme:incident-report ·",
+  "                                          source-missing",
+  "",
+  "codex → app · 1 to remove",
+  "  remove  .agents/skills/incident-report  skill acme:incident-report ·",
+  "                                          source-missing",
+  "",
+  "claude → user · up to date",
+  "",
+  "codex → user · up to date",
+  "",
+  "Commands reach no agent here: Tack does not link commands for claude, codex.",
+  "",
+  "Preview only: nothing was written. There are no docs links to reconcile.",
+  "",
+  "Next",
+  "  tack sync --all --apply",
+].join("\n");
+
+export const linksOutput = [
+  "commit-message -> ../../../acme-agent-skills/commit-message",
+  "debug-flaky-test -> ../../../../agent-setup/skills/debug-flaky-test",
+  "incident-report -> ../../../acme-agent-skills/incident-report",
+  "pr-review -> ../../../../agent-setup/skills/pr-review",
+  "release-notes -> ../../../acme-agent-skills/release-notes",
+].join("\n");
+
+# Get a teammate's new skill
+
+A team source is a Git repository that each teammate clones and registers once, as in
+[Add a source](./add-a-source). Tack never pulls for you: it links what is on disk. So a change from
+a teammate reaches you in two steps, `git pull` and, for a new skill, `tack sync`.
+
+This guide uses the team source `acme` at `~/code/acme-agent-skills`, registered on this machine,
+and the project `app`. A teammate has pushed a new skill, `release-notes`.
+
+## 1. Pull the source
+
+```sh
+cd ~/code/acme-agent-skills
+git pull
+```
+
+An edit to a skill you already have is now live in every agent: each link points at the folder you
+just pulled, so there is nothing more to do.
+
+## 2. See what is missing
+
+A new skill has no link yet. `tack status` names it for each agent of the project:
+
+<Terminal commands={["tack status --project app"]} output={statusOutput} />
+
+`tack catalog` lists it among the skills of `acme`, with its description.
+
+## 3. Preview and apply the sync
+
+The new skill follows its source's activation: a skill without Tack metadata is on by default, so
+every project that uses the source gets it. Preview every project and your user folders at once:
+
+<Terminal commands={["tack sync --all"]} output={syncOutput} />
+
+The preview shows only what changes. Apply it:
+
+<Terminal commands={["tack sync --all --apply"]} output={applyOutput} />
+
+Each agent's folder in the project now holds a link back to the team repository:
+
+<Terminal commands={["ls -l ~/code/app/.claude/skills"]} output={linksOutput} />
+
+When the new skill is opt-in, the preview plans nothing for it: include it where you want it, as
+[Choose what each project gets](./choose-skills) shows.
+
+## When a teammate deletes a skill
+
+After the pull, the links to a deleted skill point at nothing. The same `tack sync --all` preview
+removes them, with the reason `source-missing`. Here, on a machine with Claude Code and Codex, a
+teammate deleted `incident-report`:
+
+<Terminal commands={["tack sync --all"]} output={removedOutput} />
+
+Apply it with `tack sync --all --apply`. A renamed skill shows up the same way: the old name's links
+go, with `source-missing`, and the new name's links are created.
+
+A pick names a skill by its name, so a pick on the old name no longer applies after a rename. If you
+had included or excluded the skill, `tack pick` still lists the old name: pick the new name, such as
+`tack pick include incident --project app`, and forget the old one with
+`tack pick remove incident-report --project app`.
+
+## When the project ignores its links
+
+A link is a file to Git. When a project ignores its links instead of committing them, each new skill
+needs its own line in `.gitignore`. `tack status --project app --details` prints the lines under
+"For .gitignore in project app"; add the new ones. Tack never edits `.gitignore`.
+
+## Next
+
+- [Write a skill](./write-a-skill) and share it the same way: commit it, push it, and your
+  teammates follow this guide.
+- [Share a fixed set with a profile](./profiles) when every teammate must get exactly the same
+  skills.

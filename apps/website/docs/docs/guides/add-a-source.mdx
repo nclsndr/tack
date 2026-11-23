@@ -1,0 +1,202 @@
+---
+title: Add a source
+description: Register a folder of skills, commands and docs as a Tack source, with or without a tack.yaml, check it and deliver it to every project.
+---
+
+import { Terminal } from "../../../components/terminal.tsx";
+
+export const previewOutput = [
+  "tack source add · ✓ success",
+  "",
+  "Would create ~/agent-setup/tack.yaml and register source agent-setup.",
+  "No files or state changed.",
+  "",
+  "  version: 1",
+  "  skills:",
+  "    - path: skills",
+  "  commands:",
+  "    - path: commands",
+  "  docs:",
+  "    - name: handbook",
+  "      path: handbook",
+  "",
+  "skills skills · 2 skills",
+  "  debug-flaky-test, pr-review",
+  "",
+  "commands commands · 1 command",
+  "  ship",
+  "",
+  "docs handbook · 1 docs",
+  "  handbook",
+  "",
+  "Next",
+  "  tack source add /Users/ada/agent-setup --skills skills --commands commands \\",
+  "    --docs handbook --apply",
+].join("\n");
+
+export const applyOutput = [
+  "tack source add · ✓ success",
+  "",
+  "Created ~/agent-setup/tack.yaml. Registered source agent-setup (~/agent-setup).",
+  "",
+  "  id    e71e644c-e9f8-42ac-b638-3b7504635ced",
+  "  docs  handbook",
+  "",
+  "2 skills · 1 command · 0 context · 0 scripts · 1 docs",
+  "",
+  "Next",
+  "  tack project add NAME --repository-cwd PATH",
+].join("\n");
+
+export const teamOutput = [
+  "tack source add · ✓ success",
+  "",
+  "Registered source acme (~/code/acme-agent-skills).",
+  "",
+  "  id  46879f27-1f77-4d63-a6b3-8f028bd4cd9b",
+  "",
+  "2 skills · 0 commands · 0 context · 0 scripts · 0 docs",
+  "",
+  "Next",
+  "  tack project add NAME --repository-cwd PATH",
+].join("\n");
+
+export const checkOutput = [
+  "tack check · ✓ success",
+  "",
+  "Checks 2 · errors 0 · warnings 0",
+  "",
+  "source ~/agent-setup",
+  "  skill: 2",
+  "  command: 1",
+  "  context: 0",
+  "  script: 0",
+  "  docs: 1",
+  "",
+  "docs ~/agent-setup/handbook/release-process.md",
+  "  Figures (0)",
+  "  Icons (0)",
+  "  Author components (0)",
+  "",
+  "",
+  "Write files, run tack check with the relevant paths, and repeat until clean.",
+].join("\n");
+
+# Add a source
+
+A source is a folder you own that holds skills, commands, context, docs or scripts, with a
+`tack.yaml` at its top that says where each kind lives. Tack reads the folder where it is: it
+never moves or copies your files. Register each folder once; every project then picks from it.
+
+Run `tack init` once first, as [Get started](../getting-started) shows. It creates Tack's state and
+enables the agents it finds; without it, applying a new `tack.yaml` stops with
+`state-not-initialized`, and a sync has no agent to link into.
+
+This guide registers two sources: `~/agent-setup`, a folder of your own without a `tack.yaml`, and
+`~/code/acme-agent-skills`, a team repository that already has one.
+
+## A folder without a tack.yaml
+
+Say your folder looks like this:
+
+```text
+~/agent-setup
+├── commands/ship.md
+├── handbook/release-process.md
+└── skills
+    ├── debug-flaky-test/SKILL.md
+    └── pr-review/SKILL.md
+```
+
+Name each folder by what it holds: `--skills`, `--commands`, `--context` or `--docs`, each a path
+inside the source. Tack previews the `tack.yaml` it would write and what each folder holds, and
+changes nothing:
+
+<Terminal
+  commands={["tack source add ~/agent-setup --skills skills --commands commands --docs handbook"]}
+  output={previewOutput}
+/>
+
+Check that every skill, command and docs folder you expect is listed, with no `error:` line under
+it: a file that does not parse is left out, and the preview can still read `✓ success`. Then apply
+it: Tack writes the `tack.yaml` and
+registers the source.
+
+<Terminal
+  commands={[
+    "tack source add ~/agent-setup --skills skills --commands commands --docs handbook --apply",
+  ]}
+  output={applyOutput}
+/>
+
+Run `tack source add ~/agent-setup` without any flag and Tack refuses with
+`declaration-flags-required`. Its `Next` names `--skills` and `--commands` for the folders it
+recognises by name, here `skills` and `commands`; add `--docs` for a folder of documents yourself.
+
+When the skill folders sit at the top of the folder, such as `~/skills/review/SKILL.md`, write
+`--skills .` instead. Tack previews a skills collection: a `tack.yaml` that holds `kind: skills`
+and nothing else. A folder of commands or docs beside it is then a source of its own, such as
+`tack source add ~/skills/commands --commands .`. Until it is, the preview warns
+`collection-folder-not-skill` about that folder and leaves it out; the warning changes nothing
+else.
+
+## A folder that already has a tack.yaml
+
+A folder with a `tack.yaml` registers at once, with no preview: registering writes nothing into the
+folder and links nothing. This is how you add a team repository you cloned.
+
+<Terminal commands={["tack source add ~/code/acme-agent-skills"]} output={teamOutput} />
+
+Its `tack.yaml` is a skills collection with a name and its maintainers:
+
+```yaml
+version: 1
+kind: skills
+name: acme
+maintainers:
+  - platform-team
+```
+
+The `name` is the label you and other sources type, as in `acme:release-notes`. Without one, Tack
+uses the folder's name. Commit the `tack.yaml` of a repository you share, so every teammate gets the
+same source.
+
+## Check it
+
+`tack check` reads a source without registering it, and reports each problem by file and line. Run
+it after every edit to a `tack.yaml`:
+
+<Terminal commands={["tack check ~/agent-setup"]} output={checkOutput} />
+
+Scripts, `include` and `exclude` patterns and `depends-on` go into `tack.yaml` by hand; the flags
+cannot write them. Your agent's built-in `manage-tack-sources` skill knows the format.
+
+## Deliver it
+
+Registering links nothing. Links go into a project, so Tack needs one: if you have not registered a
+project yet, do it from inside the repository. It writes no link either:
+
+```sh
+cd ~/code/app
+tack project add app
+```
+
+A source's skills and commands are on by default for every project, so preview the links for every
+project and for you, then apply:
+
+```sh
+tack sync --all
+tack sync --all --apply
+```
+
+With no project registered, the preview plans nothing: at user level a skill is opt-in until you
+pick it. With no agent enabled, it plans nothing either, and warns `no-adapters-enabled`: run
+`tack init` to enable the agents it finds. A skill can be opt-in for projects too: it then reaches a project only once you pick it.
+See [Choose what each project gets](./choose-skills). The `handbook` docs are not linked by a sync
+alone: attach them first, as [Link docs into a project](./link-docs) shows.
+
+## Next
+
+- [Get a teammate's new skill](./team-source) when the team repository changes.
+- [Write a skill](./write-a-skill) in your own source.
+- [Link docs into a project](./link-docs) for the `handbook` folder.

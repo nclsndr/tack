@@ -1,0 +1,135 @@
+---
+title: Check health
+description: Find what needs attention with tack doctor, see one project's links with tack status, and check a source with tack check before anyone uses it.
+---
+
+import { Terminal } from "../../../components/terminal.tsx";
+
+export const doctorOutput = [
+  "tack doctor · 0.1.0+dev · 1 failed · 9 ok · 1 skipped · ✗ domain",
+  "",
+  "Problems 1 check",
+  "  ✗ links",
+  "    2 destinations differ from what Tack expects.",
+  "    tack sync --project app",
+  "",
+  "Checked",
+  "  ✓ release",
+  "    Tack 0.1.0+dev is running; tack upgrade names the command that upgrades it.",
+  "  ✓ state",
+  "    State format 1 at /Users/ada/.tack is readable.",
+  "  ✓ profiles",
+  "    Retained profile inventories are resolved.",
+  "  ✓ profile-definitions",
+  "    Published profile definitions are valid and linked.",
+  "  ✓ adapters",
+  "    Enabled: claude, codex.",
+  "  ✓ sources",
+  "    1 registered source, all healthy.",
+  "  ✓ imports",
+  "    No skill is imported. git 2.55 can fetch for `tack import add`.",
+  "  ✓ unregistered-dependency-source",
+  "    All declared dependency sources are registered.",
+  "  ✓ projects",
+  "    1 registered project, all healthy.",
+  "  – docs",
+  "    No docs resource is attached to a project.",
+  "",
+  "Next",
+  "  tack sync --project app",
+].join("\n");
+
+export const statusOutput = [
+  "tack status · project app · ! partial",
+  "",
+  "Destinations 4 linked, 2 need attention",
+  "  missing  codex   app:.agents/skills/write-changelog  skill write-changelog",
+  "  missing  claude  app:.claude/skills/write-changelog  skill write-changelog",
+  "",
+  "  Adapters  claude, codex",
+  "  Sources   2 sources, all healthy",
+  "  Catalog   9 resources",
+  "  Projects  app (1 root)",
+  "  State     ~/.tack",
+  "",
+  "Next",
+  "  tack sync",
+  "  tack sync --apply",
+].join("\n");
+
+# Check health
+
+Three commands tell you what state your setup is in. None of them changes anything.
+
+| Command                     | Reads                                                            | Use it when                                  |
+| --------------------------- | ---------------------------------------------------------------- | -------------------------------------------- |
+| `tack doctor`               | The whole machine: state, agents, sources, projects, links, docs | You are not sure what is wrong               |
+| `tack status --project app` | One project's links, or yours with `--user`                      | A skill is missing in one project            |
+| `tack check ~/agent-setup`  | Files, without any state                                         | You edited a source, a profile or a document |
+
+## The whole machine
+
+`tack doctor` runs one check per area. Every problem ends with the command that fixes it. Here a
+new skill, `write-changelog`, was written into a source but not synced yet:
+
+<Terminal commands={["tack doctor"]} output={doctorOutput} />
+
+A failed check exits with code `1`; warnings and skipped checks exit `0`. Doctor works before
+`tack init` too, and then names it as the first step.
+
+Two failures have no single command to run:
+
+- **`profiles`, an agent cannot take a member.** A project runs a fixed profile that holds, say, a
+  command, and an enabled agent such as Claude Code takes no commands. The check fails for as long
+  as both stay that way: leave commands out of the profile, or disable that agent. See
+  [Share a fixed set with a profile](./profiles#when-an-agent-cannot-take-a-member).
+- **`profiles`, a member is unavailable.** A source the profile uses was removed. Registering it
+  again is not enough, because the profile was applied with the old registration: register it, then
+  apply the profile again with `--force`. Or apply a profile without those members.
+
+## One project
+
+`tack status` shows each link of one project that is not as `tack sync` would leave it, and the
+command that fixes it. Run inside a project, it reads that project:
+
+<Terminal commands={["tack status"]} output={statusOutput} />
+
+`missing` means the link is not there yet. Other states you can meet:
+
+| State                 | Meaning                                                                                        | What to do                                                       |
+| --------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `missing`             | A selected resource has no link yet.                                                           | `tack sync --project app`, then `--apply`                        |
+| `hand-made`           | A file or folder you made sits where Tack would link a skill of the same name. Tack leaves it. | Keep yours with `tack pick exclude`, or move yours away and sync |
+| `foreign-destination` | Something Tack did not make sits at a link's path.                                             | Move it away and sync                                            |
+| `managed-link-drift`  | A link Tack made was changed outside Tack.                                                     | Put it back with sync, or deselect the resource                  |
+| `selection-collision` | Two sources give a selected resource the same name.                                            | `tack pick exclude SOURCE:NAME` for the one you do not want      |
+| `dependency-blocked`  | A selected skill needs a skill that is excluded or missing.                                    | The diagnostic names the blocker and the step that lifts it      |
+
+`tack status --project app --details` lists every link, what each agent gets and why, and the lines
+for `.gitignore`.
+
+## Before anyone uses it
+
+`tack check` reads files only: a source folder, a profile, a bundle or a document. It needs no state
+and runs no code, so it works in CI or before you register a source. It reports each problem by file
+and line, and exits with code `1` on an error:
+
+```sh
+tack check ~/agent-setup
+tack check ~/agent-setup ~/code/acme-agent-skills
+tack check ~/agent-setup/handbook/on-call.md
+```
+
+Pass companion sources together when a profile names members from both.
+[Write a skill](./write-a-skill#2-check-it) shows a failing check and its fix.
+
+## After an upgrade
+
+Run `tack init` after every Tack upgrade: it points the built-in skills at the new version and
+changes nothing else. `tack upgrade` prints the command that upgrades Tack, for the way it was
+installed.
+
+## Next
+
+- [Remove a source, a project or Tack](./remove).
+- The [features reference](../features) for everything Tack does.
