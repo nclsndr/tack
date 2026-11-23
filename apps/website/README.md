@@ -41,9 +41,13 @@ docs reader serving the Atlas example (`bun run reader:example`).
 
 ## Hosting on Cloudflare Pages
 
-The build is a static site ready for Cloudflare Pages. It is not deployed, and no Cloudflare project
-exists yet. When one is created, use `bun install --frozen-lockfile && bun run build` as the build command, `apps/website`
-as the root directory and `dist` as the output directory, so Pages also picks up `functions/`.
+The site deploys through a Cloudflare Pages project connected with the Git integration. Each push to
+`main` deploys to production. Each pull request from a branch of this repository gets a preview
+deployment; Cloudflare builds no preview for pull requests from forks, as its
+[preview deployments](https://developers.cloudflare.com/pages/configuration/preview-deployments/)
+documentation describes. The project builds with `bun install --frozen-lockfile && bun run build`,
+with `apps/website` as the root directory and `dist` as the output directory, so Pages also picks up
+`functions/`.
 
 - `docs/public/_headers` serves `.md` files as `text/markdown` and sets `Vary: Accept`.
 - `functions/_middleware.ts` answers a request whose `Accept` header names `text/markdown` with the
