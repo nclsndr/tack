@@ -385,18 +385,41 @@ it.layer(LiveTestLayer)("check findings", (test) => {
 it.each([
   [
     "a block list, past a nested list and a comment",
-    "metadata:\n  tack: |\n    dependencies:\n      - kind: skill\n        tags:\n          - nested\n      # note\n      - kind: command\n    projects: [app]\n",
+    "---\nmetadata:\n  tack: |\n    dependencies:\n      - kind: skill\n        tags:\n          - nested\n      # note\n      - kind: command\n    projects: [app]\n---\n",
     1,
-    8,
+    9,
   ],
   [
     "an inline list, at its key",
-    "metadata:\n  tack: |\n    dependencies: [{kind: skill, name: git}]\n",
+    "---\nmetadata:\n  tack: |\n    dependencies: [{kind: skill, name: git}]\n---\n",
+    0,
+    4,
+  ],
+  [
+    "a quoted key",
+    '---\nmetadata:\n  tack: |\n    "dependencies":\n      - kind: skill\n---\n',
+    0,
+    5,
+  ],
+  [
+    "metadata.tack only, past an agent's own dependencies keys",
+    "---\ndependencies: [agent-specific]\nmetadata:\n  other:\n    dependencies: [x]\n  tack: |\n    dependencies:\n      - kind: skill\n  dependencies: [y]\n---\n",
+    0,
+    8,
+  ],
+  [
+    "a quoted metadata.tack string, at its tack key, never in the body",
+    '---\nmetadata:\n  tack: "version: 1\\ndependencies: [{kind: skill, name: git}]"\n---\ndependencies:\n  - kind: skill\n',
     0,
     3,
   ],
-  ["a quoted key", 'metadata:\n  tack: |\n    "dependencies":\n      - kind: skill\n', 0, 4],
-  ["metadata with no dependencies line, at line 1", 'metadata: {tack: "version: 1"}\n', 0, 1],
+  [
+    "inline metadata, at its metadata key",
+    '---\nname: x\nmetadata: {tack: "version: 1"}\n---\ndependencies:\n  - kind: skill\n',
+    0,
+    3,
+  ],
+  ["a file with no frontmatter, at line 1", "dependencies:\n  - kind: skill\n", 0, 1],
 ] as const)("anchors a dependency in %s", (_case, text, position, line) => {
   expect(dependencyLine(text, position)).toBe(line);
 });

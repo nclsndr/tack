@@ -32,16 +32,42 @@ const listItemLines = (lines: ReadonlyArray<string>, start: number, keyIndent: n
 };
 
 /**
- * The one-based line of the dependency at `position` in a resource file's Tack metadata. A list
- * written inline anchors at its `dependencies:` key, and metadata with no such line at line 1.
+ * The index of the first line inside the block of the key at `parent` that `pattern` matches once
+ * unindented, or -1. The block ends at the next non-blank line indented no deeper than the key.
+ */
+const keyWithin = (lines: ReadonlyArray<string>, parent: number, pattern: RegExp) => {
+  const parentLine = lines[parent];
+  if (parentLine === undefined) return -1;
+  const indent = indentOf(parentLine);
+  const end = lines.findIndex(
+    (line, index) => index > parent && line.trim() !== "" && indentOf(line) <= indent,
+  );
+  return lines.findIndex(
+    (line, index) =>
+      index > parent && (end < 0 || index < end) && pattern.test(line.trimStart()) === true,
+  );
+};
+
+/**
+ * The one-based line of the dependency at `position` in the `metadata.tack` of a resource file's
+ * frontmatter. Only the frontmatter is read, so a body line or another key named `dependencies`
+ * never anchors it. Without a block list item it anchors at the closest key it finds:
+ * `dependencies`, then `tack`, then `metadata`, then line 1.
  */
 export const dependencyLine = (text: string, position: number) => {
   const lines = text.split(/\r?\n/);
-  const start = lines.findIndex((line) => /^\s*["']?dependencies["']?:/.test(line) === true);
-  const key = lines[start];
-  return key === undefined
-    ? 1
-    : (listItemLines(lines, start, indentOf(key))[position] ?? start) + 1;
+  const closing =
+    lines[0] === "---" ? lines.findIndex((line, index) => index > 0 && line === "---") : -1;
+  const frontmatter = lines.slice(0, Math.max(closing, 0));
+  const metadata = frontmatter.findIndex((line) => /^metadata\s*:/.test(line) === true);
+  const tack = keyWithin(frontmatter, metadata, /^["']?tack["']?\s*:/);
+  const dependencies = keyWithin(frontmatter, tack, /^["']?dependencies["']?\s*:/);
+  const key = frontmatter[dependencies];
+  const item =
+    key === undefined
+      ? undefined
+      : listItemLines(frontmatter, dependencies, indentOf(key))[position];
+  return ([item ?? -1, dependencies, tack, metadata].find((index) => index >= 0) ?? 0) + 1;
 };
 
 /**
