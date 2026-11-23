@@ -2,7 +2,8 @@ import { afterAll, expect, it } from "vitest";
 import { lstat, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { runTackSync } from "./support/tack-process.ts";
+import { Effect } from "effect";
+import { runTackInProcess } from "./support/host-runner.ts";
 
 let scratch: string | undefined;
 afterAll(async () => {
@@ -31,8 +32,10 @@ it("starts from an empty directory and writes one format 1 file that status read
   await writeFile(join(source, "knowledge", "index.md"), "# Handbook\n");
   expect(Bun.spawnSync({ cmd: ["git", "init", "-q"], cwd: project }).exitCode).toBe(0);
 
-  const run = (args: ReadonlyArray<string>, cwd = root) => {
-    const result = runTackSync(["--json", "--state-dir", state, ...args], { home, cwd });
+  const run = async (args: ReadonlyArray<string>, cwd = root) => {
+    const result = await Effect.runPromise(
+      runTackInProcess(["--json", "--state-dir", state, ...args], { home, cwd }),
+    );
     // The test reads deep into each result, so it keeps the parsed JSON rather than the decoded envelope.
     const envelope = JSON.parse(result.stdout);
     expect(
@@ -42,13 +45,13 @@ it("starts from an empty directory and writes one format 1 file that status read
     return envelope;
   };
 
-  run(["state", "init"]);
-  run(["adapter", "enable", "claude"]);
-  run(["source", "add", source]);
-  run(["project", "add", "demo"], project);
-  run(["pick", "include", "pdf", "--project", "demo"]);
-  run(["docs", "attach", "handbook", "--project", "demo"]);
-  run(["sync", "--project", "demo", "--apply"]);
+  await run(["state", "init"]);
+  await run(["adapter", "enable", "claude"]);
+  await run(["source", "add", source]);
+  await run(["project", "add", "demo"], project);
+  await run(["pick", "include", "pdf", "--project", "demo"]);
+  await run(["docs", "attach", "handbook", "--project", "demo"]);
+  await run(["sync", "--project", "demo", "--apply"]);
 
   const document = JSON.parse(await readFile(join(state, "state.json"), "utf8"));
   expect(Object.keys(document)).toEqual(["format", "data"]);
@@ -74,7 +77,7 @@ it("starts from an empty directory and writes one format 1 file that status read
   expect(document.data).not.toHaveProperty("docsManagedLinks");
   expect(document.data).not.toHaveProperty("journal");
 
-  const status = run(["status", "--project", "demo"], project);
+  const status = await run(["status", "--project", "demo"], project);
   const choices = status.result.namespaces.flatMap(
     (namespace: { choices: ReadonlyArray<unknown> }) => namespace.choices,
   );

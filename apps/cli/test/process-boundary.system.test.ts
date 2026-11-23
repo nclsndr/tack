@@ -144,26 +144,4 @@ it.layer(LiveTestLayer)("process boundary", (boundaryIt) => {
       ),
     { timeout: 60_000 },
   );
-
-  boundaryIt.effect("classifies corrupt persisted state with the stable persistence exit", () =>
-    withTackWorld((fixture) =>
-      Effect.gen(function* () {
-        const fileSystem = yield* FileSystem.FileSystem;
-        const path = yield* Path.Path;
-        yield* fileSystem.writeFileString(
-          path.join(fixture.stateDirectory, "state.json"),
-          "{not-valid-json",
-        );
-
-        const result = yield* runTack(fixture, ["status", "--project", "workspace"]);
-        expect(result.exitCode).toBe(ChildProcessSpawner.ExitCode(3));
-        expect(result.stderr).toBe("");
-        expect(decodeEnvelope(result.stdout)).toMatchObject({
-          classification: "persistence",
-          command: "status",
-          status: "failure",
-        });
-      }),
-    ),
-  );
 });

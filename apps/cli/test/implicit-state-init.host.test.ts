@@ -2,7 +2,9 @@ import { afterAll, expect, it } from "vitest";
 import { lstat, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { decodeEnvelope, runTackSync } from "./support/tack-process.ts";
+import { Effect } from "effect";
+import { runTackInProcess } from "./support/host-runner.ts";
+import { decodeEnvelope } from "./support/tack-process.ts";
 
 let scratch: string | undefined;
 afterAll(async () => {
@@ -19,29 +21,31 @@ it("initializes default state once after a valid mutation and guards explicit st
   await mkdir(source);
   await writeFile(join(source, "tack.yaml"), "version: 1\n");
 
-  const run = (args: ReadonlyArray<string>) => {
-    const result = runTackSync(["--json", ...args], { cwd: root, home });
+  const run = async (args: ReadonlyArray<string>) => {
+    const result = await Effect.runPromise(
+      runTackInProcess(["--json", ...args], { cwd: root, home }),
+    );
     return { ...result, envelope: decodeEnvelope(result.stdout) };
   };
   const state = join(home, ".tack", "state.json");
-  expect(run(["catalog"]).exitCode).not.toBe(0);
+  expect((await run(["catalog"])).exitCode).not.toBe(0);
   expect(await lstat(state).catch(() => undefined)).toBeUndefined();
-  expect(run(["source", "add", join(root, "missing")]).exitCode).not.toBe(0);
+  expect((await run(["source", "add", join(root, "missing")])).exitCode).not.toBe(0);
   expect(await lstat(state).catch(() => undefined)).toBeUndefined();
 
-  const typo = run(["--state-dir", explicit, "source", "add", source]);
+  const typo = await run(["--state-dir", explicit, "source", "add", source]);
   expect(typo.envelope.classification).toBe("invalid-configuration");
   expect(JSON.stringify(typo.envelope.diagnostics)).toContain("state init");
   expect(await lstat(explicit).catch(() => undefined)).toBeUndefined();
 
-  const first = run(["source", "add", source]);
+  const first = await run(["source", "add", source]);
   expect(first.envelope.classification, JSON.stringify(first)).toBe("success");
   expect(first.envelope.diagnostics).toContainEqual(
     expect.objectContaining({ code: "state-initialized" }),
   );
   expect(await lstat(state).then(() => true)).toBe(true);
 
-  const second = run(["adapter", "enable", "codex"]);
+  const second = await run(["adapter", "enable", "codex"]);
   expect(second.envelope.classification, JSON.stringify(second)).toBe("success");
   expect(second.envelope.diagnostics).not.toContainEqual(
     expect.objectContaining({ code: "state-initialized" }),
