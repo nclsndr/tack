@@ -271,7 +271,8 @@ twice:
 <Terminal commands={["tack sync --project app"]} output={projectSyncOutput} />
 
 Apply it with `tack sync --project app --apply`. Commit `tack.yaml` and `.ai/skills`, and ignore
-the links: `tack status --project app --details` prints the `.gitignore` lines. Do not commit them,
+the links: run `tack status --project app --details`, add the lines it prints under
+"For .gitignore" to the repository's `.gitignore`, and commit it. Do not commit the links,
 even `.claude/skills/app-conventions -> ../../.ai/skills/app-conventions`, which stays inside the
 repository: in a teammate's clone Tack did not make that link, so their sync reports it as a
 `foreign-destination` conflict. Teammates then follow [Onboard a team](./team-onboarding), and
