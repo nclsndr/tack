@@ -142,8 +142,9 @@ A plain `tack sync --project app` plans the docs mounts and the agent links toge
 holds the source's registration ID, so two sources can each have a `handbook`.
 
 The mount is a link to a folder on your machine, and its path differs on every machine, so Git shows
-`.tack/` as untracked. Ignore it in the repository's `.gitignore`; `tack status --details` does not
-list it among the lines it prints for agent links:
+`.tack/` as untracked. Ignore it in the repository's `.gitignore`.
+`tack status --project app --details` prints this line under "For .gitignore in project app",
+beside the lines for agent links:
 
 ```text
 /.tack/

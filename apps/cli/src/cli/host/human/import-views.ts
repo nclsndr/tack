@@ -198,16 +198,21 @@ const intoValue = (destination: NonNullable<ImportPlan["destination"]>) =>
 const reachLines = (reach: ImportReach, source: string, showName: boolean, style: Style) => {
   const receiving = reach.projects.filter((project) => project.receives);
   const missing = reach.projects.filter((project) => !project.receives);
+  const registered = reach.projects.length + reach.fixedProfileProjects.length;
   const rows: ReadonlyArray<readonly [string, string]> = [
     [
       "Projects",
-      reach.projects.length === 0
+      registered === 0
         ? "none registered"
-        : `${receiving.map((project) => project.project).join(", ") || "none"} · ${receiving.length} of ${plural(reach.projects.length, "registered project")}`,
+        : `${receiving.map((project) => project.project).join(", ") || "none"} · ${receiving.length} of ${plural(registered, "registered project")}`,
     ],
     ...missing.map((project): readonly [string, string] => [
       "Not",
       `${project.project} · ${project.reason ?? "not selected"}`,
+    ]),
+    ...reach.fixedProfileProjects.map((fixed): readonly [string, string] => [
+      "Fixed",
+      `${fixed.project} · not delivered: profile ${fixed.profile} fixes its skills. Add ${reach.name} to that profile, then run \`${argvLine(fixed.deliver)}\``,
     ]),
     ["User", `${reach.user.receives ? "yes" : "no"} · ${reach.user.reason}`],
     [

@@ -345,7 +345,7 @@ export const removalAppliedSummary = (result: RemovalResult) => {
     ...(forgotten === 0 ? [] : [`${forgotten} forgotten`]),
     ...(failed === 0 ? [] : [`${failed} failed`]),
     ...(skipped === 0 ? [] : [`${skipped} skipped`]),
-    ...(result.finalizedProject ? ["project registration removed"] : []),
+    ...(result.finalizedProject ? ["1 project registration removed"] : []),
     ...(result.pending.length === 0
       ? []
       : [`${plural(result.pending.length, "cleanup obligation")} still pending`]),
@@ -425,13 +425,15 @@ export const removalScopeBlock = (
 
 /**
  * The statement that opens a preview/apply view: that nothing was written, or what was applied.
- * `empty` is the full sentence for a run with nothing to report.
+ * `empty` is the full sentence for a run with nothing to report. `applyHint`, a full sentence, closes
+ * a preview that reports something to write.
  */
 export const statementLines = (
   applied: boolean,
   summary: ReadonlyArray<string>,
   empty: string,
   style: Style,
+  applyHint?: string,
 ): ReadonlyArray<string> =>
   paragraph(
     `${applied ? "Applied" : "Preview only: nothing was written"}${
@@ -439,7 +441,7 @@ export const statementLines = (
         ? `. ${empty}`
         : applied
           ? `: ${summary.join(", ")}.`
-          : `. ${summary.join(", ")}.`
+          : `. ${summary.join(", ")}.${applyHint === undefined ? "" : ` ${applyHint}`}`
     }`,
     { width: style.width },
   );

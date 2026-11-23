@@ -163,4 +163,16 @@ it.layer(LiveTestLayer)("shortest references in human output", (referencesIt) =>
       expect(listed).toMatch(/^ {2}! unmounted +handbook$/m);
     }),
   );
+
+  referencesIt.effect("names the docs mount folder for .gitignore once docs are attached", () =>
+    Effect.gen(function* () {
+      const { tack } = yield* fixture;
+      const details = ["status", "--project", "workspace", "--details"];
+      expect(yield* tack(details)).not.toMatch(/^\/\.tack\/$/m);
+      yield* tack(["docs", "attach", "handbook", "--project", "workspace"]);
+      expect(yield* tack(details)).toMatch(
+        /^For \.gitignore in project workspace\n(?:.*\n)*\/\.tack\/$/m,
+      );
+    }),
+  );
 });

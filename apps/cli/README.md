@@ -79,8 +79,8 @@ adapter already fills: `.agents/skills` from the `codex` adapter, or `.claude/sk
 The features page on the website shows the same list. Vendors move these folders often: re-read an
 agent's docs before relying on one.
 
-Configure enabled adapters as shown below, or use `tack sync --adapter claude --user --apply`
-to select one for a single invocation.
+Enable adapters as shown below. `tack sync --adapter claude --user --apply` limits one sync to an
+enabled adapter; sync refuses an adapter that is not enabled and names `tack adapter enable`.
 
 ## Run it
 
@@ -795,7 +795,9 @@ destination's normal activation: the projects that receive it and those that do 
 user namespace, a same-name skill from another source (both load, and `sync` plans a `collision`
 exactly as for two registered sources), old picks that would select nothing, and dependencies on
 sources the destination does not declare. A skill without Tack metadata reaches every registered
-project.
+project. A project a fixed profile holds is listed apart as not delivered (`fixedProfileProjects` in
+JSON), with the profile and the `tack profile apply ... --force` command that delivers the skill
+once the profile names it.
 
 **Remove.** `tack import remove [SOURCE:]NAME` deletes the folder and its record. A locally changed
 folder needs `--force`, and the preview then lists every change that is lost; Tack keeps no copy.

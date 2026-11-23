@@ -87,10 +87,20 @@ const reach: ImportReach = {
     { project: "demo", receives: true },
     { project: "tack", receives: true },
   ],
+  fixedProfileProjects: [],
   user: { receives: false, reason: "user activation is opt-in" },
   collisions: [],
   undeclaredDependencies: [],
 };
+
+const fixedCi = {
+  project: "ci",
+  profile: "team-notes:ci",
+  deliver: [
+    ...["tack", "profile", "apply", "team-notes:ci", "--project", "ci"],
+    ...["--target-root", `${testHome}/code/ci`, "--force"],
+  ],
+} as const;
 
 const basePlan: ImportPlan = {
   kind: "import-plan",
@@ -282,6 +292,7 @@ const cases: ReadonlyArray<readonly [string, PublicEnvelope]> = [
         {
           ...reach,
           name: "creator",
+          fixedProfileProjects: [fixedCi],
           user: { receives: true, reason: "selected by default" },
           collisions: [{ namespace: "project demo", with: "acme:creator" }],
           undeclaredDependencies: ["acme:helper"],
@@ -640,6 +651,22 @@ describe("import human views", () => {
     const actual = render(envelope);
     if (process.env["UPDATE_IMPORT_VIEWS"] === "1") writeFileSync(snapshotPath(name), actual);
     expect(actual).toBe(readFileSync(snapshotPath(name), "utf8"));
+  });
+
+  it("lists a project a fixed profile holds apart from the delivered ones, with how to deliver", () => {
+    const output = flat(
+      render(
+        preview({
+          ...basePlan,
+          reach: [{ ...reach, projects: [], fixedProfileProjects: [fixedCi] }],
+        }),
+        200,
+      ),
+    );
+    expect(output).toContain("Projects none · 0 of 1 registered project ");
+    expect(output).toContain(
+      `Fixed ci · not delivered: profile team-notes:ci fixes its skills. Add pdf to that profile, then run \`tack profile apply team-notes:ci --project ci --target-root ${testHome}/code/ci --force\``,
+    );
   });
 
   it.each(cases)("%s keeps the view contract and ends in one newline", (_name, envelope) => {

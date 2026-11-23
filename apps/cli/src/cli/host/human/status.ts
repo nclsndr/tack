@@ -6,6 +6,7 @@ import {
   StatusPayloadSchema,
 } from "../../../domain/status/status-schema.ts";
 import { destinationPlace } from "../../../domain/status/destination-place.ts";
+import { compareCodeUnits } from "../../../domain/identity/ordering.ts";
 import { collisionExcludeCommands } from "../collision-hints.ts";
 import { commandLine, selectorFlags } from "../command-line.ts";
 import type { PublicEnvelope } from "../public-outcome.ts";
@@ -158,11 +159,27 @@ const keptLinkTags: ReadonlySet<StatusPayloadDestination["_tag"]> = new Set([
 ]);
 
 /**
+ * The `.gitignore` line for a project's docs mounts: the whole `.tack/` folder for a destination
+ * inside it, which Tack owns, or the configured folder itself. Docs mounts are folders, so the line
+ * ends with `/`.
+ */
+const docsIgnoreLine = (docsDestination: string) =>
+  sanitize(`/${docsDestination.split("/")[0] === ".tack" ? ".tack" : docsDestination}/`);
+
+/**
  * Per project, the `.gitignore` lines for the links Tack keeps in it: each path from the
  * repository root, once for all of its worktrees, flush left and unwrapped so a copy works. A link
  * is a file to Git, so a line ends without `/`; a new skill is a new link, so it needs a new line.
+ * A project with docs attached adds the line for its docs mounts.
  */
 const ignoreLines = (report: StatusPayload, style: Style): ReadonlyArray<ReadonlyArray<string>> => {
+  const withDocs = new Map(
+    report.projects.flatMap((project) =>
+      project.docsDestination === undefined
+        ? []
+        : [[project.name, new Set([docsIgnoreLine(project.docsDestination)])] as const],
+    ),
+  );
   const byProject = report.destinations.reduce((projects, destination) => {
     const { destinationPath, target } = destination;
     if (target._tag !== "project-root" || keptLinkTags.has(destination._tag) === false)
@@ -171,15 +188,17 @@ const ignoreLines = (report: StatusPayload, style: Style): ReadonlyArray<Readonl
     const paths = projects.get(target.projectName) ?? new Set<string>();
     paths.add(sanitize(destinationPath.slice(target.canonicalPath.length)));
     return projects.set(target.projectName, paths);
-  }, new Map<string, Set<string>>());
-  return [...byProject].map(([projectName, paths]) => [
-    style.bold(`For .gitignore in project ${projectName}`),
-    ...wrapText(
-      "One line per link Tack keeps in this repository. A link is a file to Git, so a line has no trailing /. A new skill needs its own line.",
-      style.width - 2,
-    ).map((line) => `  ${style.dim(line)}`),
-    ...[...paths].toSorted(),
-  ]);
+  }, new Map(withDocs));
+  return [...byProject]
+    .toSorted(([left], [right]) => compareCodeUnits(left, right))
+    .map(([projectName, paths]) => [
+      style.bold(`For .gitignore in project ${projectName}`),
+      ...wrapText(
+        `One line per link Tack keeps in this repository. A link is a file to Git, so a line has no trailing /. A new skill needs its own line.${withDocs.has(projectName) ? " The docs mounts are in a folder, so their line ends with /." : ""}`,
+        style.width - 2,
+      ).map((line) => `  ${style.dim(line)}`),
+      ...[...paths].toSorted(),
+    ]);
 };
 
 const namespaceTitle = (namespace: StatusNamespace) =>

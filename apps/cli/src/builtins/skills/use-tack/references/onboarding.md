@@ -166,8 +166,9 @@ breaks for teammates. A committed link to a source inside the repository works i
 Tack adopts it there when it is exactly the link Tack would write. Ignore them in this repository,
 or commit them? Tack never edits `.gitignore`. To ignore them,
 run `tack status --project NAME --details` and show the lines under "For .gitignore in project
-NAME", as printed: one per link, from the repository root. A link is a file to Git, so a line never
-ends with `/`. Say that each skill linked later needs its own line. The person adds them, or asks
+NAME", as printed: one per link, from the repository root. A link is a file to Git, so its line
+never ends with `/`. With docs attached, one more line names the docs mount folder, such as
+`/.tack/`, and ends with `/`. Say that each skill linked later needs its own line. The person adds them, or asks
 you to; create `.gitignore` if the repository has none. Worker mode: do not touch `.gitignore`;
 list the question in your report.
 

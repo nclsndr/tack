@@ -51,7 +51,11 @@ export const previewOutput = [
   "",
   "Delivery at the next sync",
   "  On by default, like every skill in agent-setup.",
-  "  Projects  app, ci · 2 of 2 registered projects",
+  "  Projects  app · 1 of 2 registered projects",
+  "  Fixed     ci · not delivered: profile agent-setup:reviewer fixes its skills.",
+  "            Add pdf to that profile, then run `tack profile apply",
+  "            agent-setup:reviewer --project ci --target-root /Users/ada/ci/app",
+  "            --force`",
   "  User      no · user activation is opt-in",
   "  Clashes   none",
   "",
@@ -118,8 +122,9 @@ where the skill will reach at the next sync. The list is cut short here:
 the folder too, such as `--into agent-setup:skills`.
 
 "Delivery at the next sync" counts every registered project. A project that runs a fixed profile,
-here `ci`, still gets only its profile's members: the sync does not link the new skill there. See
-[Share a fixed set with a profile](./profiles).
+here `ci`, gets only its profile's members, so the preview lists it under `Fixed`: the sync does not
+link the new skill there. To deliver it, add the skill to the profile and re-apply the profile with
+the command the preview names. See [Share a fixed set with a profile](./profiles).
 
 ## 3. Apply it
 

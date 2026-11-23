@@ -6,6 +6,7 @@ import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Schema } from "effect";
 import { readState } from "../src/services/state-store.ts";
 import { StatusPayloadSchema } from "../src/domain/status/status-schema.ts";
+import { decodeEnvelope } from "./support/tack-process.ts";
 import {
   partialEnvelope,
   runTack,
@@ -25,7 +26,7 @@ const reconcileProject = (arguments_: ReadonlyArray<string> = []) => [
 
 it.layer(LiveTestLayer)("maintenance commands", (maintenanceIt) => {
   maintenanceIt.effect(
-    "disables only one adapter and keeps invocation overrides non-persistent",
+    "disables only one adapter and refuses a sync override that names it",
     () =>
       withTackWorld((fixture) =>
         Effect.gen(function* () {
@@ -58,10 +59,16 @@ it.layer(LiveTestLayer)("maintenance commands", (maintenanceIt) => {
             enabledAdapters: ["codex"],
           });
 
-          successfulEnvelope(
-            yield* runTack(fixture, reconcileProject(["--adapter", "cursor", "--apply"])),
+          // A sync override only narrows the enabled adapters, so it cannot revive a disabled one.
+          const revived = yield* runTack(
+            fixture,
+            reconcileProject(["--adapter", "cursor", "--apply"]),
           );
-          expect(yield* fileSystem.exists(cursorDestination)).toBe(true);
+          expect(revived.exitCode).not.toBe(0);
+          expect(decodeEnvelope(revived.stdout)).toMatchObject({
+            diagnostics: [{ code: "adapter-not-enabled" }],
+          });
+          expect(yield* fileSystem.exists(cursorDestination)).toBe(false);
           expect(successfulEnvelope(yield* runTack(fixture, ["adapter", "list"])).result).toEqual({
             kind: "adapters",
             enabledAdapters: ["codex"],

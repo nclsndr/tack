@@ -1,4 +1,5 @@
 import { type ChoiceNamespace } from "../../domain/choices/choice-schema.ts";
+import { profileApplicationFor } from "../../domain/profiles/profile-application.ts";
 import {
   resolveInitialSelection,
   type InitialSelectionDecision,
@@ -6,6 +7,7 @@ import {
 import { allSkillChoices } from "../../domain/state/state-intent.ts";
 import {
   catalogSelectableEntries,
+  resourceAddressIdentity,
   type Catalog,
   type SkillCatalogEntry,
 } from "../../domain/sources/catalog-schema.ts";
@@ -100,10 +102,27 @@ export const computeReach = (input: {
         decision.address.name === entry.address.name &&
         decision.address.sourceRegistrationId !== entry.sourceRegistrationId,
     );
-    return { namespace, selection, own, others };
+    const application = profileApplicationFor(state, namespace);
+    const fixed =
+      application === undefined ||
+      application.inventory.some(
+        (address) => resourceAddressIdentity(address) === resourceAddressIdentity(entry.address),
+      )
+        ? undefined
+        : {
+            profile: `${sourceQualifier(catalog, application.sourceRegistrationId)}:${application.profileName}`,
+          };
+    return { namespace, selection, own, others, application, fixed };
   });
   const delivery = (item: (typeof decided)[number]) => {
     const { own } = item;
+    if (item.fixed !== undefined)
+      return { receives: false, reason: `fixed by profile ${item.fixed.profile}` };
+    // A fixed profile that retains this very address delivers it once the import restores it.
+    if (item.application !== undefined)
+      return noAdapters
+        ? { receives: false, reason: "no agent adapter is enabled" }
+        : { receives: true, reason: undefined };
     if (own === undefined) return { receives: false, reason: "not selected" };
     if (own._tag === "not-selected")
       return { receives: false, reason: reasonText(item.namespace, own.reason) };
@@ -115,21 +134,43 @@ export const computeReach = (input: {
   const userDelivery =
     user === undefined ? { receives: false, reason: "no user target" } : delivery(user);
   const declared = destination.inspection.dependsOn ?? [];
+  const projects = decided.flatMap((item) => {
+    const namespace = item.namespace;
+    if (namespace._tag !== "project") return [];
+    const roots =
+      state.data.projects.find((project) => project.name === namespace.projectName)?.roots ?? [];
+    return [{ ...item, projectName: namespace.projectName, roots }];
+  });
   return {
     name: candidate.name,
-    projects: decided
-      .filter((item) => item.namespace._tag === "project")
+    projects: projects
+      .filter((item) => item.fixed === undefined)
       .map((item) => {
         const result = delivery(item);
         return {
-          project: item.namespace._tag === "project" ? item.namespace.projectName : "",
+          project: item.projectName,
           receives: result.receives,
           ...(result.reason === undefined ? {} : { reason: result.reason }),
         };
       }),
+    fixedProfileProjects: projects.flatMap((item) =>
+      item.fixed === undefined
+        ? []
+        : [
+            {
+              project: item.projectName,
+              profile: item.fixed.profile,
+              deliver: [
+                ...["tack", "profile", "apply", item.fixed.profile, "--project", item.projectName],
+                ...item.roots.flatMap((root) => ["--target-root", root]),
+                "--force",
+              ],
+            },
+          ],
+    ),
     user: { receives: userDelivery.receives, reason: userDelivery.reason ?? "selected by default" },
     collisions: decided
-      .filter((item) => item.own?._tag === "selected")
+      .filter((item) => item.application === undefined && item.own?._tag === "selected")
       .flatMap((item) =>
         item.others.map((other) => ({
           namespace: namespaceText(item.namespace),

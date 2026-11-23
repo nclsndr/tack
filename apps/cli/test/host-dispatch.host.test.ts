@@ -365,6 +365,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
         ["state", "init"],
         ["source", "add", source],
         ["project", "add", "workspace", "--repository-cwd", projectRoot],
+        ["adapter", "enable", "claude", "cursor"],
       ])
         expect(envelopeFrom(yield* invoke(setup))).toMatchObject({ status: "success" });
       const requireCommandLinks = (adapter: string) =>
@@ -714,6 +715,74 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
         command: "adapter enable",
         diagnostics: [expect.objectContaining({ code: "invalid-flag" })],
       });
+    }),
+  );
+
+  hostIt.effect("refuses a sync --adapter that is not enabled and names adapter enable", () =>
+    Effect.gen(function* () {
+      const fileSystem = yield* FileSystem.FileSystem;
+      const path = yield* Path.Path;
+      const root = yield* fileSystem.realPath(
+        yield* fileSystem.makeTempDirectoryScoped({ prefix: "tack-cli-host-test-" }),
+      );
+      const anchor = path.join(root, "anchor");
+      const projectRoot = path.join(root, "project");
+      yield* Effect.forEach([anchor, projectRoot], (directory) =>
+        fileSystem.makeDirectory(directory, { recursive: true }),
+      );
+      const stateDirectory = path.join(root, "state");
+      const stateOptions = {
+        environment: { TACK_STATE_DIR: stateDirectory },
+        homeDirectory: root,
+      } satisfies StateOptions;
+      const invoke = (arguments_: ReadonlyArray<string>) =>
+        runJson(["--state-dir", stateDirectory, ...arguments_], testGit(anchor, projectRoot)).pipe(
+          Effect.map(envelopeFrom),
+        );
+      for (const setup of [
+        ["state", "init"],
+        ["project", "add", "demo", "--repository-cwd", projectRoot],
+        ["adapter", "enable", "cursor"],
+      ])
+        expect(yield* invoke(setup)).toMatchObject({ status: "success" });
+      const before = yield* readState(stateOptions);
+
+      const refused = yield* invoke(["sync", "--project", "demo", "--adapter", "codex", "--apply"]);
+      const refusedMany = yield* invoke([
+        "sync",
+        "--project",
+        "demo",
+        ...["--adapter", "opencode", "--adapter", "cursor", "--adapter", "codex"],
+      ]);
+      const enabled = yield* invoke(["sync", "--project", "demo", "--adapter", "cursor"]);
+
+      expect(refused).toMatchObject({
+        classification: "invalid-configuration",
+        command: "sync",
+        diagnostics: [
+          {
+            code: "adapter-not-enabled",
+            details: { adapters: ["codex"], enabledAdapters: ["cursor"] },
+            message:
+              "Adapter codex is not enabled, so sync does not link for it. Run `tack adapter enable codex`, then sync again.",
+          },
+        ],
+        next: ["tack adapter enable codex"],
+      });
+      expect(exitCodeForEnvelope(refused)).not.toBe(0);
+      expect(refusedMany).toMatchObject({
+        diagnostics: [
+          {
+            code: "adapter-not-enabled",
+            details: { adapters: ["codex", "opencode"] },
+            message:
+              "Adapters codex and opencode are not enabled, so sync does not link for them. Run `tack adapter enable codex opencode`, then sync again.",
+          },
+        ],
+        next: ["tack adapter enable codex opencode"],
+      });
+      expect(yield* readState(stateOptions)).toEqual(before);
+      expect(enabled).toMatchObject({ classification: "success", command: "sync" });
     }),
   );
 

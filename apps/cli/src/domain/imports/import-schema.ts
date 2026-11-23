@@ -107,10 +107,25 @@ const ReachClashSchema = Schema.Struct({
   with: Schema.String,
 });
 
+/**
+ * A project whose fixed profile holds its selection: sync delivers only the profile's retained
+ * inventory there, so the imported skill does not reach it at the next sync.
+ */
+const ReachFixedProjectSchema = Schema.Struct({
+  project: Schema.String,
+  /** The applied profile, as `SOURCE:PROFILE`. */
+  profile: Schema.String,
+  /** The `tack` argv that re-applies the profile to every root, once its members name the skill. */
+  deliver: Schema.Array(Schema.String),
+});
+
 /** Where one imported skill will be delivered at the next `sync`; information, never a verdict. */
 const ImportReachSchema = Schema.Struct({
   name: Schema.String,
+  /** The registered projects that follow daily selection, or whose fixed profile retains the skill. */
   projects: Schema.Array(ReachProjectSchema),
+  /** The registered projects a fixed profile holds without the skill. */
+  fixedProfileProjects: Schema.Array(ReachFixedProjectSchema),
   user: Schema.Struct({ receives: Schema.Boolean, reason: Schema.String }),
   collisions: Schema.Array(ReachClashSchema),
   /** Dependencies on other sources that the destination does not declare in `depends-on`. */

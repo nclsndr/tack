@@ -144,7 +144,8 @@ it("ships the guides `tack guide` prints, and points agents at the command, not 
   // The person may still ask for the ignore lines of step 6, which status prints.
   expect(flat).toContain("Never edit `.gitignore` unless the person asks you to in step 6.");
   expect(flat).toContain("`tack status --project NAME --details`");
-  expect(flat).toContain("a line never ends with `/`");
+  expect(flat).toContain("its line never ends with `/`");
+  expect(flat).toContain("names the docs mount folder, such as `/.tack/`, and ends with `/`");
   // A skill picked for everywhere reaches each project through the user's folder.
   expect(flat).toContain("`skip … linked for the user`");
   expect(flat).not.toContain("selected-twice");

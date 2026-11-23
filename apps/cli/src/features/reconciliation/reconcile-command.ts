@@ -102,7 +102,7 @@ export const prepareReconciliation = Effect.fnUntraced(function* (
         : [],
     ),
   );
-  const enabledAdapters = resolveEffectiveAdapters(state.data.enabledAdapters, {
+  const enabledAdapters = yield* resolveEffectiveAdapters(state.data.enabledAdapters, {
     ...(options.adapterOverride === undefined ? {} : { adapterOverride: options.adapterOverride }),
   });
   const deliveryCauses = selectedNamespaces.flatMap((selected): ReadonlyArray<PartialCause> => {

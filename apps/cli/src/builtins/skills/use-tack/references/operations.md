@@ -144,8 +144,10 @@ return `choice-change`, `choice-removal` and `adapter-settings` payloads.
 `tack sync --project PROJECT` previews without writing.
 `sync --include-optional` adds optional dependency edges; it does not select every opt-in
 skill; inspect the result with `status --include-optional`. `--adapter ID` (`claude`, `cline`,
-`codex`, `copilot`, `cursor`, `gemini`, `opencode` or `pi`) limits reconciliation; repeat it to name
-several. `--no-adapters` plans docs mounts only, for a project: it cannot be combined with `--adapter`, `--no-docs` or `--user`.
+`codex`, `copilot`, `cursor`, `gemini`, `opencode` or `pi`) limits reconciliation to that enabled
+adapter; repeat it to name several. Sync refuses an adapter that is not enabled with
+`adapter-not-enabled` and writes nothing: run `tack adapter enable ID` first, so later syncs keep
+its links. `--no-adapters` plans docs mounts only, for a project: it cannot be combined with `--adapter`, `--no-docs` or `--user`.
 `--require-capability command-links` blocks every plan unit whose adapter cannot link commands.
 With no enabled adapter, sync reports `no-adapters-enabled` and delivers nothing.
 A project does not link a skill or command that the same adapter links for the user, so agents in
@@ -187,7 +189,8 @@ them. An open session may need a restart, or `/reload` in Pi, to see new links. 
 `status` reports such selected resources as undelivered, and the sync text view says which agents a
 selected command or context does not reach. Delivering a resource makes it discoverable; agent
 loading behavior is separate. `status --project PROJECT --details` also prints the project's
-`.gitignore` lines: one per link Tack keeps, from the repository root, without a trailing `/`.
+`.gitignore` lines: one per link Tack keeps, from the repository root, without a trailing `/`, and,
+when docs are attached, the docs mount folder (`/.tack/` by default) with one.
 
 ## Import skills from GitHub
 
@@ -237,8 +240,10 @@ candidates, and `--full-depth` searches every folder to five levels.
   the user namespace will receive the skill at the next `sync`, name collisions with another
   source, old picks that would select nothing, and dependencies on sources the destination does
   not declare in `depends-on`. The copy follows the destination's normal activation, so a skill
-  without Tack metadata reaches every project at the next `sync`. Report the reach to the operator
-  before applying.
+  without Tack metadata reaches every project at the next `sync`. A project a fixed profile holds
+  is listed apart as not delivered, with its profile: the skill reaches it only after the operator
+  adds it to that profile and re-applies the profile with the command the preview names. Report the
+  reach to the operator before applying.
 - **Apply.** It re-resolves the ref, fetches, validates against the live destination and writes
   only `FOLDER/NAME/` and one record in the `imports` section of the destination's `tack.yaml`,
   byte for byte, through a staging folder. An interrupted write is finished or rolled back by the

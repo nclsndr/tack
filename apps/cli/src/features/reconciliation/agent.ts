@@ -40,7 +40,19 @@ export class AgentDisablementRequiredError extends Schema.TaggedError<AgentDisab
   },
 ) {}
 
-/** The `adapter enable` payload: the enabled adapters after the call and whether they changed. */
+/** Reports a one-invocation adapter override that names adapters the machine has not enabled. */
+export class AdapterNotEnabledError extends Schema.TaggedError<AdapterNotEnabledError>()(
+  "AdapterNotEnabledError",
+  {
+    /** The requested adapters that are not enabled, in canonical order. */
+    adapters: EnabledAdaptersSchema,
+    code: Schema.Literal("adapter-not-enabled"),
+    enabledAdapters: EnabledAdaptersSchema,
+    message: Schema.String,
+  },
+) {}
+
+/** The `adapter enable` payload:the enabled adapters after the call and whether they changed. */
 export const AdapterSettingsPayloadSchema = Schema.Struct({
   kind: Schema.Literal("adapter-settings"),
   changed: Schema.Boolean,
@@ -140,9 +152,26 @@ export const listEnabledAdapters = Effect.fnUntraced(function* (options: StateOp
   return enabledAdaptersFrom(state);
 });
 
-/** Resolves persisted enablement and an optional one-invocation override. */
+/**
+ * Resolves persisted enablement and an optional one-invocation override. An override only narrows
+ * the enabled adapters: it refuses an adapter the machine has not enabled, because no later sync
+ * would maintain the links it delivers.
+ */
 export const resolveEffectiveAdapters = (
   persisted: ReadonlyArray<AgentAdapterId>,
   options: AgentInvocationOptions = {},
-): ReadonlyArray<AgentAdapterId> =>
-  canonicalizeAdapters(options.adapterOverride === undefined ? persisted : options.adapterOverride);
+): Effect.Effect<ReadonlyArray<AgentAdapterId>, AdapterNotEnabledError> => {
+  if (options.adapterOverride === undefined) return Effect.succeed(canonicalizeAdapters(persisted));
+  const requested = canonicalizeAdapters(options.adapterOverride);
+  const notEnabled = requested.filter((adapter) => persisted.includes(adapter) === false);
+  return notEnabled.length === 0
+    ? Effect.succeed(requested)
+    : Effect.fail(
+        new AdapterNotEnabledError({
+          adapters: notEnabled,
+          code: "adapter-not-enabled",
+          enabledAdapters: canonicalizeAdapters(persisted),
+          message: `Adapters ${notEnabled.join(", ")} are not enabled.`,
+        }),
+      );
+};

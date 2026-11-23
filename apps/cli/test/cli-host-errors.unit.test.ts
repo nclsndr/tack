@@ -30,6 +30,7 @@ import {
 } from "../src/features/projects/project-observation.ts";
 import { ProjectRefreshEvidenceError } from "../src/features/refresh/project-refresh.ts";
 import {
+  AdapterNotEnabledError,
   AgentDisablementRequiredError,
   AgentSelectionValidationError,
 } from "../src/features/reconciliation/agent.ts";
@@ -129,6 +130,20 @@ const cases: ReadonlyArray<Case> = [
     classification: "internal",
     code: "adapter-disablement-plan-invalid",
     message: "Plan shape is invalid.",
+  },
+  {
+    error: new AdapterNotEnabledError({
+      adapters: ["codex"],
+      code: "adapter-not-enabled",
+      enabledAdapters: ["cursor"],
+      message: "Adapters codex are not enabled.",
+    }),
+    classification: "invalid-configuration",
+    code: "adapter-not-enabled",
+    message:
+      "Adapter codex is not enabled, so sync does not link for it. Run `tack adapter enable codex`, then sync again.",
+    details: { adapters: ["codex"], enabledAdapters: ["cursor"] },
+    next: [["tack", "adapter", "enable", "codex"]],
   },
   {
     error: new AgentDisablementRequiredError({

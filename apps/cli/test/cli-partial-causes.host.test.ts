@@ -183,6 +183,7 @@ it.layer(LiveTestLayer)("structured partial causes", (causesIt) => {
   causesIt.effect("names the source behind a source-only partial reconciliation", () =>
     Effect.gen(function* () {
       const { fileSystem, path, source, tack } = yield* fixture;
+      yield* tack(["adapter", "enable", "cursor"]);
       yield* fileSystem.writeFileString(path.join(source, "tack.yaml"), "version: 99\n");
 
       const reconciled = yield* tack(["sync", "--project", "workspace", "--adapter", "cursor"]);
@@ -213,6 +214,7 @@ it.layer(LiveTestLayer)("structured partial causes", (causesIt) => {
     ([code, file, text]) =>
       Effect.gen(function* () {
         const { fileSystem, human, path, source, tack } = yield* fixture;
+        yield* tack(["adapter", "enable", "cursor"]);
         const sync = ["sync", "--project", "workspace", "--adapter", "cursor"];
         const reason = code === "catalog-quarantined" ? "quarantined" : code;
         yield* tack([...sync, "--apply"]);
@@ -239,6 +241,7 @@ it.layer(LiveTestLayer)("structured partial causes", (causesIt) => {
   causesIt.effect("names the root behind a root-only partial reconciliation", () =>
     Effect.gen(function* () {
       const { fileSystem, projectRoot, tack } = yield* fixture;
+      yield* tack(["adapter", "enable", "cursor"]);
       yield* fileSystem.remove(projectRoot, { recursive: true });
 
       const reconciled = yield* tack(["sync", "--project", "workspace", "--adapter", "cursor"]);
@@ -259,6 +262,7 @@ it.layer(LiveTestLayer)("structured partial causes", (causesIt) => {
   causesIt.effect("names quarantined entries in reconciliation and status", () =>
     Effect.gen(function* () {
       const { fileSystem, path, source, tack } = yield* fixture;
+      yield* tack(["adapter", "enable", "cursor"]);
       const brokenDirectory = path.join(source, "skills", "broken");
       yield* fileSystem.makeDirectory(brokenDirectory, { recursive: true });
       yield* fileSystem.writeFileString(
@@ -292,6 +296,7 @@ it.layer(LiveTestLayer)("structured partial causes", (causesIt) => {
   causesIt.effect("names the blocked group and the blocker of a link it removes", () =>
     Effect.gen(function* () {
       const { fileSystem, path, source, tack } = yield* fixture;
+      yield* tack(["adapter", "enable", "cursor"]);
       const requester = path.join(source, "skills", "requester");
       const helper = path.join(source, "skills", "helper");
       yield* fileSystem.makeDirectory(requester, { recursive: true });

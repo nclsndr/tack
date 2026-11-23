@@ -826,7 +826,7 @@ describe("source remove", () => {
       const output = render(registrationEnvelope("source remove", sourcePlan([removeOf(review)])));
       expect(lines(output)[0]).toBe("tack source remove · source brain · ✓ success");
       expect(statementOf(output)).toBe(
-        "Preview only: nothing was written. 1 to remove, 2 picks to delete, 1 docs attachment to detach, registration to remove.",
+        "Preview only: nothing was written. 1 to remove, 2 picks to delete, 1 docs attachment to detach, 1 source registration to remove. Add --apply to remove the source.",
       );
       expectRow(output, "Source brain /home/me/sources/brain");
       expectRow(output, "user skill review include");
@@ -862,7 +862,9 @@ describe("source remove", () => {
     expect(lines(output)[0]).toBe(
       `tack source remove · source ${sourceRegistrationId} · ✓ success`,
     );
-    expect(statementOf(output)).toBe("Preview only: nothing was written. registration to remove.");
+    expect(statementOf(output)).toBe(
+      "Preview only: nothing was written. 1 source registration to remove. Add --apply to remove the source.",
+    );
     expect(hintsIn(output)).toEqual([`tack source remove ${sourceRegistrationId} --apply`]);
   });
 
@@ -881,7 +883,7 @@ describe("source remove", () => {
       expect(envelope.status).toBe("partial");
       const output = render(envelope);
       expect(statementOf(output)).toContain(
-        "2 picks deleted, 1 docs attachment detached, registration removed.",
+        "2 picks deleted, 1 docs attachment detached, 1 source registration removed.",
       );
       expect(hintsIn(output)).toEqual(["tack state clean --pending --project demo"]);
       expect(yield* parseHintsIn(output)).toEqual(["state clean"]);
@@ -967,7 +969,7 @@ describe("project remove", () => {
     });
     const done = render(registrationEnvelope("project remove", projectPlan([]), finished));
     expect(statementOf(done)).toBe(
-      "Applied: project registration removed, 1 pick deleted, 1 docs attachment detached.",
+      "Applied: 1 project registration removed, 1 pick deleted, 1 docs attachment detached.",
     );
     expect(hintsIn(done)).toEqual([]);
   });
@@ -1926,7 +1928,7 @@ describe("state clean view", () => {
         version: 1,
       },
     );
-    expect(flatText).toContain("project registration removed");
+    expect(flatText).toContain("1 project registration removed");
     expect(flatText).toContain(
       `last attempt blocked: Something is in the way. ! pending ~/demo2/.tack/docs/handbook docs ${sourceRegistrationId}:handbook · project demo · clean`,
     );
