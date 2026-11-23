@@ -57,7 +57,7 @@ const explanation = (
     Match.when({ reason: "source-unregistered" }, ({ labels }) => ({
       why:
         dependency.source === undefined
-          ? `which no checked source provides, while ${own} also declares ${and(labels)}, not among the checked paths`
+          ? `which neither ${own} nor a checked source it declares provides, while ${own} also declares ${and(labels)}, not among the checked paths`
           : `from ${dependency.source}, which is not among the checked paths`,
       remedy: `Pass the folder of ${and(labels)} to the same tack check to verify the dependency.`,
     })),

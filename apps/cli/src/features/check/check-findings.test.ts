@@ -202,8 +202,24 @@ it.layer(LiveTestLayer)("check findings", (test) => {
       code: "dependency-source-unchecked",
       severity: "warning",
       message:
-        "skill release needs skill git, which no checked source provides, while kit also declares base and extra, not among the checked paths.",
+        "skill release needs skill git, which neither kit nor a checked source it declares provides, while kit also declares base and extra, not among the checked paths.",
       remedy: "Pass the folder of base and extra to the same tack check to verify the dependency.",
+    },
+    {
+      reason:
+        "a resource only an undeclared checked source provides, while a declared one is not checked",
+      files: {
+        "kit/tack.yaml": `${skills("kit")}depends-on: [base]\n`,
+        "kit/skills/release/SKILL.md": gitEdge(),
+        "elsewhere/tack.yaml": skills("elsewhere"),
+        "elsewhere/skills/git/SKILL.md": skillText("git"),
+      },
+      checked: ["kit", "elsewhere"],
+      code: "dependency-source-unchecked",
+      severity: "warning",
+      message:
+        "skill release needs skill git, which neither kit nor a checked source it declares provides, while kit also declares base, not among the checked paths.",
+      remedy: "Pass the folder of base to the same tack check to verify the dependency.",
     },
     {
       reason: "a declared source Tack cannot read",
