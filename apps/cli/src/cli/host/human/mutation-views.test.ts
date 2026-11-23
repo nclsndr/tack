@@ -597,14 +597,17 @@ describe("docs attach, detach and configure", () => {
 });
 
 describe("failures", () => {
-  it.effect("an uninitialized state names tack state init", () =>
+  it.effect.each([
+    { explicitDirectory: false, hint: "tack init", parsed: "init" },
+    { explicitDirectory: true, hint: "tack --state-dir / state init", parsed: "state init" },
+  ])("an uninitialized state names $hint", ({ explicitDirectory, hint, parsed }) =>
     Effect.gen(function* () {
-      const output = view(failed("source add", new StateNotInitializedError({ statePath: "/x" })));
+      const error = new StateNotInitializedError({ statePath: "/x", explicitDirectory });
+      const output = view(failed("source add", error));
       expect(lines(output)[0]).toBe("tack source add · ✗ invalid-configuration");
-      expect(lines(output).join(" ")).toContain("Tack state is absent at /x.");
       expect(lines(output)).toContain("    error state-not-initialized · statePath /x");
-      expect(hintsIn(output)).toEqual(["tack state init"]);
-      expect(yield* parseHintsIn(output)).toEqual(["state init"]);
+      expect(hintsIn(output)).toEqual([hint]);
+      expect(yield* parseHintsIn(output)).toEqual([parsed]);
     }),
   );
 

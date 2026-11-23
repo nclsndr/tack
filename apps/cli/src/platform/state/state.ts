@@ -34,6 +34,8 @@ type StatePaths = {
   readonly lockPath: string;
   readonly stateDirectory: string;
   readonly statePath: string;
+  /** Whether `--state-dir` or `TACK_STATE_DIR` named the directory. */
+  readonly explicitDirectory: boolean;
 };
 
 const StateDocumentSchema = Schema.fromJsonString(Schema.Unknown);
@@ -85,17 +87,21 @@ const resolveStatePaths = Effect.fnUntraced(function* (options: StateOptions) {
     lockPath: path.join(stateDirectory, lockFileName),
     stateDirectory,
     statePath: path.join(stateDirectory, stateFileName),
+    explicitDirectory: stateAutoInitializes(options) === false,
   } satisfies StatePaths;
 });
 
-const readStateDocumentAtPath = Effect.fnUntraced(function* (statePath: string) {
+const readStateDocumentAtPath = Effect.fnUntraced(function* ({
+  statePath,
+  explicitDirectory,
+}: StatePaths) {
   const fileSystem = yield* FileSystem.FileSystem;
   const encodedState = yield* fileSystem
     .readFileString(statePath)
     .pipe(
       Effect.mapError((error) =>
         isPlatformReason(error, "NotFound")
-          ? new StateNotInitializedError({ statePath })
+          ? new StateNotInitializedError({ statePath, explicitDirectory })
           : toStateStorageError("read state", statePath, error),
       ),
     );
@@ -105,7 +111,10 @@ const readStateDocumentAtPath = Effect.fnUntraced(function* (statePath: string) 
 
 const readStateAtPath = readStateDocumentAtPath;
 
-const ensureStateExists = Effect.fnUntraced(function* (statePath: string) {
+const ensureStateExists = Effect.fnUntraced(function* ({
+  statePath,
+  explicitDirectory,
+}: StatePaths) {
   const fileSystem = yield* FileSystem.FileSystem;
 
   yield* fileSystem
@@ -113,7 +122,7 @@ const ensureStateExists = Effect.fnUntraced(function* (statePath: string) {
     .pipe(
       Effect.mapError((error) =>
         isPlatformReason(error, "NotFound")
-          ? new StateNotInitializedError({ statePath })
+          ? new StateNotInitializedError({ statePath, explicitDirectory })
           : toStateStorageError("access state", statePath, error),
       ),
     );
@@ -313,7 +322,7 @@ const initializeStateLive = Effect.fnUntraced(function* (options: StateOptions) 
 
   return yield* withWriterLock(paths, () =>
     Effect.gen(function* () {
-      const existing = yield* readStateDocumentAtPath(paths.statePath).pipe(
+      const existing = yield* readStateDocumentAtPath(paths).pipe(
         Effect.catchIf(
           (error): error is StateNotInitializedError => error._tag === "StateNotInitializedError",
           () => Effect.succeed(undefined),
@@ -337,7 +346,7 @@ const initializeStateLive = Effect.fnUntraced(function* (options: StateOptions) 
 /** Reads and validates the complete supported state document. */
 const readStateLive = Effect.fnUntraced(function* (options: StateOptions) {
   const paths = yield* resolveStatePaths(options);
-  return yield* readStateAtPath(paths.statePath);
+  return yield* readStateAtPath(paths);
 });
 
 /** Builds the state capability over explicit platform services. */
@@ -362,16 +371,14 @@ export const makeStateStoreService = (
       const paths = yield* provideInternal(resolveStatePaths(options));
       const mayInitialize = autoInitialize && stateAutoInitializes(options);
       if (mayInitialize) yield* provideInternal(ensureStateDirectory(paths.stateDirectory));
-      else yield* provideInternal(ensureStateExists(paths.statePath));
+      else yield* provideInternal(ensureStateExists(paths));
 
       return yield* Effect.scoped(
         Effect.acquireUseRelease(
           provideInternal(acquireWriterLock(paths.lockPath)),
           () =>
             Effect.gen(function* () {
-              const document = yield* provideInternal(
-                readStateDocumentAtPath(paths.statePath),
-              ).pipe(
+              const document = yield* provideInternal(readStateDocumentAtPath(paths)).pipe(
                 Effect.catchIf(
                   (error): error is StateNotInitializedError =>
                     mayInitialize && error instanceof StateNotInitializedError,

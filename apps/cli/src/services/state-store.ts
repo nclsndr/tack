@@ -50,10 +50,13 @@ export class StateCorruptError extends Schema.TaggedError<StateCorruptError>()(
   },
 ) {}
 
-/** Reports a state-dependent operation before explicit initialization. */
+/**
+ * Reports a state-dependent operation before explicit initialization. `explicitDirectory` says
+ * whether `--state-dir` or `TACK_STATE_DIR` named the directory, rather than the default one.
+ */
 export class StateNotInitializedError extends Schema.TaggedError<StateNotInitializedError>()(
   "StateNotInitializedError",
-  { statePath: Schema.String },
+  { statePath: Schema.String, explicitDirectory: Schema.Boolean },
 ) {}
 
 /** Reports a failed filesystem operation on Tack-owned state. */

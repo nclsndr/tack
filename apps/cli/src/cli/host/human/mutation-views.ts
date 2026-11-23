@@ -104,8 +104,6 @@ const failureHints = (envelope: PublicEnvelope): ReadonlyArray<string> =>
   envelope.diagnostics.flatMap((diagnostic): ReadonlyArray<string> => {
     const details = Option.fromNullishOr(diagnostic.details);
     switch (diagnostic.code) {
-      case "state-not-initialized":
-        return [commandLine("init")];
       case "registration-not-found":
         return [commandLine("source-list")];
       case "project-not-found":
