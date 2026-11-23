@@ -1,6 +1,6 @@
 import { Schema } from "effect";
 import { CanonicalPathSchema, IdentifierSchema } from "../identity/identity-schema.ts";
-import { sortAndDedupeStrings } from "../identity/ordering.ts";
+import { isSortedUnique } from "../identity/ordering.ts";
 
 /** A canonical project namespace name. */
 export const ProjectNameSchema = IdentifierSchema;
@@ -13,13 +13,6 @@ export const ProjectLifecycleSchema = Schema.Literals(["active", "removing"]);
 
 /** A durable operator intent that refresh must not infer from transient cleanup evidence. */
 const ProjectRemovalIntentSchema = Schema.Literal("project");
-
-const usesCanonicalPathOrder = (values: ReadonlyArray<string>) => {
-  const canonical = sortAndDedupeStrings(values);
-  return (
-    canonical.length === values.length && canonical.every((value, index) => value === values[index])
-  );
-};
 
 const projectUnhealthyRootIssueCodes = [
   "root-access-failed",
@@ -64,10 +57,10 @@ export const ProjectRecordSchema = Schema.Struct({
       ...(project.removalIntent !== undefined && roots.length !== 0
         ? ["Explicit project-removal intent requires the removing lifecycle."]
         : []),
-      ...(usesCanonicalPathOrder(roots)
+      ...(isSortedUnique(roots)
         ? []
         : ["Active project roots must use unique canonical code-unit ordering."]),
-      ...(usesCanonicalPathOrder(removingRoots)
+      ...(isSortedUnique(removingRoots)
         ? []
         : ["Handoff project roots must use unique canonical code-unit ordering."]),
       ...(new Set(allRoots).size === allRoots.length

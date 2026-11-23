@@ -2,7 +2,7 @@ import { Schema } from "effect";
 import { managedLinkDestinationPath } from "../agents/agent-layout.ts";
 import { ManagedLinkEvidenceSchema } from "./managed-link-schema.ts";
 import { CanonicalPathSchema } from "../identity/identity-schema.ts";
-import { compareCodeUnits } from "../identity/ordering.ts";
+import { sortedUnique } from "../identity/ordering.ts";
 
 /** Why Tack retained one cleanup obligation. Stronger causes must not be downgraded. */
 export const PendingRemovalCauseSchema = Schema.Literals([
@@ -52,17 +52,9 @@ export type PendingRemoval = typeof PendingRemovalSchema.Type;
 export const ReportedPendingRemovalCollectionSchema = Schema.Array(
   ReportedPendingRemovalSchema,
 ).check(
-  Schema.makeFilter((pending) => {
-    const destinations = pending.map((item) => item.destinationPath);
-    const sorted = [...destinations].sort(compareCodeUnits);
-    return [
-      ...(new Set(destinations).size === destinations.length
-        ? []
-        : ["Pending removals must be unique by destination path."]),
-      ...(destinations.every((destination, index) => destination === sorted[index])
-        ? []
-        : ["Pending removals must use canonical code-unit ordering."]),
-    ];
+  sortedUnique((item) => item.destinationPath, {
+    duplicate: "Pending removals must be unique by destination path.",
+    unordered: "Pending removals must use canonical code-unit ordering.",
   }),
 );
 export type ReportedPendingRemoval = typeof ReportedPendingRemovalSchema.Type;
