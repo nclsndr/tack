@@ -56,6 +56,15 @@ Tack keeps one copy of your setup, the one you maintain, and links it everywhere
 - **Your agent can run it.** Tack ships a `use-tack` skill that teaches agents its commands. Every
   view ends with the next command to run, and `--json` gives scripts a stable contract.
 
+## What Tack does not do yet
+
+- **Deliver context.** Tack catalogues context, and `sync` and `status` say so: no agent receives
+  it yet.
+- **Commands for every agent.** Commands reach Cline, Cursor, OpenCode and Pi. Claude Code, Codex,
+  GitHub Copilot CLI and Gemini CLI get skills only.
+- **Deliver without symbolic links.** Every delivery is a symbolic link, with no copy as a fallback.
+  Windows is untested.
+
 ## Profiles for teams and remote agents
 
 A profile is a file in your source that lists the exact resources a project gets. You review it
