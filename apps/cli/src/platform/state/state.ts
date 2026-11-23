@@ -78,107 +78,6 @@ const parseState = (
     );
   });
 
-const resolveStatePaths = Effect.fnUntraced(function* (options: StateOptions) {
-  const path = yield* Path.Path;
-  const stateDirectory = yield* resolveStateDirectoryLive(options);
-
-  return {
-    dotenvPath: path.join(stateDirectory, dotenvFileName),
-    lockPath: path.join(stateDirectory, lockFileName),
-    stateDirectory,
-    statePath: path.join(stateDirectory, stateFileName),
-    explicitDirectory: stateAutoInitializes(options) === false,
-  } satisfies StatePaths;
-});
-
-const readStateDocumentAtPath = Effect.fnUntraced(function* ({
-  statePath,
-  explicitDirectory,
-}: StatePaths) {
-  const fileSystem = yield* FileSystem.FileSystem;
-  const encodedState = yield* fileSystem
-    .readFileString(statePath)
-    .pipe(
-      Effect.mapError((error) =>
-        isPlatformReason(error, "NotFound")
-          ? new StateNotInitializedError({ statePath, explicitDirectory })
-          : toStateStorageError("read state", statePath, error),
-      ),
-    );
-
-  return yield* parseState(statePath, encodedState);
-});
-
-const readStateAtPath = readStateDocumentAtPath;
-
-const ensureStateExists = Effect.fnUntraced(function* ({
-  statePath,
-  explicitDirectory,
-}: StatePaths) {
-  const fileSystem = yield* FileSystem.FileSystem;
-
-  yield* fileSystem
-    .access(statePath)
-    .pipe(
-      Effect.mapError((error) =>
-        isPlatformReason(error, "NotFound")
-          ? new StateNotInitializedError({ statePath, explicitDirectory })
-          : toStateStorageError("access state", statePath, error),
-      ),
-    );
-});
-
-const ensureStateDirectory = Effect.fnUntraced(function* (stateDirectory: string) {
-  const fileSystem = yield* FileSystem.FileSystem;
-
-  yield* fileSystem
-    .makeDirectory(stateDirectory, { mode: restrictedDirectoryMode, recursive: true })
-    .pipe(
-      Effect.mapError((error) =>
-        toStateStorageError("create state directory", stateDirectory, error),
-      ),
-    );
-});
-
-const createDotenvIfMissing = Effect.fnUntraced(function* (dotenvPath: string) {
-  const fileSystem = yield* FileSystem.FileSystem;
-  return yield* Effect.scoped(
-    fileSystem.open(dotenvPath, { flag: "wx", mode: restrictedFileMode }).pipe(
-      Effect.tap((dotenv) => dotenv.sync),
-      Effect.as(true),
-    ),
-  ).pipe(
-    Effect.catch((error): Effect.Effect<boolean, StateStorageError> => {
-      if (isPlatformReason(error, "AlreadyExists")) {
-        return fileSystem.stat(dotenvPath).pipe(
-          Effect.mapError((statError) =>
-            toStateStorageError("inspect dotenv file", dotenvPath, statError),
-          ),
-          Effect.flatMap((existingDotenv) =>
-            existingDotenv.type === "File"
-              ? Effect.succeed(false)
-              : Effect.fail(
-                  new StateStorageError({
-                    message: "The operator dotenv path is not a regular file.",
-                    operation: "create dotenv file",
-                    path: dotenvPath,
-                  }),
-                ),
-          ),
-        );
-      }
-
-      return Effect.fail(
-        new StateStorageError({
-          message: error.message,
-          operation: "create dotenv file",
-          path: dotenvPath,
-        }),
-      );
-    }),
-  );
-});
-
 const writerLockProtocol: LockProtocol = {
   record: (pid) => `${pid}\n`,
   holder: (record) => {
@@ -190,58 +89,6 @@ const writerLockProtocol: LockProtocol = {
   fileMode: restrictedFileMode,
   directoryMode: restrictedDirectoryMode,
 };
-
-const acquireWriterLock = (lockPath: string) =>
-  acquireExclusiveLock(lockPath, writerLockProtocol).pipe(
-    Effect.catchTag("LockBusyError", (busy) =>
-      Effect.fail(
-        new StateBusyError({
-          lockPath,
-          ...(busy.ownerPid === undefined ? {} : { ownerPid: busy.ownerPid }),
-        }),
-      ),
-    ),
-    Effect.mapError((error) =>
-      error instanceof StateBusyError
-        ? error
-        : new StateStorageError({
-            message: error.message,
-            operation: `${error.operation} state writer lock`,
-            path: error.path,
-          }),
-    ),
-  );
-
-const removeOrphanedStateFiles = Effect.fnUntraced(function* (paths: StatePaths) {
-  const fileSystem = yield* FileSystem.FileSystem;
-  const path = yield* Path.Path;
-  const entries = yield* fileSystem
-    .readDirectory(paths.stateDirectory)
-    .pipe(
-      Effect.mapError((error) =>
-        toStateStorageError("list temporary state files", paths.stateDirectory, error),
-      ),
-    );
-  for (const entry of entries) {
-    if (!entry.startsWith(`${stateFileName}.tmp-`)) continue;
-    const temporaryPath = path.join(paths.stateDirectory, entry);
-    const info = yield* fileSystem
-      .stat(temporaryPath)
-      .pipe(
-        Effect.mapError((error) =>
-          toStateStorageError("inspect temporary state file", temporaryPath, error),
-        ),
-      );
-    if (info.type !== "File") continue;
-    yield* fileSystem
-      .remove(temporaryPath)
-      .pipe(
-        Effect.mapError((error) =>
-          toStateStorageError("remove temporary state file", temporaryPath, error),
-        ),
-      );
-  }
-});
 
 const releaseWriterLock = (ownership: LockOwnership) =>
   ownership.release.pipe(
@@ -255,112 +102,251 @@ const releaseWriterLock = (ownership: LockOwnership) =>
     ),
   );
 
-const withWriterLock = <A, E, R>(paths: StatePaths, use: () => Effect.Effect<A, E, R>) =>
-  Effect.scoped(
-    Effect.acquireUseRelease(acquireWriterLock(paths.lockPath), () => use(), releaseWriterLock),
-  );
-
-const writeStateAtomically = Effect.fnUntraced(function* (statePath: string, state: State) {
-  const persistedState = yield* encodeState(state).pipe(
-    Effect.mapError((cause) => new StateMutationError({ message: cause.message, statePath })),
-  );
-  const encodedState = JSON.stringify(persistedState, null, 2);
-  const random = yield* SecureRandom.SecureRandom;
-  const fileSystem = yield* FileSystem.FileSystem;
-  const temporaryStateId = yield* random.uuidV4();
-  const temporaryStatePath = `${statePath}.tmp-${temporaryStateId}`;
-  const writeAndReplace = Effect.scoped(
-    Effect.gen(function* () {
-      const temporaryState = yield* fileSystem.open(temporaryStatePath, {
-        flag: "wx",
-        mode: restrictedFileMode,
-      });
-      yield* temporaryState.writeAll(textEncoder.encode(encodedState));
-      yield* temporaryState.sync;
-      yield* fileSystem.rename(temporaryStatePath, statePath);
-    }),
-  ).pipe(
-    Effect.mapError((error) => toStateStorageError("atomically write state", statePath, error)),
-  );
-  const removeTemporaryState = fileSystem
-    .remove(temporaryStatePath, { force: true })
-    .pipe(
-      Effect.mapError((error) =>
-        toStateStorageError("remove temporary state", temporaryStatePath, error),
-      ),
-    );
-
-  yield* Effect.onExit(writeAndReplace, () => removeTemporaryState);
-});
-
-/** Resolves `TACK_STATE_DIR`, falling back to the supplied operator home and `.tack`. */
-const resolveStateDirectoryLive = Effect.fnUntraced(function* (options: StateOptions) {
-  const path = yield* Path.Path;
-  const configuredStateDirectory = options.environment["TACK_STATE_DIR"];
-
-  if (configuredStateDirectory !== undefined) {
-    if (configuredStateDirectory.length === 0) {
-      return yield* new StateConfigurationError({ message: "TACK_STATE_DIR must not be empty." });
-    }
-
-    return path.resolve(configuredStateDirectory);
-  }
-
-  if (options.homeDirectory === undefined || options.homeDirectory.length === 0) {
-    return yield* new StateConfigurationError({
-      message: "The operator home directory is unavailable.",
-    });
-  }
-
-  return path.join(options.homeDirectory, ".tack");
-});
-
-/** Creates the initial state and operator-owned dotenv file without overwriting either existing file. */
-const initializeStateLive = Effect.fnUntraced(function* (options: StateOptions) {
-  const paths = yield* resolveStatePaths(options);
-  yield* ensureStateDirectory(paths.stateDirectory);
-
-  return yield* withWriterLock(paths, () =>
-    Effect.gen(function* () {
-      const existing = yield* readStateDocumentAtPath(paths).pipe(
-        Effect.catchIf(
-          (error): error is StateNotInitializedError => error._tag === "StateNotInitializedError",
-          () => Effect.succeed(undefined),
-        ),
-      );
-      const alreadyInitialized = existing !== undefined;
-      yield* removeOrphanedStateFiles(paths);
-
-      if (existing === undefined) {
-        yield* writeStateAtomically(paths.statePath, emptyState());
-        options.observer?.wrote();
-      }
-
-      yield* createDotenvIfMissing(paths.dotenvPath);
-
-      return { alreadyInitialized, stateDirectory: paths.stateDirectory };
-    }),
-  );
-});
-
-/** Reads and validates the complete supported state document. */
-const readStateLive = Effect.fnUntraced(function* (options: StateOptions) {
-  const paths = yield* resolveStatePaths(options);
-  return yield* readStateAtPath(paths);
-});
-
-/** Builds the state capability over explicit platform services. */
+/**
+ * Builds the state capability over explicit platform services. Every helper below closes over
+ * them, so no operation needs the services provided again.
+ */
 export const makeStateStoreService = (
   random: SecureRandom.SecureRandom["Service"],
   fileSystem: FileSystem.FileSystem,
   path: Path.Path,
 ): StateStore["Service"] => {
-  const provideInternal = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-    effect.pipe(
-      Effect.provideService(SecureRandom.SecureRandom, random),
-      Effect.provideService(FileSystem.FileSystem, fileSystem),
-      Effect.provideService(Path.Path, path),
+  const resolveStatePaths = Effect.fnUntraced(function* (options: StateOptions) {
+    const stateDirectory = yield* resolveStateDirectoryLive(options);
+
+    return {
+      dotenvPath: path.join(stateDirectory, dotenvFileName),
+      lockPath: path.join(stateDirectory, lockFileName),
+      stateDirectory,
+      statePath: path.join(stateDirectory, stateFileName),
+      explicitDirectory: stateAutoInitializes(options) === false,
+    } satisfies StatePaths;
+  });
+
+  const readStateDocumentAtPath = Effect.fnUntraced(function* ({
+    statePath,
+    explicitDirectory,
+  }: StatePaths) {
+    const encodedState = yield* fileSystem
+      .readFileString(statePath)
+      .pipe(
+        Effect.mapError((error) =>
+          isPlatformReason(error, "NotFound")
+            ? new StateNotInitializedError({ statePath, explicitDirectory })
+            : toStateStorageError("read state", statePath, error),
+        ),
+      );
+
+    return yield* parseState(statePath, encodedState);
+  });
+
+  const readStateAtPath = readStateDocumentAtPath;
+
+  const ensureStateExists = Effect.fnUntraced(function* ({
+    statePath,
+    explicitDirectory,
+  }: StatePaths) {
+    yield* fileSystem
+      .access(statePath)
+      .pipe(
+        Effect.mapError((error) =>
+          isPlatformReason(error, "NotFound")
+            ? new StateNotInitializedError({ statePath, explicitDirectory })
+            : toStateStorageError("access state", statePath, error),
+        ),
+      );
+  });
+
+  const ensureStateDirectory = Effect.fnUntraced(function* (stateDirectory: string) {
+    yield* fileSystem
+      .makeDirectory(stateDirectory, { mode: restrictedDirectoryMode, recursive: true })
+      .pipe(
+        Effect.mapError((error) =>
+          toStateStorageError("create state directory", stateDirectory, error),
+        ),
+      );
+  });
+
+  const createDotenvIfMissing = Effect.fnUntraced(function* (dotenvPath: string) {
+    return yield* Effect.scoped(
+      fileSystem.open(dotenvPath, { flag: "wx", mode: restrictedFileMode }).pipe(
+        Effect.tap((dotenv) => dotenv.sync),
+        Effect.as(true),
+      ),
+    ).pipe(
+      Effect.catch((error): Effect.Effect<boolean, StateStorageError> => {
+        if (isPlatformReason(error, "AlreadyExists")) {
+          return fileSystem.stat(dotenvPath).pipe(
+            Effect.mapError((statError) =>
+              toStateStorageError("inspect dotenv file", dotenvPath, statError),
+            ),
+            Effect.flatMap((existingDotenv) =>
+              existingDotenv.type === "File"
+                ? Effect.succeed(false)
+                : Effect.fail(
+                    new StateStorageError({
+                      message: "The operator dotenv path is not a regular file.",
+                      operation: "create dotenv file",
+                      path: dotenvPath,
+                    }),
+                  ),
+            ),
+          );
+        }
+
+        return Effect.fail(
+          new StateStorageError({
+            message: error.message,
+            operation: "create dotenv file",
+            path: dotenvPath,
+          }),
+        );
+      }),
     );
+  });
+
+  const acquireWriterLock = (lockPath: string) =>
+    acquireExclusiveLock(lockPath, writerLockProtocol).pipe(
+      // The shared lock helper reads the file system from its context.
+      Effect.provideService(FileSystem.FileSystem, fileSystem),
+      Effect.catchTag("LockBusyError", (busy) =>
+        Effect.fail(
+          new StateBusyError({
+            lockPath,
+            ...(busy.ownerPid === undefined ? {} : { ownerPid: busy.ownerPid }),
+          }),
+        ),
+      ),
+      Effect.mapError((error) =>
+        error instanceof StateBusyError
+          ? error
+          : new StateStorageError({
+              message: error.message,
+              operation: `${error.operation} state writer lock`,
+              path: error.path,
+            }),
+      ),
+    );
+
+  const removeOrphanedStateFiles = Effect.fnUntraced(function* (paths: StatePaths) {
+    const entries = yield* fileSystem
+      .readDirectory(paths.stateDirectory)
+      .pipe(
+        Effect.mapError((error) =>
+          toStateStorageError("list temporary state files", paths.stateDirectory, error),
+        ),
+      );
+    for (const entry of entries) {
+      if (!entry.startsWith(`${stateFileName}.tmp-`)) continue;
+      const temporaryPath = path.join(paths.stateDirectory, entry);
+      const info = yield* fileSystem
+        .stat(temporaryPath)
+        .pipe(
+          Effect.mapError((error) =>
+            toStateStorageError("inspect temporary state file", temporaryPath, error),
+          ),
+        );
+      if (info.type !== "File") continue;
+      yield* fileSystem
+        .remove(temporaryPath)
+        .pipe(
+          Effect.mapError((error) =>
+            toStateStorageError("remove temporary state file", temporaryPath, error),
+          ),
+        );
+    }
+  });
+
+  const withWriterLock = <A, E, R>(paths: StatePaths, use: () => Effect.Effect<A, E, R>) =>
+    Effect.scoped(
+      Effect.acquireUseRelease(acquireWriterLock(paths.lockPath), () => use(), releaseWriterLock),
+    );
+
+  const writeStateAtomically = Effect.fnUntraced(function* (statePath: string, state: State) {
+    const persistedState = yield* encodeState(state).pipe(
+      Effect.mapError((cause) => new StateMutationError({ message: cause.message, statePath })),
+    );
+    const encodedState = JSON.stringify(persistedState, null, 2);
+    const temporaryStateId = yield* random.uuidV4();
+    const temporaryStatePath = `${statePath}.tmp-${temporaryStateId}`;
+    const writeAndReplace = Effect.scoped(
+      Effect.gen(function* () {
+        const temporaryState = yield* fileSystem.open(temporaryStatePath, {
+          flag: "wx",
+          mode: restrictedFileMode,
+        });
+        yield* temporaryState.writeAll(textEncoder.encode(encodedState));
+        yield* temporaryState.sync;
+        yield* fileSystem.rename(temporaryStatePath, statePath);
+      }),
+    ).pipe(
+      Effect.mapError((error) => toStateStorageError("atomically write state", statePath, error)),
+    );
+    const removeTemporaryState = fileSystem
+      .remove(temporaryStatePath, { force: true })
+      .pipe(
+        Effect.mapError((error) =>
+          toStateStorageError("remove temporary state", temporaryStatePath, error),
+        ),
+      );
+
+    yield* Effect.onExit(writeAndReplace, () => removeTemporaryState);
+  });
+
+  /** Resolves `TACK_STATE_DIR`, falling back to the supplied operator home and `.tack`. */
+  const resolveStateDirectoryLive = Effect.fnUntraced(function* (options: StateOptions) {
+    const configuredStateDirectory = options.environment["TACK_STATE_DIR"];
+
+    if (configuredStateDirectory !== undefined) {
+      if (configuredStateDirectory.length === 0) {
+        return yield* new StateConfigurationError({ message: "TACK_STATE_DIR must not be empty." });
+      }
+
+      return path.resolve(configuredStateDirectory);
+    }
+
+    if (options.homeDirectory === undefined || options.homeDirectory.length === 0) {
+      return yield* new StateConfigurationError({
+        message: "The operator home directory is unavailable.",
+      });
+    }
+
+    return path.join(options.homeDirectory, ".tack");
+  });
+
+  /** Creates the initial state and operator-owned dotenv file without overwriting either existing file. */
+  const initializeStateLive = Effect.fnUntraced(function* (options: StateOptions) {
+    const paths = yield* resolveStatePaths(options);
+    yield* ensureStateDirectory(paths.stateDirectory);
+
+    return yield* withWriterLock(paths, () =>
+      Effect.gen(function* () {
+        const existing = yield* readStateDocumentAtPath(paths).pipe(
+          Effect.catchIf(
+            (error): error is StateNotInitializedError => error._tag === "StateNotInitializedError",
+            () => Effect.succeed(undefined),
+          ),
+        );
+        const alreadyInitialized = existing !== undefined;
+        yield* removeOrphanedStateFiles(paths);
+
+        if (existing === undefined) {
+          yield* writeStateAtomically(paths.statePath, emptyState());
+          options.observer?.wrote();
+        }
+
+        yield* createDotenvIfMissing(paths.dotenvPath);
+
+        return { alreadyInitialized, stateDirectory: paths.stateDirectory };
+      }),
+    );
+  });
+
+  /** Reads and validates the complete supported state document. */
+  const readStateLive = Effect.fnUntraced(function* (options: StateOptions) {
+    const paths = yield* resolveStatePaths(options);
+    return yield* readStateAtPath(paths);
+  });
 
   const withCheckpointWriter = <A, E, R>(
     options: StateOptions,
@@ -368,24 +354,24 @@ export const makeStateStoreService = (
     autoInitialize = false,
   ) =>
     Effect.gen(function* () {
-      const paths = yield* provideInternal(resolveStatePaths(options));
+      const paths = yield* resolveStatePaths(options);
       const mayInitialize = autoInitialize && stateAutoInitializes(options);
-      if (mayInitialize) yield* provideInternal(ensureStateDirectory(paths.stateDirectory));
-      else yield* provideInternal(ensureStateExists(paths));
+      if (mayInitialize) yield* ensureStateDirectory(paths.stateDirectory);
+      else yield* ensureStateExists(paths);
 
       return yield* Effect.scoped(
         Effect.acquireUseRelease(
-          provideInternal(acquireWriterLock(paths.lockPath)),
+          acquireWriterLock(paths.lockPath),
           () =>
             Effect.gen(function* () {
-              const document = yield* provideInternal(readStateDocumentAtPath(paths)).pipe(
+              const document = yield* readStateDocumentAtPath(paths).pipe(
                 Effect.catchIf(
                   (error): error is StateNotInitializedError =>
                     mayInitialize && error instanceof StateNotInitializedError,
                   () => Effect.succeed(undefined),
                 ),
               );
-              yield* provideInternal(removeOrphanedStateFiles(paths));
+              yield* removeOrphanedStateFiles(paths);
               // A state this session creates starts with the adapters the options name.
               const initialAdapters =
                 document === undefined && options.initialAdapters !== undefined
@@ -428,10 +414,10 @@ export const makeStateStoreService = (
                     }
 
                     // Encoding validates the candidate once; a rejected candidate writes nothing.
-                    yield* provideInternal(writeStateAtomically(paths.statePath, candidate.state));
+                    yield* writeStateAtomically(paths.statePath, candidate.state);
                     options.observer?.wrote();
                     if (!stateExists) {
-                      yield* provideInternal(createDotenvIfMissing(paths.dotenvPath));
+                      yield* createDotenvIfMissing(paths.dotenvPath);
                       options.observer?.initialized(paths.stateDirectory, initialAdapters);
                     }
                     currentState = candidate.state;
@@ -473,17 +459,17 @@ export const makeStateStoreService = (
                 stateExists: () => stateExists,
               });
             }),
-          (ownership) => provideInternal(releaseWriterLock(ownership)),
+          (ownership) => releaseWriterLock(ownership),
         ),
       );
     });
 
   return StateStore.of({
-    initialize: (options) => provideInternal(initializeStateLive(options)),
+    initialize: (options) => initializeStateLive(options),
     mutateEffect: (options, mutate) =>
       withCheckpointWriter(options, (writer) => writer.checkpoint(mutate), true),
-    read: (options) => provideInternal(readStateLive(options)),
-    resolveDirectory: (options) => provideInternal(resolveStateDirectoryLive(options)),
+    read: (options) => readStateLive(options),
+    resolveDirectory: (options) => resolveStateDirectoryLive(options),
     withCheckpointWriter,
   });
 };
