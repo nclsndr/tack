@@ -45,3 +45,10 @@ An edge names a `kind` (`skill` or `command`) and a `name`. These rules decide w
    optional one. An unregistered source is `source-unregistered`: fix it with `tack source add`.
    While a registered source cannot be read, its label is unknown, so the reason is
    `source-unhealthy` and lists that source's path: fix it with `tack check <path>`.
+
+`tack check` applies these rules to every edge before registration, using only the source folders
+passed to it: pass each declared source's folder with the source. It reports an edge that names no
+single resource at its line, as `dependency-missing`, `dependency-quarantined`,
+`dependency-source-undeclared` or `dependency-ambiguous`. An optional edge, and an edge to a source
+the check does not hold (`dependency-source-unchecked`) or cannot read
+(`dependency-source-unhealthy`), is a warning.

@@ -6,6 +6,7 @@ import {
   resolutionIsUnresolved,
   resolveDependencyClosure,
   selectedDependencyAddresses,
+  unresolvedDependencyEdges,
 } from "./dependency-resolution.ts";
 import { resolveInitialSelection } from "./selection.ts";
 import type {
@@ -551,6 +552,67 @@ it.each([
     });
   },
 );
+
+it("lists every edge, required or optional, that names no single resource, with its position", () => {
+  const root = entryIn(
+    "root",
+    sharedId,
+    [
+      { kind: "skill", name: "target" },
+      { kind: "skill", name: "absent", optional: true },
+      { kind: "skill", name: "target", source: "elsewhere" },
+      { kind: "command", name: "broken" },
+      { kind: "skill", name: "twin" },
+    ],
+    "default",
+  );
+  const context = {
+    address: { kind: "context", name: "notes.md", sourceRegistrationId: sharedId },
+    directoryPath: "/sources/shared",
+    filePath: "/sources/shared/notes.md",
+    sourcePath: "/sources/shared",
+    sourceRegistrationId: sharedId,
+  } satisfies Extract<SelectableCatalogEntry, { readonly address: { readonly kind: "context" } }>;
+
+  const edges = unresolvedDependencyEdges({
+    entries: [
+      root,
+      context,
+      entryIn("target", sharedId),
+      entryIn("twin", thirdId),
+      entryIn("twin", fourthId),
+    ],
+    quarantined: [
+      {
+        address: { kind: "command", name: "broken", sourceRegistrationId: sharedId },
+        code: "command-metadata-invalid",
+        directoryPath: "/sources/shared",
+        filePath: "/sources/shared/broken.md",
+        message: "invalid",
+        sourcePath: "/sources/shared",
+        sourceRegistrationId: sharedId,
+      },
+    ],
+    sources: [
+      sourceAt(sharedId, "shared", { dependsOn: ["left", "right"] }),
+      sourceAt(thirdId, "left"),
+      sourceAt(fourthId, "right"),
+    ],
+  });
+
+  expect(
+    edges.map(({ requester, position, failure }) => [
+      requester.address.name,
+      position,
+      failure.reason,
+    ]),
+  ).toEqual([
+    ["root", 1, "missing"],
+    ["root", 2, "source-undeclared"],
+    ["root", 3, "quarantined"],
+    ["root", 4, "ambiguous"],
+  ]);
+});
 
 it("blocks a dependency on a declared source label that no registered source carries", () => {
   const root = entryIn(

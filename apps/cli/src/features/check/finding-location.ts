@@ -6,17 +6,40 @@ type LocatedFinding = Omit<CheckFinding, "line"> & {
   readonly field?: string;
 };
 
+const indentOf = (line: string) => line.length - line.trimStart().length;
+
+const isListItem = (line: string) => /^\s*-(\s|$)/.test(line);
+
 /**
- * The lines of the block-list items under the top-level key at line `start`, in order. Only items
- * at the first item's indentation count, so a list nested inside an item is passed over.
+ * The lines of the block-list items under the key at line `start`, in order. The list ends at the
+ * next key at the key's indentation or less. Only items at the first item's indentation count, so
+ * a list nested inside an item is passed over.
  */
 const listItemLines = (lines: ReadonlyArray<string>, start: number) => {
-  const end = lines.findIndex((line, index) => index > start && /^[^\s#-]/.test(line) === true);
-  const items = lines.slice(start + 1, end < 0 ? undefined : end).flatMap((line, offset) => {
-    const indent = line.match(/^(\s*)-(\s|$)/)?.[1];
-    return indent === undefined ? [] : [{ indent: indent.length, line: start + 1 + offset }];
-  });
+  const keyIndent = indentOf(lines[start] ?? "");
+  const end = lines.findIndex(
+    (line, index) =>
+      index > start &&
+      line.trim() !== "" &&
+      line.trimStart().startsWith("#") === false &&
+      (indentOf(line) < keyIndent || (indentOf(line) === keyIndent && isListItem(line) === false)),
+  );
+  const items = lines
+    .slice(start + 1, end < 0 ? undefined : end)
+    .flatMap((line, offset) =>
+      isListItem(line) === true ? [{ indent: indentOf(line), line: start + 1 + offset }] : [],
+    );
   return items.filter(({ indent }) => indent === items[0]?.indent).map(({ line }) => line);
+};
+
+/**
+ * The one-based line of the dependency at `position` in a resource file's Tack metadata. A list
+ * written inline anchors at its `dependencies:` key, and metadata with no such line at line 1.
+ */
+export const dependencyLine = (text: string, position: number) => {
+  const lines = text.split(/\r?\n/);
+  const start = lines.findIndex((line) => /^\s*["']?dependencies["']?:/.test(line) === true);
+  return start < 0 ? 1 : (listItemLines(lines, start)[position] ?? start) + 1;
 };
 
 /**

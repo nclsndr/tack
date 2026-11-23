@@ -1,9 +1,9 @@
-import { writeUnder } from "../../../test/support/source-tree.ts";
+import { skillText, tackMetadata, writeUnder } from "../../../test/support/source-tree.ts";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { checkPaths } from "./check-paths.ts";
-import { locateFinding } from "./finding-location.ts";
+import { dependencyLine, locateFinding } from "./finding-location.ts";
 import { documentationFiles } from "./path-discovery.ts";
 
 const sourceFolder = Effect.gen(function* () {
@@ -28,6 +28,220 @@ it.layer(LiveTestLayer)("check findings", (test) => {
         }),
       );
     }),
+  );
+
+  test.effect(
+    "reports each dependency edge that names no single resource at its line in the requester",
+    () =>
+      Effect.gen(function* () {
+        const { path, root, write } = yield* sourceFolder;
+        yield* write(
+          "kit/tack.yaml",
+          "version: 1\nname: kit\ndepends-on: [base]\nskills: [{path: skills}]\ncommands: [{path: ship.md}]\n",
+        );
+        const release = yield* write(
+          "kit/skills/release/SKILL.md",
+          skillText("release", {
+            tack: [
+              "dependencies:",
+              "  - kind: skill",
+              "    name: git",
+              "    source: kit",
+              "  - kind: skill",
+              "    name: git",
+              "  - kind: skill",
+              "    name: changelog",
+              "    optional: true",
+              "  - kind: command",
+              "    name: audit",
+              "    source: elsewhere",
+            ],
+          }),
+        );
+        const ship = yield* write(
+          "kit/ship.md",
+          `---\n${tackMetadata("projects: [app]", "dependencies:", "- {kind: skill, name: deploy}")}---\nShip it\n`,
+        );
+        yield* write("base/tack.yaml", "version: 1\nname: base\nskills: [{path: skills}]\n");
+        yield* write("base/skills/git/SKILL.md", skillText("git"));
+        const kit = path.join(root, "kit");
+
+        const report = yield* checkPaths([kit, path.join(root, "base")]);
+
+        expect(
+          report.findings.map(({ code, severity, file, line, message }) => ({
+            code,
+            severity,
+            file,
+            line,
+            message,
+          })),
+        ).toEqual([
+          {
+            code: "dependency-missing",
+            severity: "error",
+            file: ship,
+            line: 7,
+            message:
+              "command ship needs skill deploy, which neither kit nor a source it declares provides.",
+          },
+          {
+            code: "dependency-missing",
+            severity: "error",
+            file: release,
+            line: 8,
+            message: "skill release needs skill kit:git, which kit does not provide.",
+          },
+          {
+            code: "dependency-missing",
+            severity: "warning",
+            file: release,
+            line: 13,
+            message:
+              "skill release needs skill changelog (optional), which neither kit nor a source it declares provides.",
+          },
+          {
+            code: "dependency-source-undeclared",
+            severity: "error",
+            file: release,
+            line: 16,
+            message:
+              "skill release needs command elsewhere:audit, from elsewhere, which kit does not declare.",
+          },
+        ]);
+        expect(report.summary).toMatchObject({ errors: 3, warnings: 1 });
+
+        const alone = yield* checkPaths([kit]);
+        expect(alone.findings).toContainEqual(
+          expect.objectContaining({
+            code: "dependency-source-unchecked",
+            severity: "warning",
+            file: release,
+            line: 11,
+          }),
+        );
+      }),
+  );
+
+  const gitEdge = (source?: string) =>
+    skillText("release", {
+      tack: [
+        "dependencies:",
+        "  - kind: skill",
+        "    name: git",
+        ...(source === undefined ? [] : [`    source: ${source}`]),
+      ],
+    });
+  const skills = (name: string) => `version: 1\nname: ${name}\nskills: [{path: skills}]\n` as const;
+
+  test.effect.each([
+    {
+      reason: "a quarantined resource",
+      files: {
+        "kit/tack.yaml": skills("kit"),
+        "kit/skills/release/SKILL.md": gitEdge(),
+        "kit/skills/git/SKILL.md": skillText("other"),
+      },
+      checked: ["kit"],
+      code: "dependency-quarantined",
+      severity: "error",
+      message: "skill release needs skill git, which is quarantined.",
+      remedy: "Fix the finding reported for it.",
+    },
+    {
+      reason: "a resource only an undeclared source provides",
+      files: {
+        "kit/tack.yaml": skills("kit"),
+        "kit/skills/release/SKILL.md": gitEdge(),
+        "base/tack.yaml": skills("base"),
+        "base/skills/git/SKILL.md": skillText("git"),
+      },
+      checked: ["kit", "base"],
+      code: "dependency-source-undeclared",
+      severity: "error",
+      message:
+        "skill release needs skill git, which only a source that kit does not declare provides.",
+      remedy: "Add the label of the source that provides it to depends-on in the tack.yaml of kit.",
+    },
+    {
+      reason: "a resource two declared sources provide",
+      files: {
+        "kit/tack.yaml": `${skills("kit")}depends-on: [left, right]\n`,
+        "kit/skills/release/SKILL.md": gitEdge(),
+        "left/tack.yaml": skills("left"),
+        "left/skills/git/SKILL.md": skillText("git"),
+        "right/tack.yaml": skills("right"),
+        "right/skills/git/SKILL.md": skillText("git"),
+      },
+      checked: ["kit", "left", "right"],
+      code: "dependency-ambiguous",
+      severity: "error",
+      message: "skill release needs skill git, which several sources provide.",
+      remedy: "Name the source in the dependency, as source: LABEL.",
+    },
+    {
+      reason: "a declared source that is not checked",
+      files: {
+        "kit/tack.yaml": `${skills("kit")}depends-on: [base]\n`,
+        "kit/skills/release/SKILL.md": gitEdge("base"),
+      },
+      checked: ["kit"],
+      code: "dependency-source-unchecked",
+      severity: "warning",
+      message:
+        "skill release needs skill base:git, from a declared source that is not among the checked paths.",
+      remedy: "Pass the folder of that source to the same tack check to verify the dependency.",
+    },
+    {
+      reason: "a declared source Tack cannot read",
+      files: {
+        "kit/tack.yaml": `${skills("kit")}depends-on: [base]\n`,
+        "kit/skills/release/SKILL.md": gitEdge("base"),
+        "base/tack.yaml": "version: 9\n",
+      },
+      checked: ["kit", "base"],
+      code: "dependency-source-unhealthy",
+      severity: "warning",
+      message: "skill release needs skill base:git, from a source Tack cannot read.",
+      remedy: "Fix the findings of BASE.",
+    },
+    {
+      reason: "a missing resource, from a source with no label, named by its folder",
+      files: {
+        "Kit Tools/tack.yaml": "version: 1\nskills: [{path: skills}]\n",
+        "Kit Tools/skills/release/SKILL.md": gitEdge(),
+      },
+      checked: ["Kit Tools"],
+      code: "dependency-missing",
+      severity: "error",
+      message:
+        "skill release needs skill git, which neither KIT nor a source it declares provides.",
+      remedy:
+        "Correct the name, declare the source that provides it in depends-on, or remove the dependency.",
+    },
+  ] as const)(
+    "reports a dependency edge to $reason",
+    ({ files, checked, code, severity, message, remedy }) =>
+      Effect.gen(function* () {
+        const { path, root, write } = yield* sourceFolder;
+        for (const [relative, content] of Object.entries(files)) yield* write(relative, content);
+        const requester = path.join(root, checked[0]);
+
+        const report = yield* checkPaths(checked.map((folder) => path.join(root, folder)));
+
+        expect(report.findings.filter((finding) => finding.code.startsWith("dependency-"))).toEqual(
+          [
+            {
+              code,
+              severity,
+              file: path.join(requester, "skills/release/SKILL.md"),
+              line: 8,
+              message: message.replace("KIT", requester),
+              remedy: remedy.replace("BASE", path.join(root, "base")),
+            },
+          ],
+        );
+      }),
   );
 
   test.effect("collects only Markdown documents and skips devices and hidden entries", () =>
@@ -166,4 +380,23 @@ it.layer(LiveTestLayer)("check findings", (test) => {
       ]);
     }),
   );
+});
+
+it.each([
+  [
+    "a block list, past a nested list and a comment",
+    "metadata:\n  tack: |\n    dependencies:\n      - kind: skill\n        tags:\n          - nested\n      # note\n      - kind: command\n    projects: [app]\n",
+    1,
+    8,
+  ],
+  [
+    "an inline list, at its key",
+    "metadata:\n  tack: |\n    dependencies: [{kind: skill, name: git}]\n",
+    0,
+    3,
+  ],
+  ["a quoted key", 'metadata:\n  tack: |\n    "dependencies":\n      - kind: skill\n', 0, 4],
+  ["metadata with no dependencies line, at line 1", 'metadata: {tack: "version: 1"}\n', 0, 1],
+] as const)("anchors a dependency in %s", (_case, text, position, line) => {
+  expect(dependencyLine(text, position)).toBe(line);
 });
