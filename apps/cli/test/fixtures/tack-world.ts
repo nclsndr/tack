@@ -1,8 +1,10 @@
-import { expect } from "@effect/vitest";
+import { afterAll, expect } from "@effect/vitest";
 import { Effect, FileSystem, Path, Stream } from "effect";
 import { ChildProcess, ChildProcessSpawner } from "effect/process";
+import { rm } from "node:fs/promises";
 import type { PublicEnvelope } from "../../src/cli/host/public-outcome.ts";
 import type { StateOptions } from "../../src/services/state-store.ts";
+import { runTackInProcess } from "../support/host-runner.ts";
 import {
   decodeEnvelope,
   repositoryRoot,
@@ -82,6 +84,26 @@ export const runTack = (
     })),
   );
 
+/**
+ * {@link runTack} in the test process: the same arguments, home, state and working directory, and
+ * the same result. A test that asserts only an envelope, an exit status and files uses it.
+ */
+export const hostTack = (
+  fixture: TackWorld,
+  arguments_: ReadonlyArray<string>,
+  cwd: string = fixture.primaryRoot,
+) =>
+  runTackInProcess(["--json", ...arguments_], {
+    cwd,
+    home: fixture.homeDirectory,
+    state: fixture.stateDirectory,
+  }).pipe(
+    Effect.map((run): ProcessResult => ({
+      ...run,
+      exitCode: ChildProcessSpawner.ExitCode(run.exitCode),
+    })),
+  );
+
 /** Decodes and verifies a successful public CLI envelope. */
 export const successfulEnvelope = (result: ProcessResult): PublicEnvelope => {
   expectProcessSuccess(result);
@@ -100,7 +122,59 @@ export const partialEnvelope = (result: ProcessResult): PublicEnvelope => {
   return envelope;
 };
 
-/** Creates one isolated real-Git repository and initialized Tack project fixture. */
+/**
+ * The Git half of a world, made once per test file: a bare `remote.git` and its clone `primary`,
+ * with one commit pushed. Each world copies it, so a world starts no Git process.
+ */
+const gitTemplate = {
+  root: undefined as string | undefined,
+};
+
+afterAll(async () => {
+  if (gitTemplate.root !== undefined) await rm(gitTemplate.root, { recursive: true, force: true });
+});
+
+const makeGitTemplate = Effect.fnUntraced(function* () {
+  const fileSystem = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
+  const root = yield* fileSystem.realPath(
+    yield* fileSystem.makeTempDirectory({ prefix: "tack-world-git-" }),
+  );
+  const bareRepository = path.join(root, "remote.git");
+  const primaryRoot = path.join(root, "primary");
+  yield* runGit(root, ["init", "--bare", bareRepository]);
+  yield* runGit(root, ["clone", bareRepository, primaryRoot]);
+  yield* runGit(primaryRoot, ["config", "user.name", "Tack Tests"]);
+  yield* runGit(primaryRoot, ["config", "user.email", "tack-tests@example.com"]);
+  yield* fileSystem.writeFileString(path.join(primaryRoot, "README.md"), "fixture\n");
+  yield* runGit(primaryRoot, ["add", "README.md"]);
+  yield* runGit(primaryRoot, ["commit", "-m", "Initial fixture"]);
+  yield* runGit(primaryRoot, ["push", "origin", "HEAD"]);
+  gitTemplate.root = root;
+  return root;
+});
+
+/** Copies the Git template into `root`, pointing the clone's `origin` at the copied remote. */
+const copyGitTemplate = Effect.fnUntraced(function* (root: string) {
+  const fileSystem = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
+  const template = gitTemplate.root ?? (yield* makeGitTemplate());
+  for (const name of ["remote.git", "primary"])
+    yield* fileSystem.copy(path.join(template, name), path.join(root, name), {
+      preserveTimestamps: true,
+    });
+  const config = path.join(root, "primary", ".git", "config");
+  const text = yield* fileSystem.readFileString(config);
+  yield* fileSystem.writeFileString(
+    config,
+    text.replaceAll(path.join(template, "remote.git"), path.join(root, "remote.git")),
+  );
+});
+
+/**
+ * Creates one isolated real-Git repository and initialized Tack project fixture. The repository
+ * is a copy of a template and the Tack setup runs in process, so no child process starts.
+ */
 export const withTackWorld = <A, E, R>(use: (fixture: TackWorld) => Effect.Effect<A, E, R>) =>
   Effect.gen(function* () {
     const fileSystem = yield* FileSystem.FileSystem;
@@ -110,7 +184,6 @@ export const withTackWorld = <A, E, R>(use: (fixture: TackWorld) => Effect.Effec
       prefix: "tack-world-",
     });
     const root = yield* fileSystem.realPath(temporaryRoot);
-    const bareRepository = path.join(root, "remote.git");
     const homeDirectory = path.join(root, "home");
     const primaryRoot = path.join(root, "primary");
     const sourceDirectory = path.join(root, "source");
@@ -130,14 +203,7 @@ export const withTackWorld = <A, E, R>(use: (fixture: TackWorld) => Effect.Effec
       "---\nname: valid\ndescription: Valid skill\n---\n",
     );
 
-    yield* runGit(root, ["init", "--bare", bareRepository]);
-    yield* runGit(root, ["clone", bareRepository, primaryRoot]);
-    yield* runGit(primaryRoot, ["config", "user.name", "Tack Tests"]);
-    yield* runGit(primaryRoot, ["config", "user.email", "tack-tests@example.com"]);
-    yield* fileSystem.writeFileString(path.join(primaryRoot, "README.md"), "fixture\n");
-    yield* runGit(primaryRoot, ["add", "README.md"]);
-    yield* runGit(primaryRoot, ["commit", "-m", "Initial fixture"]);
-    yield* runGit(primaryRoot, ["push", "origin", "HEAD"]);
+    yield* copyGitTemplate(root);
 
     const options = {
       environment: { TACK_STATE_DIR: stateDirectory },
@@ -153,10 +219,10 @@ export const withTackWorld = <A, E, R>(use: (fixture: TackWorld) => Effect.Effec
       stateDirectory,
       worktreeRoot,
     } satisfies TackWorld;
-    successfulEnvelope(yield* runTack(fixture, ["state", "init"]));
-    successfulEnvelope(yield* runTack(fixture, ["source", "add", sourceDirectory]));
+    successfulEnvelope(yield* hostTack(fixture, ["state", "init"]));
+    successfulEnvelope(yield* hostTack(fixture, ["source", "add", sourceDirectory]));
     successfulEnvelope(
-      yield* runTack(fixture, [
+      yield* hostTack(fixture, [
         "project",
         "add",
         "workspace",
@@ -165,7 +231,7 @@ export const withTackWorld = <A, E, R>(use: (fixture: TackWorld) => Effect.Effec
       ]),
     );
     successfulEnvelope(
-      yield* runTack(fixture, ["pick", "include", "valid", "--project", "workspace"]),
+      yield* hostTack(fixture, ["pick", "include", "valid", "--project", "workspace"]),
     );
     return yield* use(fixture);
   });

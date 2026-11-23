@@ -1,10 +1,12 @@
-import { Effect, Exit, Ref, Sink, Stdio, Stream } from "effect";
+import { Effect, Exit, Ref, Runtime, Sink, Stdio, Stream } from "effect";
+import { ApplicationLive } from "../../src/bootstrap/application-layer.ts";
 import { runCli } from "../../src/cli/host/run.ts";
 import {
   TerminalContext,
   type TerminalContextShape,
 } from "../../src/cli/host/human/terminal-context.ts";
 import { Git, type GitService } from "../../src/services/git.ts";
+import { isolationChanges, type TackRunOptions, type TackRun } from "./tack-process.ts";
 
 const text = (chunk: string | Uint8Array) =>
   typeof chunk === "string" ? chunk : new TextDecoder().decode(chunk);
@@ -113,3 +115,55 @@ export function runHost(input: HostInput): Effect.Effect<HostRun, never, CliServ
     return { exit, stdout: yield* capture.stdout, stderr: yield* capture.stderr };
   });
 }
+
+/** Runs `effect` with the process working directory set to `directory`, restoring it after. */
+export const inDirectory =
+  (directory: string) =>
+  <A, E, R>(effect: Effect.Effect<A, E, R>) =>
+    Effect.acquireUseRelease(
+      Effect.sync(() => {
+        const previous = process.cwd();
+        process.chdir(directory);
+        return previous;
+      }),
+      () => effect,
+      (previous) => Effect.sync(() => process.chdir(previous)),
+    );
+
+/** The exit status the process entrypoint reports for `exit`, by the runtime's own rule. */
+const exitCodeOf = (exit: Exit.Exit<unknown, unknown>) => {
+  const codes: Array<number> = [];
+  Runtime.defaultTeardown(exit, (code) => codes.push(code));
+  return codes[0] ?? 0;
+};
+
+/** A run of a `tack` process that {@link runTackInProcess} can stand in for. */
+export type InProcessOptions = Pick<TackRunOptions, "cwd" | "env" | "home" | "state" | "temporary">;
+
+/**
+ * Runs `tack` in the test process as `tackProcess` runs it in a child: the production service
+ * graph, the same environment changes, a working directory, an 80-column pipe for stdin and
+ * stdout, and the exit status the entrypoint would report. It costs no process start, so a test
+ * that asserts only an envelope, an exit status and files uses it. A held lock, a killed writer,
+ * a signal or the built package needs a real process.
+ */
+export const runTackInProcess = (
+  args: ReadonlyArray<string>,
+  options: InProcessOptions = {},
+): Effect.Effect<TackRun> => {
+  const run = runHost({
+    args,
+    env: isolationChanges(options, options.env),
+    // The live environment, which the run's changes above apply to, as a child process sees its own.
+    terminal: {
+      columns: 80,
+      environment: process.env,
+      stdinIsTerminal: false,
+      stdoutIsTerminal: false,
+    },
+  });
+  return (options.cwd === undefined ? run : inDirectory(options.cwd)(run)).pipe(
+    Effect.map(({ exit, stdout, stderr }) => ({ exitCode: exitCodeOf(exit), stdout, stderr })),
+    Effect.provide(ApplicationLive),
+  );
+};
