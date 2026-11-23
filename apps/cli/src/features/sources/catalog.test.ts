@@ -240,6 +240,11 @@ it.layer(LiveTestLayer)("skill catalog", (sourceIt) => {
         const catalog = yield* resolveCatalog(options);
 
         expect(names(catalog)).toEqual(["valid"]);
+        expect(
+          catalog.quarantined.find(
+            (entry) => entry.code === "skill-metadata-dependency-kind-unsupported",
+          )?.message,
+        ).toBe("Only skill and command dependency kinds are supported.");
         expect(catalog.quarantined.map((entry) => entry.code)).toEqual([
           "skill-metadata-activation-invalid",
           "skill-metadata-dependency-invalid",

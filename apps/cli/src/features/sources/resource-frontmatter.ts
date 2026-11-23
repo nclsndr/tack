@@ -9,6 +9,10 @@ import {
   resourceMetadataVersion,
   type SkillCatalogEntry,
 } from "../../domain/sources/catalog-schema.ts";
+import { dependencyTargetKinds } from "../../domain/resources/kinds.ts";
+
+/** The kinds a dependency can name, as a sentence lists them: `skill and command`. */
+const dependencyTargetKindList = new Intl.ListFormat("en").format(dependencyTargetKinds);
 
 type YamlMappingErrorCodes =
   | {
@@ -166,13 +170,12 @@ const validateMetadataDependencies = (metadata: Record<string, unknown>) => {
 
       if (
         Predicate.hasProperty(dependency, "kind") === true &&
-        dependency.kind !== "skill" &&
-        dependency.kind !== "command"
+        dependencyTargetKinds.some((kind) => kind === dependency.kind) === false
       ) {
         return Effect.fail(
           candidateError(
             "skill-metadata-dependency-kind-unsupported",
-            "Only skill and command dependency kinds are supported.",
+            `Only ${dependencyTargetKindList} dependency kinds are supported.`,
             "dependencies.kind",
           ),
         );
