@@ -1,4 +1,4 @@
-import { Effect, FileSystem, Layer, Path, Stream } from "effect";
+import { Clock, Effect, FileSystem, Layer, Path, Stream } from "effect";
 import { ChildProcess, ChildProcessSpawner } from "effect/process";
 import { lstatSync, readdirSync } from "node:fs";
 import { join } from "node:path";
@@ -260,7 +260,7 @@ export const makeImportRemote = (
   ): Effect.Effect<A, ImportFetchError> => {
     const monitor = Effect.gen(function* () {
       let last = -1;
-      let idleSince = Date.now();
+      let idleSince = yield* Clock.currentTimeMillis;
       while (true) {
         yield* Effect.sleep("250 millis");
         const bytes = yield* Effect.sync(() => directoryBytes(scratch));
@@ -269,10 +269,11 @@ export const makeImportRemote = (
             code: "import-limit-exceeded",
             message: `The transfer exceeded the ${Math.floor(limits.maxScratchBytes / mebibyte)} MiB scratch limit and was stopped.`,
           });
+        const now = yield* Clock.currentTimeMillis;
         if (bytes !== last) {
           last = bytes;
-          idleSince = Date.now();
-        } else if (Date.now() - idleSince > limits.idleTimeoutMillis)
+          idleSince = now;
+        } else if (now - idleSince > limits.idleTimeoutMillis)
           return yield* new ImportFetchError({
             code: "import-timeout",
             message: "The transfer made no progress and was stopped.",

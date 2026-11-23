@@ -1,6 +1,7 @@
 import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
 import { Effect, FileSystem, Path } from "effect";
 import { expect, it } from "@effect/vitest";
+import { TestClock } from "effect/testing";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { ExecutionPlatform, ExecutionError } from "../../services/execution-platform.ts";
 import { ExecutionPlatformLive } from "../../platform/execution/execution-platform.ts";
@@ -419,6 +420,26 @@ it.layer(LiveTestLayer)("operator attempt lifetime", (test) => {
           expect(touched).toBe(false);
         }),
       ),
+  );
+  test.effect("stamps the run record's start and finish from the Effect clock", () =>
+    fixture((options) =>
+      Effect.gen(function* () {
+        const live = yield* ExecutionPlatform;
+        yield* TestClock.setTime(Date.UTC(2026, 0, 2, 3, 4, 5));
+        const result = yield* runOperatorScript(options, request).pipe(
+          Effect.provideService(ExecutionPlatform, {
+            ...live,
+            // Reading the input takes 90 seconds of test time between the two stamps.
+            input: () => TestClock.adjust("90 seconds").pipe(Effect.as({})),
+          }),
+        );
+        expect(yield* showScriptHistory(options, result.runId)).toMatchObject({
+          status: "complete",
+          startedAt: "2026-01-02T03:04:05.000Z",
+          finishedAt: "2026-01-02T03:05:35.000Z",
+        });
+      }),
+    ),
   );
   test.effect(
     "conflicting input sources and unresolved scripts still finish durable attempts",

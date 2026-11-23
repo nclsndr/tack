@@ -138,6 +138,11 @@ export const superviseWorker = async (options: {
   readonly workerPath?: string;
   readonly graceMs?: number;
   readonly mirror?: (content: string) => void;
+  /**
+   * Reads the current time in epoch milliseconds for log timestamps. The default is the wall clock;
+   * the execution platform passes the Effect `Clock`.
+   */
+  readonly now?: () => number;
 }): Promise<{
   readonly result: OperatorRunResult;
   readonly diagnostics?: Schema.Json;
@@ -150,6 +155,7 @@ export const superviseWorker = async (options: {
           ((content) => {
             process.stderr.write(content);
           })),
+    options.now ?? Date.now,
   );
   const environment = options.environment ?? process.env;
   const secrets = await prepareSecretLookup(options.stateDirectory, environment);

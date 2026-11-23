@@ -1,4 +1,4 @@
-import { Effect, Path, Schema } from "effect";
+import { DateTime, Effect, Path, Schema } from "effect";
 import { SecureRandom } from "effect/crypto";
 import {
   ExecutionPlatform,
@@ -224,7 +224,7 @@ const runWithCancellation = Effect.fnUntraced(function* (
     version: 1,
     runId,
     status: "pending",
-    startedAt: new Date().toISOString(),
+    startedAt: DateTime.formatIso(yield* DateTime.now),
     address: request.address,
   };
   const initial = yield* platform.createHistory(stateDirectory, pending).pipe(Effect.result);
@@ -290,7 +290,7 @@ const runWithCancellation = Effect.fnUntraced(function* (
   const completed: HistoryRecord = {
     ...pending,
     status: "complete",
-    finishedAt: new Date().toISOString(),
+    finishedAt: DateTime.formatIso(yield* DateTime.now),
     result,
     ...(request.words === undefined
       ? originalInput === undefined

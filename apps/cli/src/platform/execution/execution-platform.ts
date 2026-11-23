@@ -145,5 +145,8 @@ export const ExecutionPlatformLive = Layer.succeed(ExecutionPlatform, {
   countHistory: (directory) => promise(() => countHistory(directory)),
   showHistory: (directory, runId) => promise(() => readHistory(directory, runId)),
   clearHistory: (directory) => promise(() => clearHistory(directory)),
-  worker: (request) => promise(() => superviseWorker(request)),
+  worker: (request) =>
+    Effect.clockWith((clock) =>
+      promise(() => superviseWorker({ ...request, now: () => clock.currentTimeMillisUnsafe() })),
+    ),
 });

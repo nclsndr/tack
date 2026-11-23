@@ -316,13 +316,19 @@ describe("durable run history", () => {
 
 it("captures bounded logs in one observed sequence and mirrors retained content only", () => {
   const mirrored: string[] = [];
-  const logs = makeRunLogs((content) => mirrored.push(content));
+  const logs = makeRunLogs(
+    (content) => mirrored.push(content),
+    () => Date.UTC(2026, 0, 2, 3, 4, 5),
+  );
   logs.add("stdout", "one");
   logs.add("script", "two");
   logs.add("script", "three\n");
   logs.add("stderr", "x".repeat(70000));
   const snapshot = logs.snapshot();
   expect(snapshot.logs.map((event) => event.sequence)).toEqual([1, 2, 3, 4]);
+  expect(new Set(snapshot.logs.map((event) => event.timestamp))).toEqual(
+    new Set(["2026-01-02T03:04:05.000Z"]),
+  );
   expect(snapshot.logs.map((event) => event.content).slice(0, 3)).toEqual([
     "one",
     "two",
@@ -636,7 +642,10 @@ it("cancels a stdin read without requiring EOF and keeps UTF8 log truncation wit
     outcome: { code: "interrupted", classification: "interruption" },
   });
   expect(stream.destroyed).toBe(true);
-  const logs = makeRunLogs(() => undefined);
+  const logs = makeRunLogs(
+    () => undefined,
+    () => 0,
+  );
   logs.add("stdout", "x".repeat(65535) + "😀");
   const captured = logs.snapshot().logs[0]?.content ?? "";
   expect(Buffer.byteLength(captured)).toBeLessThanOrEqual(65536);
@@ -898,7 +907,10 @@ describe("secret configuration and diagnostic redaction", () => {
 describe("bounded run logs", () => {
   it("counts events past the event limit without retaining them", () => {
     const mirrored: string[] = [];
-    const logs = makeRunLogs((content) => mirrored.push(content));
+    const logs = makeRunLogs(
+      (content) => mirrored.push(content),
+      () => 0,
+    );
     for (let index = 0; index < 10_001; index += 1) logs.add("stdout", "x");
     const snapshot = logs.snapshot();
     expect(snapshot.logs).toHaveLength(10_000);
@@ -912,7 +924,10 @@ describe("bounded run logs", () => {
   });
 
   it("retains at most the total byte limit and drops everything after it", () => {
-    const logs = makeRunLogs(() => undefined);
+    const logs = makeRunLogs(
+      () => undefined,
+      () => 0,
+    );
     const event = "x".repeat(65_535);
     for (let index = 0; index < 160; index += 1) logs.add("stdout", event);
     logs.add("stderr", "y".repeat(1000));

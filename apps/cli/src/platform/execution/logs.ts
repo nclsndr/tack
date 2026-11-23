@@ -8,9 +8,9 @@ import {
 /**
  * Merges host-observed sources into one bounded sequence and mirrors each retained event to stderr.
  * A script log record is one line, so its mirror ends with a newline; raw stream chunks are mirrored
- * as they arrived.
+ * as they arrived. `now` reads the current time in epoch milliseconds for each event's timestamp.
  */
-export const makeRunLogs = (mirror: (content: string) => void) => {
+export const makeRunLogs = (mirror: (content: string) => void, now: () => number) => {
   const logs: RunLog[] = [];
   const reasons = new Set<string>();
   let observedBytes = 0;
@@ -40,7 +40,7 @@ export const makeRunLogs = (mirror: (content: string) => void) => {
       logs.push({
         source,
         sequence: logs.length + 1,
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(now()).toISOString(),
         content: text,
       });
       mirror(source === "script" && text.endsWith("\n") === false ? `${text}\n` : text);
