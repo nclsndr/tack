@@ -51,10 +51,14 @@ What to know about each:
 - **Pi** calls commands prompt templates. It reads a project's `.pi` folders from the folder it
   starts in, so start it at the project root, and it loads project resources only after you trust
   the project. Run `/reload` in Pi to see a new link.
-- **Another agent's folder.** OpenCode also reads `.claude/skills` and `.agents/skills`; Pi, Gemini
-  CLI and Copilot CLI read `.agents/skills`; Copilot CLI and Cline also read `.claude/skills`. A
-  skill the Claude Code or Codex adapter links can then show up twice in those agents, and turning
-  one adapter off can leave it visible through another.
+- **Cursor** also reads `.agents/skills`, and, when its _Include Third-Party Plugins, Skills, and
+  Other Configs_ setting is on, `.claude/skills` and `.codex/skills`. Cursor 3.17 and later lists a
+  skill it reaches through several of these folders once.
+- **Another agent's folder.** Cursor and OpenCode also read `.claude/skills` and `.agents/skills`;
+  Pi, Gemini CLI and Copilot CLI read `.agents/skills`; Copilot CLI and Cline also read
+  `.claude/skills`. Because each link points at the same skill folder, these agents list the skill
+  once, but Gemini CLI warns of a skill conflict when the Codex and Gemini CLI adapters both link
+  it, and turning one adapter off can leave the skill visible through another.
 - **Standard folders only.** Tack does not follow `XDG_CONFIG_HOME` or `OPENCODE_CONFIG_DIR` for
   OpenCode, `PI_CODING_AGENT_DIR` for Pi, `COPILOT_HOME` for Copilot CLI, `GEMINI_CLI_HOME` for
   Gemini CLI or `CLINE_DIR` for Cline.

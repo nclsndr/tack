@@ -184,9 +184,9 @@ Gemini CLI reads commands only as TOML files. Tack uses only these standard fold
 `XDG_CONFIG_HOME` and `OPENCODE_CONFIG_DIR` for OpenCode, `PI_CODING_AGENT_DIR` for Pi,
 `COPILOT_HOME` for Copilot CLI, `GEMINI_CLI_HOME` for Gemini CLI and `CLINE_DIR` for Cline. Pi
 reads a project's `.pi` folders from the folder it starts in, so start it at the project root, and loads
-them only once the project is trusted. Several agents read other agents' folders too: OpenCode reads
-`.claude/skills` and `.agents/skills`; Pi, Gemini CLI and Copilot CLI read `.agents/skills`; Copilot
-CLI and Cline also read `.claude/skills`. A skill can then appear twice; `adapter disable` removes
+them only once the project is trusted. Several agents read other agents' folders too: Cursor and OpenCode read
+`.claude/skills` and `.agents/skills` (Cursor the first only with its third-party configs setting on); Pi, Gemini CLI and Copilot CLI read `.agents/skills`; Copilot
+CLI and Cline also read `.claude/skills`. They list a skill reached through several folders once, though Gemini CLI warns of a conflict when the `codex` and `gemini` adapters both link it; `adapter disable` removes
 only that adapter's links. Zed, Goose and Amp read `.agents/skills`, so the `codex` adapter reaches
 them. An open session may need a restart, or `/reload` in Pi, to see new links. Context has no delivery adapter yet;
 `status` reports such selected resources as undelivered, and the sync text view says which agents a
