@@ -189,7 +189,8 @@ them. An open session may need a restart, or `/reload` in Pi, to see new links. 
 `status` reports such selected resources as undelivered, and the sync text view says which agents a
 selected command or context does not reach. Delivering a resource makes it discoverable; agent
 loading behavior is separate. `status --project PROJECT --details` also prints the project's
-`.gitignore` lines: one per link Tack keeps, from the repository root, without a trailing `/`.
+`.gitignore` lines: one per link Tack keeps, from the repository root, without a trailing `/`, and,
+when docs are attached, the docs mount folder (`/.tack/` by default) with one.
 
 ## Import skills from GitHub
 

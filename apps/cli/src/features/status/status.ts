@@ -36,6 +36,7 @@ import {
 } from "../../domain/links/managed-link-schema.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
 import { docsPendingRemovalsOf } from "../../domain/docs/docs-schema.ts";
+import { docsMountDirectory } from "../docs/docs-resource.ts";
 import {
   reportPendingRemoval,
   type PendingRemoval,
@@ -141,6 +142,7 @@ const statusRoot = (
 
 const statusProject = Effect.fnUntraced(function* (
   inspection: ProjectInspection,
+  docs: State["data"]["projects"][number]["docs"],
 ): Effect.fn.Return<StatusProject, never, FileSystem.FileSystem | Path.Path> {
   const lifecycle = projectLifecycle(inspection.project);
   const activeRoots = inspection.roots.map((root) => statusRoot(root, "active"));
@@ -156,6 +158,9 @@ const statusProject = Effect.fnUntraced(function* (
             path: inspection.anchor.path,
             status: "unhealthy",
           },
+    ...(docs === undefined || docs.attachments.length === 0
+      ? {}
+      : { docsDestination: docsMountDirectory(docs) }),
     lifecycle,
     name: inspection.project.name,
     roots: [...activeRoots, ...removingRoots].sort((left, right) =>
@@ -637,7 +642,10 @@ export const statusFromSnapshot = Effect.fnUntraced(function* (
     )
     .sort((left, right) => compareCodeUnits(left.project.name, right.project.name));
   const projects = yield* Effect.forEach(scopedInspections, (inspection) =>
-    statusProject(inspection),
+    statusProject(
+      inspection,
+      state.data.projects.find((project) => project.name === inspection.project.name)?.docs,
+    ),
   );
   const scopedProjectRecords = state.data.projects
     .filter(

@@ -17,19 +17,17 @@ import {
 /** The project-relative directory that holds docs mounts when none is configured. */
 const defaultDocsDestination = ".tack/docs";
 
+/** The project-relative directory that holds a project's docs mounts. */
+export const docsMountDirectory = (settings: Pick<DocsProject, "destination">) =>
+  settings.destination ?? defaultDocsDestination;
+
 /** Derives the single mount path of one source-qualified docs resource under a project root. */
 export const docsDestinationPath = (
   path: Path.Path,
   root: string,
   settings: Pick<DocsProject, "destination">,
   resource: DocsResourceReference,
-) =>
-  path.join(
-    root,
-    settings.destination ?? defaultDocsDestination,
-    resource.sourceRegistrationId,
-    resource.name,
-  );
+) => path.join(root, docsMountDirectory(settings), resource.sourceRegistrationId, resource.name);
 
 /** Finds the healthy catalog entry for one source-qualified docs identity. */
 export const findDocsEntry = (

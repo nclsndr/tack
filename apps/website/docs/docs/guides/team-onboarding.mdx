@@ -137,9 +137,9 @@ user: it installs with `npm install --global @tackup/cli`.
 The repository ignores the links Tack makes, and commits a `.gitignore` that says so. Each
 teammate's sync makes their own links. A link committed before is adopted when it is exactly the one
 Tack writes, such as a link to the repository's own `.ai/skills`; any other committed link is a
-`foreign-destination` conflict, and `git rm` clears it. Run `tack status --project app --details`, add the lines it prints
-under "For .gitignore" to the repository's `.gitignore`, and commit it; add `/.tack/` too when the
-project attaches docs. Tack never edits `.gitignore`.
+`foreign-destination` conflict, and `git rm` clears it. Run `tack status --project app --details`,
+add the lines it prints under "For .gitignore" to the repository's `.gitignore`, and commit it. When
+the project attaches docs, those lines include `/.tack/`. Tack never edits `.gitignore`.
 
 ## A new teammate
 

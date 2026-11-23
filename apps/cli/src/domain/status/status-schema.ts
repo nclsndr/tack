@@ -104,6 +104,11 @@ export const StatusProjectRootSchema = Schema.Struct({
 /** One scoped registered project with current anchor and root observations. */
 export const StatusProjectSchema = Schema.Struct({
   anchor: StatusAnchorSchema,
+  /**
+   * The root-relative folder that holds the project's docs mounts, such as `.tack/docs`; absent
+   * while no docs resource is attached.
+   */
+  docsDestination: Schema.optionalKey(Schema.String),
   lifecycle: ProjectLifecycleSchema,
   name: ProjectNameSchema,
   roots: Schema.Array(StatusProjectRootSchema).check(

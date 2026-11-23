@@ -114,6 +114,26 @@ describe("status view", () => {
     expect(render({ destinations }).text).not.toContain("For .gitignore");
   });
 
+  it.each([
+    [".tack/docs", "/.tack/"],
+    ["vendor/docs", "/vendor/docs/"],
+  ])("prints the folder of docs mounted under %s among the .gitignore lines", (folder, line) => {
+    const projects = payload.projects.map((project) => ({ ...project, docsDestination: folder }));
+    const ignored = (destinations: StatusPayload["destinations"]) =>
+      render({ destinations, projects }, true)
+        .text.split("\nFor .gitignore in project demo\n")[1]
+        ?.split("\n\n")[0]
+        ?.split("\n")
+        .filter((entry) => entry.startsWith("/"));
+    expect(ignored(payload.destinations)).toContain(line);
+    const docsNote = "The docs mounts are in a folder, so their line ends with /.";
+    expect(flat(render({ projects }, true).text)).toContain(docsNote);
+    expect(flat(render({}, true).text)).not.toContain(docsNote);
+    // A project with docs and no agent link still gets its docs line.
+    expect(ignored([])).toEqual([line]);
+    expect(render({ destinations: [], projects }).text).not.toContain("For .gitignore");
+  });
+
   it("prints no .gitignore lines for the user's links", () => {
     const user = humanFixture("status-user");
     const text = renderStatus(user, hintRecorder().style, true);
