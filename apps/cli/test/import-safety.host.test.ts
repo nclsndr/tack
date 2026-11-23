@@ -1,10 +1,10 @@
+import { git } from "./support/tack-process.ts";
 import { skillText } from "./support/source-tree.ts";
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   addProject,
-  git,
   makeGitShim,
   makeSystemWorld,
   shimCalls,

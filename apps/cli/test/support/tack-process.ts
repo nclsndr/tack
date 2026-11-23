@@ -1,3 +1,4 @@
+import { BunServices } from "@effect/platform-bun";
 import { expect } from "@effect/vitest";
 import { Effect, Schema, Stream } from "effect";
 import { ChildProcess, ChildProcessSpawner } from "effect/process";
@@ -218,6 +219,16 @@ export const runGit = Effect.fnUntraced(function* (cwd: string, arguments_: Read
   expectProcessSuccess(result);
   return result;
 });
+
+/** {@link runGit} for promise-based tests: it requires success and resolves to Git's stdout. */
+export const git = (cwd: string, args: ReadonlyArray<string>): Promise<string> =>
+  Effect.runPromise(
+    runGit(cwd, args).pipe(
+      Effect.map((result) => result.stdout),
+      Effect.scoped,
+      Effect.provide(BunServices.layer),
+    ),
+  );
 
 const decodePublicEnvelope = Schema.decodeUnknownSync(PublicEnvelopeSchema);
 

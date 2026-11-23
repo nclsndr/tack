@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { makeRemoteFixture, type FixtureCommit } from "./git-remote-fixture.ts";
 import { runTackInProcess } from "./host-runner.ts";
-import { runGit, runTack } from "./tack-process.ts";
+import { git, runTack } from "./tack-process.ts";
 
 /** The result of one Tack process run. */
 type TackRun = {
@@ -83,16 +83,6 @@ const hostTack = async (
   );
   return { code: exitCode, stdout, stderr };
 };
-
-/** {@link runGit} for the promise-based tests of this module: it requires success. */
-export const git = (cwd: string, args: ReadonlyArray<string>): Promise<string> =>
-  Effect.runPromise(
-    runGit(cwd, args).pipe(
-      Effect.map((result) => result.stdout),
-      Effect.scoped,
-      Effect.provide(BunServices.layer),
-    ),
-  );
 
 /** Creates a git repository with one commit, for registering a project. */
 const makeRepository = async (parent: string, name: string): Promise<string> => {
