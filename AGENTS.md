@@ -35,6 +35,13 @@ To test a change to Tack itself, run the checkout's build as `bun tack` with a t
 `--state-dir`, as [CONTRIBUTING.md](CONTRIBUTING.md#run-your-changes) shows. Do not run `bun tack`
 against the real `~/.tack`: it would link your agents' built-in skills into this checkout.
 
+## This repository is public
+
+Pull request text, commits, branch names, fixtures and docs must not contain absolute paths of the
+author's machine, usernames, private repository names, internal tooling names, or the names or
+roles of the people or agents who direct the work. Use neutral paths such as `/Users/ada` and
+public links only. The `public-repo` skill in `.ai/skills` holds the full rules.
+
 ## Pull request screenshots
 
 A PR with a user-visible change (terminal output, reader, explorer, website) includes before and

@@ -21,5 +21,7 @@ coverage/
 .DS_Store
 Thumbs.db
 
+/.tack/
+
 # Project documentation lives in its registered source; docs may be a local compatibility link.
 /docs
