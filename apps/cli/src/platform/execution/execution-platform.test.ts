@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
-import { ExecutionPlatform } from "../../services/execution-platform.ts";
+import { ExecutionWorker, RunHistory } from "../../services/execution-platform.ts";
 import type { HistoryRecord, OperatorRunRequest } from "../../domain/execution/execution-schema.ts";
 import { ExecutionPlatformLive, makeRunCancellation } from "./execution-platform.ts";
 
@@ -25,13 +25,14 @@ const fixture = async (run: (directory: string) => Promise<void>) => {
   }
 };
 
+/** Both production execution adapters, read as one object. */
+type Platform = ExecutionWorker["Service"] & RunHistory["Service"];
+
 /** Runs one production platform operation and returns its error, or `undefined` on success. */
-const platformError = <A>(
-  use: (platform: ExecutionPlatform["Service"]) => Effect.Effect<A, unknown>,
-) =>
+const platformError = <A>(use: (platform: Platform) => Effect.Effect<A, unknown>) =>
   Effect.runPromise(
     Effect.gen(function* () {
-      return yield* use(yield* ExecutionPlatform);
+      return yield* use({ ...(yield* ExecutionWorker), ...(yield* RunHistory) });
     }).pipe(
       Effect.flip,
       Effect.map((error): unknown => error),
@@ -40,10 +41,10 @@ const platformError = <A>(
     ),
   );
 
-const run = <A, E>(use: (platform: ExecutionPlatform["Service"]) => Effect.Effect<A, E>) =>
+const run = <A, E>(use: (platform: Platform) => Effect.Effect<A, E>) =>
   Effect.runPromise(
     Effect.gen(function* () {
-      return yield* use(yield* ExecutionPlatform);
+      return yield* use({ ...(yield* ExecutionWorker), ...(yield* RunHistory) });
     }).pipe(Effect.provide(ExecutionPlatformLive)),
   );
 

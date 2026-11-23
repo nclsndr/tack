@@ -5,7 +5,7 @@ import {
   Compression,
   defaultImportLimits,
   executionError,
-  ExecutionPlatform,
+  ExecutionWorker,
   FigureCheckError,
   ImportFetchError,
   ImportRemote,
@@ -15,6 +15,7 @@ import {
   ReaderCorpus,
   ReaderSearchError,
   ReaderStartupError,
+  RunHistory,
 } from "@tackup/cli/core";
 
 /** Why a capability is missing where Tack runs over a memory volume, such as the browser demo. */
@@ -65,8 +66,8 @@ const noScripts = () =>
     executionError("worker", "worker_unavailable", unavailableMessage("Running scripts")),
   );
 
-/** Scripts run in a separate worker process, and their history lives beside it on disk. */
-export const unavailableExecutionPlatform = {
+/** Scripts run in a separate worker process. */
+export const unavailableExecutionWorker = {
   cancellation: () =>
     Effect.sync(() => {
       const controller = new AbortController();
@@ -74,14 +75,18 @@ export const unavailableExecutionPlatform = {
     }),
   input: noScripts,
   packageReady: noScripts,
+  worker: noScripts,
+} satisfies ExecutionWorker["Service"];
+
+/** Run history lives beside the worker on disk: it reads as empty and refuses new records. */
+export const unavailableRunHistory = {
   createHistory: noScripts,
   finishHistory: noScripts,
   listHistory: () => Effect.succeed({ runs: [], issues: [] }),
   countHistory: () => Effect.succeed(0),
   showHistory: () => Effect.succeed(undefined),
   clearHistory: () => Effect.succeed(0),
-  worker: noScripts,
-} satisfies ExecutionPlatform["Service"];
+} satisfies RunHistory["Service"];
 
 /** Child processes, which only Git and scripts would start, do not exist in memory. */
 export const unavailableSpawner = ChildProcessSpawner.make((command) =>

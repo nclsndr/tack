@@ -1,7 +1,6 @@
 import { skillText, write } from "./support/source-tree.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
-import { ExecutionPlatform } from "../src/services/execution-platform.ts";
 import { type GitService } from "../src/services/git.ts";
 import { readState } from "../src/services/state-store.ts";
 import { runHost } from "./support/host-runner.ts";
@@ -59,21 +58,10 @@ const fixture = (skillCount: number, withDocs = false) =>
       Effect.gen(function* () {
         stateWrites = 0;
         const { stdout } = yield* provideTestFileSystem(
-          Effect.gen(function* () {
-            const platform = yield* ExecutionPlatform;
-            return yield* runHost({
-              args: ["--json", "--state-dir", stateDirectory, ...arguments_],
-              git,
-              ...(home === undefined ? {} : { env: { HOME: home } }),
-            }).pipe(
-              Effect.provideService(
-                ExecutionPlatform,
-                ExecutionPlatform.of({
-                  ...platform,
-                  listHistory: () => Effect.succeed({ runs: [], issues: [] }),
-                }),
-              ),
-            );
+          runHost({
+            args: ["--json", "--state-dir", stateDirectory, ...arguments_],
+            git,
+            ...(home === undefined ? {} : { env: { HOME: home } }),
           }),
           counting,
         );

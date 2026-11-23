@@ -1,7 +1,6 @@
 import { skillText, write } from "./support/source-tree.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
-import { ExecutionPlatform } from "../src/services/execution-platform.ts";
 import { type GitService } from "../src/services/git.ts";
 import { withStateCheckpointWriter } from "../src/services/state-store.ts";
 import { runHost } from "./support/host-runner.ts";
@@ -83,22 +82,11 @@ const fixture = Effect.gen(function* () {
       counts.stateReads = 0;
       counts.catalogResolutions = 0;
       const { stdout } = yield* provideTestFileSystem(
-        Effect.gen(function* () {
-          const platform = yield* ExecutionPlatform;
-          // The doctor report scans retained run history; the fixture retains none.
-          return yield* runHost({
-            args: ["--json", "--state-dir", stateDirectory, ...arguments_],
-            git,
-            ...(home === undefined ? {} : { env: { HOME: home } }),
-          }).pipe(
-            Effect.provideService(
-              ExecutionPlatform,
-              ExecutionPlatform.of({
-                ...platform,
-                listHistory: () => Effect.succeed({ runs: [], issues: [] }),
-              }),
-            ),
-          );
+        // The doctor report scans retained run history; the fixture retains none.
+        runHost({
+          args: ["--json", "--state-dir", stateDirectory, ...arguments_],
+          git,
+          ...(home === undefined ? {} : { env: { HOME: home } }),
         }),
         counting,
       );

@@ -2,7 +2,11 @@ import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "../../../../test/support/live-test-layer.ts";
 import { mutateStateFixture } from "../../../../test/support/state-fixture.ts";
-import { ExecutionPlatform, type WorkerRequest } from "../../../services/execution-platform.ts";
+import {
+  ExecutionWorker,
+  RunHistory,
+  type WorkerRequest,
+} from "../../../services/execution-platform.ts";
 import { makeRunCancellation } from "../../../platform/execution/execution-platform.ts";
 import { initializeState, type StateOptions } from "../../../services/state-store.ts";
 import { registerSource } from "../../../features/sources/source.ts";
@@ -73,10 +77,7 @@ const scene = (
     }));
     const history = new Map<string, HistoryRecord>();
     const workers: Array<WorkerRequest> = [];
-    const platform = ExecutionPlatform.of({
-      cancellation: () => Effect.sync(makeRunCancellation),
-      input: () => Effect.succeed(null),
-      packageReady: () => Effect.void,
+    const runHistory = RunHistory.of({
       createHistory: (_directory, record) =>
         Effect.sync(() => void history.set(record.runId, record)),
       finishHistory: (_directory, record) =>
@@ -94,6 +95,11 @@ const scene = (
           history.clear();
           return removed;
         }),
+    });
+    const worker = ExecutionWorker.of({
+      cancellation: () => Effect.sync(makeRunCancellation),
+      input: () => Effect.succeed(null),
+      packageReady: () => Effect.void,
       worker: (request) =>
         Effect.sync(() => {
           workers.push(request);
@@ -106,7 +112,10 @@ const scene = (
         }),
     });
     const routed = <E, R>(effect: Effect.Effect<PublicOutcome | ForegroundSession, E, R>) =>
-      routeOutcome(effect).pipe(Effect.provideService(ExecutionPlatform, platform));
+      routeOutcome(effect).pipe(
+        Effect.provideService(ExecutionWorker, worker),
+        Effect.provideService(RunHistory, runHistory),
+      );
     const run = (invocation: ScriptRun) =>
       routed(executionRoutes["script-run"].run(invocation, options));
     return { root, home, project, options, history, workers, run, routed };

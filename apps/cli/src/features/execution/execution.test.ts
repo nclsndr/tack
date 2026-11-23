@@ -3,7 +3,7 @@ import { Effect, FileSystem, Path } from "effect";
 import { expect, it } from "@effect/vitest";
 import { TestClock } from "effect/testing";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
-import { ExecutionPlatform, ExecutionError } from "../../services/execution-platform.ts";
+import { ExecutionError, ExecutionWorker, RunHistory } from "../../services/execution-platform.ts";
 import { ExecutionPlatformLive } from "../../platform/execution/execution-platform.ts";
 import {
   initializeState,
@@ -113,7 +113,7 @@ it.layer(LiveTestLayer)("operator run execution", (test) => {
     () =>
       fixture((options, root) =>
         Effect.gen(function* () {
-          const live = yield* ExecutionPlatform;
+          const live = yield* ExecutionWorker;
           const { request: run, entrypoint } = yield* registerScripts(options, root, runScript);
           const requests: Array<Omit<WorkerRequest, "signal" | "onRepeatSignal">> = [];
           const succeeded = (runId: string): OperatorRunResult => ({
@@ -140,12 +140,12 @@ it.layer(LiveTestLayer)("operator run execution", (test) => {
               }),
           };
           const result = yield* runOperatorScript(options, { ...run, timeoutMs: 5000 }).pipe(
-            Effect.provideService(ExecutionPlatform, platform),
+            Effect.provideService(ExecutionWorker, platform),
           );
           // Without a timeout or quiet flag, the worker request carries neither.
           const { quiet: _quiet, ...loud } = run;
           const second = yield* runOperatorScript(options, loud).pipe(
-            Effect.provideService(ExecutionPlatform, platform),
+            Effect.provideService(ExecutionWorker, platform),
           );
           expect(result).toEqual(succeeded(result.runId));
           expect(requests).toEqual([
@@ -180,7 +180,7 @@ it.layer(LiveTestLayer)("operator run execution", (test) => {
   test.effect("records the words a run was given in place of its JSON input", () =>
     fixture((options, root) =>
       Effect.gen(function* () {
-        const live = yield* ExecutionPlatform;
+        const live = yield* ExecutionWorker;
         const { request: run } = yield* registerScripts(options, root, runScript);
         const words: Array<ReadonlyArray<string> | undefined> = [];
         const platform = {
@@ -211,7 +211,7 @@ it.layer(LiveTestLayer)("operator run execution", (test) => {
             }),
         };
         const result = yield* runOperatorScript(options, { ...run, words: ["--name", "Ada"] }).pipe(
-          Effect.provideService(ExecutionPlatform, platform),
+          Effect.provideService(ExecutionWorker, platform),
         );
         expect(words).toEqual([["--name", "Ada"]]);
         const record = yield* showScriptHistory(options, result.runId);
@@ -226,7 +226,7 @@ it.layer(LiveTestLayer)("operator run execution", (test) => {
     () =>
       fixture((options, root) =>
         Effect.gen(function* () {
-          const live = yield* ExecutionPlatform;
+          const live = yield* ExecutionWorker;
           const { request: run, entrypoint } = yield* registerScripts(options, root, runScript);
           const requests: Array<Omit<WorkerRequest, "signal" | "onRepeatSignal">> = [];
           const refusal = {
@@ -269,7 +269,7 @@ it.layer(LiveTestLayer)("operator run execution", (test) => {
               }),
           });
           const shown = yield* describeScript(options, run.address).pipe(
-            Effect.provideService(ExecutionPlatform, platform(true)),
+            Effect.provideService(ExecutionWorker, platform(true)),
           );
           expect(shown).toMatchObject({
             address: run.address,
@@ -284,7 +284,7 @@ it.layer(LiveTestLayer)("operator run execution", (test) => {
           expect(requests[0]).toMatchObject({ describe: true, input: {}, quiet: true });
           const failed = yield* Effect.flip(
             describeScript(options, run.address).pipe(
-              Effect.provideService(ExecutionPlatform, platform(false)),
+              Effect.provideService(ExecutionWorker, platform(false)),
             ),
           );
           expect(failed).toMatchObject({ code: "invalid_definition", stage: "preflight" });
@@ -295,7 +295,7 @@ it.layer(LiveTestLayer)("operator run execution", (test) => {
   test.effect("an interruption before or after the package check runs no worker", () =>
     fixture((options, root) =>
       Effect.gen(function* () {
-        const live = yield* ExecutionPlatform;
+        const live = yield* ExecutionWorker;
         const { request: run } = yield* registerScripts(options, root, runScript);
         let workers = 0;
         const attempt = (abortAt: "start" | "package") =>
@@ -303,7 +303,7 @@ it.layer(LiveTestLayer)("operator run execution", (test) => {
             const controller = new AbortController();
             if (abortAt === "start") controller.abort();
             return yield* runOperatorScript(options, run).pipe(
-              Effect.provideService(ExecutionPlatform, {
+              Effect.provideService(ExecutionWorker, {
                 ...live,
                 cancellation: () => Effect.succeed(controlledCancellation(controller)),
                 input: () => Effect.succeed({}),
@@ -390,11 +390,12 @@ it.layer(LiveTestLayer)("operator attempt lifetime", (test) => {
     () =>
       fixture((options) =>
         Effect.gen(function* () {
-          const live = yield* ExecutionPlatform;
+          const live = yield* ExecutionWorker;
+          const history = yield* RunHistory;
           let touched = false;
           const result = yield* runOperatorScript(options, request).pipe(
-            Effect.provideService(ExecutionPlatform, {
-              ...live,
+            Effect.provideService(RunHistory, {
+              ...history,
               createHistory: () =>
                 Effect.fail(
                   new ExecutionError({
@@ -404,6 +405,9 @@ it.layer(LiveTestLayer)("operator attempt lifetime", (test) => {
                     classification: "persistence",
                   }),
                 ),
+            }),
+            Effect.provideService(ExecutionWorker, {
+              ...live,
               input: () =>
                 Effect.sync(() => {
                   touched = true;
@@ -424,10 +428,10 @@ it.layer(LiveTestLayer)("operator attempt lifetime", (test) => {
   test.effect("stamps the run record's start and finish from the Effect clock", () =>
     fixture((options) =>
       Effect.gen(function* () {
-        const live = yield* ExecutionPlatform;
+        const live = yield* ExecutionWorker;
         yield* TestClock.setTime(Date.UTC(2026, 0, 2, 3, 4, 5));
         const result = yield* runOperatorScript(options, request).pipe(
-          Effect.provideService(ExecutionPlatform, {
+          Effect.provideService(ExecutionWorker, {
             ...live,
             // Reading the input takes 90 seconds of test time between the two stamps.
             input: () => TestClock.adjust("90 seconds").pipe(Effect.as({})),
@@ -484,9 +488,9 @@ it.layer(LiveTestLayer)("operator attempt lifetime", (test) => {
   test.effect("terminal write failure keeps completed safe outcome and the pending record", () =>
     fixture((options) =>
       Effect.gen(function* () {
-        const live = yield* ExecutionPlatform;
+        const live = yield* RunHistory;
         const result = yield* runOperatorScript(options, request).pipe(
-          Effect.provideService(ExecutionPlatform, {
+          Effect.provideService(RunHistory, {
             ...live,
             finishHistory: () =>
               Effect.fail(
@@ -549,7 +553,7 @@ it.layer(LiveTestLayer)("operator attempt lifetime", (test) => {
   test.effect("history pages newest-first summaries with offset, limit and runId tie-breaks", () =>
     fixture((options) =>
       Effect.gen(function* () {
-        const platform = yield* ExecutionPlatform;
+        const platform = yield* RunHistory;
         const stateDirectory = options.environment["TACK_STATE_DIR"] ?? "";
         const records: HistoryRecord[] = Array.from({ length: 35 }, (_, index) => ({
           version: 1,
@@ -600,7 +604,7 @@ it.layer(LiveTestLayer)("operator attempt lifetime", (test) => {
         Effect.gen(function* () {
           const fs = yield* FileSystem.FileSystem;
           const path = yield* Path.Path;
-          const platform = yield* ExecutionPlatform;
+          const platform = yield* RunHistory;
           const stateDirectory = options.environment["TACK_STATE_DIR"] ?? "";
           const valid: HistoryRecord = {
             version: 1,
@@ -659,7 +663,7 @@ it.layer(LiveTestLayer)("operator attempt lifetime", (test) => {
   test.effect("history show distinguishes a missing run from a retained one", () =>
     fixture((options) =>
       Effect.gen(function* () {
-        const platform = yield* ExecutionPlatform;
+        const platform = yield* RunHistory;
         const stateDirectory = options.environment["TACK_STATE_DIR"] ?? "";
         const record: HistoryRecord = {
           version: 1,

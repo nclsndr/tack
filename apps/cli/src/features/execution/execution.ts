@@ -1,10 +1,11 @@
 import { DateTime, Effect, Path, Schema } from "effect";
 import { SecureRandom } from "effect/crypto";
 import {
-  ExecutionPlatform,
   ExecutionError,
   executionError,
   executionFailureOutcome,
+  ExecutionWorker,
+  RunHistory,
 } from "../../services/execution-platform.ts";
 import { resolveStateDirectory, type StateOptions } from "../../services/state-store.ts";
 import { type State } from "../../domain/state/state-schema.ts";
@@ -163,7 +164,7 @@ const declaredScript = Effect.fnUntraced(function* (
   stateOptions: StateOptions,
   address: OperatorRunRequest["address"],
 ) {
-  const platform = yield* ExecutionPlatform;
+  const platform = yield* ExecutionWorker;
   const catalog = yield* resolveInvocationCatalog(stateOptions);
   const identity = resourceAddressIdentity(address);
   const duplicates = catalog.quarantined.some(
@@ -202,7 +203,8 @@ const runWithCancellation = Effect.fnUntraced(function* (
   request: OperatorRunRequest,
   cancellation: import("../../services/execution-platform.ts").RunCancellation,
 ) {
-  const platform = yield* ExecutionPlatform;
+  const platform = yield* ExecutionWorker;
+  const history = yield* RunHistory;
   const random = yield* SecureRandom.SecureRandom;
   const runId = yield* random.uuidV4();
   const stateDirectory = yield* resolveStateDirectory(stateOptions);
@@ -227,7 +229,7 @@ const runWithCancellation = Effect.fnUntraced(function* (
     startedAt: DateTime.formatIso(yield* DateTime.now),
     address: request.address,
   };
-  const initial = yield* platform.createHistory(stateDirectory, pending).pipe(Effect.result);
+  const initial = yield* history.createHistory(stateDirectory, pending).pipe(Effect.result);
   if (initial._tag === "Failure")
     return emptyResult(runId, executionFailureOutcome(initial.failure));
   let originalInput: Schema.Json | undefined;
@@ -300,7 +302,7 @@ const runWithCancellation = Effect.fnUntraced(function* (
     ...(target === undefined ? {} : { target }),
     ...(diagnostics === undefined ? {} : { diagnostics }),
   };
-  const persisted = yield* platform.finishHistory(stateDirectory, completed).pipe(Effect.result);
+  const persisted = yield* history.finishHistory(stateDirectory, completed).pipe(Effect.result);
   return persisted._tag === "Success"
     ? result
     : ({
@@ -318,7 +320,7 @@ export const runOperatorScript = Effect.fn("execution.runOperatorScript")(functi
   request: OperatorRunRequest,
 ) {
   return yield* Effect.acquireUseRelease(
-    Effect.flatMap(ExecutionPlatform, (platform) => platform.cancellation()),
+    Effect.flatMap(ExecutionWorker, (platform) => platform.cancellation()),
     (cancellation) => runWithCancellation(stateOptions, request, cancellation),
     (cancellation) => Effect.sync(() => cancellation.close()),
   );
@@ -335,7 +337,7 @@ export const describeScript = Effect.fn("execution.describeScript")(function* (
   stateOptions: StateOptions,
   address: OperatorRunRequest["address"],
 ) {
-  const platform = yield* ExecutionPlatform;
+  const platform = yield* ExecutionWorker;
   const random = yield* SecureRandom.SecureRandom;
   const stateDirectory = yield* initializedStateDirectory(stateOptions);
   const entry = yield* declaredScript(stateOptions, address);
@@ -396,7 +398,7 @@ export const listScriptHistory = Effect.fn("execution.listScriptHistory")(functi
 ) {
   const limit = page.limit ?? historyListBounds.defaultLimit;
   const offset = page.offset ?? 0;
-  const scanned = yield* (yield* ExecutionPlatform).listHistory(
+  const scanned = yield* (yield* RunHistory).listHistory(
     yield* initializedStateDirectory(stateOptions),
   );
   const runs = [...scanned.runs].sort(newestFirst).slice(offset, offset + limit);
@@ -414,7 +416,7 @@ export const showScriptHistory = Effect.fn("execution.showScriptHistory")(functi
   stateOptions: StateOptions,
   runId: string,
 ) {
-  const record = yield* (yield* ExecutionPlatform).showHistory(
+  const record = yield* (yield* RunHistory).showHistory(
     yield* initializedStateDirectory(stateOptions),
     runId,
   );
@@ -444,18 +446,18 @@ export const clearScriptHistory = Effect.fn("execution.clearScriptHistory")(func
   stateOptions: StateOptions,
   apply = false,
 ) {
-  const platform = yield* ExecutionPlatform;
+  const history = yield* RunHistory;
   const directory = yield* initializedStateDirectory(stateOptions);
   const plan = {
     kind: HistoryClearPlanSchema.fields.kind.literal,
-    count: yield* platform.countHistory(directory),
+    count: yield* history.countHistory(directory),
   };
   if (apply === false) return { plan } satisfies HistoryClearExecution;
   return {
     plan,
     applied: {
       kind: HistoryClearApplicationSchema.fields.kind.literal,
-      removedCount: yield* platform.clearHistory(directory),
+      removedCount: yield* history.clearHistory(directory),
     },
   } satisfies HistoryClearExecution;
 });

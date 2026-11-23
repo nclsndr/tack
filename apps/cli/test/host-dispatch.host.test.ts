@@ -8,7 +8,7 @@ import { exitCodeForEnvelope } from "../src/cli/host/public-outcome.ts";
 import { type TerminalContextShape } from "../src/cli/host/human/terminal-context.ts";
 import { runHost } from "./support/host-runner.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
-import { ExecutionPlatform } from "../src/services/execution-platform.ts";
+import { ExecutionWorker } from "../src/services/execution-platform.ts";
 import { makeRunCancellation } from "../src/platform/execution/execution-platform.ts";
 import { initializeState, readState, type StateOptions } from "../src/services/state-store.ts";
 
@@ -927,17 +927,11 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
       );
       const projectRoot = path.join(root, "project");
       yield* fileSystem.makeDirectory(projectRoot, { recursive: true });
-      const runs = ExecutionPlatform.of({
+      const runs = ExecutionWorker.of({
         cancellation: () => Effect.sync(makeRunCancellation),
         input: () => Effect.succeed(null),
-        createHistory: () => Effect.void,
-        finishHistory: () => Effect.void,
         packageReady: () => Effect.die("not reached"),
         worker: () => Effect.die("not reached"),
-        listHistory: () => Effect.die("not reached"),
-        countHistory: () => Effect.die("not reached"),
-        showHistory: () => Effect.die("not reached"),
-        clearHistory: () => Effect.die("not reached"),
       });
       // `script run` resolves the user scope, so the home is the throwaway root.
       const invoke = (arguments_: ReadonlyArray<string>) =>
@@ -945,7 +939,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
           args: ["--json", "--state-dir", path.join(root, "state"), ...arguments_],
           git: testGit(root, projectRoot),
           env: { HOME: root },
-        }).pipe(Effect.provideService(ExecutionPlatform, runs));
+        }).pipe(Effect.provideService(ExecutionWorker, runs));
       for (const setup of [
         ["state", "init"],
         ["project", "add", "workspace", "--repository-cwd", projectRoot],
