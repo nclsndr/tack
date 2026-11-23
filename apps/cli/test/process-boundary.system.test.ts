@@ -139,7 +139,9 @@ it.layer(LiveTestLayer)("process boundary", (boundaryIt) => {
   boundaryIt.effect(
     "settles the completed unlinks of an early and a mid-reset interruption before a later reset converges",
     () =>
-      Effect.forEach([interruptionLinkCount - 1, interruptionLinkCount / 2], (threshold) =>
+      // Unlinks run one at a time, and the one in flight when the signal lands stays owed even
+      // when it is already gone from disk. Two gone from disk therefore settle at least one.
+      Effect.forEach([interruptionLinkCount - 2, interruptionLinkCount / 2], (threshold) =>
         withTackWorld((fixture) => interruptResetAt(fixture, threshold)),
       ),
     { timeout: 60_000 },
