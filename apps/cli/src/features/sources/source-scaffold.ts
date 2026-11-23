@@ -301,7 +301,7 @@ export const scaffoldLoadsNothing = (plan: typeof SourceScaffoldPlanSchema.Type)
  * source has its tack.yaml and no flag was given, so the source registers as it is. It refuses
  * flags on a source that has tack.yaml, and a source without one that no flag describes.
  */
-export const planSourceScaffold = Effect.fnUntraced(
+export const planSourceScaffold = Effect.fn("sources.planSourceScaffold")(
   function* (sourcePath: string, folders: SourceFolders) {
     const sourceService = yield* Source;
     const fs = yield* FileSystem.FileSystem;
@@ -441,7 +441,7 @@ export const refuseScaffoldInsideSources = Effect.fnUntraced(function* (
 });
 
 /** Creates a previewed declaration exclusively, including when another process creates it first. */
-export const writeSourceScaffold = Effect.fnUntraced(function* (
+export const writeSourceScaffold = Effect.fn("sources.writeSourceScaffold")(function* (
   plan: NonNullable<Effect.Success<ReturnType<typeof planSourceScaffold>>>,
 ) {
   const fs = yield* FileSystem.FileSystem;

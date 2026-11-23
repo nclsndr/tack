@@ -240,7 +240,7 @@ export const resolveProjectDocsContext = Effect.fnUntraced(function* (
 });
 
 /** Resolves one registered reader input without changing local state or links. */
-export const resolveProjectDocs = Effect.fnUntraced(function* (
+export const resolveProjectDocs = Effect.fn("docs.resolveProjectDocs")(function* (
   options: StateOptions,
   selector: DocsSelector,
 ) {

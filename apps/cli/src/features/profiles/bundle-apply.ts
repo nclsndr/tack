@@ -102,7 +102,7 @@ const prepareBundleApply = Effect.fnUntraced(function* (
 });
 
 /** Validates complete boundary and artifact before retaining/registering projections or replacing intent. */
-export const runBundleApply = Effect.fnUntraced(function* (
+export const runBundleApply = Effect.fn("profiles.runBundleApply")(function* (
   options: StateOptions,
   request: BundleApplyRequest,
 ) {

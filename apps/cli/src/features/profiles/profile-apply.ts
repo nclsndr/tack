@@ -190,7 +190,7 @@ export const planProfileApply = Effect.fnUntraced(function* (
 });
 
 /** Replans under the writer lock, retains exact intent, then uses ordinary ownership-safe delivery. */
-export const runProfileApply = Effect.fnUntraced(function* (
+export const runProfileApply = Effect.fn("profiles.runProfileApply")(function* (
   options: StateOptions,
   request: ProfileApplyRequest,
 ) {

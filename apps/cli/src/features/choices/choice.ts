@@ -152,7 +152,7 @@ export const requireChoiceNamespace = (state: State, namespace: ChoiceNamespace)
   );
 
 /** Persists one exact choice without consulting the live resource catalog. */
-export const setSkillChoice = Effect.fnUntraced(function* (
+export const setSkillChoice = Effect.fn("choices.setSkillChoice")(function* (
   writer: StateCheckpointWriter,
   choice: SkillChoice,
 ) {
@@ -243,7 +243,7 @@ export const catalogAddressCandidates = (
 };
 
 /** Removes one exact choice so declaration-driven behavior applies again. */
-export const removeSkillChoice = Effect.fnUntraced(function* (
+export const removeSkillChoice = Effect.fn("choices.removeSkillChoice")(function* (
   writer: StateCheckpointWriter,
   remove: RemoveSkillChoiceOptions,
 ) {
@@ -277,7 +277,7 @@ export const ChoiceListPayloadSchema = Schema.Struct({
 });
 
 /** Lists persisted choices in deterministic order, optionally narrowed to one namespace. */
-export const listSkillChoices = Effect.fnUntraced(function* (
+export const listSkillChoices = Effect.fn("choices.listSkillChoices")(function* (
   state: State,
   namespace?: ChoiceNamespace,
 ) {

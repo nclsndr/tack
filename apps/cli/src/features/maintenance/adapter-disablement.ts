@@ -97,7 +97,7 @@ const applyPlan = Effect.fnUntraced(function* (
  * scoped to a project, so the cleanup covers every managed target holding the adapter's links
  * regardless of the operator's current directory.
  */
-export const disableAdapter = Effect.fnUntraced(function* (
+export const disableAdapter = Effect.fn("maintenance.disableAdapter")(function* (
   stateOptions: StateOptions,
   adapterCandidate: unknown,
   options: { readonly apply: boolean },

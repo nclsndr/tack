@@ -83,16 +83,17 @@ export const planSync = (
   });
 
 /** Plans selected resources and attached docs from one snapshot, then applies under one writer. */
-export const runSyncCommand = (
+export const runSyncCommand = Effect.fn("reconciliation.runSyncCommand")(function* (
   stateOptions: StateOptions,
   options: ReconcileCommandOptions & { readonly noDocs: boolean },
-) =>
-  previewOrApply(stateOptions, {
+) {
+  return yield* previewOrApply(stateOptions, {
     apply: options.apply,
     plan: (snapshot) => planSync(stateOptions, options, snapshot),
     // Agent links first, then docs, as one prepared batch: one write to prepare it and one to settle it.
     applyPlan: applySyncPlan,
   });
+});
 
 /** Applies a sync plan through the shared prepared-batch writer. */
 export const applySyncPlan = (writer: StateCheckpointWriter, plan: SyncPlan) =>

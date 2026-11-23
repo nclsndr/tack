@@ -36,59 +36,58 @@ const containingProject = Effect.fnUntraced(function* (stateOptions: StateOption
  * or else the project that contains `cwd`, and stages choices and docs attachments for it. With
  * neither, it opens on the destination chooser and only reads until one is chosen.
  */
-export const exploreSelection = (
+export const exploreSelection = Effect.fn("explore.exploreSelection")(function* (
   stateOptions: StateOptions,
   options: { readonly destination?: ChoiceNamespace; readonly cwd: string },
-) =>
-  Effect.gen(function* () {
-    const terminal = yield* TerminalContext;
-    if (!interactiveAllowed(terminal))
-      return yield* new InvocationError({
-        code: "terminal-required",
-        command: "explore",
-        message:
-          "tack explore requires an interactive terminal. Agents should use tack catalog, tack pick or tack status.",
-      });
-    const plain = makeStyle({
-      color: colorEnabled(terminal),
-      homeDirectory: terminal.environment["HOME"],
-      width: terminal.columns,
+) {
+  const terminal = yield* TerminalContext;
+  if (!interactiveAllowed(terminal))
+    return yield* new InvocationError({
+      code: "terminal-required",
+      command: "explore",
+      message:
+        "tack explore requires an interactive terminal. Agents should use tack catalog, tack pick or tack status.",
     });
-    const edit = options.destination ?? (yield* containingProject(stateOptions, options.cwd));
-    const { report, entries, fixedBy } = yield* loadExplorer(stateOptions, plain, edit);
-    // Every screen names a resource by its shortest reference in the catalog it browses.
-    const style = withReferences(plain, referencesOf(report));
-    const heading = `Tack explorer  ${report.resources.length} resources · ${report.issues.length} issues`;
-    const context = yield* Effect.context<RouteServices>();
-    const destinations = yield* makeExplorerDestinations({
-      stateOptions,
-      style,
-      cwd: options.cwd,
-      context,
-    });
-    const editor =
-      edit === undefined
-        ? undefined
-        : makeExplorerEditor({ stateOptions, namespace: edit, style, cwd: options.cwd, context });
-    const session = yield* runExplorer(
-      {
-        ...initialExplorerState(heading, entries, edit, fixedBy),
-        destinations: destinations.options,
-        // Without a destination the window opens on the chooser; Esc keeps it read-only.
-        ...(edit === undefined ? { destinationMenu: { phase: "choose", cursor: 0 } } : {}),
-      },
-      style,
-      undefined,
-      editor,
-      destinations,
-    );
-    if (session.interrupted)
-      return yield* new ExplorerInterruptedError({
-        code: "interrupted",
-        message: "The command was interrupted.",
-      });
-    return resultOutcome({ kind: "explore-session" });
+  const plain = makeStyle({
+    color: colorEnabled(terminal),
+    homeDirectory: terminal.environment["HOME"],
+    width: terminal.columns,
   });
+  const edit = options.destination ?? (yield* containingProject(stateOptions, options.cwd));
+  const { report, entries, fixedBy } = yield* loadExplorer(stateOptions, plain, edit);
+  // Every screen names a resource by its shortest reference in the catalog it browses.
+  const style = withReferences(plain, referencesOf(report));
+  const heading = `Tack explorer  ${report.resources.length} resources · ${report.issues.length} issues`;
+  const context = yield* Effect.context<RouteServices>();
+  const destinations = yield* makeExplorerDestinations({
+    stateOptions,
+    style,
+    cwd: options.cwd,
+    context,
+  });
+  const editor =
+    edit === undefined
+      ? undefined
+      : makeExplorerEditor({ stateOptions, namespace: edit, style, cwd: options.cwd, context });
+  const session = yield* runExplorer(
+    {
+      ...initialExplorerState(heading, entries, edit, fixedBy),
+      destinations: destinations.options,
+      // Without a destination the window opens on the chooser; Esc keeps it read-only.
+      ...(edit === undefined ? { destinationMenu: { phase: "choose", cursor: 0 } } : {}),
+    },
+    style,
+    undefined,
+    editor,
+    destinations,
+  );
+  if (session.interrupted)
+    return yield* new ExplorerInterruptedError({
+      code: "interrupted",
+      message: "The command was interrupted.",
+    });
+  return resultOutcome({ kind: "explore-session" });
+});
 
 /** The interactive explorer; every session can choose the user destination inside the window. */
 export const exploreRoutes: RoutesFor<"explore"> = {

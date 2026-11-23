@@ -70,7 +70,7 @@ export const ReaderSearchPayloadSchema = Schema.Struct({
 export type ReaderSearch = Omit<typeof ReaderSearchPayloadSchema.Type, "kind">;
 
 /** Searches the registered project's attached resources with shared completeness and provenance. */
-export const searchReader = Effect.fn("searchReader")(function* (
+export const searchReader = Effect.fn("reader.searchReader")(function* (
   options: StateOptions,
   request: ReaderSearchQuery & DocsSelector,
 ) {

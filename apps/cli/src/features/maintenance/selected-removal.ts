@@ -143,19 +143,28 @@ const runSelectedRemoval = (
   );
 
 /** Plans a clean by default, or removes exact verified links when apply is true. */
-export const cleanManagedLinks = (stateOptions: StateOptions, options: CleanOptions) =>
-  runSelectedRemoval(stateOptions, "clean", options);
+export const cleanManagedLinks = Effect.fn("maintenance.cleanManagedLinks")(function* (
+  stateOptions: StateOptions,
+  options: CleanOptions,
+) {
+  return yield* runSelectedRemoval(stateOptions, "clean", options);
+});
 
 /** Plans a scoped retry by default, or applies only retained pending obligations. */
-export const retrySelectedPendingRemovals = (
-  stateOptions: StateOptions,
-  options: RetryPendingRemovalOptions,
-) => runSelectedRemoval(stateOptions, "retry", options);
+export const retrySelectedPendingRemovals = Effect.fn("maintenance.retrySelectedPendingRemovals")(
+  function* (stateOptions: StateOptions, options: RetryPendingRemovalOptions) {
+    return yield* runSelectedRemoval(stateOptions, "retry", options);
+  },
+);
 
 /** Plans a full reset by default, or applies it and deletes state after cleanup settles. */
-export const resetTack = (stateOptions: StateOptions, options: ResetOptions = {}) =>
-  runManagedRemoval(
+export const resetTack = Effect.fn("maintenance.resetTack")(function* (
+  stateOptions: StateOptions,
+  options: ResetOptions = {},
+) {
+  return yield* runManagedRemoval(
     stateOptions,
     { cause: "reset", scope: { _tag: "reset" } },
     options.apply ?? false,
   );
+});

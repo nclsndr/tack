@@ -20,7 +20,7 @@ import { unresolvedDependencyEdges } from "../../domain/choices/dependency-resol
 import { dependencyEdgeFindings } from "./dependency-edges.ts";
 
 /** Checks explicit files/source folders as one stateless authoring scope; never reads StateStore. */
-export const checkPaths = Effect.fnUntraced(function* (
+export const checkPaths = Effect.fn("check.checkPaths")(function* (
   paths: ReadonlyArray<string>,
   options: {
     readonly additionalDocumentationDetectors?: ReadonlyArray<DocumentationDetector>;

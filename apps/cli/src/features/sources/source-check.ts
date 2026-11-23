@@ -10,7 +10,7 @@ import { declarationFileName } from "./declaration-file.ts";
 import { nonSkillCollectionFolders, nonSkillFolderMessage } from "./collection-folders.ts";
 
 /** Inspects a directory through catalog discovery without registration, state or network. */
-export const checkSource = Effect.fnUntraced(function* (sourcePath: string) {
+export const checkSource = Effect.fn("sources.checkSource")(function* (sourcePath: string) {
   const sourceService = yield* Source;
   const path = yield* Path.Path;
   const source = yield* sourceService.validate(sourcePath).pipe(

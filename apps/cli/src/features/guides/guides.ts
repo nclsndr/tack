@@ -20,7 +20,7 @@ export const isGuideTopic = (topic: string): topic is GuideTopic =>
  * Reads one guide from the running version's built-in `use-tack` skill, where the skill's agents
  * read it too. It reads no Tack state and writes nothing.
  */
-export const readGuide = Effect.fnUntraced(function* (topic: GuideTopic) {
+export const readGuide = Effect.fn("guides.readGuide")(function* (topic: GuideTopic) {
   const fileSystem = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
   const relative = path.join("skills", "use-tack", "references", `${topic}.md`);
