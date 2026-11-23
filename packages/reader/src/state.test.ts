@@ -1,5 +1,22 @@
+import { createElement } from "react";
+import { renderToMarkdownString } from "react-render-to-markdown";
 import { describe, expect, it } from "vitest";
-import { numericState, readVisualState, updateVisualState } from "./state.ts";
+import { numericState, readVisualState, updateVisualState, useVisualState } from "./state.ts";
+
+/** Prints one visual's URL state, as a figure reads it while it renders. */
+function StateProbe(props: { readonly id: string }) {
+  const [state] = useVisualState(props.id);
+  return createElement("p", null, `state: ${JSON.stringify(state)}`);
+}
+
+describe("visual URL state without a window", () => {
+  // Rspress writes Markdown twins with this client renderer in Node, where no `window` exists.
+  it("reads every visual in its initial state", async () => {
+    expect(typeof globalThis.window).toBe("undefined");
+    const markdown = await renderToMarkdownString(createElement(StateProbe, { id: "walk" }));
+    expect(markdown).toBe("state: {}\n\n");
+  });
+});
 
 describe("visual URL state", () => {
   it("keeps each visual separate and preserves the page anchor and other state", () => {

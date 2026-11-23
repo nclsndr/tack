@@ -3,7 +3,6 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import type { Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { Walkthrough } from "../visuals.tsx";
 import { FigureFrame } from "./frame.tsx";
 
 // Rspress's Markdown pass renders with a client reconciler; this suite stands in for it.
@@ -42,23 +41,4 @@ it("prints the figure's readable text in a block of its own instead of its frame
     ),
   );
   expect(container.innerHTML).toBe("<pre>Deploy figure\n\nThe queue runs first.</pre>");
-});
-
-it("reads the server snapshot, not the page URL, for the figure's state", async () => {
-  window.history.replaceState(null, "", "/guide?reader.walk.step=2");
-  await act(async () =>
-    root.render(
-      createElement(Walkthrough, {
-        id: "walk",
-        title: "Two steps",
-        steps: [
-          { title: "One", body: "First body" },
-          { title: "Two", body: "Second body" },
-        ],
-      }),
-    ),
-  );
-  expect(container.textContent).toBe(
-    "Two steps\n\n1. One\nFirst body\n\n2. Two\nSecond body\n\nCurrent step: 1 of 2",
-  );
 });
