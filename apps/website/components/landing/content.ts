@@ -1,12 +1,36 @@
 /**
- * Landing page copy. The landing page carries no benchmark figures.
+ * Landing page copy. The landing page carries no benchmark figures, and no count of agents leads
+ * it.
  */
 
-/** Hero copy. */
+import { sharedAgents } from "../features-page/content.ts";
+
+/**
+ * What Tack is, in one sentence, word for word wherever a page or package describes it: the site,
+ * the docs overview and the package descriptions (`content.test.ts` checks each one).
+ */
+export const definingSentence =
+  "Tack is an open-source CLI that combines the agent skills, commands, docs and scripts in the folders and Git repositories you and your team own into one setup, links it into every coding agent, project and Git worktree, and shows every change before it writes.";
+
+/**
+ * Hero copy: the tagline, the lead line beside it, the agents Tack has an adapter for, and a strip
+ * of facts a reader can check.
+ */
 export const hero = {
-  headline: "One setup. Every coding agent.",
-  subhead: "Write a skill once. Tack links it wherever your agents look, in every project.",
+  headline: "One setup. Every agent, project and worktree.",
+  subhead:
+    "Combine your own skills and docs with your team's, from as many repositories as you keep. Tack links them into every project and worktree, for each agent you use, and shows the plan before it writes.",
+  agents: "Claude Code, Codex, Cursor, Copilot CLI, Gemini CLI, Cline, OpenCode and Pi today.",
+  facts: [
+    "Preview before every write",
+    "Your repositories, no registry",
+    "No account, no telemetry",
+    "Open source, MIT",
+  ],
 } as const;
+
+/** The landing page's title, for the browser tab and for a shared link. */
+export const pageTitle = "Tack: one setup for every agent, project and worktree";
 
 /**
  * The story plate, after the features: the metaphor of what they said. The agent is the horse and
@@ -23,7 +47,7 @@ export const story = {
     {
       id: "sources",
       title: "Write it once.",
-      text: "Skills, commands and docs live in folders you own, or in a Git repository your team shares.",
+      text: "Skills, commands and docs live in folders you own and in Git repositories your team shares.",
       proof: "~/skills/review/SKILL.md",
       region: { left: 1.6, top: 5.5, width: 27.6, height: 67.5 },
       caption: { left: 31, top: 12 },
@@ -93,18 +117,37 @@ export const demo = {
 } as const;
 
 /**
- * The features, one block per lens: agents, team, docs. Each block has a headline, plain lines and
- * one command as its proof. Text in `backticks` shows as inline code. Commands reach Cline,
- * Cursor, OpenCode and Pi only, and context reaches no agent, so no line here says otherwise.
+ * The features, one block per lens, the team first: team, projects, agents, docs, then profiles
+ * for a CI runner. Each block has a headline, plain lines and one command as its proof. Text in
+ * `backticks` shows as inline code. Commands reach Cline, Cursor, OpenCode and Pi only, and
+ * context reaches no agent, so no line here says otherwise.
  */
 export const features = {
-  heading: "One copy, linked everywhere.",
+  heading: "Share skills like code.",
   intro:
-    "Edit a skill once. Every agent and project that links it sees the change. Teammates get it with a pull.",
-  agents: {
-    title: "Every agent, every project, every worktree.",
+    "Your skills and your team's live in Git repositories, side by side. A pull brings a teammate's edit. A sync shows what would change before it changes anything.",
+  team: {
+    title: "One setup for the whole team.",
     lines: [
-      "One skill folder, linked into Claude Code, Codex, Cursor, Copilot CLI, Gemini CLI, Cline, OpenCode and Pi: for you, and in each project you register, worktrees included.",
+      "Keep the team's skills and docs in a Git repository. Each teammate clones it once, adds it beside their own skills, and links both into the agent they use: Claude Code for one, Cursor or Codex for another.",
+      "A change goes through review like any code. Edits arrive with `git pull`. New skills wait for your sync preview.",
+    ],
+    note: "No account and no registry: Git does the sharing.",
+    proof: "tack source add ~/code/acme-agent-skills",
+    alt: "Illustration: a blue wireframe horse at a gallop, wearing a leather saddle with brass stirrups.",
+  },
+  projects: {
+    title: "Each project picks its own. Every worktree follows.",
+    lines: [
+      "Register a repository once and choose the skills it needs. Each of its worktrees gets the same links.",
+      "After `git worktree add`, one refresh and one sync bring the new worktree level with the others.",
+    ],
+    proof: "tack project refresh --project app --apply",
+  },
+  agents: {
+    title: "Whatever agent each person uses.",
+    lines: [
+      `One skill folder reaches Claude Code, Codex, Cursor, Copilot CLI, Gemini CLI, Cline, OpenCode and Pi, and ${sharedAgents.rows.length} more agents that read the same folders.`,
       "Turn on a new agent and one sync links every skill you use. Turn it off and only Tack's links go.",
     ],
     note: "Each agent also gets the `use-tack` skill, so it can run Tack for you.",
@@ -128,42 +171,35 @@ export const features = {
     },
     alt: "Illustration: a blue wireframe horse fitted with a leather driving harness and brass rings.",
   },
-  team: {
-    title: "Share skills like code.",
-    lines: [
-      "Keep the team's skills and docs in a Git repository. Each teammate clones it once and links it into the agent they use.",
-      "Edits arrive with `git pull`. New skills wait for your sync preview.",
-    ],
-    note: "Each project picks its own skills, and every worktree of a project gets the same links.",
-    proof: "tack source add ~/code/acme-agent-skills",
-    alt: "Illustration: a blue wireframe horse at a gallop, wearing a leather saddle with brass stirrups.",
-  },
   docs: {
-    title: "Docs your agents can find.",
+    title: "The docs your skills point to, in every worktree.",
     lines: [
-      "Attach a docs folder to a project and every worktree gets it under `.tack/docs`. Agents search it with `tack docs search`.",
-      "You read it in a local reader, and a passage you copy keeps its file and line numbers.",
+      "Attach a docs folder to a project and each worktree gets it under `.tack/docs`, as a link to the one copy you maintain.",
+      "Agents read it there or search it with `tack docs search`. You read it in a local reader.",
     ],
     proof: "tack docs attach handbook --project app",
     alt: "Screenshot: the Tack docs reader showing an architecture walkthrough, with its document index, metadata and a figure.",
+  },
+  profiles: {
+    title: "The same set on a CI runner.",
+    lines: [
+      "A profile is a file in one of your sources that lists an exact set. You review it like any change.",
+      "`tack profile export` packs it into one file with checksums. On a fresh machine, `tack profile apply-bundle` sets it up without the source and without fetching anything.",
+    ],
+    proof: "tack profile export agent-setup:reviewer reviewer.tar.gz",
   },
   also: {
     heading: "Also in Tack",
     items: [
       {
-        title: "Scripts, run by name.",
+        title: "Scripts, declared beside your skills.",
         text: "Each run gets only the secrets it declares and leaves a history.",
         proof: "tack script run report --project app",
       },
       {
-        title: "Skills from GitHub.",
-        text: "Copies a skill into your source and records where it came from.",
+        title: "Skills from GitHub, as your own copy.",
+        text: "Tack copies a skill into one of your sources and records where it came from. It changes only when you commit a change.",
         proof: "tack import add github:org/repo --skill pdf --into team-skills",
-      },
-      {
-        title: "One file for CI.",
-        text: "Packs a reviewed set of skills into one bundle that sets up a fresh machine without fetching.",
-        proof: "tack profile export",
       },
     ],
   },
@@ -186,19 +222,36 @@ export const getStarted = {
     "tack sync --project app --apply",
   ],
   note: "Requires Node 22.12 or later, or Bun. Your files are not moved or copied.",
+  teammate:
+    "Joining a repository that already uses Tack? Its `AGENTS.md` tells your agent what to run.",
 } as const;
 
-/** Questions, from the common objections. */
+/** Questions, from the common objections, the likeliest first. */
 export const questions = [
+  {
+    question: "I can symlink my skills myself.",
+    answer:
+      "You can, and for one agent, one repository and one machine a script is enough. Tack adds what a script does not have: a set for each project, every worktree of each project, a preview before each write, a record of every link so that it removes only its own, and your own skills combined with your team's. tack status tells you when a link is broken.",
+  },
+  {
+    question: "Most agents read .agents/skills now. Do I still need Tack?",
+    answer:
+      "Not always. With one repository, one machine and agents that all read .agents/skills, commit the folder and use no tool. Tack is for the next step: the same skills in several repositories, a different set for each project, worktrees, a teammate on Claude Code, which reads .claude/skills, and a CI runner.",
+  },
+  {
+    question: "Does it work in CI, or for a remote agent?",
+    answer:
+      "Yes. tack profile export packs a profile your team reviewed into one file with checksums, and tack profile apply-bundle sets it up on a fresh machine without the source and without fetching anything.",
+  },
   {
     question: "Will it touch my files?",
     answer:
       "Commands that change links to your files preview first and write only with --apply; tack init writes at once to set up Tack and link its own skills. Tack writes symlinks, never copies, and never overwrites a file it did not create.",
   },
   {
-    question: "I can symlink my skills myself.",
+    question: "Can I share a setup with my team?",
     answer:
-      "You can, for one agent and one folder. Tack does it for three agents, at user level and in every project and worktree, keeps a record of what it created, and removes only that.",
+      "Yes. Keep the team's skills and docs in a Git repository. Each teammate clones it, registers it with tack source add beside their own sources, and gets edits with git pull. Fixed profiles and portable bundles reproduce an exact setup.",
   },
   {
     question: "What if I stop using Tack?",
@@ -209,11 +262,6 @@ export const questions = [
     question: "Does it call a model or send data?",
     answer:
       "No. Tack is a local CLI. It calls no model and has no telemetry. Only tack import add reaches the network, to fetch from GitHub.",
-  },
-  {
-    question: "Can I share a setup with my team?",
-    answer:
-      "Yes. Keep the team's skills and docs in a Git repository. Each teammate clones it, registers it with tack source add, and gets edits with git pull. Fixed profiles and portable bundles reproduce an exact setup.",
   },
   {
     question: "Is Tack open source?",

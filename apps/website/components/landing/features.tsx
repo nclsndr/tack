@@ -1,5 +1,6 @@
 import { motion } from "motion/react";
 import { useRef, type ReactNode, type RefObject } from "react";
+import { lensFigures } from "../features-page/figures.tsx";
 import { features } from "./content.ts";
 import { corners, InView, settle } from "./drafting-sheet.tsx";
 import { Illustration } from "./illustration.tsx";
@@ -229,9 +230,9 @@ function AgentsBlock() {
 }
 
 /**
- * Team: a free-scrolling spread. The saddled horse runs in from the left at its own, slower pace
- * (parallax), and the words arrive beside it one after another, with shrinking gaps: headline,
- * lines, the supporting line, then the proof.
+ * Team: the first lens, a free-scrolling spread. The saddled horse runs in from the left at its
+ * own, slower pace (parallax), and the words arrive beside it one after another, with shrinking
+ * gaps: headline, lines, the supporting line, then the proof.
  */
 function TeamBlock() {
   const block = useRef<HTMLElement>(null);
@@ -258,10 +259,10 @@ function TeamBlock() {
           <InlineCode text={team.title} />
         </motion.h3>
         <motion.p data-intro="" variants={settle(0.1, 12)}>
-          {team.lines[0]}
+          <InlineCode text={team.lines[0]} />
         </motion.p>
         <motion.p data-intro="" variants={settle(0.17, 10)}>
-          {team.lines[1]}
+          <InlineCode text={team.lines[1]} />
         </motion.p>
         <motion.p className="feature-note" data-intro="" variants={settle(0.22, 0)}>
           {team.note}
@@ -350,8 +351,46 @@ function DocsBlock() {
   );
 }
 
+/**
+ * A lens told in words beside a figure of what it does: the projects lens with one link in each
+ * worktree, the profiles lens with the way from a reviewed file to a CI runner. The figures are the
+ * features page's, so both pages draw the same thing the same way.
+ */
+function PairBlock({
+  id,
+  block,
+  figure: Figure,
+}: {
+  readonly id: "projects" | "profiles";
+  readonly block: (typeof features)["projects" | "profiles"];
+  readonly figure: () => ReactNode;
+}) {
+  return (
+    <article className="pair" aria-labelledby={`${id}-title`}>
+      <InView className="pair-grid" amount={0.4}>
+        <div className="pair-words">
+          <motion.h3 id={`${id}-title`} data-intro="" variants={settle(0, 16)}>
+            {block.title}
+          </motion.h3>
+          {block.lines.map((line, at) => (
+            <motion.p key={line} data-intro="" variants={settle(0.1 + at * 0.07, 10)}>
+              <InlineCode text={line} />
+            </motion.p>
+          ))}
+          <motion.div data-intro="" variants={settle(0.24, 0)}>
+            <Proof text={block.proof} />
+          </motion.div>
+        </div>
+        <div className="pair-figure">
+          <Figure />
+        </div>
+      </InView>
+    </article>
+  );
+}
+
 /** The smaller features, one line and one command each, arriving with shrinking gaps. */
-const alsoDelays = [0.04, 0.1, 0.14] as const;
+const alsoDelays = [0.04, 0.1] as const;
 
 /** The smaller features, one line and one command each. */
 function AlsoRow() {
@@ -367,7 +406,7 @@ function AlsoRow() {
             key={item.title}
             className="also-item"
             data-intro=""
-            variants={settle(alsoDelays[index] ?? alsoDelays[2], 10)}
+            variants={settle(alsoDelays[index] ?? alsoDelays[1], 10)}
           >
             <h4>{item.title}</h4>
             <p>{item.text}</p>
@@ -383,20 +422,22 @@ function AlsoRow() {
 }
 
 /**
- * The features, one lens each, in a varied rhythm down the blueprint sheet: a pinned moment for
- * the agents, a parallax spread for the team, the docs reader standing up, and a quiet row for the
- * rest.
+ * The features, one lens each, the team first, in a varied rhythm down the blueprint sheet: a
+ * parallax spread for the team, the worktrees beside their figure, a pinned moment for the agents,
+ * the docs reader standing up, the CI runner beside its figure, and a quiet row for the rest.
  */
 export function Features() {
   return (
     <section id="features" className="landing-section features" aria-labelledby="features-title">
       <div className="landing-shell">
         <FeaturesHead />
+        <TeamBlock />
+        <PairBlock id="projects" block={features.projects} figure={lensFigures.projects} />
       </div>
       <AgentsBlock />
       <div className="landing-shell">
-        <TeamBlock />
         <DocsBlock />
+        <PairBlock id="profiles" block={features.profiles} figure={lensFigures.profiles} />
         <AlsoRow />
       </div>
     </section>

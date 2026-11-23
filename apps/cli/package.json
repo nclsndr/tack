@@ -2,7 +2,7 @@
   "name": "@tackup/cli",
   "version": "0.1.0",
   "private": true,
-  "description": "CLI for managing cross-agent resources from registered sources.",
+  "description": "Tack is an open-source CLI that combines the agent skills, commands, docs and scripts in the folders and Git repositories you and your team own into one setup, links it into every coding agent, project and Git worktree, and shows every change before it writes.",
   "license": "MIT",
   "bin": {
     "tack": "./dist/main.js"

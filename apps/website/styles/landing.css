@@ -561,6 +561,19 @@ html:has(.landing) {
   margin-top: 24px;
 }
 
+/* The agents Tack has an adapter for, under the lead line. */
+.landing .landing-agents {
+  margin-top: 12px !important;
+  color: var(--tack-faint);
+  font-size: 15px;
+}
+
+.landing-hero-aside .landing-facts {
+  margin-top: 20px;
+  color: var(--tack-muted);
+  font-size: 12px;
+}
+
 /* The blueprint sheet: a drafting grid, a major line every five minor ones, brightest where the
    window stands and fading out toward the edges. */
 .hero-sheet {

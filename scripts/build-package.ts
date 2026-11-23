@@ -30,6 +30,7 @@ const workspaces = ["apps/cli", "packages/reader", "packages/core"] as const;
 
 type Manifest = {
   readonly version?: string;
+  readonly description?: string;
   readonly dependencies?: Readonly<Record<string, string>>;
 };
 const readManifest = (path: string): Manifest => {
@@ -144,8 +145,8 @@ writeFileSync(
     {
       name: packageName,
       version,
-      description:
-        "Manage cross-agent resources, including skills, commands, context, docs, and scripts.",
+      // The CLI workspace's description: the one sentence that says what Tack is, everywhere.
+      description: readManifest(join(checkout, "apps/cli/package.json")).description,
       license: "MIT",
       type: "module",
       bin: { tack: "dist/main.js" },

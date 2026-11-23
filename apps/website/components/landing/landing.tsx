@@ -203,12 +203,20 @@ function Hero() {
               <div className="landing-hero-aside">
                 <HeroFollow part="lead">
                   <p className="landing-lead">{hero.subhead}</p>
+                  <p className="landing-agents">{hero.agents}</p>
                 </HeroFollow>
-                <HeroFollow part="actions" className="landing-actions">
-                  <a href="#get-started" className="landing-button landing-button-primary">
-                    Get started
-                  </a>
-                  <CopyButton text={agentPrompt} label="Copy the agent prompt" />
+                <HeroFollow part="actions">
+                  <div className="landing-actions">
+                    <a href="#get-started" className="landing-button landing-button-primary">
+                      Get started
+                    </a>
+                    <CopyButton text={agentPrompt} label="Copy the agent prompt" />
+                  </div>
+                  <ul className="landing-facts" aria-label="Facts">
+                    {hero.facts.map((fact) => (
+                      <li key={fact}>{fact}</li>
+                    ))}
+                  </ul>
                 </HeroFollow>
               </div>
             </div>
@@ -243,6 +251,9 @@ function GetStarted() {
           <p className="landing-label">Get started</p>
           <h2 id="start-title">{getStarted.heading}</h2>
           <p className="landing-note">{getStarted.note}</p>
+          <p className="landing-note">
+            <InlineCode text={getStarted.teammate} />
+          </p>
         </div>
         <Tabs
           label="Ways to start"
@@ -339,7 +350,16 @@ function LandingMarkdown() {
     readonly proof: string;
   }) =>
     `### ${block.title}\n\n${[...block.lines, ...(block.note === undefined ? [] : [block.note])].join(" ")}\n\n\`\`\`sh\n${block.proof}\n\`\`\``;
-  const featureList = [features.agents, features.team, features.docs].map(lens).join("\n\n");
+  // The lenses in the order the page shows them.
+  const featureList = [
+    features.team,
+    features.projects,
+    features.agents,
+    features.docs,
+    features.profiles,
+  ]
+    .map(lens)
+    .join("\n\n");
   const also = features.also.items
     .map((item) => `- **${item.title}** ${item.text} \`${item.proof}\``)
     .join("\n");
@@ -349,6 +369,10 @@ function LandingMarkdown() {
       {`# Tack: ${hero.headline}
 
 ${hero.subhead}
+
+${hero.agents}
+
+${hero.facts.join(" · ")}
 
 ## ${demo.heading}
 
@@ -390,7 +414,7 @@ Or run the commands yourself. ${getStarted.manualIntro}
 ${getStarted.commands.join("\n")}
 \`\`\`
 
-${getStarted.note}
+${getStarted.note} ${getStarted.teammate}
 
 ## Questions
 

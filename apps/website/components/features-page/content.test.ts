@@ -2,7 +2,7 @@ import { agentAdapterDescriptors } from "@tackup/cli/core";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { makeDemoSession, shellWords } from "../../demo/demo-shell.ts";
-import { getStarted } from "../landing/content.ts";
+import { features, getStarted } from "../landing/content.ts";
 import {
   agentsFigure,
   groundRules,
@@ -17,8 +17,19 @@ import {
 const escape = String.fromCharCode(27);
 const plain = (text: string) => text.replaceAll(new RegExp(`${escape}\\[[0-9;]*m`, "g"), "");
 
-/** Every command the page prints, from proofs, details, the ground rules and the figures. */
+/**
+ * Every command the page prints, from proofs, details, the ground rules and the figures, and every
+ * proof the landing page's features print.
+ */
 const commands = [
+  ...[
+    features.team,
+    features.projects,
+    features.agents,
+    features.docs,
+    features.profiles,
+    ...features.also.items,
+  ].map((block) => block.proof),
   ...lenses.flatMap((lens) => [
     lens.proof,
     ...lens.details.flatMap((detail) => ("command" in detail ? [detail.command] : [])),
