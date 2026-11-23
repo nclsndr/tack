@@ -31,7 +31,7 @@ export type OperationContract = {
 export class OperationContractAnnotation extends Context.Service<
   OperationContractAnnotation,
   OperationContract
->()("tack/cli/commands/OperationContract") {}
+>()("tack/cli/cli/commands/operation-contract/OperationContract") {}
 
 /** Declares the operation contract of an executable command. */
 export const operationContract = (contract: OperationContract) =>

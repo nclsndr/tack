@@ -242,6 +242,23 @@ describe("CLI architecture boundaries", () => {
 
     expect(violations).toEqual([]);
   });
+
+  it("names every service identifier after the path of its declaring module", () => {
+    const identifiers = productionSourceFiles().flatMap((path) =>
+      [...readFileSync(path, "utf8").matchAll(/["'](tack\/cli\/[^"']+)["']/g)].map((match) => ({
+        module: modulePath(path),
+        identifier: match[1] ?? "",
+      })),
+    );
+    const misnamed = identifiers.filter(
+      ({ module, identifier }) =>
+        identifier.slice(0, identifier.lastIndexOf("/")) !==
+        `tack/cli/${module.slice(0, -".ts".length)}`,
+    );
+
+    expect(identifiers.length).toBeGreaterThan(0);
+    expect(misnamed).toEqual([]);
+  });
 });
 
 it("declares no hidden flags or unlisted commands, which help would omit", () => {

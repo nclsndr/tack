@@ -3,8 +3,9 @@ import { dirname, join, relative, isAbsolute } from "node:path";
 import { Effect, Layer } from "effect";
 import {
   ExecutionError,
-  ExecutionPlatform,
+  ExecutionWorker,
   executionError,
+  RunHistory,
   type RunCancellation,
 } from "../../services/execution-platform.ts";
 import {
@@ -134,16 +135,26 @@ export const makeRunCancellation = (): RunCancellation => {
     },
   };
 };
-/** Production adapters selected only by the CLI composition root. */
-export const ExecutionPlatformLive = Layer.succeed(ExecutionPlatform, {
+/** The production worker adapter: process signals, stdin, package checks and supervised workers. */
+const ExecutionWorkerLive = Layer.succeed(ExecutionWorker, {
   cancellation: () => Effect.sync(makeRunCancellation),
   input: (request, signal) => promise(() => readRunInput(request, process.stdin, signal)),
   packageReady: (sourcePath, entrypoint) => promise(() => inspectPackage(sourcePath, entrypoint)),
+  worker: (request) =>
+    Effect.clockWith((clock) =>
+      promise(() => superviseWorker({ ...request, now: () => clock.currentTimeMillisUnsafe() })),
+    ),
+});
+
+/** The production run history: one record file per run in the state directory. */
+export const RunHistoryLive = Layer.succeed(RunHistory, {
   createHistory: (directory, record) => promise(() => createPendingHistory(directory, record)),
   finishHistory: (directory, record) => promise(() => finishHistory(directory, record)),
   listHistory: (directory) => promise(() => listHistory(directory)),
   countHistory: (directory) => promise(() => countHistory(directory)),
   showHistory: (directory, runId) => promise(() => readHistory(directory, runId)),
   clearHistory: (directory) => promise(() => clearHistory(directory)),
-  worker: (request) => promise(() => superviseWorker(request)),
 });
+
+/** Both production execution adapters, selected only by the CLI composition root. */
+export const ExecutionPlatformLive = Layer.mergeAll(ExecutionWorkerLive, RunHistoryLive);

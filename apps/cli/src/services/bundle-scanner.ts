@@ -14,5 +14,5 @@ export type BundleScannerShape = {
 
 /** Reads bundled code and documents for the modules and files they refer to. */
 export class BundleScanner extends Context.Service<BundleScanner, BundleScannerShape>()(
-  "tack/cli/BundleScanner",
+  "tack/cli/services/bundle-scanner/BundleScanner",
 ) {}

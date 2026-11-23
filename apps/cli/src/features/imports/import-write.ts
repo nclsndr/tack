@@ -59,36 +59,36 @@ const writeFailure = (message: string) => new ImportError({ code: "import-write-
 export const stagingPathOf = (root: string) => `${root}/${importStagingFolderName}`;
 
 /** Reports whether a source root holds a staging folder left by an interrupted write. */
-export const hasLeftoverStaging = (root: string) =>
-  Effect.gen(function* () {
-    const fileSystem = yield* FileSystem.FileSystem;
-    return yield* fileSystem.exists(stagingPathOf(root)).pipe(Effect.orElseSucceed(() => false));
-  });
+export const hasLeftoverStaging = Effect.fnUntraced(function* (root: string) {
+  const fileSystem = yield* FileSystem.FileSystem;
+  return yield* fileSystem.exists(stagingPathOf(root)).pipe(Effect.orElseSucceed(() => false));
+});
 
 /** Removes each folder, deepest first, only while it is empty, as `rmdir` does; failures are ignored. */
-const removeEmptyFolders = (root: string, folders: ReadonlyArray<string>) =>
-  Effect.gen(function* () {
-    const fileSystem = yield* FileSystem.FileSystem;
-    yield* Effect.forEach(
-      [...folders].reverse(),
-      (folder) =>
-        fileSystem.readDirectory(`${root}/${folder}`).pipe(
-          Effect.flatMap((entries) =>
-            entries.length === 0
-              ? fileSystem.remove(`${root}/${folder}`, { recursive: true })
-              : Effect.void,
-          ),
-          Effect.ignore,
+const removeEmptyFolders = Effect.fnUntraced(function* (
+  root: string,
+  folders: ReadonlyArray<string>,
+) {
+  const fileSystem = yield* FileSystem.FileSystem;
+  yield* Effect.forEach(
+    [...folders].reverse(),
+    (folder) =>
+      fileSystem.readDirectory(`${root}/${folder}`).pipe(
+        Effect.flatMap((entries) =>
+          entries.length === 0
+            ? fileSystem.remove(`${root}/${folder}`, { recursive: true })
+            : Effect.void,
         ),
-      { discard: true },
-    );
-  });
+        Effect.ignore,
+      ),
+    { discard: true },
+  );
+});
 
-const removeTree = (target: string) =>
-  Effect.gen(function* () {
-    const fileSystem = yield* FileSystem.FileSystem;
-    yield* fileSystem.remove(target, { recursive: true, force: true }).pipe(Effect.ignore);
-  });
+const removeTree = Effect.fnUntraced(function* (target: string) {
+  const fileSystem = yield* FileSystem.FileSystem;
+  yield* fileSystem.remove(target, { recursive: true, force: true }).pipe(Effect.ignore);
+});
 
 /**
  * Rewrites the imports section of the source's `tack.yaml` through a temporary file in the staging

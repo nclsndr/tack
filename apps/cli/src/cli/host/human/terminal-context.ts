@@ -10,7 +10,7 @@ export type TerminalContextShape = {
 
 /** An absent live layer safely describes a non-terminal process. */
 export const TerminalContext = Context.Reference<TerminalContextShape>(
-  "tack/cli/host/TerminalContext",
+  "tack/cli/cli/host/human/terminal-context/TerminalContext",
   {
     defaultValue: () => ({
       columns: 80,

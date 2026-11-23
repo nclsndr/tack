@@ -13,7 +13,8 @@ import { CompressionLive } from "../../src/platform/compression/compression.ts";
 import { InstallationLive } from "../../src/platform/installation/installation.ts";
 import { Reader } from "../../src/services/reader.ts";
 import { ReaderCorpusLive } from "../../src/platform/reader/search.ts";
-import { ExecutionPlatform } from "../../src/services/execution-platform.ts";
+import { ExecutionWorker } from "../../src/services/execution-platform.ts";
+import { RunHistoryLive } from "../../src/platform/execution/execution-platform.ts";
 import { StateStore } from "../../src/services/state-store.ts";
 import { StateStoreLive, makeStateStoreService } from "../../src/platform/state/state.ts";
 
@@ -36,18 +37,15 @@ export const LiveTestLayer = Layer.mergeAll(
   InstallationLive,
   CompressionLive,
   BundleScannerLive,
+  // Run history reads and writes record files in the test's own state directory, so the real
+  // store is hermetic; the worker starts processes and needs an explicit replacement.
+  RunHistoryLive,
   Layer.succeed(
-    ExecutionPlatform,
-    ExecutionPlatform.of({
+    ExecutionWorker,
+    ExecutionWorker.of({
       cancellation: () => Effect.die("Script execution requires an explicit test replacement."),
       input: () => Effect.die("Script execution requires an explicit test replacement."),
       packageReady: () => Effect.die("Script execution requires an explicit test replacement."),
-      createHistory: () => Effect.die("Script execution requires an explicit test replacement."),
-      finishHistory: () => Effect.die("Script execution requires an explicit test replacement."),
-      listHistory: () => Effect.die("Script execution requires an explicit test replacement."),
-      countHistory: () => Effect.die("Script execution requires an explicit test replacement."),
-      showHistory: () => Effect.die("Script execution requires an explicit test replacement."),
-      clearHistory: () => Effect.die("Script execution requires an explicit test replacement."),
       worker: () => Effect.die("Script execution requires an explicit test replacement."),
     }),
   ),

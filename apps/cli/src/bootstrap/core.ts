@@ -18,7 +18,7 @@ export { BundleScanner } from "../services/bundle-scanner.ts";
 export { Compression } from "../services/compression.ts";
 export { Destination } from "../services/destination.ts";
 export { LockProcess } from "../services/exclusive-lock.ts";
-export { executionError, ExecutionPlatform } from "../services/execution-platform.ts";
+export { executionError, ExecutionWorker, RunHistory } from "../services/execution-platform.ts";
 export { Git, GitCommandError, type GitService } from "../services/git.ts";
 export { defaultImportLimits, ImportFetchError, ImportRemote } from "../services/import-remote.ts";
 export { Installation } from "../services/installation.ts";

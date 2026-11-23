@@ -202,7 +202,7 @@ export type StateStoreService = {
 
 /** Exclusive, validated access to the versioned Tack state document. */
 export class StateStore extends Context.Service<StateStore, StateStoreService>()(
-  "tack/cli/platform/state/StateStore",
+  "tack/cli/services/state-store/StateStore",
 ) {}
 
 export const resolveStateDirectory = Effect.fnUntraced(function* (options: StateOptions) {

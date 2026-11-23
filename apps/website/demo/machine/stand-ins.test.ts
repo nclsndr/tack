@@ -2,7 +2,8 @@ import { describe, expect, it } from "@effect/vitest";
 import { Effect, Exit, Terminal } from "effect";
 import { ChildProcess } from "effect/process";
 import {
-  unavailableExecutionPlatform,
+  unavailableExecutionWorker,
+  unavailableRunHistory,
   unavailableImportRemote,
   unavailableMessage,
   unavailableReader,
@@ -25,11 +26,11 @@ describe("in-memory stand-ins", () => {
         Effect.flip(unavailableImportRemote.probe),
         Effect.flip(unavailableImportRemote.listRefs()),
         Effect.flip(Effect.scoped(unavailableImportRemote.open())),
-        Effect.flip(unavailableExecutionPlatform.worker()),
-        Effect.flip(unavailableExecutionPlatform.input()),
-        Effect.flip(unavailableExecutionPlatform.packageReady()),
-        Effect.flip(unavailableExecutionPlatform.createHistory()),
-        Effect.flip(unavailableExecutionPlatform.finishHistory()),
+        Effect.flip(unavailableExecutionWorker.worker()),
+        Effect.flip(unavailableExecutionWorker.input()),
+        Effect.flip(unavailableExecutionWorker.packageReady()),
+        Effect.flip(unavailableRunHistory.createHistory()),
+        Effect.flip(unavailableRunHistory.finishHistory()),
       ]);
 
       expect(
@@ -40,18 +41,18 @@ describe("in-memory stand-ins", () => {
 
   it.effect("reads an empty script history and hands out a cancellation that never fires", () =>
     Effect.gen(function* () {
-      const cancellation = yield* unavailableExecutionPlatform.cancellation();
+      const cancellation = yield* unavailableExecutionWorker.cancellation();
       cancellation.onRepeatSignal()();
       cancellation.close();
 
       expect(cancellation.signal.aborted).toBe(false);
-      expect(yield* unavailableExecutionPlatform.listHistory()).toEqual({
+      expect(yield* unavailableRunHistory.listHistory()).toEqual({
         runs: [],
         issues: [],
       });
-      expect(yield* unavailableExecutionPlatform.countHistory()).toBe(0);
-      expect(yield* unavailableExecutionPlatform.showHistory()).toBeUndefined();
-      expect(yield* unavailableExecutionPlatform.clearHistory()).toBe(0);
+      expect(yield* unavailableRunHistory.countHistory()).toBe(0);
+      expect(yield* unavailableRunHistory.showHistory()).toBeUndefined();
+      expect(yield* unavailableRunHistory.clearHistory()).toBe(0);
     }),
   );
 

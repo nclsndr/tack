@@ -63,9 +63,9 @@ export type WorkerRequest = {
   readonly onRepeatSignal?: (listener: () => void) => () => void;
 };
 
-/** Replaceable OS boundary for operator input, history, readiness, and fresh workers. */
-export class ExecutionPlatform extends Context.Service<
-  ExecutionPlatform,
+/** Replaceable OS boundary for operator signals, input, package readiness, and fresh workers. */
+export class ExecutionWorker extends Context.Service<
+  ExecutionWorker,
   {
     readonly cancellation: () => Effect.Effect<RunCancellation>;
     readonly input: (
@@ -76,6 +76,14 @@ export class ExecutionPlatform extends Context.Service<
       sourcePath: string,
       entrypoint: string,
     ) => Effect.Effect<void, ExecutionError>;
+    readonly worker: (request: WorkerRequest) => Effect.Effect<WorkerExecution, ExecutionError>;
+  }
+>()("tack/cli/services/execution-platform/ExecutionWorker") {}
+
+/** Replaceable store of run records in the state directory. */
+export class RunHistory extends Context.Service<
+  RunHistory,
+  {
     readonly createHistory: (
       directory: string,
       record: HistoryRecord,
@@ -100,9 +108,8 @@ export class ExecutionPlatform extends Context.Service<
     ) => Effect.Effect<HistoryRecord | undefined, ExecutionError>;
     /** Removes retained record files without decoding them and returns the removed count. */
     readonly clearHistory: (directory: string) => Effect.Effect<number, ExecutionError>;
-    readonly worker: (request: WorkerRequest) => Effect.Effect<WorkerExecution, ExecutionError>;
   }
->()("tack/cli/ExecutionPlatform") {}
+>()("tack/cli/services/execution-platform/RunHistory") {}
 
 /** Projects an operational adapter failure to the stable run outcome contract. */
 export const executionFailureOutcome = (error: ExecutionError): RunFailure => ({

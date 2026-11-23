@@ -146,24 +146,20 @@ export const withCheckoutHint = (state: State, error: TargetSelectionError) => {
  * Several projects and none holding the directory leave the choice to the operator, so the command
  * lists them.
  */
-export const linkingNext = (state: State, cwd: string) =>
-  Effect.gen(function* () {
-    const projects = state.data.projects.filter(
-      (project) => projectLifecycle(project) === "active",
-    );
-    const checkout = yield* observeCheckout(state, cwd);
-    if (checkout._tag === "unregistered-repository")
-      return ["tack", "project", "add", checkout.suggestedName];
-    if (projects.length === 0)
-      return ["tack", "project", "add", "NAME", "--repository-cwd", "PATH"];
-    const [only] = projects;
-    const projectName =
-      checkout._tag === "registered-root" || checkout._tag === "unregistered-worktree"
-        ? checkout.projectName
-        : projects.length === 1
-          ? only?.name
-          : undefined;
-    return projectName === undefined
-      ? ["tack", "project"]
-      : ["tack", "sync", "--project", projectName];
-  });
+export const linkingNext = Effect.fnUntraced(function* (state: State, cwd: string) {
+  const projects = state.data.projects.filter((project) => projectLifecycle(project) === "active");
+  const checkout = yield* observeCheckout(state, cwd);
+  if (checkout._tag === "unregistered-repository")
+    return ["tack", "project", "add", checkout.suggestedName];
+  if (projects.length === 0) return ["tack", "project", "add", "NAME", "--repository-cwd", "PATH"];
+  const [only] = projects;
+  const projectName =
+    checkout._tag === "registered-root" || checkout._tag === "unregistered-worktree"
+      ? checkout.projectName
+      : projects.length === 1
+        ? only?.name
+        : undefined;
+  return projectName === undefined
+    ? ["tack", "project"]
+    : ["tack", "sync", "--project", projectName];
+});

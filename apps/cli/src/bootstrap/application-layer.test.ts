@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import { TerminalContext } from "../cli/host/human/terminal-context.ts";
 import { Source } from "../features/sources/source.ts";
 import { Destination } from "../services/destination.ts";
-import { ExecutionPlatform } from "../services/execution-platform.ts";
+import { ExecutionWorker, RunHistory } from "../services/execution-platform.ts";
 import { Git } from "../services/git.ts";
 import { ImportRemote } from "../services/import-remote.ts";
 import { Reader } from "../services/reader.ts";
@@ -22,7 +22,8 @@ it.effect("builds every capability the CLI resolves from the one production grap
       yield* Source,
       yield* Reader,
       yield* ReaderCorpus,
-      yield* ExecutionPlatform,
+      yield* ExecutionWorker,
+      yield* RunHistory,
     ];
 
     expect(

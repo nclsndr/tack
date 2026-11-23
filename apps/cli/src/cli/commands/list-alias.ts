@@ -3,7 +3,7 @@ import { Command } from "effect/cli";
 
 /** Marks a subcommand as another spelling of its parent, which `schema` and help do not list. */
 export class ListAliasAnnotation extends Context.Service<ListAliasAnnotation, true>()(
-  "tack/cli/commands/ListAlias",
+  "tack/cli/cli/commands/list-alias/ListAlias",
 ) {}
 
 /**

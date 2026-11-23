@@ -7,7 +7,7 @@ import type { BundleScanner } from "../../../services/bundle-scanner.ts";
 import type { Compression } from "../../../services/compression.ts";
 import type { Destination } from "../../../services/destination.ts";
 import type { Source } from "../../../features/sources/source.ts";
-import type { ExecutionPlatform } from "../../../services/execution-platform.ts";
+import type { ExecutionWorker, RunHistory } from "../../../services/execution-platform.ts";
 import type { Git } from "../../../services/git.ts";
 import type { ImportRemote } from "../../../services/import-remote.ts";
 import type { Installation } from "../../../services/installation.ts";
@@ -40,7 +40,7 @@ export type RouteServices =
   | Command.Environment
   | Compression
   | Destination
-  | ExecutionPlatform
+  | ExecutionWorker
   | FileSystem.FileSystem
   | Git
   | ImportRemote
@@ -48,6 +48,7 @@ export type RouteServices =
   | Path.Path
   | Reader
   | ReaderCorpus
+  | RunHistory
   | SecureRandom.SecureRandom
   | Scope.Scope
   | Source

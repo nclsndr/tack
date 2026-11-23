@@ -1,4 +1,4 @@
-import { Effect, Path, Result } from "effect";
+import { DateTime, Effect, Path, Result } from "effect";
 import { ImportRemote } from "../../services/import-remote.ts";
 import { withStateCheckpointWriter, type StateOptions } from "../../services/state-store.ts";
 import { type State } from "../../domain/state/state-schema.ts";
@@ -161,7 +161,10 @@ type DestinationOutcome =
   | { readonly _tag: "resolved"; readonly destination: ImportDestination }
   | { readonly _tag: "refused"; readonly error: ImportError };
 
-const timestamp = () => `${new Date().toISOString().slice(0, 19)}Z`;
+/** The import record time in whole seconds, read from the Effect clock. */
+const timestamp = DateTime.now.pipe(
+  Effect.map((now) => `${DateTime.formatIso(now).slice(0, 19)}Z`),
+);
 
 /**
  * One planning pass shared by the preview and the apply: it resolves the ref, fetches, reads the
@@ -373,7 +376,7 @@ const run = Effect.fnUntraced(function* (
     );
   }
   const treeIds = yield* session.treeIds(selected.map((candidate) => candidate.folder));
-  const importedAt = timestamp();
+  const importedAt = yield* timestamp;
   const staged = yield* Effect.forEach(selected, (candidate) =>
     Effect.gen(function* () {
       const files = yield* loadSkillFiles(session, candidate.folder, analysis.tree);
