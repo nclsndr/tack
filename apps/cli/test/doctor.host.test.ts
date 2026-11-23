@@ -12,7 +12,7 @@ import {
   successfulEnvelope,
   withTackWorld,
   type TackWorld,
-} from "./fixtures/tack-world.ts";
+} from "./support/tack-world.ts";
 
 const outcomeOf = (report: DoctorReport, id: string) =>
   report.checks.find((check) => check.id === id);

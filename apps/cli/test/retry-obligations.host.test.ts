@@ -1,3 +1,4 @@
+import { runGit } from "./support/tack-process.ts";
 import { pendingRemovalsOf } from "../src/domain/links/link-record-schema.ts";
 import { managedDocsLinksOf } from "../src/domain/docs/docs-schema.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
@@ -7,12 +8,11 @@ import { readState } from "../src/services/state-store.ts";
 import { managedLinkDestinationPath } from "../src/domain/agents/agent-layout.ts";
 import {
   partialEnvelope,
-  runGit,
   hostTack,
   successfulEnvelope,
   withTackWorld,
   type TackWorld,
-} from "./fixtures/tack-world.ts";
+} from "./support/tack-world.ts";
 
 /** Attaches one docs resource to the fixture project and mounts it with a real reconcile. */
 const mountDocs = Effect.fnUntraced(function* (fixture: TackWorld) {

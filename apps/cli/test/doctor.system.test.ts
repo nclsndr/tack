@@ -3,7 +3,7 @@ import { Effect, FileSystem, Path, Schema } from "effect";
 import { DoctorReportSchema } from "../src/domain/doctor/doctor-schema.ts";
 import { PublicEnvelopeSchema } from "../src/cli/host/public-outcome.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
-import { runProcess } from "./fixtures/tack-world.ts";
+import { runProcess } from "./support/tack-process.ts";
 
 const decodeReport = Schema.decodeUnknownSync(DoctorReportSchema, { onExcessProperty: "error" });
 const decodeEnvelope = Schema.decodeUnknownSync(PublicEnvelopeSchema);

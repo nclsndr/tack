@@ -12,7 +12,7 @@ import {
   successfulEnvelope,
   withTackWorld,
   type TackWorld,
-} from "./fixtures/tack-world.ts";
+} from "./support/tack-world.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { runTackInProcess } from "./support/host-runner.ts";
 

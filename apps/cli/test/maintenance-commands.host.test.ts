@@ -12,7 +12,7 @@ import {
   hostTack,
   successfulEnvelope,
   withTackWorld,
-} from "./fixtures/tack-world.ts";
+} from "./support/tack-world.ts";
 
 const adapterDestination = (adapter: "codex" | "cursor", projectRoot: string, path: Path.Path) =>
   path.join(projectRoot, adapter === "codex" ? ".agents" : ".cursor", "skills", "valid");

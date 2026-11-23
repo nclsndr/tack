@@ -2,7 +2,7 @@ import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect } from "effect";
 import { ChildProcessSpawner } from "effect/process";
-import { withTackWorld } from "./fixtures/tack-world.ts";
+import { withTackWorld } from "./support/tack-world.ts";
 import { decodeEnvelope, tackProcess } from "./support/tack-process.ts";
 
 // The process-level smoke test of `tack status` and `tack project refresh`, without HOME. The

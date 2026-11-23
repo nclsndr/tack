@@ -13,7 +13,7 @@ import {
   successfulEnvelope,
   type TackWorld,
   withTackWorld,
-} from "./fixtures/tack-world.ts";
+} from "./support/tack-world.ts";
 import { decodeEnvelope, sourceEntrypoint, tackEnvironment } from "./support/tack-process.ts";
 
 /** Many links in one directory: the apply is fast, so a long batch gives the kill a window. */

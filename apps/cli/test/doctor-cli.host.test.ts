@@ -1,3 +1,4 @@
+import type { ProcessResult } from "./support/tack-process.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Schema } from "effect";
 import { DoctorReportSchema } from "../src/domain/doctor/doctor-schema.ts";
@@ -10,8 +11,7 @@ import {
   successfulEnvelope,
   withTackWorld,
   type TackWorld,
-  type ProcessResult,
-} from "./fixtures/tack-world.ts";
+} from "./support/tack-world.ts";
 
 const decodeReport = Schema.decodeUnknownSync(DoctorReportSchema, { onExcessProperty: "error" });
 const decodeEnvelope = Schema.decodeUnknownSync(PublicEnvelopeSchema);
