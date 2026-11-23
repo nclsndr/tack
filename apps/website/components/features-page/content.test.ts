@@ -2,6 +2,7 @@ import { agentAdapterDescriptors } from "@tackup/cli/core";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { makeDemoSession, shellWords } from "../../demo/demo-shell.ts";
+import { getStarted } from "../landing/content.ts";
 import {
   agentsFigure,
   groundRules,
@@ -79,10 +80,56 @@ describe("features page agents", () => {
 });
 
 describe("features page install", () => {
-  it("installs from a checkout and never from npm", () => {
-    expect(intro.facts).toContain("Not on npm yet");
-    expect(install.commands.at(-1)).toBe("bun run install:local");
-    expect(JSON.stringify([intro, install, lenses, groundRules])).not.toContain("npm install");
+  it("installs from npm, with the landing's command", () => {
+    expect(install.commands).toEqual(["npm install --global @tackup/cli"]);
+    expect(install.commands[0]).toBe(getStarted.commands[0]);
+  });
+
+  it("no longer says Tack is missing from npm or installs from a checkout", () => {
+    const page = JSON.stringify([intro, install, lenses, groundRules]);
+    expect(page).not.toContain("npm yet");
+    expect(page).not.toContain("install:local");
+    expect(page).not.toContain("checkout");
+  });
+});
+
+describe("features page limits", () => {
+  /** The agent names a sentence lists, by the agents the skills figure names. */
+  const named = (sentence: string) =>
+    agentsFigure.links.map((link) => link.agent).filter((agent) => sentence.includes(agent));
+
+  it("leads the limits with what Tack does not do yet, and links to it from the head", () => {
+    expect(groundRules.notYetHeading).toBe("What Tack does not do yet");
+    expect(intro.limitsLink.startsWith(groundRules.notYetHeading)).toBe(true);
+    expect(groundRules.notYet.map((limit) => limit.title)).toEqual([
+      "Deliver context.",
+      "Commands for every agent.",
+      "Deliver without symbolic links.",
+    ]);
+  });
+
+  it("names exactly the agents that take commands, then every other one", () => {
+    const commandLimit = groundRules.notYet.find((limit) => limit.title.startsWith("Commands"));
+    const [reach = "", without = ""] = commandLimit?.text.split(". ") ?? [];
+    const takers: ReadonlyArray<string> = agentsFigure.commands.map((link) => link.agent);
+    expect(named(reach).toSorted()).toEqual(takers.toSorted());
+    expect(named(without).toSorted()).toEqual(
+      agentsFigure.links
+        .map((link) => link.agent)
+        .filter((agent) => !takers.includes(agent))
+        .toSorted(),
+    );
+  });
+
+  it("lists the same limits in the README as on the page", () => {
+    const readme = readFileSync(new URL("../../../../README.md", import.meta.url), "utf8");
+    const section = readme.slice(readme.indexOf(`## ${groundRules.notYetHeading}`));
+    const bullets = section
+      .slice(0, section.indexOf("\n## ", 1))
+      .split("\n- ")
+      .slice(1)
+      .map((bullet) => bullet.replaceAll(/\s+/gu, " ").trim());
+    expect(bullets).toEqual(groundRules.notYet.map((limit) => `**${limit.title}** ${limit.text}`));
   });
 });
 

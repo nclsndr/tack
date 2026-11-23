@@ -234,27 +234,42 @@ function GroundRules() {
           <DetailList details={groundRules.rules} />
         </InView>
         <InView as="div" className="fp-limits" amount={0.3}>
-          <motion.h3 id="limits" data-intro="" variants={settle(0, 8)}>
-            {groundRules.limitsHeading}
-          </motion.h3>
-          <ul>
-            {groundRules.limits.map((limit, at) => (
-              <motion.li key={limit.title} data-intro="" variants={settle(detailDelay(at), 8)}>
-                <span className="fp-limit-mark" aria-hidden="true" />
-                <strong>{limit.title}</strong> <InlineCode text={limit.text} />
-              </motion.li>
-            ))}
-          </ul>
+          <LimitList id="limits" heading={groundRules.notYetHeading} limits={groundRules.notYet} />
+          <LimitList heading={groundRules.limitsHeading} limits={groundRules.limits} />
         </InView>
       </div>
     </section>
   );
 }
 
-/**
- * The close: how to install Tack today, from a checkout, since it is not on npm yet. The header's
- * Get started leads here on this page.
- */
+/** One list of what Tack does not do, under its heading, each item struck with a cross. */
+function LimitList({
+  id,
+  heading,
+  limits,
+}: {
+  readonly id?: string;
+  readonly heading: string;
+  readonly limits: ReadonlyArray<Detail>;
+}) {
+  return (
+    <>
+      <motion.h3 id={id} data-intro="" variants={settle(0, 8)}>
+        {heading}
+      </motion.h3>
+      <ul>
+        {limits.map((limit, at) => (
+          <motion.li key={limit.title} data-intro="" variants={settle(detailDelay(at), 8)}>
+            <span className="fp-limit-mark" aria-hidden="true" />
+            <strong>{limit.title}</strong> <InlineCode text={limit.text} />
+          </motion.li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
+/** The close: the npm install command and the way on. The header's Get started leads here. */
 function Install() {
   return (
     <section
@@ -315,6 +330,10 @@ ${previewFigure.output}
 \`\`\`
 
 ${groundRules.rules.map(item).join("\n")}
+
+### ${groundRules.notYetHeading}
+
+${groundRules.notYet.map(item).join("\n")}
 
 ### ${groundRules.limitsHeading}
 

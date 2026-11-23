@@ -37,22 +37,19 @@ export const intro = {
   problem:
     "Every coding agent looks for your setup in its own folder, in every project and every worktree. You fix one copy and the others drift.",
   tagline: "Write a skill once. Tack links it wherever your agents look, in every project.",
-  facts: ["Local CLI", "No account, no telemetry", "Open source, MIT", "Not on npm yet"],
-  limitsLink: "What Tack does not do ↓",
+  facts: ["Local CLI", "No account, no telemetry", "Open source, MIT"],
+  limitsLink: "What Tack does not do yet ↓",
   indexLabel: "Jump to",
 } as const;
 
-/**
- * How to install Tack today. It is not published to npm yet, so a visitor installs a checkout of
- * the repository, as the contributing guide describes.
- */
+/** How to install Tack: the landing's npm command, then the getting started guide. */
 export const install = {
   id: "install",
-  heading: "Install Tack from a checkout.",
-  text: "Tack is not on npm yet. Clone the repository and install it as your global `tack`; it needs Bun and npm. Then `tack init` sets up your machine.",
-  commands: ["git clone https://github.com/nclsndr/tack.git", "cd tack", "bun run install:local"],
-  guide: "Install guide",
-  guideHref: "https://github.com/nclsndr/tack/blob/main/CONTRIBUTING.md#run-your-changes",
+  heading: "Install Tack.",
+  text: "Tack runs on Node 22.12 or later, or on Bun. Then `tack init` sets up your machine.",
+  commands: ["npm install --global @tackup/cli"],
+  guide: "Get started",
+  guideHref: "/docs/getting-started",
   docs: "Read the docs",
 } as const;
 
@@ -575,7 +572,10 @@ export const lenses = [
 /** A part's id, which is also its anchor on the page. */
 export type LensId = (typeof lenses)[number]["id"];
 
-/** The rules that hold under every part, and what Tack does not do. */
+/**
+ * The rules that hold under every part, then what Tack does not do: first what it does not do
+ * yet, as the adapters and the link engine stand, then what it leaves to other tools by design.
+ */
 export const groundRules = {
   label: "Under everything",
   heading: "No link changes until you say so.",
@@ -608,12 +608,23 @@ export const groundRules = {
       text: "Views end with the next command to run, and `--json` gives programs a stable contract for status, sync, doctor and upgrade.",
     },
   ],
-  limitsHeading: "What Tack does not do",
-  limits: [
+  notYetHeading: "What Tack does not do yet",
+  notYet: [
     {
       title: "Deliver context.",
-      text: "Tack catalogues context; no agent receives it yet.",
+      text: "Tack catalogues context, and `sync` and `status` say so: no agent receives it yet.",
     },
+    {
+      title: "Commands for every agent.",
+      text: "Commands reach Cline, Cursor, OpenCode and Pi. Claude Code, Codex, GitHub Copilot CLI and Gemini CLI get skills only.",
+    },
+    {
+      title: "Deliver without symbolic links.",
+      text: "Every delivery is a symbolic link, with no copy as a fallback. Windows is untested.",
+    },
+  ],
+  limitsHeading: "What Tack does not do",
+  limits: [
     {
       title: "Pull for you.",
       text: "Teammates run `git pull`; Tack links what is on disk.",
@@ -631,6 +642,8 @@ export const groundRules = {
   readonly label: string;
   readonly heading: string;
   readonly rules: ReadonlyArray<Detail>;
+  readonly notYetHeading: string;
+  readonly notYet: ReadonlyArray<Detail>;
   readonly limitsHeading: string;
   readonly limits: ReadonlyArray<Detail>;
 };
