@@ -6,6 +6,7 @@ import {
   resolutionIsUnresolved,
   resolveDependencyClosure,
   selectedDependencyAddresses,
+  unresolvedDependencyEdges,
 } from "./dependency-resolution.ts";
 import { resolveInitialSelection } from "./selection.ts";
 import type {
@@ -493,6 +494,7 @@ const sourceAt = (
 });
 
 const sharedId = address("x").sourceRegistrationId;
+const privateId = address("x", "private").sourceRegistrationId;
 const bundleIdentity = "a".repeat(64);
 
 it.each([
@@ -525,6 +527,196 @@ it.each([
     expect(selectedDependencyAddresses(result)).toEqual([root.address, target.address]);
   },
 );
+
+it.each([
+  ["its own source", "shared", thirdId, ["helpers"]],
+  ["a declared source", "helpers", sharedId, ["helpers"]],
+  ["its own source while a declared label is absent", "shared", thirdId, ["helpers", "absent"]],
+] as const)(
+  "reports a dependency pinned to %s as missing when only another source provides it",
+  (_case, sourceName, providerId, dependsOn) => {
+    const root = entryIn(
+      "root",
+      sharedId,
+      [{ kind: "skill", name: "target", source: sourceName }],
+      "default",
+    );
+
+    const result = resolve({
+      entries: [root, entryIn("target", providerId)],
+      sources: [sourceAt(sharedId, "shared", { dependsOn }), sourceAt(thirdId, "helpers")],
+    });
+
+    expect(groupFor(result, "root")).toMatchObject({
+      _tag: "blocked",
+      blockers: [{ _tag: "required-missing", requester: root.address }],
+    });
+  },
+);
+
+it("lists every edge, required or optional, that names no single resource, with its position", () => {
+  const root = entryIn(
+    "root",
+    sharedId,
+    [
+      { kind: "skill", name: "target" },
+      { kind: "skill", name: "absent", optional: true },
+      { kind: "skill", name: "target", source: "elsewhere" },
+      { kind: "command", name: "broken" },
+      { kind: "skill", name: "twin" },
+    ],
+    "default",
+  );
+  const context = {
+    address: { kind: "context", name: "notes.md", sourceRegistrationId: sharedId },
+    directoryPath: "/sources/shared",
+    filePath: "/sources/shared/notes.md",
+    sourcePath: "/sources/shared",
+    sourceRegistrationId: sharedId,
+  } satisfies Extract<SelectableCatalogEntry, { readonly address: { readonly kind: "context" } }>;
+
+  const edges = unresolvedDependencyEdges({
+    entries: [
+      root,
+      context,
+      entryIn("target", sharedId),
+      entryIn("twin", thirdId),
+      entryIn("twin", fourthId),
+    ],
+    quarantined: [
+      {
+        address: { kind: "command", name: "broken", sourceRegistrationId: sharedId },
+        code: "command-metadata-invalid",
+        directoryPath: "/sources/shared",
+        filePath: "/sources/shared/broken.md",
+        message: "invalid",
+        sourcePath: "/sources/shared",
+        sourceRegistrationId: sharedId,
+      },
+    ],
+    sources: [
+      sourceAt(sharedId, "shared", { dependsOn: ["left", "right"] }),
+      sourceAt(thirdId, "left"),
+      sourceAt(fourthId, "right"),
+    ],
+  });
+
+  expect(
+    edges.map(({ requester, position, failure }) => [
+      requester.address.name,
+      position,
+      failure.reason,
+    ]),
+  ).toEqual([
+    ["root", 1, "missing"],
+    ["root", 2, "source-undeclared"],
+    ["root", 3, "quarantined"],
+    ["root", 4, "ambiguous"],
+  ]);
+});
+
+it("names the declared labels no source carries, and the sources an undeclared edge would need", () => {
+  const { label: _label, ...noLabel } = sourceAt(fourthId, "unused");
+  const unlistedId = "00000000-0000-4000-8000-000000000005";
+
+  const edges = unresolvedDependencyEdges({
+    entries: [
+      entryIn(
+        "root",
+        sharedId,
+        [
+          { kind: "skill", name: "target" },
+          { kind: "skill", name: "target", source: "ghost" },
+        ],
+        "default",
+      ),
+      entryIn("lone", privateId, [{ kind: "skill", name: "audit" }], "default"),
+      entryIn("audit", thirdId),
+      entryIn("audit", fourthId),
+      entryIn("audit", unlistedId),
+    ],
+    quarantined: [],
+    sources: [
+      sourceAt(sharedId, "shared", { dependsOn: ["ghost", "phantom"] }),
+      sourceAt(privateId, "private"),
+      sourceAt(thirdId, "elsewhere"),
+      noLabel,
+    ],
+  });
+
+  expect(edges.map(({ failure }) => failure)).toEqual([
+    { reason: "source-unregistered", labels: ["ghost", "phantom"] },
+    { reason: "source-unregistered", labels: ["ghost"] },
+    {
+      reason: "source-undeclared",
+      providers: [`/sources/${fourthId}`, unlistedId, "elsewhere"],
+    },
+  ]);
+});
+
+it("names the sources an ambiguous edge matches, once per source", () => {
+  const edges = unresolvedDependencyEdges({
+    entries: [
+      entryIn(
+        "root",
+        sharedId,
+        [
+          { kind: "skill", name: "target" },
+          { kind: "skill", name: "target", source: "twin" },
+        ],
+        "default",
+      ),
+      entryIn("target", thirdId),
+      entryIn("target", fourthId),
+    ],
+    quarantined: [],
+    sources: [
+      sourceAt(sharedId, "shared", { dependsOn: ["twin"] }),
+      sourceAt(thirdId, "twin"),
+      sourceAt(fourthId, "twin"),
+    ],
+  });
+
+  expect(edges.map(({ failure }) => failure)).toEqual([
+    { reason: "ambiguous", providers: ["twin", "twin"] },
+    { reason: "ambiguous", providers: ["twin", "twin"] },
+  ]);
+});
+
+it("names the source that quarantines a dependency and the labels an unreadable source may carry", () => {
+  const edges = unresolvedDependencyEdges({
+    entries: [
+      entryIn("root", sharedId, [{ kind: "skill", name: "broken" }], "default"),
+      entryIn("needy", thirdId, [{ kind: "skill", name: "x", source: "mystery" }], "default"),
+    ],
+    quarantined: [quarantine(address("broken"))],
+    sources: [
+      sourceAt(sharedId, "shared"),
+      sourceAt(thirdId, "third", { dependsOn: ["mystery"] }),
+      unhealthySourceAt(fourthId),
+    ],
+  });
+
+  expect(edges.map(({ failure }) => failure)).toEqual([
+    { reason: "quarantined", source: "shared" },
+    {
+      reason: "source-unhealthy",
+      labels: ["mystery"],
+      unhealthySources: [`/sources/${fourthId}`],
+    },
+  ]);
+});
+
+it("lists an unresolved edge of a catalog that reports no sources", () => {
+  const edges = unresolvedDependencyEdges({
+    entries: [entry("root", { dependencies: [dependency("absent")] })],
+    quarantined: [],
+  });
+
+  expect(edges.map(({ position, failure }) => [position, failure.reason])).toEqual([
+    [0, "missing"],
+  ]);
+});
 
 it("blocks a dependency on a declared source label that no registered source carries", () => {
   const root = entryIn(

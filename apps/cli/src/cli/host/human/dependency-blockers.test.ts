@@ -49,6 +49,11 @@ it.each([
     "lint needs skill notes, which no registered source provides. Register a source that provides it, or remove the dependency.",
   ],
   [
+    "required-missing",
+    { source: "team" },
+    "lint needs skill team:notes, which team does not provide. Correct the name or the source of the dependency.",
+  ],
+  [
     "required-quarantined",
     {},
     "lint needs skill notes, which is quarantined. Run tack catalog to see why, then fix it.",

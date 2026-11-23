@@ -16,6 +16,8 @@ import { discoverCheckInput, documentationFiles } from "./path-discovery.ts";
 import { locateFinding } from "./finding-location.ts";
 import { documentationDetectors, type DocumentationDetector } from "./documentation.ts";
 import { declarationFileName } from "../sources/declaration-file.ts";
+import { unresolvedDependencyEdges } from "../../domain/choices/dependency-resolution.ts";
+import { dependencyEdgeFindings } from "./dependency-edges.ts";
 
 /** Checks explicit files/source folders as one stateless authoring scope; never reads StateStore. */
 export const checkPaths = Effect.fnUntraced(function* (
@@ -45,6 +47,7 @@ export const checkPaths = Effect.fnUntraced(function* (
   const sources: ReadonlyArray<DeclaredSourceInspection> =
     snapshot === undefined ? [] : yield* snapshot.sourceInspections;
   const catalog = snapshot === undefined ? undefined : yield* snapshot.catalog;
+  const unresolvedEdges = catalog === undefined ? [] : unresolvedDependencyEdges(catalog);
   const checks: CheckItem[] = [];
   const findings: CheckFinding[] = [];
   const seen = new Set<string>();
@@ -177,6 +180,14 @@ export const checkPaths = Effect.fnUntraced(function* (
     if (inspected?.status !== "healthy" || catalog === undefined) return;
     for (const issue of inspected.labelIssues ?? [])
       readFailure(path.join(directory, declarationFileName), issue.code, issue.message);
+    findings.push(
+      ...(yield* dependencyEdgeFindings(
+        unresolvedEdges.filter(
+          (edge) => edge.requester.sourceRegistrationId === inspected.registration.id,
+        ),
+        inspected.label ?? directory,
+      )),
+    );
     const published = profilePublications(directory, inspected.declaration);
     for (const publication of published.publications)
       yield* profile(path.join(directory, publication.path), directory);

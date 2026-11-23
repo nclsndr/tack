@@ -5,6 +5,7 @@ import type { InitialSelection } from "./selection.ts";
 import {
   SelectableAddressSchema,
   ResourceDependencySchema,
+  catalogSelectableEntries,
   resourceAddressIdentity,
   type CatalogQuarantine,
   type Catalog,
@@ -149,49 +150,133 @@ const blockerIdentity = (blocker: RequiredDependencyBlocker) =>
 const optionalSkipIdentity = (skip: OptionalDependencySkip) =>
   `${resourceAddressIdentity(skip.requester)}\u0000${JSON.stringify(skip.dependency)}\u0000${skip._tag}`;
 
-/** Why a requester cannot use one dependency, shared by required blockers and optional skips. */
-type DependencyBlockReason =
-  | "excluded"
-  | "missing"
-  | "source-undeclared"
-  | "source-unregistered"
-  | "ambiguous"
-  | "quarantined";
-
-type DependencyLookup =
-  | { readonly target: SelectableAddress; readonly reason?: never }
-  | { readonly reason: DependencyBlockReason; readonly target?: never }
+/**
+ * Why a dependency names no single catalog resource, whatever any namespace selects, as the
+ * stateless check reports it. Blockers and skips copy only the reason, never the names.
+ */
+type DependencyFindFailure =
+  | { readonly reason: "missing"; readonly target?: never }
+  | {
+      readonly reason: "quarantined";
+      readonly target?: never;
+      /** The name of the source that quarantines the resource. */
+      readonly source: string;
+    }
+  | {
+      readonly reason: "ambiguous";
+      readonly target?: never;
+      /**
+       * The name of each source the edge matches, once per source, in code-unit order. A name seen
+       * twice is a label that several sources share.
+       */
+      readonly providers: ReadonlyArray<string>;
+    }
+  | {
+      readonly reason: "source-undeclared";
+      readonly target?: never;
+      /**
+       * For an edge that names no source, the labels, or paths when unlabelled, of the sources that
+       * provide the resource without being declared, in code-unit order. Empty for a named source.
+       */
+      readonly providers: ReadonlyArray<string>;
+    }
+  | {
+      readonly reason: "source-unregistered";
+      readonly target?: never;
+      /** The declared labels that no registered source carries. */
+      readonly labels: readonly [string, ...Array<string>];
+    }
   | {
       readonly reason: "source-unhealthy";
       readonly target?: never;
+      /** The declared labels that no readable source carries; an unhealthy source may carry them. */
+      readonly labels: readonly [string, ...Array<string>];
       readonly unhealthySources: typeof UnhealthySourcesSchema.Type;
     };
 
-/** A failed dependency lookup, as a required blocker or an optional skip names it. */
-type DependencyLookupFailure = Exclude<DependencyLookup, { readonly reason?: never }>;
+type DependencyFind =
+  | { readonly target: SelectableAddress; readonly reason?: never }
+  | DependencyFindFailure;
+
+/**
+ * Why a requester cannot use one dependency in a namespace, shared by required blockers and
+ * optional skips: the dependency names no single resource, or the namespace excludes it.
+ */
+type DependencyLookupFailure =
+  | DependencyFindFailure
+  | { readonly reason: "excluded"; readonly target?: never };
+
+type DependencyLookup =
+  | { readonly target: SelectableAddress; readonly reason?: never }
+  | DependencyLookupFailure;
 
 /**
  * Why a declared source label resolves to no registered source: a registered source Tack cannot
  * read has an unknown label and may be that source, so it is unhealthy, not unregistered.
  */
-const labelUnresolved = (sources: NonNullable<Catalog["sources"]>): DependencyLookupFailure => {
+const labelUnresolved = (
+  sources: NonNullable<Catalog["sources"]>,
+  labels: readonly [string, ...Array<string>],
+): DependencyFindFailure => {
   const [first, ...remaining] = sources
     .filter((source) => source.status === "unhealthy" && source.label === undefined)
     .map((source) => source.registration.canonicalPath)
     .sort(compareCodeUnits);
   return first === undefined
-    ? { reason: "source-unregistered" }
-    : { reason: "source-unhealthy", unhealthySources: [first, ...remaining] };
+    ? { reason: "source-unregistered", labels }
+    : { reason: "source-unhealthy", labels, unhealthySources: [first, ...remaining] };
 };
 
-const dependencyLookup = (
+/** What every dependency lookup of one catalog reads, built once so a lookup never scans it. */
+type DependencyIndex = {
+  /** The entries of each kind and name, across sources, keyed by {@link kindAndName}. */
+  readonly byKindAndName: ReadonlyMap<string, ReadonlyArray<SelectableCatalogEntry>>;
+  /** The identities of the quarantined resources. */
+  readonly quarantined: ReadonlySet<string>;
+  /** Each source's label, or its path when it has none, by registration ID. */
+  readonly sourceNames: ReadonlyMap<string, string>;
+  readonly sources: NonNullable<Catalog["sources"]>;
+};
+
+const kindAndName = (kind: string, name: string) => `${kind}\u0000${name}`;
+
+/** Groups the entries by kind and name, so a lookup reads only the entries a dependency can name. */
+const indexDependencies = (
+  entries: Iterable<SelectableCatalogEntry>,
+  quarantined: ReadonlyArray<CatalogQuarantine>,
+  sources: NonNullable<Catalog["sources"]>,
+): DependencyIndex => ({
+  byKindAndName: [...entries].reduce((index, entry) => {
+    const key = kindAndName(entry.address.kind, entry.address.name);
+    return index.set(key, [...(index.get(key) ?? []), entry]);
+  }, new Map<string, ReadonlyArray<SelectableCatalogEntry>>()),
+  quarantined: new Set(
+    quarantined.flatMap((item) =>
+      item.address === undefined ? [] : [resourceAddressIdentity(item.address)],
+    ),
+  ),
+  sourceNames: new Map(
+    sources.map((source) => [
+      source.registration.id,
+      source.label ?? source.registration.canonicalPath,
+    ]),
+  ),
+  sources,
+});
+
+/**
+ * Finds the one resource a dependency names, or why it cannot. A dependency that names its source
+ * looks only there, so a resource of the same name elsewhere leaves it missing.
+ */
+const findDependency = (
   requester: SelectableAddress,
   dependency: typeof ResourceDependencySchema.Type,
-  entries: ReadonlyMap<string, SelectableCatalogEntry>,
-  excluded: ReadonlySet<string>,
-  quarantined: ReadonlySet<string>,
-  sources: NonNullable<Catalog["sources"]>,
-): DependencyLookup => {
+  { byKindAndName, quarantined, sourceNames, sources }: DependencyIndex,
+): DependencyFind => {
+  const candidates = byKindAndName.get(kindAndName(dependency.kind, dependency.name)) ?? [];
+  /** The names of the given sources, in code-unit order. */
+  const namesOf = (ids: ReadonlyArray<string>) =>
+    ids.map((id) => sourceNames.get(id) ?? id).sort(compareCodeUnits);
   const ownId = requester.sourceRegistrationId;
   const own = sources.find((source) => source.registration.id === ownId);
   const declared = own?.dependsOn ?? [];
@@ -222,16 +307,11 @@ const dependencyLookup = (
     )
       allowedIds = ownId === undefined ? [] : [ownId];
     else if (declared.includes(dependency.source)) allowedIds = sourceIds(dependency.source);
-    else return { reason: "source-undeclared" };
-    if (allowedIds.length === 0) return labelUnresolved(sources);
-    if (allowedIds.length > 1) return { reason: "ambiguous" };
+    else return { reason: "source-undeclared", providers: [] };
+    if (allowedIds.length === 0) return labelUnresolved(sources, [dependency.source]);
+    if (allowedIds.length > 1) return { reason: "ambiguous", providers: namesOf(allowedIds) };
   } else {
-    const ownMatch = [...entries.values()].find(
-      (entry) =>
-        entry.sourceRegistrationId === ownId &&
-        entry.address.kind === dependency.kind &&
-        entry.address.name === dependency.name,
-    );
+    const ownMatch = candidates.find((entry) => entry.sourceRegistrationId === ownId);
     if (ownMatch !== undefined) allowedIds = [ownMatch.sourceRegistrationId];
     else
       allowedIds = [
@@ -239,38 +319,93 @@ const dependencyLookup = (
         ...declared.flatMap((label) => sourceIds(label)),
       ];
   }
-  const matches = [...entries.values()].filter(
-    (entry) =>
-      allowedIds.includes(entry.sourceRegistrationId) &&
-      entry.address.kind === dependency.kind &&
-      entry.address.name === dependency.name,
-  );
-  if (matches.length > 1) return { reason: "ambiguous" };
+  const matches = candidates.filter((entry) => allowedIds.includes(entry.sourceRegistrationId));
+  if (matches.length > 1)
+    return {
+      reason: "ambiguous",
+      providers: namesOf(matches.map((entry) => entry.sourceRegistrationId)),
+    };
   const target = matches[0]?.address;
   if (target === undefined) {
-    if (declared.some((label) => sourceIds(label).length === 0)) return labelUnresolved(sources);
-    if (
-      [...entries.values()].some(
-        (entry) =>
-          !allowedIds.includes(entry.sourceRegistrationId) &&
-          entry.address.kind === dependency.kind &&
-          entry.address.name === dependency.name,
-      )
-    )
-      return { reason: "source-undeclared" };
-    const quarantinedMatch = [...quarantined].some((key) =>
-      allowedIds.some((id) => key === `${id}\u0000${dependency.kind}\u0000${dependency.name}`),
+    if (dependency.source === undefined) {
+      const [unresolved, ...moreUnresolved] = declared.filter(
+        (label) => sourceIds(label).length === 0,
+      );
+      if (unresolved !== undefined)
+        return labelUnresolved(sources, [unresolved, ...moreUnresolved]);
+      const providers = namesOf(
+        candidates
+          .filter((entry) => allowedIds.includes(entry.sourceRegistrationId) === false)
+          .map((entry) => entry.sourceRegistrationId),
+      );
+      if (providers.length > 0) return { reason: "source-undeclared", providers };
+    }
+    const [quarantiner] = namesOf(
+      allowedIds.filter((id) =>
+        quarantined.has(
+          resourceAddressIdentity({
+            kind: dependency.kind,
+            name: dependency.name,
+            sourceRegistrationId: id,
+          }),
+        ),
+      ),
     );
-    return { reason: quarantinedMatch ? "quarantined" : "missing" };
+    return quarantiner === undefined
+      ? { reason: "missing" }
+      : { reason: "quarantined", source: quarantiner };
   }
-  return excluded.has(resourceAddressIdentity(target)) ? { reason: "excluded" } : { target };
+  return { target };
+};
+
+/** Finds the resource a dependency names, then refuses it when the namespace excludes it. */
+const dependencyLookup = (
+  requester: SelectableAddress,
+  dependency: typeof ResourceDependencySchema.Type,
+  index: DependencyIndex,
+  excluded: ReadonlySet<string>,
+): DependencyLookup => {
+  const found = findDependency(requester, dependency, index);
+  return found.target !== undefined && excluded.has(resourceAddressIdentity(found.target))
+    ? { reason: "excluded" }
+    : found;
+};
+
+/** One dependency edge of a skill or command that names no single catalog resource. */
+export type UnresolvedDependencyEdge = {
+  readonly requester: Extract<SelectableCatalogEntry, { readonly dependencies: unknown }>;
+  readonly dependency: typeof ResourceDependencySchema.Type;
+  /** The edge's zero-based position in the requester's `dependencies` list. */
+  readonly position: number;
+  readonly failure: DependencyFindFailure;
+};
+
+/**
+ * Finds every dependency edge, required or optional, that names no single resource of the
+ * catalog. It reads no selection, so no resource is excluded: what it reports breaks in every
+ * namespace. The resolution's own lookup decides each edge.
+ */
+export const unresolvedDependencyEdges = (
+  catalog: Pick<Catalog, "entries" | "quarantined" | "sources">,
+): ReadonlyArray<UnresolvedDependencyEdge> => {
+  const entries = catalogSelectableEntries(catalog);
+  const index = indexDependencies(entries, catalog.quarantined, catalog.sources ?? []);
+  return entries.flatMap((requester) =>
+    "dependencies" in requester
+      ? requester.dependencies.flatMap((dependency, position) => {
+          const found = findDependency(requester.address, dependency, index);
+          return found.target === undefined
+            ? [{ requester, dependency, position, failure: found }]
+            : [];
+        })
+      : [],
+  );
 };
 
 const buildRequiredGraph = (
   entries: ReadonlyMap<string, SelectableCatalogEntry>,
+  index: DependencyIndex,
   excluded: ReadonlySet<string>,
-  quarantined: ReadonlySet<string>,
-  sources: NonNullable<Catalog["sources"]>,
 ): RequiredGraph => {
   const directBlockers = new Map<string, ReadonlyArray<RequiredDependencyBlocker>>();
   const edges = new Map<string, ReadonlyArray<string>>();
@@ -282,14 +417,7 @@ const buildRequiredGraph = (
     const blockers: Array<RequiredDependencyBlocker> = [];
     const targets: Array<string> = [];
     for (const dependency of required) {
-      const lookup = dependencyLookup(
-        entry.address,
-        dependency,
-        entries,
-        excluded,
-        quarantined,
-        sources,
-      );
+      const lookup = dependencyLookup(entry.address, dependency, index, excluded);
       if (lookup.target !== undefined) {
         targets.push(resourceAddressIdentity(lookup.target));
       } else {
@@ -461,12 +589,8 @@ export const resolveDependencyClosure = ({
         : [],
     ),
   );
-  const quarantinedKeys = new Set(
-    quarantined.flatMap((item) =>
-      item.address === undefined ? [] : [resourceAddressIdentity(item.address)],
-    ),
-  );
-  const graph = buildRequiredGraph(entries, excluded, quarantinedKeys, sources);
+  const index = indexDependencies(entries.values(), quarantined, sources);
+  const graph = buildRequiredGraph(entries, index, excluded);
   const { groupKeyByMember, groups } = buildRequiredGroups(entries, graph);
   const selectedGroupKeys = new Set<string>();
   const blockedGroupKeys = new Set<string>();
@@ -543,14 +667,7 @@ export const resolveDependencyClosure = ({
             compareCodeUnits(`${left.kind}\u0000${left.name}`, `${right.kind}\u0000${right.name}`),
           );
         for (const dependency of optionalDependencies) {
-          const lookup = dependencyLookup(
-            member.address,
-            dependency,
-            entries,
-            excluded,
-            quarantinedKeys,
-            sources,
-          );
+          const lookup = dependencyLookup(member.address, dependency, index, excluded);
           if (lookup.reason !== undefined) {
             optionalSkips.push(
               lookup.reason === "source-unhealthy"
@@ -628,7 +745,7 @@ export const resolveDependencyClosure = ({
       ...initialSelection.unresolvedChoices.flatMap((choice) =>
         choice.decision === "include"
           ? [
-              quarantinedKeys.has(resourceAddressIdentity(choice.address))
+              index.quarantined.has(resourceAddressIdentity(choice.address))
                 ? ({ _tag: "requested-quarantined", address: choice.address } as const)
                 : ({ _tag: "requested-missing", address: choice.address } as const),
             ]

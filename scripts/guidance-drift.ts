@@ -177,7 +177,7 @@ export const scanCommands = (
 
 /** The code families that guidance names in backticks; each code must still exist in the CLI. */
 const codeFamily =
-  /^(?:profile|declaration|docs|source|release|legacy|resource|rollback|self|ci|terminal|no-adapters|root|destination|managed|removed|skill|command)-[a-z-]*[a-z]$/;
+  /^(?:profile|declaration|docs|source|release|legacy|resource|rollback|self|ci|terminal|no-adapters|root|destination|managed|removed|skill|command|dependency)-[a-z-]*[a-z]$/;
 
 /**
  * Reports each backticked diagnostic code in a guide that the CLI no longer defines. `known`

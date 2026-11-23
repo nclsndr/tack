@@ -16,7 +16,7 @@ export const checkCommand = Command.make(
   ({ paths }) => receive({ _tag: "check", paths }),
 ).pipe(
   Command.withDescription(
-    "Detect and check each path without state, registration, network or executing authored code. Sources include resources, profile definitions and docs figures. Pass companion source folders together. One file:line report; errors exit 1, warnings exit 0.",
+    "Detect and check each path without state, registration, network or executing authored code. Sources include resources, dependency edges, profile definitions and docs figures. Pass companion source folders together. One file:line report; errors exit 1, warnings exit 0.",
   ),
   Command.withExamples([
     { command: "tack check /sources/tools /sources/helpers" },
