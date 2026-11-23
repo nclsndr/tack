@@ -137,10 +137,10 @@ Apply it with `tack sync --all --apply`. OpenCode takes commands, so it also get
 Name several adapters at once, such as `tack adapter enable opencode pi`. To sync only some of the
 enabled agents, name them: `tack sync --adapter claude --user --apply`.
 
-To try an agent, enable it rather than syncing it with `--adapter` alone. A sync with `--adapter`
-for an agent that is not enabled does link its folders, but no later sync keeps those links up to
-date, and `tack status` reports them as `drifted`. Enable the agent, then disable it with `--apply`
-to remove them.
+`--adapter` only narrows a sync to enabled agents. A sync with `--adapter` for an agent that is not
+enabled writes nothing and names the command to enable it, such as
+`tack adapter enable opencode`. To try an agent, enable it, and disable it with `--apply` to remove
+its links again.
 
 ## Turn an agent off
 
