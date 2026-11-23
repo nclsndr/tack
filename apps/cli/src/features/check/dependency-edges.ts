@@ -40,9 +40,9 @@ const explanation = (
             remedy: "Correct the name or the source of the dependency.",
           },
     ),
-    Match.when({ reason: "quarantined" }, () => ({
-      why: "which is quarantined",
-      remedy: "Fix the finding reported for it.",
+    Match.when({ reason: "quarantined" }, ({ source }) => ({
+      why: `which is quarantined in ${source}`,
+      remedy: `Run tack check on the folder of ${source} to see why, then fix it.`,
     })),
     Match.when({ reason: "source-undeclared" }, ({ providers }) =>
       dependency.source === undefined
@@ -62,9 +62,12 @@ const explanation = (
           : `from ${dependency.source}, which is not among the checked paths`,
       remedy: `Pass the folder of ${and(labels)} to the same tack check to verify the dependency.`,
     })),
-    Match.when({ reason: "source-unhealthy" }, ({ unhealthySources }) => ({
-      why: "from a source Tack cannot read",
-      remedy: `Fix the findings of ${unhealthySources.join(" and ")}.`,
+    Match.when({ reason: "source-unhealthy" }, ({ labels, unhealthySources }) => ({
+      why:
+        dependency.source === undefined
+          ? `which neither ${own} nor a checked source it declares provides, while ${and(labels)} may be a source Tack cannot read`
+          : `from ${dependency.source}, which may be a source Tack cannot read`,
+      remedy: `Fix the findings of ${and(unhealthySources)}, or pass the folder of ${and(labels)} to the same tack check.`,
     })),
     Match.when({ reason: "ambiguous" }, ({ providers }) => {
       const shared = unique(providers.filter((name, index) => providers.indexOf(name) !== index));

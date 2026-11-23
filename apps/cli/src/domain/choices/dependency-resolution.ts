@@ -155,7 +155,13 @@ const optionalSkipIdentity = (skip: OptionalDependencySkip) =>
  * stateless check reports it. Blockers and skips copy only the reason, never the names.
  */
 type DependencyFindFailure =
-  | { readonly reason: "missing" | "quarantined"; readonly target?: never }
+  | { readonly reason: "missing"; readonly target?: never }
+  | {
+      readonly reason: "quarantined";
+      readonly target?: never;
+      /** The name of the source that quarantines the resource. */
+      readonly source: string;
+    }
   | {
       readonly reason: "ambiguous";
       readonly target?: never;
@@ -183,6 +189,8 @@ type DependencyFindFailure =
   | {
       readonly reason: "source-unhealthy";
       readonly target?: never;
+      /** The declared labels that no readable source carries; an unhealthy source may carry them. */
+      readonly labels: readonly [string, ...Array<string>];
       readonly unhealthySources: typeof UnhealthySourcesSchema.Type;
     };
 
@@ -216,7 +224,7 @@ const labelUnresolved = (
     .sort(compareCodeUnits);
   return first === undefined
     ? { reason: "source-unregistered", labels }
-    : { reason: "source-unhealthy", unhealthySources: [first, ...remaining] };
+    : { reason: "source-unhealthy", labels, unhealthySources: [first, ...remaining] };
 };
 
 /** What every dependency lookup of one catalog reads, built once so a lookup never scans it. */
@@ -332,16 +340,20 @@ const findDependency = (
       );
       if (providers.length > 0) return { reason: "source-undeclared", providers };
     }
-    const quarantinedMatch = allowedIds.some((id) =>
-      quarantined.has(
-        resourceAddressIdentity({
-          kind: dependency.kind,
-          name: dependency.name,
-          sourceRegistrationId: id,
-        }),
+    const [quarantiner] = namesOf(
+      allowedIds.filter((id) =>
+        quarantined.has(
+          resourceAddressIdentity({
+            kind: dependency.kind,
+            name: dependency.name,
+            sourceRegistrationId: id,
+          }),
+        ),
       ),
     );
-    return { reason: quarantinedMatch ? "quarantined" : "missing" };
+    return quarantiner === undefined
+      ? { reason: "missing" }
+      : { reason: "quarantined", source: quarantiner };
   }
   return { target };
 };

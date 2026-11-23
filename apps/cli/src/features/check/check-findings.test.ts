@@ -145,8 +145,8 @@ it.layer(LiveTestLayer)("check findings", (test) => {
       checked: ["kit"],
       code: "dependency-quarantined",
       severity: "error",
-      message: "skill release needs skill git, which is quarantined.",
-      remedy: "Fix the finding reported for it.",
+      message: "skill release needs skill git, which is quarantined in kit.",
+      remedy: "Run tack check on the folder of kit to see why, then fix it.",
     },
     {
       reason: "a resource only an undeclared source provides",
@@ -247,8 +247,23 @@ it.layer(LiveTestLayer)("check findings", (test) => {
       checked: ["kit", "base"],
       code: "dependency-source-unhealthy",
       severity: "warning",
-      message: "skill release needs skill base:git, from a source Tack cannot read.",
-      remedy: "Fix the findings of BASE.",
+      message:
+        "skill release needs skill base:git, from base, which may be a source Tack cannot read.",
+      remedy: "Fix the findings of BASE, or pass the folder of base to the same tack check.",
+    },
+    {
+      reason: "a resource no checked source provides, while a declared source may be unreadable",
+      files: {
+        "kit/tack.yaml": `${skills("kit")}depends-on: [base]\n`,
+        "kit/skills/release/SKILL.md": gitEdge(),
+        "base/tack.yaml": "version: 9\n",
+      },
+      checked: ["kit", "base"],
+      code: "dependency-source-unhealthy",
+      severity: "warning",
+      message:
+        "skill release needs skill git, which neither kit nor a checked source it declares provides, while base may be a source Tack cannot read.",
+      remedy: "Fix the findings of BASE, or pass the folder of base to the same tack check.",
     },
     {
       reason: "a missing resource, from a source with no label, named by its folder",

@@ -683,6 +683,30 @@ it("names the sources an ambiguous edge matches, once per source", () => {
   ]);
 });
 
+it("names the source that quarantines a dependency and the labels an unreadable source may carry", () => {
+  const edges = unresolvedDependencyEdges({
+    entries: [
+      entryIn("root", sharedId, [{ kind: "skill", name: "broken" }], "default"),
+      entryIn("needy", thirdId, [{ kind: "skill", name: "x", source: "mystery" }], "default"),
+    ],
+    quarantined: [quarantine(address("broken"))],
+    sources: [
+      sourceAt(sharedId, "shared"),
+      sourceAt(thirdId, "third", { dependsOn: ["mystery"] }),
+      unhealthySourceAt(fourthId),
+    ],
+  });
+
+  expect(edges.map(({ failure }) => failure)).toEqual([
+    { reason: "quarantined", source: "shared" },
+    {
+      reason: "source-unhealthy",
+      labels: ["mystery"],
+      unhealthySources: [`/sources/${fourthId}`],
+    },
+  ]);
+});
+
 it("lists an unresolved edge of a catalog that reports no sources", () => {
   const edges = unresolvedDependencyEdges({
     entries: [entry("root", { dependencies: [dependency("absent")] })],
