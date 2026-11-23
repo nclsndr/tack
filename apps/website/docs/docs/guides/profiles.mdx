@@ -307,11 +307,26 @@ tack profile apply agent-setup:reviewer --project ci --target-root ~/ci/app --ap
 
 Repeat `--target-root` for every worktree of the project. A project that already has picks or
 links needs `--force` to replace them. From now on the project's set is fixed: a pick is refused,
-and `tack status` and `tack doctor` name the profile.
+a new skill in one of its sources does not reach it, and `tack status` and `tack doctor` name the
+profile.
 
 <Terminal commands={["tack pick include incident-report --project ci"]} output={fixedOutput} />
 
-To change the set, edit the profile, commit it, and apply it again.
+To change the set, edit the profile and commit it, then apply it again. The project already holds
+the profile, so the new apply stops with `profile-existing-selection` until you add `--force`:
+
+```sh
+tack profile apply agent-setup:reviewer --project ci --target-root ~/ci/app --force
+tack profile apply agent-setup:reviewer --project ci --target-root ~/ci/app --force --apply
+```
+
+### When an agent cannot take a member
+
+A partial result is not an error, but it exits with code `1`: `--apply` writes every link it can and
+still exits `1`, and `tack doctor` fails its `profiles` check for as long as an enabled agent cannot
+take a member. Here Claude Code and Codex cannot take the command `ship`. On a machine where that
+matters, such as a CI runner, leave commands out of the profile, or enable only agents that take
+every member.
 
 ## 3. Carry it to another machine
 
@@ -345,10 +360,12 @@ tack check reviewer.tar.gz
 ```
 
 Then set Tack up, register the repository and apply the bundle. No source is registered and
-nothing is fetched: Tack keeps the bundle's files in its state and links them.
+nothing is fetched: Tack keeps the bundle's files in its state and links them. A runner usually has
+no agent folder for `tack init` to find, so name the agent; a bare `tack init` there stops with
+`agent-home-not-found`.
 
 ```sh
-tack init
+tack init --adapter claude
 cd ~/app
 tack project add ci
 tack profile apply-bundle ~/reviewer.tar.gz --project ci --target-root ~/app
@@ -361,6 +378,10 @@ tack profile apply-bundle ~/reviewer.tar.gz --project ci --target-root ~/app --a
   ]}
   output={bundleOutput}
 />
+
+The result is `partial`, and the command exits with code `1`, because this bundle holds the command
+`ship` and Claude Code takes no commands; every skill is linked. See
+[When an agent cannot take a member](#when-an-agent-cannot-take-a-member).
 
 The bundle's sources get labels that start with `bundle-`, so they never mix with a source of the
 same name on that machine. No script, hook or installer in a bundle runs while it is applied.
