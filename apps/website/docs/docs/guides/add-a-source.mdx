@@ -117,7 +117,9 @@ changes nothing:
   output={previewOutput}
 />
 
-Check that every skill you expect is listed. Then apply it: Tack writes the `tack.yaml` and
+Check that every skill, command and docs folder you expect is listed, with no `error:` line under
+it: a file that does not parse is left out, and the preview can still read `✓ success`. Then apply
+it: Tack writes the `tack.yaml` and
 registers the source.
 
 <Terminal
@@ -128,7 +130,8 @@ registers the source.
 />
 
 Run `tack source add ~/agent-setup` without any flag and Tack refuses with
-`declaration-flags-required`; its `Next` names the flags that fit the folders it found at the top.
+`declaration-flags-required`. Its `Next` names `--skills` and `--commands` for the folders it
+recognises by name, here `skills` and `commands`; add `--docs` for a folder of documents yourself.
 
 When the skill folders sit at the top of the folder, such as `~/skills/review/SKILL.md`, write
 `--skills .` instead. Tack previews a skills collection: a `tack.yaml` that holds `kind: skills`
