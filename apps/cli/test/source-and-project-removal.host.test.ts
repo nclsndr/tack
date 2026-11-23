@@ -1,3 +1,5 @@
+import { skillText } from "./support/source-tree.ts";
+import { fakeGit } from "./support/fake-git.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Schema } from "effect";
 import { SecureRandom } from "effect/crypto";
@@ -18,12 +20,6 @@ import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { mutateStateFixture } from "./support/state-fixture.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
 import { write } from "./support/source-tree.ts";
-
-const testGit = (anchor: string, root: string) =>
-  ({
-    listWorktrees: () => Effect.succeed([{ bare: false, detached: false, path: root }]),
-    resolveCommonDirectory: () => Effect.succeed(anchor),
-  }) satisfies GitService;
 
 const registrationOf = Schema.decodeUnknownSync(SourceRegistrationPayloadSchema);
 const sourcePlanOf = Schema.decodeUnknownSync(SourceRemovalPlanSchema);
@@ -73,7 +69,7 @@ const withRemovalWorld = <A, E, R>(
     );
     yield* write(
       path.join(brain, "skills", "review", "SKILL.md"),
-      "---\nname: review\ndescription: Review\n---\n",
+      skillText("review", { description: "Review", body: "" }),
     );
     yield* write(path.join(brain, "guide", "a.md"), "# A\n");
     yield* write(
@@ -82,9 +78,9 @@ const withRemovalWorld = <A, E, R>(
     );
     yield* write(
       path.join(tools, "skills", "lint", "SKILL.md"),
-      "---\nname: lint\ndescription: Lint\n---\n",
+      skillText("lint", { description: "Lint", body: "" }),
     );
-    const git = testGit(path.join(repository, ".git"), repository);
+    const git = fakeGit(path.join(repository, ".git"), [{ path: repository }]);
     const tack = makeTack(stateDirectory, git, home);
     const idOf = (stdout: string) => {
       return registrationOf(decodeEnvelope(stdout).applied).registration.id;
@@ -354,7 +350,7 @@ it.layer(LiveTestLayer)("source and project removal", (removalIt) => {
           );
           yield* write(
             path.join(extra, "skills", "x", "SKILL.md"),
-            "---\nname: x\ndescription: X\n---\n",
+            skillText("x", { description: "X", body: "" }),
           );
           yield* tack(["source", "add", extra, "--apply"]);
           expect((yield* run(tack, ["source", "remove", "extra"])).envelope).toMatchObject({
@@ -382,7 +378,7 @@ it.layer(LiveTestLayer)("source and project removal", (removalIt) => {
             );
             yield* write(
               path.join(twin, "skills", "x", "SKILL.md"),
-              "---\nname: x\ndescription: X\n---\n",
+              skillText("x", { description: "X", body: "" }),
             );
             ids.push(
               registrationOf(

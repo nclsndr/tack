@@ -62,9 +62,9 @@ const pendingOnly = evidence("pending-only", goneRoot);
 const state: State = runtimeFixture({
   version: 1,
   data: {
-    docsManagedLinks: [docs],
+    docsLinks: [docs],
     enabledAdapters: ["codex", "cursor"],
-    managedLinks: [owned, foreign, cursorOwned, absent, userOwned],
+    agentLinks: [owned, foreign, cursorOwned, absent, userOwned],
     pendingRemovals: [
       {
         cause: "project-removal",
@@ -181,7 +181,7 @@ it.effect("orders docs removal evidence by code units, not locale", () =>
       sourceDirectoryPath: `/source/docs/${name}`,
     });
     const plan = yield* planRemoval(
-      runtimeFixture({ version: 1, data: { docsManagedLinks: [link("a"), link("Z")] } }),
+      runtimeFixture({ version: 1, data: { docsLinks: [link("a"), link("Z")] } }),
       { cause: "reset", scope: { _tag: "reset" } },
     );
     expect(plan.docsActions?.map((action) => action.evidence.resource.name)).toEqual(["Z", "a"]);

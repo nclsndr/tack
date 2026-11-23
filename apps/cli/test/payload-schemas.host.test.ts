@@ -10,6 +10,7 @@ import {
   describeContracts,
 } from "../src/cli/commands/manifest.test-support.ts";
 import { runTackInProcess } from "./support/host-runner.ts";
+import { runGit } from "./support/tack-process.ts";
 
 const contracts = (commandPath: ReadonlyArray<string> = []) =>
   describeContracts(commandPath).pipe(Effect.provide(BunServices.layer));
@@ -25,12 +26,7 @@ it.effect("decodes real JSON stdout against the payload schemas of its slots", (
     mkdirSync(project);
     const run = Effect.fnUntraced(function* (command: ReadonlyArray<string>, git = false) {
       if (git) {
-        const child = Bun.spawnSync({
-          cmd: ["git", ...command],
-          cwd: project,
-          env: { ...process.env, HOME: directory },
-        });
-        expect(child.exitCode, child.stderr.toString()).toBe(0);
+        yield* runGit(project, command).pipe(Effect.scoped, Effect.provide(BunServices.layer));
         return {};
       }
       const child = yield* runTackInProcess([...command, "--state-dir", state, "--json"], {

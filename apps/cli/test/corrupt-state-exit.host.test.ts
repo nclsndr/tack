@@ -2,7 +2,7 @@ import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { ChildProcessSpawner } from "effect/process";
-import { hostTack, withTackWorld } from "./fixtures/tack-world.ts";
+import { hostTack, withTackWorld } from "./support/tack-world.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
 
 it.layer(LiveTestLayer)("corrupt state", (corruptIt) => {

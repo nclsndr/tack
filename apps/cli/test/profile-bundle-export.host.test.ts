@@ -1,3 +1,4 @@
+import { skillText } from "./support/source-tree.ts";
 import { checkPaths } from "../src/features/check/check-paths.ts";
 import { readBoundedBundleFile } from "../src/features/sources/bundle-file-read.ts";
 import { expect, it } from "@effect/vitest";
@@ -31,7 +32,10 @@ it.layer(LiveTestLayer)("bundle export completeness", (test) => {
     Effect.gen(function* () {
       const f = yield* profileFixture;
       yield* f.write("team/tack.yaml", "version: 2\nname: team\nskills: [{path: skills}]\n");
-      yield* f.write("team/skills/lint/SKILL.md", "---\nname: lint\ndescription: Lint\n---\n");
+      yield* f.write(
+        "team/skills/lint/SKILL.md",
+        skillText("lint", { description: "Lint", body: "" }),
+      );
       yield* registerSource(f.options, { sourcePath: f.path.join(f.root, "team") });
       yield* f.write(
         "source/tack.yaml",

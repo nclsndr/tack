@@ -1,18 +1,15 @@
+import { skillText } from "./support/source-tree.ts";
+import { fakeGit } from "./support/fake-git.ts";
 import { writeUnder } from "./support/source-tree.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Schema } from "effect";
-import { type GitService } from "../src/services/git.ts";
 import { exitCodeForEnvelope } from "../src/cli/host/public-outcome.ts";
 import { SourceRegistrationPayloadSchema } from "../src/features/sources/source.ts";
 import { runHost } from "./support/host-runner.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
 
-const git = (root: string) =>
-  ({
-    listWorktrees: () => Effect.succeed([{ bare: false, detached: false, path: root }]),
-    resolveCommonDirectory: () => Effect.succeed(root),
-  }) satisfies GitService;
+const git = (root: string) => fakeGit(root, [{ path: root }]);
 
 /**
  * Runs one command in process and returns its raw stdout. The scratch root is the home, so a
@@ -46,7 +43,7 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
         yield* write("source/tack.yaml", "version: 1\nname: tools\nskills:\n  - path: skills\n");
         yield* write(
           "source/skills/review/SKILL.md",
-          "---\nname: review\ndescription: Review changes\n---\n",
+          skillText("review", { description: "Review changes", body: "" }),
         );
         const directory = path.join(root, "source");
         yield* run(root, state, ["state", "init"]);

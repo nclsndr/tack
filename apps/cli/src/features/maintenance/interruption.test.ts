@@ -64,7 +64,7 @@ it.layer(LiveTestLayer)("maintenance interruption", (interruptIt) => {
             data: {
               ...state.data,
               enabledAdapters: ["codex", "cursor"],
-              managedLinks: [evidence],
+              agentLinks: [evidence],
             },
           }));
           const lockPath = path.join(path.dirname(statePath), "state.lock");

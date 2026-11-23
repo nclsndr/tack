@@ -242,7 +242,7 @@ it.layer(LiveTestLayer)("agent selection", (agentIt) => {
             data: {
               ...state.data,
               enabledAdapters: ["cursor"],
-              managedLinks: [evidence],
+              agentLinks: [evidence],
             },
           }));
 

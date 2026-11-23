@@ -1,3 +1,4 @@
+import { skillText } from "./support/source-tree.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { mutateStateFixture } from "./support/state-fixture.ts";
 import { fakeGit, outsideRepositoryGit } from "./support/fake-git.ts";
@@ -42,7 +43,7 @@ const machine = Effect.fnUntraced(function* () {
   );
   yield* fileSystem.writeFileString(
     at("source/skills/review/SKILL.md"),
-    "---\nname: review\ndescription: Review a change\n---\n",
+    skillText("review", { description: "Review a change", body: "" }),
   );
   const app = fakeGit(at("app/.git"), [{ path: at("app") }, { path: at("app-wt") }]);
   const other = fakeGit(at("other/.git"), [{ path: at("other") }]);

@@ -45,7 +45,11 @@ it.layer(LiveTestLayer)("reconciliation command lifecycle", (reconcileIt) => {
       );
       yield* fileSystem.writeFileString(
         skillFilePath,
-        "---\nname: valid\ndescription: Valid skill\nmetadata:\n  tack: |\n    version: 1\n    user-activation: default\n---\n",
+        skillText("valid", {
+          description: "Valid skill",
+          tack: ["user-activation: default"],
+          body: "",
+        }),
       );
       yield* initializeState(options);
       yield* enableAdapters(options, ["cursor"]);
@@ -116,7 +120,11 @@ it.layer(LiveTestLayer)("reconciliation command lifecycle", (reconcileIt) => {
         );
         yield* fileSystem.writeFileString(
           path.join(skillDirectory, "SKILL.md"),
-          "---\nname: valid\ndescription: Valid skill\nmetadata:\n  tack: |\n    version: 1\n    user-activation: default\n---\n",
+          skillText("valid", {
+            description: "Valid skill",
+            tack: ["user-activation: default"],
+            body: "",
+          }),
         );
         yield* initializeState(options);
         yield* enableAdapters(options, ["cursor"]);
@@ -143,7 +151,7 @@ it.layer(LiveTestLayer)("reconciliation command lifecycle", (reconcileIt) => {
         yield* fileSystem.symlink(preparedAction.relativeTarget, preparedAction.destinationPath);
         yield* mutateStateFixture(options, (state) => ({
           ...state,
-          data: { ...state.data, reconciliationJournal: { action: preparedAction } },
+          data: { ...state.data, preparedAgentAction: { action: preparedAction } },
         }));
 
         const result = yield* syncResources(options, {
@@ -183,7 +191,11 @@ it.layer(LiveTestLayer)("reconciliation command lifecycle", (reconcileIt) => {
       );
       yield* fileSystem.writeFileString(
         path.join(skillDirectory, "SKILL.md"),
-        "---\nname: valid\ndescription: Valid skill\nmetadata:\n  tack: |\n    version: 1\n    user-activation: default\n---\n",
+        skillText("valid", {
+          description: "Valid skill",
+          tack: ["user-activation: default"],
+          body: "",
+        }),
       );
       yield* initializeState(options);
       yield* enableAdapters(options, ["claude"]);
@@ -272,8 +284,11 @@ it.layer(LiveTestLayer)("reconciliation command lifecycle", (reconcileIt) => {
   );
 });
 
-const validSkillDocument =
-  "---\nname: valid\ndescription: Valid skill\nmetadata:\n  tack: |\n    version: 1\n    user-activation: default\n---\n";
+const validSkillDocument = skillText("valid", {
+  description: "Valid skill",
+  tack: ["user-activation: default"],
+  body: "",
+});
 
 const userReconciliation = (apply: boolean) =>
   ({

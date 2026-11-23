@@ -114,7 +114,7 @@ it.layer(LiveTestLayer)("read-only status", (statusIt) => {
           yield* fileSystem.writeFileString(foreignDestination, "operator-owned\n");
           yield* fileSystem.writeFileString(pendingDestination, "replacement\n");
 
-          const managedLinks = [evidenceFor("beta"), evidenceFor("delta"), evidenceFor("orphan")];
+          const agentLinks = [evidenceFor("beta"), evidenceFor("delta"), evidenceFor("orphan")];
           yield* mutateStateFixture(options, (state) => ({
             ...state,
             data: {
@@ -140,7 +140,7 @@ it.layer(LiveTestLayer)("read-only status", (statusIt) => {
                 },
               ],
               enabledAdapters: ["codex"],
-              managedLinks,
+              agentLinks,
               pendingRemovals: [
                 {
                   cause: "clean" as const,
@@ -383,7 +383,7 @@ it.layer(LiveTestLayer)("read-only status", (statusIt) => {
             data: {
               ...state.data,
               enabledAdapters: ["cursor"],
-              managedLinks: [retainedEvidence],
+              agentLinks: [retainedEvidence],
               projects: [
                 {
                   gitCommonDirectory: canonicalAnchor,
@@ -563,7 +563,7 @@ it.layer(LiveTestLayer)("read-only status", (statusIt) => {
               },
             ],
             // A link recorded under each root before it went bad.
-            managedLinks: projectRoots.map((canonicalPath) => ({
+            agentLinks: projectRoots.map((canonicalPath) => ({
               adapter: "codex" as const,
               address: {
                 kind: "skill" as const,

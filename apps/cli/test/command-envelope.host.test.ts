@@ -10,17 +10,15 @@ import {
   ReconciliationPlanSchema,
 } from "../src/domain/reconciliation/reconciliation-schema.ts";
 import { CatalogReportSchema } from "../src/domain/sources/catalog-report.ts";
-import { runProcess } from "./fixtures/tack-world.ts";
 import {
   envelope,
-  expectProcessSuccess,
   expectSuccess,
   isolationOf,
   withFixture,
   type CliFixture,
 } from "./support/envelope-fixture.ts";
 import { runTackInProcess } from "./support/host-runner.ts";
-import type { TackRun } from "./support/tack-process.ts";
+import { runGit, type TackRun } from "./support/tack-process.ts";
 
 const resourcePlan = (result: TackRun) => {
   const plan = Schema.decodeUnknownSync(SyncPlanSchema)(envelope(result).plan);
@@ -34,9 +32,6 @@ const hostTack = (
   arguments_: ReadonlyArray<string>,
   cwd: string = fixture.repositoryDirectory,
 ) => runTackInProcess(["--json", ...arguments_], { ...isolationOf(fixture), cwd });
-
-const runGit = (cwd: string, arguments_: ReadonlyArray<string>) =>
-  runProcess("git", arguments_, { cwd });
 
 // These cases assert an envelope, an exit status and files, so they run in process. The cases
 // that need a process (a held lock, a killed writer, the built package) and the process-level
@@ -244,26 +239,21 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
             ["config", "user.email", "tack@example.test"],
             ["config", "user.name", "Tack Test"],
           ] satisfies ReadonlyArray<ReadonlyArray<string>>) {
-            const result = yield* runGit(fixture.repositoryDirectory, args);
-            expect(result.exitCode).toBe(ChildProcessSpawner.ExitCode(0));
+            yield* runGit(fixture.repositoryDirectory, args);
           }
           yield* fileSystem.writeFileString(
             path.join(fixture.repositoryDirectory, "README.md"),
             "initial\n",
           );
-          expectProcessSuccess(yield* runGit(fixture.repositoryDirectory, ["add", "README.md"]));
-          expectProcessSuccess(
-            yield* runGit(fixture.repositoryDirectory, ["commit", "-m", "initial"]),
-          );
-          expectProcessSuccess(
-            yield* runGit(fixture.repositoryDirectory, [
-              "worktree",
-              "add",
-              "-b",
-              "phase-one-worktree",
-              fixture.worktreeDirectory,
-            ]),
-          );
+          yield* runGit(fixture.repositoryDirectory, ["add", "README.md"]);
+          yield* runGit(fixture.repositoryDirectory, ["commit", "-m", "initial"]);
+          yield* runGit(fixture.repositoryDirectory, [
+            "worktree",
+            "add",
+            "-b",
+            "phase-one-worktree",
+            fixture.worktreeDirectory,
+          ]);
           const projectAdd = yield* hostTack(fixture, [
             "project",
             "add",
@@ -580,16 +570,14 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
             ["config", "user.email", "tack@example.test"],
             ["config", "user.name", "Tack Test"],
           ] satisfies ReadonlyArray<ReadonlyArray<string>>) {
-            expectProcessSuccess(yield* runGit(fixture.repositoryDirectory, args));
+            yield* runGit(fixture.repositoryDirectory, args);
           }
           yield* fileSystem.writeFileString(
             path.join(fixture.repositoryDirectory, "README.md"),
             "phase two\n",
           );
-          expectProcessSuccess(yield* runGit(fixture.repositoryDirectory, ["add", "README.md"]));
-          expectProcessSuccess(
-            yield* runGit(fixture.repositoryDirectory, ["commit", "-m", "phase two"]),
-          );
+          yield* runGit(fixture.repositoryDirectory, ["add", "README.md"]);
+          yield* runGit(fixture.repositoryDirectory, ["commit", "-m", "phase two"]);
 
           for (const args of [
             ["state", "init"],
@@ -878,25 +866,21 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
           ["config", "user.email", "tack@example.test"],
           ["config", "user.name", "Tack Test"],
         ] satisfies ReadonlyArray<ReadonlyArray<string>>) {
-          expectProcessSuccess(yield* runGit(fixture.repositoryDirectory, args));
+          yield* runGit(fixture.repositoryDirectory, args);
         }
         yield* fileSystem.writeFileString(
           path.join(fixture.repositoryDirectory, "README.md"),
           "isolation\n",
         );
-        expectProcessSuccess(yield* runGit(fixture.repositoryDirectory, ["add", "README.md"]));
-        expectProcessSuccess(
-          yield* runGit(fixture.repositoryDirectory, ["commit", "-m", "isolation"]),
-        );
-        expectProcessSuccess(
-          yield* runGit(fixture.repositoryDirectory, [
-            "worktree",
-            "add",
-            "-b",
-            "isolation-worktree",
-            fixture.worktreeDirectory,
-          ]),
-        );
+        yield* runGit(fixture.repositoryDirectory, ["add", "README.md"]);
+        yield* runGit(fixture.repositoryDirectory, ["commit", "-m", "isolation"]);
+        yield* runGit(fixture.repositoryDirectory, [
+          "worktree",
+          "add",
+          "-b",
+          "isolation-worktree",
+          fixture.worktreeDirectory,
+        ]);
         for (const args of [
           ["state", "init"],
           ["source", "add", fixture.sourceDirectory, "--apply"],

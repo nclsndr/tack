@@ -1,3 +1,4 @@
+import { skillText } from "./support/source-tree.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect } from "effect";
 import { bundleDigest, makeBundleManifest } from "../src/domain/bundles/bundle-codec.ts";
@@ -103,7 +104,7 @@ it.layer(LiveTestLayer)("bundle projection check", (test) => {
         tamper(archive, {
           "tack.yaml":
             "version: 2\nname: tools\nskills: [{path: skills/review}, {path: skills/style}, {path: skills/extra}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
-          "skills/extra/SKILL.md": "---\nname: extra\ndescription: Extra\n---\n",
+          "skills/extra/SKILL.md": skillText("extra", { description: "Extra", body: "" }),
         }),
       );
       expect(error).toMatchObject({

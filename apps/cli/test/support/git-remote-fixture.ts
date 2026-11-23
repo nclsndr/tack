@@ -1,22 +1,5 @@
 import { Effect, FileSystem, Path } from "effect";
-import { expectProcessSuccess, runProcess } from "../fixtures/tack-world.ts";
-
-/**
- * Fixture repositories are built without the machine's git configuration: a system git-lfs filter,
- * for example, must not touch the files that hostile fixtures commit on purpose.
- */
-const runGit = Effect.fnUntraced(function* (cwd: string, arguments_: ReadonlyArray<string>) {
-  const result = yield* runProcess("git", arguments_, {
-    cwd,
-    environment: {
-      GIT_CONFIG_NOSYSTEM: "1",
-      GIT_CONFIG_GLOBAL: "/dev/null",
-      GIT_LFS_SKIP_SMUDGE: "1",
-    },
-  });
-  expectProcessSuccess(result);
-  return result;
-});
+import { runGit } from "./tack-process.ts";
 
 /** One path in a fixture commit. A `null` entry deletes the path. */
 type FixtureEntry =

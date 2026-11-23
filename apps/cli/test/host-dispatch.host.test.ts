@@ -1,3 +1,5 @@
+import { skillText } from "./support/source-tree.ts";
+import { fakeGit } from "./support/fake-git.ts";
 import { mutateStateFixture } from "./support/state-fixture.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
@@ -46,12 +48,6 @@ it.effect("redacts malformed host envelopes before they reach stdout", () =>
   }),
 );
 
-const testGit = (anchor: string, root: string) =>
-  ({
-    listWorktrees: () => Effect.succeed([{ bare: false, detached: false, path: root }]),
-    resolveCommonDirectory: () => Effect.succeed(anchor),
-  }) satisfies GitService;
-
 const runHostRaw = (
   args: ReadonlyArray<string>,
   git: GitService,
@@ -90,9 +86,9 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
         );
         yield* fs.writeFileString(
           path.join(source, "skills", "review", "SKILL.md"),
-          "---\nname: review\ndescription: Review\n---\n",
+          skillText("review", { description: "Review", body: "" }),
         );
-        const git = testGit(root, root);
+        const git = fakeGit(root, [{ path: root }]);
         const args = (command: string) => ["--state-dir", stateDirectory, command];
         yield* runJson(args("state").concat("init"), git);
         yield* runJson(args("source").concat("add", source, "--apply"), git);
@@ -151,12 +147,11 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
       });
       yield* fileSystem.writeFileString(
         path.join(relocatedSource, "skills", "valid", "SKILL.md"),
-        "---\nname: valid\ndescription: Valid\n---\n",
+        skillText("valid", { description: "Valid", body: "" }),
       );
-      const git = testGit(
-        yield* fileSystem.realPath(anchor),
-        yield* fileSystem.realPath(projectRoot),
-      );
+      const git = fakeGit(yield* fileSystem.realPath(anchor), [
+        { path: yield* fileSystem.realPath(projectRoot) },
+      ]);
       const invocation = (arguments_: ReadonlyArray<string>) =>
         runJson(["--state-dir", stateDirectory, ...arguments_], git);
 
@@ -355,10 +350,9 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
         "version: 1\ncommands:\n  - path: commands\n",
       );
       yield* fileSystem.writeFileString(path.join(source, "commands", "review.md"), "# Review\n");
-      const git = testGit(
-        yield* fileSystem.realPath(anchor),
-        yield* fileSystem.realPath(projectRoot),
-      );
+      const git = fakeGit(yield* fileSystem.realPath(anchor), [
+        { path: yield* fileSystem.realPath(projectRoot) },
+      ]);
       const invoke = (arguments_: ReadonlyArray<string>) =>
         runJson(["--state-dir", stateDirectory, ...arguments_], git);
       for (const setup of [
@@ -449,7 +443,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
       );
       yield* fileSystem.writeFileString(path.join(source, "knowledge", "guide.md"), "# Guide\n");
       const canonicalProjectRoot = yield* fileSystem.realPath(projectRoot);
-      const git = testGit(yield* fileSystem.realPath(anchor), canonicalProjectRoot);
+      const git = fakeGit(yield* fileSystem.realPath(anchor), [{ path: canonicalProjectRoot }]);
       const invoke = (arguments_: ReadonlyArray<string>) =>
         runJson(["--state-dir", stateDirectory, ...arguments_], git).pipe(Effect.map(envelopeFrom));
       expect(yield* invoke(["state", "init"])).toMatchObject({ status: "success" });
@@ -623,7 +617,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
       const path = yield* Path.Path;
       const root = yield* fileSystem.makeTempDirectoryScoped({ prefix: "tack-cli-host-test-" });
       const stateDirectory = path.join(root, "state");
-      const git = testGit(path.join(root, "anchor"), path.join(root, "project"));
+      const git = fakeGit(path.join(root, "anchor"), [{ path: path.join(root, "project") }]);
       const invalidInvocations = [
         {
           arguments: ["docs", "serve", "--port", "nope"],
@@ -736,9 +730,10 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
         homeDirectory: root,
       } satisfies StateOptions;
       const invoke = (arguments_: ReadonlyArray<string>) =>
-        runJson(["--state-dir", stateDirectory, ...arguments_], testGit(anchor, projectRoot)).pipe(
-          Effect.map(envelopeFrom),
-        );
+        runJson(
+          ["--state-dir", stateDirectory, ...arguments_],
+          fakeGit(anchor, [{ path: projectRoot }]),
+        ).pipe(Effect.map(envelopeFrom));
       for (const setup of [
         ["state", "init"],
         ["project", "add", "demo", "--repository-cwd", projectRoot],
@@ -802,7 +797,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
       );
       const invoke = (
         arguments_: ReadonlyArray<string>,
-        git: GitService = testGit(anchor, projectRoot),
+        git: GitService = fakeGit(anchor, [{ path: projectRoot }]),
       ) =>
         runJson(["--state-dir", path.join(root, "state"), ...arguments_], git).pipe(
           Effect.map(envelopeFrom),
@@ -823,14 +818,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
             }),
           ),
       } satisfies GitService;
-      const withFeatureWorktree = {
-        listWorktrees: () =>
-          Effect.succeed([
-            { bare: false, detached: false, path: projectRoot },
-            { bare: false, detached: false, path: featureRoot },
-          ]),
-        resolveCommonDirectory: () => Effect.succeed(anchor),
-      } satisfies GitService;
+      const withFeatureWorktree = fakeGit(anchor, [{ path: projectRoot }, { path: featureRoot }]);
       for (const setup of [
         ["state", "init"],
         ["project", "add", "demo", "--repository-cwd", projectRoot],
@@ -905,14 +893,18 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
       const state = path.join(root, "state");
       const home = process.env["HOME"];
       expect(
-        envelopeFrom(yield* runJson(["--state-dir", state, "state", "init"], testGit(root, root))),
+        envelopeFrom(
+          yield* runJson(["--state-dir", state, "state", "init"], fakeGit(root, [{ path: root }])),
+        ),
       ).toMatchObject({ status: "success" });
       for (const argv of [
         ["sync", "--user", "--apply"],
         ["status", "--user"],
       ])
         expect(
-          envelopeFrom(yield* runJson(["--state-dir", state, ...argv], testGit(root, root))),
+          envelopeFrom(
+            yield* runJson(["--state-dir", state, ...argv], fakeGit(root, [{ path: root }])),
+          ),
         ).toMatchObject({ diagnostics: [{ code: "home-directory-unavailable" }] });
       expect(process.env["HOME"]).toBe(home);
     }),
@@ -937,7 +929,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
       const invoke = (arguments_: ReadonlyArray<string>) =>
         runHost({
           args: ["--json", "--state-dir", path.join(root, "state"), ...arguments_],
-          git: testGit(root, projectRoot),
+          git: fakeGit(root, [{ path: projectRoot }]),
           env: { HOME: root },
         }).pipe(Effect.provideService(ExecutionWorker, runs));
       for (const setup of [
@@ -999,7 +991,9 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
         const anchor = path.join(root, "anchor");
         yield* fileSystem.makeDirectory(anchor, { recursive: true });
         const cwd = path.resolve(".");
-        const git = testGit(yield* fileSystem.realPath(anchor), yield* fileSystem.realPath(cwd));
+        const git = fakeGit(yield* fileSystem.realPath(anchor), [
+          { path: yield* fileSystem.realPath(cwd) },
+        ]);
         const invoke = (arguments_: ReadonlyArray<string>) =>
           runJson(["--state-dir", stateDirectory, ...arguments_], git);
 
@@ -1061,7 +1055,10 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
         yield* fileSystem.makeTempDirectoryScoped({ prefix: "tack-cli-host-test-" }),
       );
       const invoke = (arguments_: ReadonlyArray<string>) =>
-        runJson(["--state-dir", path.join(root, "state"), ...arguments_], testGit(root, root));
+        runJson(
+          ["--state-dir", path.join(root, "state"), ...arguments_],
+          fakeGit(root, [{ path: root }]),
+        );
       yield* invoke(["state", "init"]);
       yield* invoke(["adapter", "enable", "claude"]);
 
@@ -1131,7 +1128,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
         ...state,
         data: {
           ...state.data,
-          managedLinks: [evidence("alpha", sourceAlpha), evidence("beta", sourceBeta)],
+          agentLinks: [evidence("alpha", sourceAlpha), evidence("beta", sourceBeta)],
           projects: [
             {
               gitCommonDirectory: path.join(projectRoot, ".git"),
@@ -1148,7 +1145,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
             ? Effect.fail(PlatformError.badArgument({ module: "test", method: "remove" }))
             : fileSystem.remove(candidate, removeOptions),
       });
-      const git = testGit(path.join(projectRoot, ".git"), projectRoot);
+      const git = fakeGit(path.join(projectRoot, ".git"), [{ path: projectRoot }]);
 
       const envelope = envelopeFrom(
         yield* runJson(
@@ -1186,7 +1183,7 @@ it.layer(LiveTestLayer)("CLI output format parity", (formatIt) => {
       const path = yield* Path.Path;
       const root = yield* fileSystem.makeTempDirectoryScoped({ prefix: "tack-format-host-" });
       const state = path.join(root, "state");
-      const git = testGit(root, root);
+      const git = fakeGit(root, [{ path: root }]);
       yield* runHostRaw(["--json", "--state-dir", state, "state", "init"], git);
       const interactive: TerminalContextShape = {
         columns: 80,
@@ -1246,7 +1243,7 @@ it.layer(LiveTestLayer)("CLI output format parity", (formatIt) => {
         const root = yield* fileSystem.makeTempDirectoryScoped({ prefix: "tack-format-outcomes-" });
         const state = path.join(root, "state");
         const blocked = path.join(root, "blocked");
-        const git = testGit(root, root);
+        const git = fakeGit(root, [{ path: root }]);
         const interactive: TerminalContextShape = {
           columns: 80,
           environment: { TERM: "xterm" },

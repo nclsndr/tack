@@ -14,7 +14,7 @@ const evidence = (name: string, target: ManagedLinkEvidence["target"]): ManagedL
 it("finds only the named project's evidence at roots a final plan does not account for", () => {
   const state = runtimeFixture({
     data: {
-      managedLinks: [
+      agentLinks: [
         evidence("accounted", { _tag: "project-root", canonicalPath: "/repo/a", projectName: "p" }),
         evidence("stray", { _tag: "project-root", canonicalPath: "/repo/z", projectName: "p" }),
         evidence("other", { _tag: "project-root", canonicalPath: "/repo/y", projectName: "q" }),

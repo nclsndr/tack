@@ -10,7 +10,7 @@ import {
   hostTack,
   successfulEnvelope,
   withTackWorld,
-} from "./fixtures/tack-world.ts";
+} from "./support/tack-world.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 
 const reconciliationPlan = (payload: unknown) => {

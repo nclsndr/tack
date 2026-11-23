@@ -1,7 +1,8 @@
+import { bareSkillText, skillText } from "./support/source-tree.ts";
+import { decodeEnvelope, type ProcessResult } from "./support/tack-process.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Schema } from "effect";
 import { DoctorReportSchema } from "../src/domain/doctor/doctor-schema.ts";
-import { PublicEnvelopeSchema } from "../src/cli/host/public-outcome.ts";
 import { recordFilesOf, type SkillFile } from "../src/features/imports/import-files.ts";
 import { writeImports } from "../src/features/imports/import-write.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
@@ -10,15 +11,12 @@ import {
   successfulEnvelope,
   withTackWorld,
   type TackWorld,
-  type ProcessResult,
-} from "./fixtures/tack-world.ts";
+} from "./support/tack-world.ts";
 
 const decodeReport = Schema.decodeUnknownSync(DoctorReportSchema, { onExcessProperty: "error" });
-const decodeEnvelope = Schema.decodeUnknownSync(PublicEnvelopeSchema);
-
 const doctorOf = (result: ProcessResult) => {
   expect(result.stderr).toBe("");
-  const envelope = decodeEnvelope(JSON.parse(result.stdout));
+  const envelope = decodeEnvelope(result.stdout);
   return { envelope, report: decodeReport(envelope.result), exitCode: Number(result.exitCode) };
 };
 
@@ -68,7 +66,7 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
         const files: ReadonlyArray<SkillFile> = [
           {
             path: "SKILL.md",
-            bytes: new TextEncoder().encode("---\nname: pdf\ndescription: pdf\n---\n"),
+            bytes: new TextEncoder().encode(bareSkillText("pdf")),
             executable: false,
           },
         ];
@@ -100,7 +98,7 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
         });
         yield* fs.writeFileString(
           path.join(fixture.sourceDirectory, "skills/pdf/SKILL.md"),
-          "---\nname: pdf\ndescription: edited\n---\n",
+          skillText("pdf", { description: "edited", body: "" }),
         );
         const edited = doctorOf(yield* hostTack(fixture, ["doctor"])).report;
         expect(outcomeOf(edited, "imports")).toMatchObject({ outcome: "ok" });
@@ -208,7 +206,11 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
           yield* fs.makeDirectory(path.join(fixture.sourceDirectory, "skills", "needs-lint"));
           yield* fs.writeFileString(
             path.join(fixture.sourceDirectory, "skills", "needs-lint", "SKILL.md"),
-            "---\nname: needs-lint\ndescription: Needs lint\nmetadata:\n  tack: |\n    version: 1\n    dependencies:\n      - kind: skill\n        name: lint\n        source: missing\n---\n",
+            skillText("needs-lint", {
+              description: "Needs lint",
+              tack: ["dependencies:", "  - kind: skill", "    name: lint", "    source: missing"],
+              body: "",
+            }),
           );
           const { report } = doctorOf(yield* hostTack(fixture, ["doctor"]));
           expect(outcomeOf(report, "unregistered-dependency-source")).toMatchObject({
@@ -343,7 +345,7 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
         );
         const result = yield* hostTack(fixture, ["doctor"]);
         expect(Number(result.exitCode)).toBe(3);
-        expect(decodeEnvelope(JSON.parse(result.stdout))).toMatchObject({
+        expect(decodeEnvelope(result.stdout)).toMatchObject({
           classification: "persistence",
           result: null,
         });

@@ -1,3 +1,4 @@
+import { skillText } from "../../../../test/support/source-tree.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "../../../../test/support/live-test-layer.ts";
@@ -39,7 +40,7 @@ it.layer(LiveTestLayer)("reference index", (test) => {
       );
       yield* fs.writeFileString(
         path.join(source, "skills", "review", "SKILL.md"),
-        "---\nname: review\ndescription: Review\n---\n",
+        skillText("review", { description: "Review", body: "" }),
       );
       const options = {
         environment: { TACK_STATE_DIR: path.join(root, "state") },

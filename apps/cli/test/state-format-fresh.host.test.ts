@@ -1,3 +1,5 @@
+import { skillText } from "./support/source-tree.ts";
+import { git } from "./support/tack-process.ts";
 import { afterAll, expect, it } from "vitest";
 import { lstat, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -27,10 +29,10 @@ it("starts from an empty directory and writes one format 1 file that status read
   );
   await writeFile(
     join(source, "skills", "pdf", "SKILL.md"),
-    "---\nname: pdf\ndescription: Read PDFs\n---\n",
+    skillText("pdf", { description: "Read PDFs", body: "" }),
   );
   await writeFile(join(source, "knowledge", "index.md"), "# Handbook\n");
-  expect(Bun.spawnSync({ cmd: ["git", "init", "-q"], cwd: project }).exitCode).toBe(0);
+  await git(project, ["init", "-q"]);
 
   const run = async (args: ReadonlyArray<string>, cwd = root) => {
     const result = await Effect.runPromise(

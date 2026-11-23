@@ -144,7 +144,7 @@ const orphan = link("orphan", {
 });
 
 const agentLinks: Data = {
-  managedLinks: [retiring, link("writing"), userLink, commandLink, windowsLink],
+  agentLinks: [retiring, link("writing"), userLink, commandLink, windowsLink],
   pendingRemovals: [
     pending(windowsLink, "reset"),
     pending(retiring, "adapter-disable", { _tag: "blocked", message: "Keep this reason." }),
@@ -156,8 +156,8 @@ const agentLinks: Data = {
 
 const replacement = { ...link("writing"), sourceDirectoryPath: "/sources/a/next/writing" };
 const linkJournal: Data = {
-  managedLinks: [link("writing")],
-  reconciliationJournal: {
+  agentLinks: [link("writing")],
+  preparedAgentAction: {
     action: {
       _tag: "link-create",
       evidence: replacement,
@@ -173,13 +173,13 @@ const linkJournal: Data = {
 
 const docsLinks: Data = {
   projects,
-  docsManagedLinks: [docsLink("guide"), docsLink("handbook")],
-  docsJournal: { action: "remove", evidence: docsLink("handbook", omegaRoot, "omega") },
+  docsLinks: [docsLink("guide"), docsLink("handbook")],
+  preparedDocsAction: { action: "remove", evidence: docsLink("handbook", omegaRoot, "omega") },
 };
 
 const recovery: Data = {
   pendingRemovals: [pending(orphan, "reset", { _tag: "filesystem-failure", message: "EACCES" })],
-  docsJournal: { action: "create", evidence: docsLink("guide") },
+  preparedDocsAction: { action: "create", evidence: docsLink("guide") },
 };
 
 const removalMatrix: Data = {
@@ -198,8 +198,8 @@ const removalMatrix: Data = {
 };
 
 const linkRemoveJournal: Data = {
-  managedLinks: [link("writing")],
-  reconciliationJournal: {
+  agentLinks: [link("writing")],
+  preparedAgentAction: {
     action: {
       _tag: "link-remove",
       destinationPath: managedLinkDestinationPath(link("writing")),
@@ -211,7 +211,7 @@ const linkRemoveJournal: Data = {
 
 const realSized: Data = {
   ...registrations,
-  managedLinks: Array.from({ length: 1_274 }, (_, index) =>
+  agentLinks: Array.from({ length: 1_274 }, (_, index) =>
     link(`skill-${String(index % 39).padStart(2, "0")}`, {
       target: {
         _tag: "project-root",

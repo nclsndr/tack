@@ -1,3 +1,4 @@
+import { skillText } from "../../../../test/support/source-tree.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "../../../../test/support/live-test-layer.ts";
@@ -60,7 +61,7 @@ const scene = (
     yield* fs.makeDirectory(path.join(source, "skills", "hello"), { recursive: true });
     yield* fs.writeFileString(
       path.join(source, "skills", "hello", "SKILL.md"),
-      "---\nname: hello\ndescription: A skill that shares the script name\n---\n",
+      skillText("hello", { description: "A skill that shares the script name", body: "" }),
     );
     const options = {
       environment: { TACK_STATE_DIR: path.join(root, "state") },

@@ -27,11 +27,6 @@ export const expectSuccess = (result: TackRun) => {
   });
 };
 
-/** Asserts a process exited 0. */
-export const expectProcessSuccess = (result: { readonly exitCode: number }) => {
-  expect(result.exitCode).toBe(ChildProcessSpawner.ExitCode(0));
-};
-
 /** Creates a {@link CliFixture} under a scoped temporary root. */
 export const withFixture = <A, E, R>(use: (fixture: CliFixture) => Effect.Effect<A, E, R>) =>
   Effect.gen(function* () {

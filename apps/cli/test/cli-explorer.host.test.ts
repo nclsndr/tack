@@ -1,3 +1,4 @@
+import { fakeGit } from "./support/fake-git.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { unwatchedTerminalSize } from "./support/explorer.ts";
 import { BunServices } from "@effect/platform-bun";
@@ -20,7 +21,7 @@ import {
   type TerminalContextShape,
 } from "../src/cli/host/human/terminal-context.ts";
 import { parseInvocation } from "../src/cli/commands/index.ts";
-import { Git, type GitService } from "../src/services/git.ts";
+import { Git } from "../src/services/git.ts";
 import { runHost } from "./support/host-runner.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
 import {
@@ -61,11 +62,6 @@ const forbiddenTerminal = Terminal.make({
   readLine: Effect.die("Explorer read a line before refusal."),
 });
 
-const testGit = {
-  listWorktrees: () => Effect.succeed([]),
-  resolveCommonDirectory: () => Effect.succeed("/tmp"),
-} satisfies GitService;
-
 /** An empty home: the refusal resolves the default state under `HOME` before it refuses. */
 const throwawayHome = Effect.gen(function* () {
   const fs = yield* FileSystem.FileSystem;
@@ -89,7 +85,7 @@ it.layer(LiveTestLayer)("explore refuses non-interactive callers", (test) => {
       ]) {
         const { exit, stdout } = yield* runHost({
           args: ["--json", "explore"],
-          git: testGit,
+          git: fakeGit("/tmp", []),
           env: { HOME: yield* throwawayHome },
           ...(context === undefined ? {} : { terminal: context }),
         }).pipe(Effect.provideService(Terminal.Terminal, forbiddenTerminal));
@@ -108,7 +104,7 @@ it.layer(LiveTestLayer)("explore refuses non-interactive callers", (test) => {
     Effect.gen(function* () {
       const { exit, stdout } = yield* runHost({
         args: ["--json", "explore", "--user"],
-        git: testGit,
+        git: fakeGit("/tmp", []),
         env: { HOME: yield* throwawayHome },
       }).pipe(Effect.provideService(Terminal.Terminal, forbiddenTerminal));
       expect(exit._tag).toBe("Failure");
@@ -494,7 +490,7 @@ it.layer(LiveTestLayer)("explorer sessions", (test) => {
         exploreSelection(options, { cwd: root }).pipe(
           Effect.provideService(Terminal.Terminal, terminal),
           Effect.provideService(TerminalContext, interactive),
-          Effect.provideService(Git, testGit),
+          Effect.provideService(Git, fakeGit("/tmp", [])),
           Effect.provide(BunServices.layer),
         ),
       );
@@ -551,7 +547,7 @@ it.layer(LiveTestLayer)("explorer sessions", (test) => {
       const { terminal, displayed } = yield* scriptedTerminal([input("c", "\u0003", true)]);
       const { exit, stdout } = yield* runHost({
         args: ["--state-dir", path.join(root, "state"), "explore", "--json"],
-        git: testGit,
+        git: fakeGit("/tmp", []),
         terminal: interactive,
         env: { HOME: root },
       }).pipe(Effect.provideService(Terminal.Terminal, terminal));

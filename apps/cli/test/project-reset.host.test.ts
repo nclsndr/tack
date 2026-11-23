@@ -11,7 +11,7 @@ import {
   hostTack,
   successfulEnvelope,
   withTackWorld,
-} from "./fixtures/tack-world.ts";
+} from "./support/tack-world.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
 
 const reconcile = (selector: ReadonlyArray<string>) => ["sync", ...selector, "--apply"];

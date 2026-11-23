@@ -1,3 +1,4 @@
+import { skillText } from "../../../test/support/source-tree.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect } from "effect";
 import { parseCommandDocument, parseSkillDocument } from "./resource-frontmatter.ts";
@@ -38,8 +39,11 @@ it.effect("reads an independent global activation policy without changing projec
   Effect.gen(function* () {
     const parsed = yield* parseSkillDocument({
       directoryName: "example",
-      encoded:
-        "---\nname: example\ndescription: Example\nmetadata:\n  tack: |\n    version: 1\n    activation: opt-in\n    user-activation: default\n---\n",
+      encoded: skillText("example", {
+        description: "Example",
+        tack: ["activation: opt-in", "user-activation: default"],
+        body: "",
+      }),
     });
     expect(parsed).toMatchObject({ activation: "opt-in", userActivation: "default" });
   }),
@@ -50,8 +54,11 @@ it.effect("rejects an invalid global activation policy", () =>
     const result = yield* Effect.flip(
       parseSkillDocument({
         directoryName: "example",
-        encoded:
-          "---\nname: example\ndescription: Example\nmetadata:\n  tack: |\n    version: 1\n    user-activation: always\n---\n",
+        encoded: skillText("example", {
+          description: "Example",
+          tack: ["user-activation: always"],
+          body: "",
+        }),
       }),
     );
     expect(result).toMatchObject({ code: "skill-metadata-schema-invalid" });

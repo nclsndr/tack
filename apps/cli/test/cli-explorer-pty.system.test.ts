@@ -1,3 +1,4 @@
+import { skillText } from "./support/source-tree.ts";
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -39,7 +40,7 @@ beforeAll(() => {
   writeFileSync(join(source, "tack.yaml"), "version: 1\nskills:\n  - path: skills\n");
   writeFileSync(
     join(skill, "SKILL.md"),
-    "---\nname: pty-fixture-skill\ndescription: A fixed PTY fixture.\n---\n# Fixture\n",
+    skillText("pty-fixture-skill", { description: "A fixed PTY fixture.", body: "# Fixture\n" }),
   );
   const built = spawnSync(process.execPath, ["scripts/build-release.ts", release], {
     cwd: repository,

@@ -1,10 +1,10 @@
+import { fakeGit } from "./support/fake-git.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { describeTree } from "../src/cli/commands/manifest.ts";
 import { choicesOf, completeTack, valueSourceOf } from "../src/cli/host/completion.ts";
 import { HostEnvironment } from "../src/cli/host/host-environment.ts";
 import { guideTopics } from "../src/domain/guides/guide-schema.ts";
-import type { GitService } from "../src/services/git.ts";
 import { runHost } from "./support/host-runner.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { skillText, write } from "./support/source-tree.ts";
@@ -40,10 +40,7 @@ const fixture = Effect.gen(function* () {
   yield* write(path.join(me, "tack.yaml"), "version: 1\nname: me\nskills:\n  - path: skills\n");
   yield* write(path.join(me, "skills", "review", "SKILL.md"), skillText("review"));
   yield* write(path.join(me, "skills", "notes", "SKILL.md"), skillText("notes"));
-  const git = {
-    listWorktrees: () => Effect.succeed([{ bare: false, detached: false, path: projectRoot }]),
-    resolveCommonDirectory: () => Effect.succeed(anchor),
-  } satisfies GitService;
+  const git = fakeGit(anchor, [{ path: projectRoot }]);
   const tack = (arguments_: ReadonlyArray<string>) =>
     runHost({ args: ["--state-dir", stateDirectory, ...arguments_], git });
   yield* tack(["state", "init"]);

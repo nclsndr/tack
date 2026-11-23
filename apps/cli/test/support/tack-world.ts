@@ -1,23 +1,19 @@
 import { afterAll, expect } from "@effect/vitest";
-import { Effect, FileSystem, Path, Stream } from "effect";
-import { ChildProcess, ChildProcessSpawner } from "effect/process";
+import { Effect, FileSystem, Path } from "effect";
+import { ChildProcessSpawner } from "effect/process";
 import { rm } from "node:fs/promises";
 import type { PublicEnvelope } from "../../src/cli/host/public-outcome.ts";
 import type { StateOptions } from "../../src/services/state-store.ts";
-import { runTackInProcess } from "../support/host-runner.ts";
+import { runTackInProcess } from "./host-runner.ts";
 import {
   decodeEnvelope,
+  expectProcessSuccess,
   repositoryRoot,
+  runGit,
   sourceEntrypoint,
   tackProcess,
-} from "../support/tack-process.ts";
-
-/** What one external process printed and how it exited. */
-export type ProcessResult = {
-  readonly exitCode: ChildProcessSpawner.ExitCode;
-  readonly stderr: string;
-  readonly stdout: string;
-};
+  type ProcessResult,
+} from "./tack-process.ts";
 
 export type TackWorld = {
   readonly entrypoint: string;
@@ -29,42 +25,6 @@ export type TackWorld = {
   readonly stateDirectory: string;
   readonly worktreeRoot: string;
 };
-
-/** Runs one external command through Effect's child-process capability. */
-export const runProcess = Effect.fnUntraced(function* (
-  command: string,
-  arguments_: ReadonlyArray<string>,
-  options: {
-    readonly cwd: string;
-    readonly environment?: Readonly<Record<string, string | undefined>>;
-  },
-) {
-  const process = yield* ChildProcess.make(command, arguments_, {
-    cwd: options.cwd,
-    ...(options.environment === undefined ? {} : { env: options.environment }),
-    extendEnv: true,
-  });
-  return yield* Effect.all(
-    {
-      exitCode: process.exitCode,
-      stderr: process.stderr.pipe(Stream.decodeText, Stream.mkString),
-      stdout: process.stdout.pipe(Stream.decodeText, Stream.mkString),
-    },
-    { concurrency: "unbounded" },
-  );
-});
-
-/** Asserts that an external process completed successfully. */
-export const expectProcessSuccess = (result: ProcessResult) => {
-  expect(result.exitCode).toBe(ChildProcessSpawner.ExitCode(0));
-};
-
-/** Runs Git against an isolated fixture and requires a zero exit status. */
-export const runGit = Effect.fnUntraced(function* (cwd: string, arguments_: ReadonlyArray<string>) {
-  const result = yield* runProcess("git", arguments_, { cwd });
-  expectProcessSuccess(result);
-  return result;
-});
 
 /** Runs Tack's source entrypoint with `--json` against the isolated fixture state and home. */
 export const runTack = (

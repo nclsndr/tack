@@ -1,13 +1,13 @@
+import { runGit } from "./support/tack-process.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Schema } from "effect";
 import {
   partialEnvelope,
-  runGit,
   hostTack,
   successfulEnvelope,
   withTackWorld,
-} from "./fixtures/tack-world.ts";
+} from "./support/tack-world.ts";
 
 const decodeRunId = Schema.decodeUnknownSync(Schema.Struct({ runId: Schema.String }));
 

@@ -1,12 +1,11 @@
 import { skillText } from "./support/source-tree.ts";
-import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Effect, Schema } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
 import { runTackInProcess } from "./support/host-runner.ts";
-import { decodeEnvelope } from "./support/tack-process.ts";
+import { decodeEnvelope, git } from "./support/tack-process.ts";
 
 const roots: Array<string> = [];
 
@@ -157,7 +156,7 @@ describe("release-owned picks", () => {
     const { root, run, statePath } = await fixture();
     const repository = join(root, "demo");
     mkdirSync(repository);
-    expect(spawnSync("git", ["init", "--quiet"], { cwd: repository }).status).toBe(0);
+    await git(repository, ["init", "--quiet"]);
     expect((await run(["project", "add", "demo", "--repository-cwd", repository])).exitCode).toBe(
       0,
     );

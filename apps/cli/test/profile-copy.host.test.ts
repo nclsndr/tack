@@ -1,3 +1,5 @@
+import { skillText } from "./support/source-tree.ts";
+import { fakeGit } from "./support/fake-git.ts";
 import { stageChange } from "../src/cli/host/human/explorer/edit.ts";
 import { checkPaths } from "../src/features/check/check-paths.ts";
 import { Git } from "../src/services/git.ts";
@@ -197,13 +199,7 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
         cwd: project,
         style: makeStyle({ color: false, width: 120, homeDirectory: options.homeDirectory }),
         context: yield* Effect.context<RouteServices>().pipe(
-          Effect.provideService(
-            Git,
-            Git.of({
-              listWorktrees: () => Effect.succeed([]),
-              resolveCommonDirectory: () => Effect.succeed("/unused"),
-            }),
-          ),
+          Effect.provideService(Git, fakeGit("/unused", [])),
         ),
       });
       const copyOptions = destinations.options.filter(
@@ -343,7 +339,10 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
         expect(adopted.adopted).toBe(true);
         expect(adopted.plan.blockers.length).toBeGreaterThan(0);
         yield* write("other/tack.yaml", "version: 2\nname: other\nskills: [{path: skills}]\n");
-        yield* write("other/skills/notes/SKILL.md", "---\nname: notes\ndescription: Other\n---\n");
+        yield* write(
+          "other/skills/notes/SKILL.md",
+          skillText("notes", { description: "Other", body: "" }),
+        );
         yield* registerSource(options, { sourcePath: path.join(root, "other") });
         const collision = yield* collectProfileInput(yield* readInvocationSnapshot(options), {
           user: false,
@@ -483,7 +482,10 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
           true,
         );
         const bytes = yield* fs.readFileString(path.join(source, "profiles/copied.yaml"));
-        yield* write("source/skills/later/SKILL.md", "---\nname: later\ndescription: Later\n---\n");
+        yield* write(
+          "source/skills/later/SKILL.md",
+          skillText("later", { description: "Later", body: "" }),
+        );
         expect(yield* fs.readFileString(path.join(source, "profiles/copied.yaml"))).toBe(bytes);
         expect(
           (yield* runProfileSaveSelection(options, { ...request, apply: true })).plan.findings[0]
@@ -585,11 +587,15 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
         yield* f.write("team/tack.yaml", "version: 1\nname: team\nskills: [{path: skills}]\n");
         yield* f.write(
           "team/skills/review/SKILL.md",
-          "---\nname: review\ndescription: External review\nmetadata:\n  tack: |\n    version: 1\n    activation: opt-in\n---\n",
+          skillText("review", {
+            description: "External review",
+            tack: ["activation: opt-in"],
+            body: "",
+          }),
         );
         yield* f.write(
           "source/skills/extra/SKILL.md",
-          "---\nname: extra\ndescription: Extra\nmetadata:\n  tack: |\n    version: 1\n    activation: opt-in\n---\n",
+          skillText("extra", { description: "Extra", tack: ["activation: opt-in"], body: "" }),
         );
         const team = yield* registerSource(f.options, { sourcePath: f.path.join(f.root, "team") });
         yield* mutateStateFixture(f.options, (state) => ({

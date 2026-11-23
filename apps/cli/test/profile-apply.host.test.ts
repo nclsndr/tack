@@ -1,3 +1,4 @@
+import { skillText } from "./support/source-tree.ts";
 import { profileFixture as fixture } from "./support/profile-fixture.ts";
 import { runManagedRemoval } from "../src/features/removal/removal.ts";
 import { agentLink } from "../src/domain/links/link-record-schema.ts";
@@ -160,7 +161,7 @@ it.layer(LiveTestLayer)("exact profile application", (test) => {
         expect((yield* run(runProfileApply(options, request))).plan.refused).toBe(true);
         yield* write(
           "source/skills/new-default/SKILL.md",
-          "---\nname: new-default\ndescription: New\n---\n",
+          skillText("new-default", { description: "New", body: "" }),
         );
         yield* run(
           runSyncCommand(options, {
@@ -195,11 +196,15 @@ it.layer(LiveTestLayer)("exact profile application", (test) => {
       yield* run(runProfileApply(options, request));
       yield* write(
         "source/skills/new-required/SKILL.md",
-        "---\nname: new-required\ndescription: New\n---\n",
+        skillText("new-required", { description: "New", body: "" }),
       );
       yield* write(
         "source/skills/style/SKILL.md",
-        "---\nname: style\ndescription: Style\nmetadata:\n  tack: |\n    version: 1\n    dependencies:\n      - kind: skill\n        name: new-required\n---\n",
+        skillText("style", {
+          description: "Style",
+          tack: ["dependencies:", "  - kind: skill", "    name: new-required"],
+          body: "",
+        }),
       );
       const synced = yield* run(
         runSyncCommand(options, {
@@ -316,7 +321,10 @@ it.layer(LiveTestLayer)("exact profile application", (test) => {
       );
       expect(yield* readState(options)).toEqual(before);
       yield* write("team/tack.yaml", "version: 1\nname: team\nskills: [{path: skills}]\n");
-      yield* write("team/skills/review/SKILL.md", "---\nname: review\ndescription: Team\n---\n");
+      yield* write(
+        "team/skills/review/SKILL.md",
+        skillText("review", { description: "Team", body: "" }),
+      );
       yield* registerSource(options, { sourcePath: path.join(root, "team") });
       yield* write(
         "source/ci.yaml",
@@ -388,7 +396,10 @@ it.layer(LiveTestLayer)("exact profile application", (test) => {
           "review",
           "style",
         ]);
-        yield* write("source/skills/later/SKILL.md", "---\nname: later\ndescription: Later\n---\n");
+        yield* write(
+          "source/skills/later/SKILL.md",
+          skillText("later", { description: "Later", body: "" }),
+        );
         yield* run(
           runSyncCommand(options, {
             apply: true,

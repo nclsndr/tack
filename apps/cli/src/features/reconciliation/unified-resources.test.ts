@@ -1,3 +1,5 @@
+import { skillText } from "../../../test/support/source-tree.ts";
+import { fakeGit } from "../../../test/support/fake-git.ts";
 import { writeUnder } from "../../../test/support/source-tree.ts";
 import { setSkillChoice } from "../../../test/support/snapshot-helpers.ts";
 import {
@@ -47,7 +49,7 @@ const fixture = Effect.fnUntraced(function* () {
   );
   yield* write(
     "skills/review/SKILL.md",
-    "---\nname: review\ndescription: Review\nmetadata:\n  tack: |\n    version: 1\n    user-activation: default\n---\n",
+    skillText("review", { description: "Review", tack: ["user-activation: default"], body: "" }),
   );
   yield* write("context/notes/design.md", "Context\n");
   yield* initializeState(options);
@@ -374,10 +376,7 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
             ],
           },
         }));
-        const git = Git.of({
-          resolveCommonDirectory: () => Effect.succeed(anchor),
-          listWorktrees: () => Effect.succeed([{ path: activeRoot, bare: false, detached: false }]),
-        });
+        const git = fakeGit(anchor, [{ path: activeRoot }]);
         // Out of the user's folder, so the project links the command itself.
         yield* setSkillChoice(f.options, {
           namespace: { _tag: "user" },
@@ -519,10 +518,7 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
           projects: [{ name: "app", gitCommonDirectory: anchor, roots: [projectRoot] }],
         },
       }));
-      const git = Git.of({
-        resolveCommonDirectory: () => Effect.succeed(anchor),
-        listWorktrees: () => Effect.succeed([{ path: projectRoot, bare: false, detached: false }]),
-      });
+      const git = fakeGit(anchor, [{ path: projectRoot }]);
       // Out of the user's folders, so the project links both resources itself.
       for (const kind of ["command", "skill"] as const)
         yield* setSkillChoice(f.options, {

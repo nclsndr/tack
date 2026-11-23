@@ -102,7 +102,7 @@ it.layer(LiveTestLayer)("adapter disablement", (adapterIt) => {
               ...state.data,
               choices,
               enabledAdapters: ["codex", "cursor"],
-              managedLinks: [codexActive, cursorActive, cursorRemoving, cursorUser],
+              agentLinks: [codexActive, cursorActive, cursorRemoving, cursorUser],
               projects,
             },
           }));
@@ -207,7 +207,7 @@ it.layer(LiveTestLayer)("adapter disablement", (adapterIt) => {
           data: {
             ...state.data,
             enabledAdapters: ["cursor"],
-            managedLinks: [command, skill],
+            agentLinks: [command, skill],
             projects: [project(projectRoot)],
           },
         }));
@@ -263,7 +263,7 @@ it.layer(LiveTestLayer)("adapter disablement", (adapterIt) => {
           data: {
             ...state.data,
             enabledAdapters: ["codex"],
-            managedLinks: [evidence],
+            agentLinks: [evidence],
             pendingRemovals: [{ cause: "adapter-disable" as const, evidence }],
           },
         }));
@@ -311,7 +311,7 @@ it.layer(LiveTestLayer)("adapter disablement", (adapterIt) => {
         const destinationPath = yield* setupLink(evidence);
         yield* mutateStateFixture(options, (state) => ({
           ...state,
-          data: { ...state.data, enabledAdapters: ["cursor"], managedLinks: [evidence] },
+          data: { ...state.data, enabledAdapters: ["cursor"], agentLinks: [evidence] },
         }));
         const entered = yield* Deferred.make<void>();
         const release = yield* Deferred.make<void>();

@@ -7,7 +7,7 @@ import {
   hostTack,
   successfulEnvelope,
   withTackWorld,
-} from "./fixtures/tack-world.ts";
+} from "./support/tack-world.ts";
 
 const SearchResult = Schema.Struct({
   complete: Schema.Boolean,

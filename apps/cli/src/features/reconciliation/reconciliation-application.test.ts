@@ -175,7 +175,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
         const managed = evidence("cursor", targetUser(home), entry);
         yield* mutateStateFixture(options, (state) => ({
           ...state,
-          data: { ...state.data, managedLinks: [managed] },
+          data: { ...state.data, agentLinks: [managed] },
         }));
 
         const removePlan = yield* planReconciliation({
@@ -197,7 +197,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
         });
         yield* mutateStateFixture(options, (state) => ({
           ...state,
-          data: { ...state.data, managedLinks: [managed] },
+          data: { ...state.data, agentLinks: [managed] },
         }));
         const retired = yield* applyReconciliationPlan(options, absentPlan);
         expect(retired.units[0]?.actions[0]?._tag).toBe("applied");
@@ -225,7 +225,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
         const managed = evidence("cursor", targetUser(home), catalogEntry("skill", source));
         yield* mutateStateFixture(options, (state) => ({
           ...state,
-          data: { ...state.data, managedLinks: [managed] },
+          data: { ...state.data, agentLinks: [managed] },
         }));
         const plan = yield* planReconciliation({
           adapters: [agentAdapterDescriptor("cursor")],
@@ -264,7 +264,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
         const managed = evidence("cursor", targetUser(home), catalogEntry("skill", source));
         yield* mutateStateFixture(options, (state) => ({
           ...state,
-          data: { ...state.data, managedLinks: [managed] },
+          data: { ...state.data, agentLinks: [managed] },
         }));
         const plan = yield* planReconciliation({
           adapters: [agentAdapterDescriptor("cursor")],
@@ -309,7 +309,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
           const managed = evidence("cursor", targetUser(home), catalogEntry("skill", source));
           yield* mutateStateFixture(options, (state) => ({
             ...state,
-            data: { ...state.data, managedLinks: [managed] },
+            data: { ...state.data, agentLinks: [managed] },
           }));
           const plan = yield* planReconciliation({
             adapters: [agentAdapterDescriptor("cursor")],
@@ -375,7 +375,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
         const oldEvidence = evidence("cursor", targetUser(home), oldEntry);
         yield* mutateStateFixture(options, (state) => ({
           ...state,
-          data: { ...state.data, managedLinks: [oldEvidence] },
+          data: { ...state.data, agentLinks: [oldEvidence] },
         }));
         const plan = yield* planReconciliation({
           adapters: [agentAdapterDescriptor("cursor")],
@@ -497,7 +497,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
         const managed = evidence("cursor", targetUser(home), oldEntry);
         yield* mutateStateFixture(options, (state) => ({
           ...state,
-          data: { ...state.data, managedLinks: [managed] },
+          data: { ...state.data, agentLinks: [managed] },
         }));
         const plan = yield* planReconciliation({
           adapters: [agentAdapterDescriptor("cursor")],
@@ -537,7 +537,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
         const managed = evidence("cursor", targetUser(home), entry);
         yield* mutateStateFixture(options, (state) => ({
           ...state,
-          data: { ...state.data, managedLinks: [managed] },
+          data: { ...state.data, agentLinks: [managed] },
         }));
         const plan = yield* planReconciliation({
           adapters: [agentAdapterDescriptor("cursor")],
@@ -577,7 +577,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
         const managed = evidence("cursor", targetUser(home), oldEntry);
         yield* mutateStateFixture(options, (state) => ({
           ...state,
-          data: { ...state.data, managedLinks: [managed] },
+          data: { ...state.data, agentLinks: [managed] },
         }));
         const plan = yield* planReconciliation({
           adapters: [agentAdapterDescriptor("cursor")],
@@ -752,7 +752,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
         const managed = evidence("cursor", targetUser(home), entry);
         yield* mutateStateFixture(options, (state) => ({
           ...state,
-          data: { ...state.data, managedLinks: [managed] },
+          data: { ...state.data, agentLinks: [managed] },
         }));
         const plan = yield* planReconciliation({
           adapters: [agentAdapterDescriptor("cursor")],
@@ -941,7 +941,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
         const managed = evidence("cursor", targetUser(home), entry);
         yield* mutateStateFixture(options, (state) => ({
           ...state,
-          data: { ...state.data, managedLinks: [managed] },
+          data: { ...state.data, agentLinks: [managed] },
         }));
         const planInput = {
           adapters: [agentAdapterDescriptor("cursor")],
@@ -1012,7 +1012,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
         yield* fileSystem.symlink(path.relative(path.dirname(destination), source), destination);
         yield* mutateStateFixture(options, (state) => ({
           ...state,
-          data: { ...state.data, reconciliationJournal: { action: preparedAction } },
+          data: { ...state.data, preparedAgentAction: { action: preparedAction } },
         }));
 
         const result = yield* replan(options, planInput);
@@ -1048,7 +1048,7 @@ it.layer(LiveTestLayer)("safe reconciliation application", (applyIt) => {
           ...state,
           data: {
             ...state.data,
-            managedLinks: [previous],
+            agentLinks: [previous],
             pendingRemovals: [{ cause: "root-removal", evidence: previous }],
           },
         }));

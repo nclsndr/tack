@@ -1,4 +1,7 @@
-import { Effect, Schema } from "effect";
+import { BunServices } from "@effect/platform-bun";
+import { expect } from "@effect/vitest";
+import { Effect, Schema, Stream } from "effect";
+import { ChildProcess, ChildProcessSpawner } from "effect/process";
 import { spawnSync } from "node:child_process";
 import { join, resolve } from "node:path";
 import { agentMarkers } from "../../src/cli/host/human/terminal-context.ts";
@@ -156,6 +159,76 @@ export const runTackSync = (
 /** {@link runTack} as an Effect, for tests written with `it.effect`. */
 export const tackProcess = (args: ReadonlyArray<string>, options: TackRunOptions = {}) =>
   Effect.promise(() => runTack(args, options));
+
+/** What one external process printed and how it exited. */
+export type ProcessResult = {
+  readonly exitCode: ChildProcessSpawner.ExitCode;
+  readonly stderr: string;
+  readonly stdout: string;
+};
+
+/** Runs one external command through Effect's child-process capability. */
+export const runProcess = Effect.fnUntraced(function* (
+  executable: string,
+  arguments_: ReadonlyArray<string>,
+  options: {
+    readonly cwd: string;
+    readonly environment?: Readonly<Record<string, string | undefined>>;
+  },
+) {
+  const process = yield* ChildProcess.make(executable, arguments_, {
+    cwd: options.cwd,
+    ...(options.environment === undefined ? {} : { env: options.environment }),
+    extendEnv: true,
+  });
+  return yield* Effect.all(
+    {
+      exitCode: process.exitCode,
+      stderr: process.stderr.pipe(Stream.decodeText, Stream.mkString),
+      stdout: process.stdout.pipe(Stream.decodeText, Stream.mkString),
+    },
+    { concurrency: "unbounded" },
+  );
+});
+
+/** Asserts that an external process exited 0, showing its stderr when it did not. */
+export const expectProcessSuccess = (result: {
+  readonly exitCode: number;
+  readonly stderr?: string;
+}) => {
+  expect(result.exitCode, result.stderr).toBe(ChildProcessSpawner.ExitCode(0));
+};
+
+/**
+ * Git without the machine's configuration and with a fixed identity: a system git-lfs filter, a
+ * default branch or a signing rule of the operator must not touch a fixture repository.
+ */
+const gitEnvironment = {
+  GIT_CONFIG_NOSYSTEM: "1",
+  GIT_CONFIG_GLOBAL: "/dev/null",
+  GIT_LFS_SKIP_SMUDGE: "1",
+  GIT_AUTHOR_NAME: "Fixture",
+  GIT_AUTHOR_EMAIL: "fixture@example.com",
+  GIT_COMMITTER_NAME: "Fixture",
+  GIT_COMMITTER_EMAIL: "fixture@example.com",
+};
+
+/** Runs Git against an isolated fixture and requires a zero exit status. */
+export const runGit = Effect.fnUntraced(function* (cwd: string, arguments_: ReadonlyArray<string>) {
+  const result = yield* runProcess("git", arguments_, { cwd, environment: gitEnvironment });
+  expectProcessSuccess(result);
+  return result;
+});
+
+/** {@link runGit} for promise-based tests: it requires success and resolves to Git's stdout. */
+export const git = (cwd: string, args: ReadonlyArray<string>): Promise<string> =>
+  Effect.runPromise(
+    runGit(cwd, args).pipe(
+      Effect.map((result) => result.stdout),
+      Effect.scoped,
+      Effect.provide(BunServices.layer),
+    ),
+  );
 
 const decodePublicEnvelope = Schema.decodeUnknownSync(PublicEnvelopeSchema);
 

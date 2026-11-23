@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { makeRemoteFixture, type FixtureCommit } from "./git-remote-fixture.ts";
 import { runTackInProcess } from "./host-runner.ts";
-import { runTack } from "./tack-process.ts";
+import { git, runTack } from "./tack-process.ts";
 
 /** The result of one Tack process run. */
 type TackRun = {
@@ -82,31 +82,6 @@ const hostTack = async (
     }),
   );
   return { code: exitCode, stdout, stderr };
-};
-
-/** Runs git against a fixture and requires success. */
-export const git = async (cwd: string, args: ReadonlyArray<string>): Promise<string> => {
-  const child = Bun.spawn(["git", ...args], {
-    cwd,
-    env: {
-      ...process.env,
-      GIT_CONFIG_NOSYSTEM: "1",
-      GIT_CONFIG_GLOBAL: "/dev/null",
-      GIT_AUTHOR_NAME: "Fixture",
-      GIT_AUTHOR_EMAIL: "fixture@example.com",
-      GIT_COMMITTER_NAME: "Fixture",
-      GIT_COMMITTER_EMAIL: "fixture@example.com",
-    },
-    stdout: "pipe",
-    stderr: "pipe",
-  });
-  const [code, stdout, stderr] = await Promise.all([
-    child.exited,
-    new Response(child.stdout).text(),
-    new Response(child.stderr).text(),
-  ]);
-  if (code !== 0) throw new Error(`git ${args.join(" ")} failed: ${stderr}`);
-  return stdout;
 };
 
 /** Creates a git repository with one commit, for registering a project. */

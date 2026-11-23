@@ -50,7 +50,7 @@ const linkedWorld = Effect.gen(function* () {
   };
   yield* mutateStateFixture(options, (state) => ({
     ...state,
-    data: { ...state.data, managedLinks: [evidence], projects: [project] },
+    data: { ...state.data, agentLinks: [evidence], projects: [project] },
   }));
   return { fs, path, root, options, projectRoot, destination, evidence, project };
 });
@@ -83,8 +83,8 @@ it.layer(LiveTestLayer)("removal against state that moved on", (test) => {
         ...state,
         data: {
           ...state.data,
-          managedLinks: [evidence],
-          reconciliationJournal: { action: { _tag: "link-remove", evidence } },
+          agentLinks: [evidence],
+          preparedAgentAction: { action: { _tag: "link-remove", evidence } },
         },
       }));
       // A reset journals nothing, so applying it without recovery finds the earlier entry.
@@ -121,7 +121,7 @@ it.layer(LiveTestLayer)("removal against state that moved on", (test) => {
         format: 1,
         data: {
           ...state.data,
-          managedLinks: [],
+          agentLinks: [],
           projects: [other, { ...project, roots: [], removingRoots: project.roots }],
           profileApplications: [
             application({ _tag: "user" }),

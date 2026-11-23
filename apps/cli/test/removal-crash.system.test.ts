@@ -5,7 +5,7 @@ import { Effect, FileSystem, Path } from "effect";
 import { ChildProcess } from "effect/process";
 import { stateManagedLinks, statePendingRemovals } from "../src/features/removal/removal-plan.ts";
 import { readState } from "../src/services/state-store.ts";
-import { runTack, successfulEnvelope, withTackWorld } from "./fixtures/tack-world.ts";
+import { runTack, successfulEnvelope, withTackWorld } from "./support/tack-world.ts";
 
 /** Real SIGKILL during a removal, then journal recovery, then retry: the record rows of one destination. */
 it.layer(LiveTestLayer)("a killed removal recovers and retries", (crashIt) => {
