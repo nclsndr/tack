@@ -127,6 +127,11 @@ A source whose folder is gone has no label: use its ID from `tack source`. The p
 any registered source that still lists the removed one under `depends-on`, because the skills that
 need it stop working.
 
+A project that runs a fixed profile with members from the source keeps the profile: the preview
+marks it `! keep` and lists the members that no longer resolve, and `tack doctor` then fails its
+`profiles` check. Apply a profile without those members first, with `--force`, or remove that
+project.
+
 To keep a source but stop one project from using it, exclude its skills there instead, as
 [Choose what each project gets](./choose-skills) shows.
 
@@ -156,7 +161,11 @@ repositories stay.
 <Terminal commands={["tack state reset"]} output={resetOutput} />
 
 Apply it with `tack state reset --apply`, then uninstall the package with the package manager that
-installed it.
+installed it, such as `npm uninstall --global @tackup/cli`.
+
+Two things stay. `~/.tack/.env` keeps the script secrets you put there: delete it yourself. The
+agent folders Tack created, such as an empty `~/.agents/skills`, stay too, and a later `tack init`
+treats a folder like `~/.agents` as a sign that the agent is installed.
 
 ## When a link cannot be removed
 
