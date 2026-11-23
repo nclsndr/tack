@@ -14,6 +14,7 @@ import type {
   SelectableAddress,
 } from "../../../../domain/sources/catalog-schema.ts";
 import type { ExplorerDestination } from "./destination.ts";
+import { namespaceText } from "../view.ts";
 import { withChoice } from "../../../../features/choices/choice.ts";
 import {
   allSkillChoices,
@@ -103,15 +104,23 @@ export const initialEditState = (namespace: ExplorerDestination, fixedBy?: strin
   ...(fixedBy === undefined ? {} : { fixedBy }),
 });
 
-/** The name of the namespace being edited, for headings. */
-export const namespaceText = (namespace: ExplorerDestination): string =>
-  namespace._tag === "copy"
-    ? `save selection: ${[...(namespace.input.user ? ["user"] : []), ...(namespace.input.projectName === undefined ? [] : [`project ${namespace.input.projectName}`])].join(" + ")}`
-    : namespace._tag === "profile"
-      ? `profile ${namespace.profileName}`
-      : namespace._tag === "user"
-        ? "user"
-        : `project ${namespace.projectName}`;
+/** The name of the destination being edited, for headings and titles. */
+export const destinationText = (destination: ExplorerDestination): string =>
+  destination._tag === "copy"
+    ? `save selection: ${[
+        ...(destination.input.user ? [namespaceText({ _tag: "user" }, "label")] : []),
+        ...(destination.input.projectName === undefined
+          ? []
+          : [
+              namespaceText(
+                { _tag: "project", projectName: destination.input.projectName },
+                "label",
+              ),
+            ]),
+      ].join(" + ")}`
+    : destination._tag === "profile"
+      ? `profile ${destination.profileName}`
+      : namespaceText(destination, "label");
 
 /** Describes one staged change in a few words. */
 export const pendingText = (change: PendingChange): string =>

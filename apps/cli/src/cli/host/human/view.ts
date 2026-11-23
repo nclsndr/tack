@@ -1,4 +1,5 @@
 import { Predicate } from "effect";
+import type { ChoiceNamespace } from "../../../domain/choices/choice-schema.ts";
 import type { ResourceKind } from "../../../domain/resources/kinds.ts";
 import { argvLine } from "../command-line.ts";
 import type { PublicEnvelope } from "../public-outcome.ts";
@@ -19,6 +20,18 @@ export const addressText = (
   style: Style,
 ) =>
   `${address.kind} ${address.sourceRegistrationId === undefined ? address.name : style.reference({ ...address, sourceRegistrationId: address.sourceRegistrationId })}`;
+
+/**
+ * Names a namespace of picks. A `label` stands alone in a heading, a title or a table cell, as
+ * `user` or `project demo`; `prose` sits inside a sentence, where a bare `user` would read as a
+ * person, so it says `the user namespace`.
+ */
+export const namespaceText = (namespace: ChoiceNamespace, form: "label" | "prose"): string =>
+  namespace._tag === "project"
+    ? `project ${namespace.projectName}`
+    : form === "label"
+      ? "user"
+      : "the user namespace";
 
 /** `1 skill`, `2 skills`. */
 export const plural = (count: number, singular: string, pluralForm = `${singular}s`) =>

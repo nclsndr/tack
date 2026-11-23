@@ -43,7 +43,7 @@ const staged = (): ExplorerState => {
   return step.state;
 };
 const reviewLines = [
-  "Staged changes in user",
+  "Staged changes in the user namespace",
   "  include  shared skill fixture-review",
   "",
   "Nothing has been written. This is the plan tack sync would apply:",

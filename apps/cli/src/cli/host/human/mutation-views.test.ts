@@ -487,7 +487,7 @@ describe("pick include", () => {
   it.effect("addresses the user namespace", () =>
     Effect.gen(function* () {
       const output = view(choiceSet(true, review, { _tag: "user" }, "exclude"));
-      expect(lines(output)[0]).toBe("tack pick exclude · the user namespace · ✓ success");
+      expect(lines(output)[0]).toBe("tack pick exclude · user · ✓ success");
       expect(lines(output)).toContain("Set skill review to exclude for the user namespace.");
       expect(hintsIn(output)).toEqual(["tack sync --user"]);
       expect(yield* parseHintsIn(output)).toEqual(["sync"]);

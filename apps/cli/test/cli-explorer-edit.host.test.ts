@@ -441,6 +441,7 @@ it.layer(LiveTestLayer)("explore write sessions", (test) => {
       ]);
       yield* runEditing(options, terminal);
       const frames = yield* framesOf(displayed);
+      expect(frames).toContain("Staged changes in the user namespace");
       expect(frames).toContain("Nothing has been written");
       expect(frames).toContain("tack sync would apply");
       expect(frames).toContain("link");
@@ -473,6 +474,36 @@ it.layer(LiveTestLayer)("explore write sessions", (test) => {
       expect(yield* fs.exists(userLink)).toBe(true);
       // The list reloads from state, so the applied pick shows as the row's state.
       expect(frames).toContain("● included");
+    }),
+  );
+
+  test.effect("counts a link changed outside Tack as one to release in the preview", () =>
+    Effect.gen(function* () {
+      const { fs, path, root, userLink, options } = yield* withWorkspace();
+      const linked = yield* scriptedTerminal([
+        input("down", ""),
+        input("i"),
+        input("c"),
+        input("y"),
+        input("q"),
+        input("q"),
+      ]);
+      yield* runEditing(options, linked.terminal);
+      // The operator points the link at their own copy, so excluding the skill only forgets it.
+      const copy = path.join(root, "own-review");
+      yield* fs.makeDirectory(copy);
+      yield* fs.remove(userLink);
+      yield* fs.symlink(copy, userLink);
+      const { terminal, displayed } = yield* scriptedTerminal([
+        input("down", ""),
+        input("x"),
+        input("c"),
+        input("n"),
+        input("q"),
+        input("q"),
+      ]);
+      yield* runEditing(options, terminal);
+      expect(yield* framesOf(displayed)).toContain("claude → user: 1 to release");
     }),
   );
 

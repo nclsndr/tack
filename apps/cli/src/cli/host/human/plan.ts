@@ -230,7 +230,11 @@ export const workOf = ({ summary }: ReconciliationUnitPlan) =>
 export const attentionOf = ({ summary }: ReconciliationUnitPlan) =>
   summary.conflict + summary.collision + summary.blocked;
 
-const unitSummary = (unit: ReconciliationUnitPlan): string => {
+/**
+ * The work and attention of one unit as comma-separated phrases, `1 to link, 1 conflict`, or `up to
+ * date` when it has neither. `tack sync` and the explorer preview both print it.
+ */
+export const unitSummary = (unit: ReconciliationUnitPlan): string => {
   const { summary } = unit;
   const parts = [
     ...(summary.create > 0 ? [`${summary.create} to link`] : []),

@@ -1,6 +1,5 @@
 import { Option, Schema } from "effect";
 import { sourceCheckLines, renderSourceScaffold } from "./source-authoring.ts";
-import type { ChoiceNamespace } from "../../../domain/choices/choice-schema.ts";
 import type { DocsResourceReference } from "../../../domain/docs/docs-schema.ts";
 import type { SelectableAddress } from "../../../domain/sources/catalog-schema.ts";
 import {
@@ -23,7 +22,15 @@ import { commandLine, selectorFlags } from "../command-line.ts";
 import type { PublicEnvelope } from "../public-outcome.ts";
 import { handMadeLines } from "./hand-made.ts";
 import { displayWidth, padEnd, wrapText } from "./text.ts";
-import { addressText, diagnosticLines, headerLines, hintLines, plural, sections } from "./view.ts";
+import {
+  addressText,
+  diagnosticLines,
+  headerLines,
+  hintLines,
+  namespaceText,
+  plural,
+  sections,
+} from "./view.ts";
 import type { HumanView, HumanViewRegistry } from "./render.ts";
 import type { Style } from "./style.ts";
 
@@ -79,9 +86,6 @@ const compose = (envelope: PublicEnvelope, style: Style, parts: Parts): string =
     parts.after,
     hintLines(parts.hints ?? [], style),
   );
-
-const namespaceText = (namespace: ChoiceNamespace) =>
-  namespace._tag === "user" ? "the user namespace" : `project ${namespace.projectName}`;
 
 const addressOperands = (address: SelectableAddress, style: Style) => [
   style.reference(address),
@@ -229,12 +233,12 @@ const choiceSetView = mutationView(
   ChoiceChangePayloadSchema,
   ({ changed, choice }, style, envelope) => {
     const subject = addressText(choice.address, style);
-    const where = namespaceText(choice.namespace);
+    const where = namespaceText(choice.namespace, "prose");
     const flags = selectorFlags(choice.namespace);
     const warned = warnedCandidates(envelope);
     const closest = Option.flatMap(warned, ({ candidates }) => Option.fromNullishOr(candidates[0]));
     return {
-      scope: where,
+      scope: namespaceText(choice.namespace, "label"),
       confirmation: changed
         ? `Set ${subject} to ${choice.decision} for ${where}.`
         : `${subject} is already set to ${choice.decision} for ${where}; nothing changed.`,
@@ -267,9 +271,9 @@ const choiceSetView = mutationView(
 
 const choiceRemoveView = mutationView(ChoiceRemovalPayloadSchema, (applied, style) => {
   const subject = addressText(applied.address, style);
-  const where = namespaceText(applied.namespace);
+  const where = namespaceText(applied.namespace, "prose");
   return {
-    scope: where,
+    scope: namespaceText(applied.namespace, "label"),
     confirmation: applied.removed
       ? `Removed the choice for ${subject} from ${where}.`
       : `No choice for ${subject} exists in ${where}; nothing changed.`,

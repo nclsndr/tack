@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { PublicEnvelope } from "../public-outcome.ts";
 import { plainStyle } from "./human.test-support.ts";
-import { subjectText } from "./view.ts";
+import { namespaceText, subjectText } from "./view.ts";
 
 type Diagnostic = PublicEnvelope["diagnostics"][number];
 const sourceId = "00000000-0000-4000-8000-000000000001";
@@ -77,5 +77,19 @@ describe("diagnostic subject text", () => {
       "~/a and 2 more",
     );
     expect(about({ subject: { destinationPaths: "/not/a/list", reason: "why" } })).toBe("why");
+  });
+});
+
+describe("namespace text", () => {
+  const demo = { _tag: "project", projectName: "demo" } as const;
+
+  it("labels a namespace in a heading, a title or a table cell", () => {
+    expect(namespaceText({ _tag: "user" }, "label")).toBe("user");
+    expect(namespaceText(demo, "label")).toBe("project demo");
+  });
+
+  it("names a namespace inside a sentence", () => {
+    expect(namespaceText({ _tag: "user" }, "prose")).toBe("the user namespace");
+    expect(namespaceText(demo, "prose")).toBe("project demo");
   });
 });

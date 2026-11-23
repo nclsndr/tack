@@ -22,7 +22,6 @@ import type {
   DroppedDocsAttachment,
   DroppedPick,
 } from "../../../domain/reconciliation/dropped-intent-schema.ts";
-import type { ChoiceNamespace } from "../../../domain/choices/choice-schema.ts";
 import {
   ProjectRefreshCommandPlanSchema,
   ProjectRefreshCommandResultSchema,
@@ -65,7 +64,7 @@ import {
 } from "./removal-rows.ts";
 import type { Style } from "./style.ts";
 import { cell, flow, paragraph, type Paint } from "./text.ts";
-import { headingLines, plural } from "./view.ts";
+import { headingLines, namespaceText, plural } from "./view.ts";
 
 // Decoding
 
@@ -283,9 +282,6 @@ const adapterDisableView: HumanView = withFailure((envelope, style) =>
 
 // source remove, project remove
 
-const namespaceText = (namespace: ChoiceNamespace) =>
-  namespace._tag === "user" ? "user" : `project ${namespace.projectName}`;
-
 /** Summary phrases for the picks and docs attachments a removal deletes. */
 const intentSummary = (
   picks: ReadonlyArray<DroppedPick>,
@@ -314,7 +310,7 @@ const intentBlocks = (
         ...rowLines(
           picks.map((pick): Row => ({
             cells: [
-              cell(namespaceText(pick.namespace)),
+              cell(namespaceText(pick.namespace, "label")),
               cell(`${pick.address.kind} ${pick.address.name}`),
               cell(pick.decision, style.dim),
             ],
@@ -355,7 +351,7 @@ const profileRows = (plan: SourceRemovalPlan, style: Style): ReadonlyArray<strin
                 application.outcome === "dropped" ? "− drop" : "! keep",
                 application.outcome === "dropped" ? style.red : style.yellow,
               ),
-              cell(namespaceText(application.namespace)),
+              cell(namespaceText(application.namespace, "label")),
               cell(application.profileName),
             ],
             notes: [

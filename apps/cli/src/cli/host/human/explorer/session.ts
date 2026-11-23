@@ -3,7 +3,7 @@ import { Prompt } from "effect/cli";
 import { ReaderCorpus } from "../../../../services/reader-corpus.ts";
 import type { Style } from "../style.ts";
 import { renderExplorerFrame } from "./frame.ts";
-import { namespaceText } from "./edit.ts";
+import { destinationText } from "./edit.ts";
 import type { ExplorerEditor } from "./editor.ts";
 import type { ExplorerDestinations } from "./profile-editor.ts";
 import {
@@ -131,7 +131,7 @@ export const runExplorer = Effect.fnUntraced(function* (
             const lines = yield* activeEditor.preview(pendingChanges(step.state));
             current = withReview(step.state, {
               phase: "preview",
-              title: `Review: ${namespaceText(step.state.edit.namespace)}`,
+              title: `Review: ${destinationText(step.state.edit.namespace)}`,
               lines,
             });
           } else if (
@@ -144,7 +144,7 @@ export const runExplorer = Effect.fnUntraced(function* (
               applied.nextState ??
               withAppliedEntries(step.state, applied.entries, {
                 phase: "result",
-                title: `${step.state.edit.namespace._tag === "profile" ? "Saved" : "Applied"}: ${namespaceText(step.state.edit.namespace)}`,
+                title: `${step.state.edit.namespace._tag === "profile" ? "Saved" : "Applied"}: ${destinationText(step.state.edit.namespace)}`,
                 lines: applied.lines,
               });
           } else if (
