@@ -184,14 +184,45 @@ const labelUnresolved = (sources: NonNullable<Catalog["sources"]>): DependencyLo
     : { reason: "source-unhealthy", unhealthySources: [first, ...remaining] };
 };
 
-const dependencyLookup = (
-  requester: SelectableAddress,
-  dependency: typeof ResourceDependencySchema.Type,
-  entries: ReadonlyMap<string, SelectableCatalogEntry>,
+/** What every dependency lookup of one resolution reads, built once so a lookup never scans it. */
+type DependencyIndex = {
+  /** The entries of each kind and name, across sources, keyed by {@link kindAndName}. */
+  readonly byKindAndName: ReadonlyMap<string, ReadonlyArray<SelectableCatalogEntry>>;
+  /** The identities of the excluded resources. */
+  readonly excluded: ReadonlySet<string>;
+  /** The identities of the quarantined resources. */
+  readonly quarantined: ReadonlySet<string>;
+  readonly sources: NonNullable<Catalog["sources"]>;
+};
+
+const kindAndName = (kind: string, name: string) => `${kind}\u0000${name}`;
+
+/** Groups the entries by kind and name, so a lookup reads only the entries a dependency can name. */
+const indexDependencies = (
+  entries: Iterable<SelectableCatalogEntry>,
   excluded: ReadonlySet<string>,
   quarantined: ReadonlySet<string>,
   sources: NonNullable<Catalog["sources"]>,
+): DependencyIndex => ({
+  byKindAndName: [...entries].reduce((index, entry) => {
+    const key = kindAndName(entry.address.kind, entry.address.name);
+    return index.set(key, [...(index.get(key) ?? []), entry]);
+  }, new Map<string, ReadonlyArray<SelectableCatalogEntry>>()),
+  excluded,
+  quarantined,
+  sources,
+});
+
+/**
+ * Finds the one resource a dependency names, or why it cannot. A dependency that names its source
+ * looks only there, so a resource of the same name elsewhere leaves it missing.
+ */
+const dependencyLookup = (
+  requester: SelectableAddress,
+  dependency: typeof ResourceDependencySchema.Type,
+  { byKindAndName, excluded, quarantined, sources }: DependencyIndex,
 ): DependencyLookup => {
+  const candidates = byKindAndName.get(kindAndName(dependency.kind, dependency.name)) ?? [];
   const ownId = requester.sourceRegistrationId;
   const own = sources.find((source) => source.registration.id === ownId);
   const declared = own?.dependsOn ?? [];
@@ -226,12 +257,7 @@ const dependencyLookup = (
     if (allowedIds.length === 0) return labelUnresolved(sources);
     if (allowedIds.length > 1) return { reason: "ambiguous" };
   } else {
-    const ownMatch = [...entries.values()].find(
-      (entry) =>
-        entry.sourceRegistrationId === ownId &&
-        entry.address.kind === dependency.kind &&
-        entry.address.name === dependency.name,
-    );
+    const ownMatch = candidates.find((entry) => entry.sourceRegistrationId === ownId);
     if (ownMatch !== undefined) allowedIds = [ownMatch.sourceRegistrationId];
     else
       allowedIds = [
@@ -239,27 +265,23 @@ const dependencyLookup = (
         ...declared.flatMap((label) => sourceIds(label)),
       ];
   }
-  const matches = [...entries.values()].filter(
-    (entry) =>
-      allowedIds.includes(entry.sourceRegistrationId) &&
-      entry.address.kind === dependency.kind &&
-      entry.address.name === dependency.name,
-  );
+  const matches = candidates.filter((entry) => allowedIds.includes(entry.sourceRegistrationId));
   if (matches.length > 1) return { reason: "ambiguous" };
   const target = matches[0]?.address;
   if (target === undefined) {
-    if (declared.some((label) => sourceIds(label).length === 0)) return labelUnresolved(sources);
-    if (
-      [...entries.values()].some(
-        (entry) =>
-          !allowedIds.includes(entry.sourceRegistrationId) &&
-          entry.address.kind === dependency.kind &&
-          entry.address.name === dependency.name,
-      )
-    )
-      return { reason: "source-undeclared" };
-    const quarantinedMatch = [...quarantined].some((key) =>
-      allowedIds.some((id) => key === `${id}\u0000${dependency.kind}\u0000${dependency.name}`),
+    if (dependency.source === undefined) {
+      if (declared.some((label) => sourceIds(label).length === 0)) return labelUnresolved(sources);
+      if (candidates.some((entry) => allowedIds.includes(entry.sourceRegistrationId) === false))
+        return { reason: "source-undeclared" };
+    }
+    const quarantinedMatch = allowedIds.some((id) =>
+      quarantined.has(
+        resourceAddressIdentity({
+          kind: dependency.kind,
+          name: dependency.name,
+          sourceRegistrationId: id,
+        }),
+      ),
     );
     return { reason: quarantinedMatch ? "quarantined" : "missing" };
   }
@@ -268,9 +290,7 @@ const dependencyLookup = (
 
 const buildRequiredGraph = (
   entries: ReadonlyMap<string, SelectableCatalogEntry>,
-  excluded: ReadonlySet<string>,
-  quarantined: ReadonlySet<string>,
-  sources: NonNullable<Catalog["sources"]>,
+  index: DependencyIndex,
 ): RequiredGraph => {
   const directBlockers = new Map<string, ReadonlyArray<RequiredDependencyBlocker>>();
   const edges = new Map<string, ReadonlyArray<string>>();
@@ -282,14 +302,7 @@ const buildRequiredGraph = (
     const blockers: Array<RequiredDependencyBlocker> = [];
     const targets: Array<string> = [];
     for (const dependency of required) {
-      const lookup = dependencyLookup(
-        entry.address,
-        dependency,
-        entries,
-        excluded,
-        quarantined,
-        sources,
-      );
+      const lookup = dependencyLookup(entry.address, dependency, index);
       if (lookup.target !== undefined) {
         targets.push(resourceAddressIdentity(lookup.target));
       } else {
@@ -466,7 +479,8 @@ export const resolveDependencyClosure = ({
       item.address === undefined ? [] : [resourceAddressIdentity(item.address)],
     ),
   );
-  const graph = buildRequiredGraph(entries, excluded, quarantinedKeys, sources);
+  const index = indexDependencies(entries.values(), excluded, quarantinedKeys, sources);
+  const graph = buildRequiredGraph(entries, index);
   const { groupKeyByMember, groups } = buildRequiredGroups(entries, graph);
   const selectedGroupKeys = new Set<string>();
   const blockedGroupKeys = new Set<string>();
@@ -543,14 +557,7 @@ export const resolveDependencyClosure = ({
             compareCodeUnits(`${left.kind}\u0000${left.name}`, `${right.kind}\u0000${right.name}`),
           );
         for (const dependency of optionalDependencies) {
-          const lookup = dependencyLookup(
-            member.address,
-            dependency,
-            entries,
-            excluded,
-            quarantinedKeys,
-            sources,
-          );
+          const lookup = dependencyLookup(member.address, dependency, index);
           if (lookup.reason !== undefined) {
             optionalSkips.push(
               lookup.reason === "source-unhealthy"

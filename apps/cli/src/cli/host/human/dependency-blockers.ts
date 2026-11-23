@@ -19,10 +19,10 @@ const sentence = (
   const { dependency, requester } = blocker;
   const requesterSource = style.source(requester.sourceRegistrationId);
   const lift = Match.value(blocker).pipe(
-    Match.tag(
-      "required-missing",
-      () =>
-        "which no registered source provides. Register a source that provides it, or remove the dependency.",
+    Match.tag("required-missing", () =>
+      dependency.source === undefined
+        ? "which no registered source provides. Register a source that provides it, or remove the dependency."
+        : `which ${dependency.source} does not provide. Correct the name or the source of the dependency.`,
     ),
     Match.tag(
       "required-quarantined",

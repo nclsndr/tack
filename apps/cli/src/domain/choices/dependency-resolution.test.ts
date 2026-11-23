@@ -526,6 +526,32 @@ it.each([
   },
 );
 
+it.each([
+  ["its own source", "shared", thirdId, ["helpers"]],
+  ["a declared source", "helpers", sharedId, ["helpers"]],
+  ["its own source while a declared label is absent", "shared", thirdId, ["helpers", "absent"]],
+] as const)(
+  "reports a dependency pinned to %s as missing when only another source provides it",
+  (_case, sourceName, providerId, dependsOn) => {
+    const root = entryIn(
+      "root",
+      sharedId,
+      [{ kind: "skill", name: "target", source: sourceName }],
+      "default",
+    );
+
+    const result = resolve({
+      entries: [root, entryIn("target", providerId)],
+      sources: [sourceAt(sharedId, "shared", { dependsOn }), sourceAt(thirdId, "helpers")],
+    });
+
+    expect(groupFor(result, "root")).toMatchObject({
+      _tag: "blocked",
+      blockers: [{ _tag: "required-missing", requester: root.address }],
+    });
+  },
+);
+
 it("blocks a dependency on a declared source label that no registered source carries", () => {
   const root = entryIn(
     "root",
