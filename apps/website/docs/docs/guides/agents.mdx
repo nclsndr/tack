@@ -134,8 +134,13 @@ up to date.
 
 Apply it with `tack sync --all --apply`. OpenCode takes commands, so it also gets `ship`.
 
-Name several adapters at once, such as `tack adapter enable opencode pi`. To link for one adapter
-only, once, without enabling it, pass it to the sync: `tack sync --adapter claude --user --apply`.
+Name several adapters at once, such as `tack adapter enable opencode pi`. To sync only some of the
+enabled agents, name them: `tack sync --adapter claude --user --apply`.
+
+To try an agent, enable it rather than syncing it with `--adapter` alone. A sync with `--adapter`
+for an agent that is not enabled does link its folders, but no later sync keeps those links up to
+date, and `tack status` reports them as `drifted`. Enable the agent, then disable it with `--apply`
+to remove them.
 
 ## Turn an agent off
 
@@ -147,6 +152,10 @@ project:
 Apply it with `tack adapter disable opencode --apply`. Tack removes only links it made: a skill you
 put in the agent's folder by hand stays. An agent can still see a skill through another agent's
 folder, such as OpenCode reading `.claude/skills`.
+
+The folders Tack created for the agent stay too, empty, such as `~/.config/opencode/skills`. A
+later `tack init` finds `~/.config/opencode` and enables OpenCode again; delete those folders if you
+do not use the agent.
 
 ## Agents without an adapter
 
