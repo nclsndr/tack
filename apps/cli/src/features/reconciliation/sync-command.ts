@@ -51,36 +51,35 @@ const docsPendingOf = (
       );
 
 /** Plans selected resources and attached docs against the supplied state without writing. */
-export const planSync = (
+export const planSync = Effect.fnUntraced(function* (
   stateOptions: StateOptions,
   options: ReconcileCommandOptions & { readonly noDocs: boolean },
   snapshot: CommandSnapshot,
-) =>
-  Effect.gen(function* () {
-    const prepared = yield* prepareReconciliation(stateOptions, options, snapshot);
-    const docs = options.noDocs
-      ? []
-      : yield* Effect.forEach(
-          prepared.projectNames.filter(
-            (projectName) =>
-              prepared.causes.some(
-                (cause) =>
-                  cause.code === "profile-inventory-unresolved" &&
-                  cause.subject.namespace["_tag"] === "project" &&
-                  cause.subject.namespace.projectName === projectName,
-              ) === false,
-          ),
+) {
+  const prepared = yield* prepareReconciliation(stateOptions, options, snapshot);
+  const docs = options.noDocs
+    ? []
+    : yield* Effect.forEach(
+        prepared.projectNames.filter(
           (projectName) =>
-            Effect.flatMap(snapshot.catalog, (catalog) =>
-              planDocsLinks(snapshot.state, catalog, { projectName }),
-            ),
-        );
-    return {
-      ...(options.adapterOverride?.length === 0 ? {} : { resources: prepared }),
-      docs,
-      docsPending: docsPendingOf(snapshot.state.data.links, prepared.projectNames, options.noDocs),
-    } satisfies SyncPlan;
-  });
+            prepared.causes.some(
+              (cause) =>
+                cause.code === "profile-inventory-unresolved" &&
+                cause.subject.namespace["_tag"] === "project" &&
+                cause.subject.namespace.projectName === projectName,
+            ) === false,
+        ),
+        (projectName) =>
+          Effect.flatMap(snapshot.catalog, (catalog) =>
+            planDocsLinks(snapshot.state, catalog, { projectName }),
+          ),
+      );
+  return {
+    ...(options.adapterOverride?.length === 0 ? {} : { resources: prepared }),
+    docs,
+    docsPending: docsPendingOf(snapshot.state.data.links, prepared.projectNames, options.noDocs),
+  } satisfies SyncPlan;
+});
 
 /** Plans selected resources and attached docs from one snapshot, then applies under one writer. */
 export const runSyncCommand = Effect.fn("reconciliation.runSyncCommand")(function* (

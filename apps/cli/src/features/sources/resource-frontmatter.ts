@@ -58,19 +58,21 @@ const candidateError = (code: CatalogCandidateError["code"], message: string, fi
     message,
   });
 
-const parseYamlMapping = (encoded: string, codes: YamlMappingErrorCodes) =>
-  Effect.gen(function* () {
-    const parsed: unknown = yield* Effect.try({
-      catch: (cause) => candidateError(codes.malformed, String(cause)),
-      try: (): unknown => Yaml.parse(encoded),
-    });
-
-    if (Predicate.isObject(parsed) === false) {
-      return yield* candidateError(codes.root, "The YAML document root must be a mapping.");
-    }
-
-    return parsed;
+const parseYamlMapping = Effect.fnUntraced(function* (
+  encoded: string,
+  codes: YamlMappingErrorCodes,
+) {
+  const parsed: unknown = yield* Effect.try({
+    catch: (cause) => candidateError(codes.malformed, String(cause)),
+    try: (): unknown => Yaml.parse(encoded),
   });
+
+  if (Predicate.isObject(parsed) === false) {
+    return yield* candidateError(codes.root, "The YAML document root must be a mapping.");
+  }
+
+  return parsed;
+});
 
 const extractFrontmatter = (encoded: string): Effect.Effect<string, CatalogCandidateError> => {
   const lines = encoded.split(/\r?\n/);

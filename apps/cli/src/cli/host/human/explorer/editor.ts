@@ -243,87 +243,82 @@ export const makeExplorerEditor = (options: {
       Effect.catch((error) => Effect.succeed([`Cannot preview these changes: ${describe(error)}`])),
     );
 
-  const apply: ExplorerEditor["apply"] = (pending) =>
-    Effect.gen(function* () {
-      const lines: Array<string> = [];
-      const failure = yield* run(
-        Effect.gen(function* () {
-          const snapshot = yield* readInvocationSnapshot(stateOptions);
-          const catalog = yield* snapshot.catalog;
-          const style = named(catalog);
-          // Validate the whole batch before its first write, including forged or stale staging.
-          for (const change of pending)
-            if (change.kind === "choice") yield* requireMutableChoice(catalog, change.address);
-          for (const change of pending) {
-            if (change.kind === "choice") {
-              if (change.decision === "unset")
-                yield* withStateCheckpointWriter(stateOptions, (writer) =>
-                  removeSkillChoice(writer, { address: change.address, namespace }),
-                );
-              else {
-                const { decision } = change;
-                yield* withStateCheckpointWriter(stateOptions, (writer) =>
-                  setSkillChoice(writer, { address: change.address, decision, namespace }),
-                );
-              }
-              lines.push(`saved   ${pendingText(change)} ${labelled(change.address, style)}`);
-            } else if (change.kind === "docs" && projectName !== undefined) {
-              const request = {
-                reference: `${change.resource.sourceRegistrationId}:${change.resource.name}`,
-              };
-              yield* change.attached
-                ? attachDocs(stateOptions, { projectName }, request)
-                : detachDocs(stateOptions, { projectName }, request);
-              lines.push(`saved   ${pendingText(change)} docs ${change.resource.name}`);
+  const apply: ExplorerEditor["apply"] = Effect.fnUntraced(function* (pending) {
+    const lines: Array<string> = [];
+    const failure = yield* run(
+      Effect.gen(function* () {
+        const snapshot = yield* readInvocationSnapshot(stateOptions);
+        const catalog = yield* snapshot.catalog;
+        const style = named(catalog);
+        // Validate the whole batch before its first write, including forged or stale staging.
+        for (const change of pending)
+          if (change.kind === "choice") yield* requireMutableChoice(catalog, change.address);
+        for (const change of pending) {
+          if (change.kind === "choice") {
+            if (change.decision === "unset")
+              yield* withStateCheckpointWriter(stateOptions, (writer) =>
+                removeSkillChoice(writer, { address: change.address, namespace }),
+              );
+            else {
+              const { decision } = change;
+              yield* withStateCheckpointWriter(stateOptions, (writer) =>
+                setSkillChoice(writer, { address: change.address, decision, namespace }),
+              );
             }
+            lines.push(`saved   ${pendingText(change)} ${labelled(change.address, style)}`);
+          } else if (change.kind === "docs" && projectName !== undefined) {
+            const request = {
+              reference: `${change.resource.sourceRegistrationId}:${change.resource.name}`,
+            };
+            yield* change.attached
+              ? attachDocs(stateOptions, { projectName }, request)
+              : detachDocs(stateOptions, { projectName }, request);
+            lines.push(`saved   ${pendingText(change)} docs ${change.resource.name}`);
           }
-          const result = yield* runSyncCommand(stateOptions, { ...syncOptions, apply: true });
-          const outcomes = (result.applied?.resources?.units ?? []).flatMap((unit) => unit.actions);
-          const count = (tag: "applied" | "failed" | "skipped") =>
-            outcomes.filter((outcome) => outcome._tag === tag).length;
-          // Foreign destinations are never replaced; say so instead of reporting nothing to do.
-          const left = (result.plan.resources?.plan.units ?? []).reduce(
-            (total, { summary }) => total + summary.conflict + summary.collision + summary.blocked,
-            0,
-          );
-          lines.push(
-            outcomes.length === 0 && left === 0
-              ? "skills  nothing to link or remove"
-              : `skills  ${[
-                  ...(outcomes.length === 0
-                    ? []
-                    : [
-                        `${count("applied")} applied, ${count("failed")} failed, ${count("skipped")} skipped`,
-                      ]),
-                  ...(left === 0 ? [] : [`${plural(left, "conflict")} left unchanged`]),
-                ].join(", ")}`,
-          );
-          for (const outcome of outcomes)
-            if (outcome._tag === "failed")
-              lines.push(`  failed ${outcome.code}: ${outcome.message}`);
-          const docs = (result.applied?.docs ?? []).flatMap((entry) => entry.actions);
-          if (docs.length > 0)
-            lines.push(
-              `docs    ${docs.filter((outcome) => outcome._tag === "applied").length} applied, ${docs.filter((outcome) => outcome._tag !== "applied").length} not applied`,
-            );
-          for (const outcome of docs)
-            if (outcome._tag === "failed" || outcome._tag === "blocked")
-              lines.push(`  ${outcome._tag} ${outcome.message}`);
-          return undefined;
-        }),
-      ).pipe(Effect.catch((error) => Effect.succeed(describe(error))));
-      if (failure !== undefined)
-        lines.push(
-          `stopped ${failure}`,
-          "Changes saved before this point remain; rerun to finish.",
+        }
+        const result = yield* runSyncCommand(stateOptions, { ...syncOptions, apply: true });
+        const outcomes = (result.applied?.resources?.units ?? []).flatMap((unit) => unit.actions);
+        const count = (tag: "applied" | "failed" | "skipped") =>
+          outcomes.filter((outcome) => outcome._tag === tag).length;
+        // Foreign destinations are never replaced; say so instead of reporting nothing to do.
+        const left = (result.plan.resources?.plan.units ?? []).reduce(
+          (total, { summary }) => total + summary.conflict + summary.collision + summary.blocked,
+          0,
         );
-      const entries = yield* run(
-        loadExplorer(stateOptions, options.style, namespace).pipe(
-          Effect.map((loaded) => loaded.entries),
-        ),
-      ).pipe(Effect.catch(() => Effect.succeed(undefined)));
-      return { lines, entries };
-    });
+        lines.push(
+          outcomes.length === 0 && left === 0
+            ? "skills  nothing to link or remove"
+            : `skills  ${[
+                ...(outcomes.length === 0
+                  ? []
+                  : [
+                      `${count("applied")} applied, ${count("failed")} failed, ${count("skipped")} skipped`,
+                    ]),
+                ...(left === 0 ? [] : [`${plural(left, "conflict")} left unchanged`]),
+              ].join(", ")}`,
+        );
+        for (const outcome of outcomes)
+          if (outcome._tag === "failed") lines.push(`  failed ${outcome.code}: ${outcome.message}`);
+        const docs = (result.applied?.docs ?? []).flatMap((entry) => entry.actions);
+        if (docs.length > 0)
+          lines.push(
+            `docs    ${docs.filter((outcome) => outcome._tag === "applied").length} applied, ${docs.filter((outcome) => outcome._tag !== "applied").length} not applied`,
+          );
+        for (const outcome of docs)
+          if (outcome._tag === "failed" || outcome._tag === "blocked")
+            lines.push(`  ${outcome._tag} ${outcome.message}`);
+        return undefined;
+      }),
+    ).pipe(Effect.catch((error) => Effect.succeed(describe(error))));
+    if (failure !== undefined)
+      lines.push(`stopped ${failure}`, "Changes saved before this point remain; rerun to finish.");
+    const entries = yield* run(
+      loadExplorer(stateOptions, options.style, namespace).pipe(
+        Effect.map((loaded) => loaded.entries),
+      ),
+    ).pipe(Effect.catch(() => Effect.succeed(undefined)));
+    return { lines, entries };
+  });
 
   return { preview, apply };
 };

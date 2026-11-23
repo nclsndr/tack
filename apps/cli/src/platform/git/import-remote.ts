@@ -346,28 +346,27 @@ export const makeImportRemote = (
     };
   };
 
-  const listRefs = (target: RemoteTarget) =>
-    Effect.gen(function* () {
-      yield* probe;
-      const succeed = succeeding(target.authenticationHelp);
-      const where = reach(target);
-      const result = yield* run(
-        ["ls-remote", "--symref", "--", where.url, "HEAD", "refs/heads/*", "refs/tags/*"],
-        { protocols: where.protocols },
-      ).pipe(
-        Effect.timeoutOrElse({
-          duration: limits.commandTimeoutMillis,
-          orElse: () =>
-            Effect.fail(
-              new ImportFetchError({
-                code: "import-timeout",
-                message: "The remote did not answer in time.",
-              }),
-            ),
-        }),
-      );
-      return parseRefs(textDecoder.decode(yield* succeed(result)));
-    });
+  const listRefs = Effect.fnUntraced(function* (target: RemoteTarget) {
+    yield* probe;
+    const succeed = succeeding(target.authenticationHelp);
+    const where = reach(target);
+    const result = yield* run(
+      ["ls-remote", "--symref", "--", where.url, "HEAD", "refs/heads/*", "refs/tags/*"],
+      { protocols: where.protocols },
+    ).pipe(
+      Effect.timeoutOrElse({
+        duration: limits.commandTimeoutMillis,
+        orElse: () =>
+          Effect.fail(
+            new ImportFetchError({
+              code: "import-timeout",
+              message: "The remote did not answer in time.",
+            }),
+          ),
+      }),
+    );
+    return parseRefs(textDecoder.decode(yield* succeed(result)));
+  });
 
   const parseTree = (output: Uint8Array): ReadonlyArray<TreeEntry> => {
     const entries: TreeEntry[] = [];
@@ -386,191 +385,185 @@ export const makeImportRemote = (
     return entries;
   };
 
-  const open = (target: RemoteTarget, revision: string) =>
-    Effect.gen(function* () {
-      if (!/^[0-9a-f]{40}$/.test(revision))
-        return yield* new ImportFetchError({
-          code: "import-fetch-failed",
-          message: "A revision must be a full 40-character commit ID.",
-        });
-      yield* probe;
-      const scratch = yield* fileSystem.makeTempDirectoryScoped({ prefix: "tack-import-" }).pipe(
+  const open = Effect.fnUntraced(function* (target: RemoteTarget, revision: string) {
+    if (!/^[0-9a-f]{40}$/.test(revision))
+      return yield* new ImportFetchError({
+        code: "import-fetch-failed",
+        message: "A revision must be a full 40-character commit ID.",
+      });
+    yield* probe;
+    const scratch = yield* fileSystem.makeTempDirectoryScoped({ prefix: "tack-import-" }).pipe(
+      Effect.mapError(
+        () =>
+          new ImportFetchError({
+            code: "import-fetch-failed",
+            message: "Tack could not create a scratch directory.",
+          }),
+      ),
+    );
+    const succeed = succeeding(target.authenticationHelp);
+    const where = reach(target);
+    const git = (args: ReadonlyArray<string>, stdin?: Uint8Array) =>
+      run(args, {
+        cwd: scratch,
+        protocols: where.protocols,
+        ...(stdin === undefined ? {} : { stdin }),
+      });
+    yield* git(["init", "--quiet"]).pipe(Effect.flatMap(succeed));
+    // The highest-precedence attributes: nothing from the repository can pick a filter, an
+    // identity expansion, an encoding or a line-ending conversion for the files git writes.
+    yield* fileSystem
+      .writeFileString(
+        path.join(scratch, ".git", "info", "attributes"),
+        "* !filter !ident !working-tree-encoding -text\n",
+      )
+      .pipe(
         Effect.mapError(
           () =>
             new ImportFetchError({
               code: "import-fetch-failed",
-              message: "Tack could not create a scratch directory.",
+              message: "Tack could not prepare the scratch directory.",
             }),
         ),
       );
-      const succeed = succeeding(target.authenticationHelp);
-      const where = reach(target);
-      const git = (args: ReadonlyArray<string>, stdin?: Uint8Array) =>
-        run(args, {
-          cwd: scratch,
-          protocols: where.protocols,
-          ...(stdin === undefined ? {} : { stdin }),
-        });
-      yield* git(["init", "--quiet"]).pipe(Effect.flatMap(succeed));
-      // The highest-precedence attributes: nothing from the repository can pick a filter, an
-      // identity expansion, an encoding or a line-ending conversion for the files git writes.
-      yield* fileSystem
-        .writeFileString(
-          path.join(scratch, ".git", "info", "attributes"),
-          "* !filter !ident !working-tree-encoding -text\n",
-        )
-        .pipe(
-          Effect.mapError(
-            () =>
-              new ImportFetchError({
-                code: "import-fetch-failed",
-                message: "Tack could not prepare the scratch directory.",
-              }),
+    yield* git(["remote", "add", "origin", where.url]).pipe(Effect.flatMap(succeed));
+    yield* guarded(
+      git([
+        "fetch",
+        "--quiet",
+        "--depth=1",
+        "--filter=blob:none",
+        "--no-tags",
+        "--no-recurse-submodules",
+        "--no-write-fetch-head",
+        "origin",
+        revision,
+      ]).pipe(Effect.flatMap(succeed)),
+      scratch,
+    ).pipe(
+      Effect.timeoutOrElse({
+        duration: limits.commandTimeoutMillis,
+        orElse: () =>
+          Effect.fail(
+            new ImportFetchError({
+              code: "import-timeout",
+              message: "The fetch took longer than the command limit and was stopped.",
+            }),
           ),
-        );
-      yield* git(["remote", "add", "origin", where.url]).pipe(Effect.flatMap(succeed));
-      yield* guarded(
+      }),
+    );
+    const objectLines = (values: ReadonlyArray<string>) =>
+      textEncoder.encode(`${values.join("\n")}\n`);
+    const session: FetchSession = {
+      revision,
+      list: (pathspecs) =>
         git([
-          "fetch",
-          "--quiet",
-          "--depth=1",
-          "--filter=blob:none",
-          "--no-tags",
-          "--no-recurse-submodules",
-          "--no-write-fetch-head",
-          "origin",
+          "ls-tree",
+          "-r",
+          "-t",
+          "-z",
           revision,
-        ]).pipe(Effect.flatMap(succeed)),
-        scratch,
-      ).pipe(
-        Effect.timeoutOrElse({
-          duration: limits.commandTimeoutMillis,
-          orElse: () =>
-            Effect.fail(
-              new ImportFetchError({
-                code: "import-timeout",
-                message: "The fetch took longer than the command limit and was stopped.",
+          ...(pathspecs.length === 0 ? [] : ["--", ...pathspecs]),
+        ]).pipe(
+          Effect.flatMap(succeed),
+          Effect.flatMap((output) => {
+            const entries = parseTree(output);
+            return entries.length > limits.maxTreeEntries
+              ? Effect.fail(
+                  new ImportFetchError({
+                    code: "import-limit-exceeded",
+                    message: `The repository listing has more than ${limits.maxTreeEntries} entries. Scope the location to a folder.`,
+                  }),
+                )
+              : Effect.succeed(entries);
+          }),
+        ),
+      prefetch: (directories) => {
+        if (directories.length === 0) return Effect.void;
+        // An empty directory is the repository root: everything.
+        const escaped = directories.map((directory) =>
+          directory.length === 0
+            ? "/*"
+            : `/${directory.replace(/[\\*?[\]!#\s]/g, (character) => `\\${character}`)}/`,
+        );
+        return guarded(
+          Effect.gen(function* () {
+            yield* git(["config", "core.sparseCheckoutCone", "false"]).pipe(
+              Effect.flatMap(succeed),
+            );
+            yield* git(
+              ["sparse-checkout", "set", "--no-cone", "--stdin"],
+              objectLines(escaped),
+            ).pipe(Effect.flatMap(succeed));
+            yield* git(["checkout", "--quiet", "--detach", revision]).pipe(Effect.flatMap(succeed));
+          }),
+          scratch,
+        );
+      },
+      sizes: (oids) =>
+        oids.length === 0
+          ? Effect.succeed(new Map())
+          : git(["cat-file", "--batch-check=%(objectname) %(objectsize)"], objectLines(oids)).pipe(
+              Effect.flatMap(succeed),
+              Effect.map((output) => {
+                const sizes = new Map<string, number>();
+                for (const line of textDecoder.decode(output).split("\n")) {
+                  const [oid, size] = line.split(" ");
+                  if (oid !== undefined && size !== undefined && /^\d+$/.test(size))
+                    sizes.set(oid, Number(size));
+                }
+                return sizes;
               }),
             ),
-        }),
-      );
-      const objectLines = (values: ReadonlyArray<string>) =>
-        textEncoder.encode(`${values.join("\n")}\n`);
-      const session: FetchSession = {
-        revision,
-        list: (pathspecs) =>
-          git([
-            "ls-tree",
-            "-r",
-            "-t",
-            "-z",
-            revision,
-            ...(pathspecs.length === 0 ? [] : ["--", ...pathspecs]),
-          ]).pipe(
-            Effect.flatMap(succeed),
-            Effect.flatMap((output) => {
-              const entries = parseTree(output);
-              return entries.length > limits.maxTreeEntries
-                ? Effect.fail(
-                    new ImportFetchError({
-                      code: "import-limit-exceeded",
-                      message: `The repository listing has more than ${limits.maxTreeEntries} entries. Scope the location to a folder.`,
-                    }),
-                  )
-                : Effect.succeed(entries);
-            }),
-          ),
-        prefetch: (directories) => {
-          if (directories.length === 0) return Effect.void;
-          // An empty directory is the repository root: everything.
-          const escaped = directories.map((directory) =>
-            directory.length === 0
-              ? "/*"
-              : `/${directory.replace(/[\\*?[\]!#\s]/g, (character) => `\\${character}`)}/`,
-          );
-          return guarded(
-            Effect.gen(function* () {
-              yield* git(["config", "core.sparseCheckoutCone", "false"]).pipe(
-                Effect.flatMap(succeed),
-              );
-              yield* git(
-                ["sparse-checkout", "set", "--no-cone", "--stdin"],
-                objectLines(escaped),
-              ).pipe(Effect.flatMap(succeed));
-              yield* git(["checkout", "--quiet", "--detach", revision]).pipe(
-                Effect.flatMap(succeed),
-              );
-            }),
-            scratch,
-          );
-        },
-        sizes: (oids) =>
-          oids.length === 0
-            ? Effect.succeed(new Map())
-            : git(
-                ["cat-file", "--batch-check=%(objectname) %(objectsize)"],
-                objectLines(oids),
-              ).pipe(
-                Effect.flatMap(succeed),
-                Effect.map((output) => {
-                  const sizes = new Map<string, number>();
-                  for (const line of textDecoder.decode(output).split("\n")) {
-                    const [oid, size] = line.split(" ");
-                    if (oid !== undefined && size !== undefined && /^\d+$/.test(size))
-                      sizes.set(oid, Number(size));
-                  }
-                  return sizes;
-                }),
-              ),
-        read: (oids) =>
-          oids.length === 0
-            ? Effect.succeed(new Map())
-            : git(["cat-file", "--batch"], objectLines(oids)).pipe(
-                Effect.flatMap(succeed),
-                Effect.flatMap((output) => {
-                  const contents = new Map<string, Uint8Array>();
-                  let offset = 0;
-                  while (offset < output.length) {
-                    const newline = output.indexOf(10, offset);
-                    if (newline === -1) break;
-                    const header = textDecoder.decode(output.subarray(offset, newline)).split(" ");
-                    const size = Number(header[2]);
-                    if (header[1] !== "blob" || !Number.isInteger(size))
-                      return Effect.fail(
-                        new ImportFetchError({
-                          code: "import-fetch-failed",
-                          message: "Git returned an unexpected object.",
-                        }),
-                      );
-                    contents.set(header[0] ?? "", output.slice(newline + 1, newline + 1 + size));
-                    offset = newline + 1 + size + 1;
-                  }
-                  return Effect.succeed(contents);
-                }),
-              ),
-        treeIds: (paths) =>
-          paths.length === 0
-            ? Effect.succeed(new Map())
-            : git(
-                ["cat-file", "--batch-check=%(objectname) %(objecttype)"],
-                objectLines(paths.map((entry) => `${revision}:${entry}`)),
-              ).pipe(
-                Effect.flatMap(succeed),
-                Effect.map((output) => {
-                  const ids = new Map<string, string>();
-                  const lines = textDecoder.decode(output).split("\n");
-                  for (const [index, line] of lines.entries()) {
-                    const [oid, type] = line.split(" ");
-                    const entry = paths[index];
-                    if (entry !== undefined && type === "tree" && oid !== undefined)
-                      ids.set(entry, oid);
-                  }
-                  return ids;
-                }),
-              ),
-      };
-      return session;
-    });
+      read: (oids) =>
+        oids.length === 0
+          ? Effect.succeed(new Map())
+          : git(["cat-file", "--batch"], objectLines(oids)).pipe(
+              Effect.flatMap(succeed),
+              Effect.flatMap((output) => {
+                const contents = new Map<string, Uint8Array>();
+                let offset = 0;
+                while (offset < output.length) {
+                  const newline = output.indexOf(10, offset);
+                  if (newline === -1) break;
+                  const header = textDecoder.decode(output.subarray(offset, newline)).split(" ");
+                  const size = Number(header[2]);
+                  if (header[1] !== "blob" || !Number.isInteger(size))
+                    return Effect.fail(
+                      new ImportFetchError({
+                        code: "import-fetch-failed",
+                        message: "Git returned an unexpected object.",
+                      }),
+                    );
+                  contents.set(header[0] ?? "", output.slice(newline + 1, newline + 1 + size));
+                  offset = newline + 1 + size + 1;
+                }
+                return Effect.succeed(contents);
+              }),
+            ),
+      treeIds: (paths) =>
+        paths.length === 0
+          ? Effect.succeed(new Map())
+          : git(
+              ["cat-file", "--batch-check=%(objectname) %(objecttype)"],
+              objectLines(paths.map((entry) => `${revision}:${entry}`)),
+            ).pipe(
+              Effect.flatMap(succeed),
+              Effect.map((output) => {
+                const ids = new Map<string, string>();
+                const lines = textDecoder.decode(output).split("\n");
+                for (const [index, line] of lines.entries()) {
+                  const [oid, type] = line.split(" ");
+                  const entry = paths[index];
+                  if (entry !== undefined && type === "tree" && oid !== undefined)
+                    ids.set(entry, oid);
+                }
+                return ids;
+              }),
+            ),
+    };
+    return session;
+  });
 
   return { limits, probe, listRefs, open };
 };

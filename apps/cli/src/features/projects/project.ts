@@ -146,20 +146,19 @@ const directoryChecks: Record<DirectoryKind, DirectoryCheck> = {
 const canonicalExistingDirectory = (candidate: string, kind: DirectoryKind) =>
   observeDirectory(candidate).pipe(Effect.flatMap(directoryChecks[kind]));
 
-const validateProjectName = (name: string) =>
-  Effect.gen(function* () {
-    const decoded = yield* Schema.decodeUnknownEffect(ProjectNameSchema)(name).pipe(
-      Effect.mapError(
-        () =>
-          new ProjectValidationError({
-            code: "project-name-invalid",
-            message: "Project names must be safe identifier labels.",
-          }),
-      ),
-    );
+const validateProjectName = Effect.fnUntraced(function* (name: string) {
+  const decoded = yield* Schema.decodeUnknownEffect(ProjectNameSchema)(name).pipe(
+    Effect.mapError(
+      () =>
+        new ProjectValidationError({
+          code: "project-name-invalid",
+          message: "Project names must be safe identifier labels.",
+        }),
+    ),
+  );
 
-    return decoded;
-  });
+  return decoded;
+});
 
 /** The input needed to register one project from a Git worktree. */
 export type RegisterProjectOptions = {
