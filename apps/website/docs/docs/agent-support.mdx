@@ -16,16 +16,31 @@ Tack fills it with `tack sync --user`. A dash means the agent does not read that
 
 ## Agents with an adapter
 
-| Agent              | Adapter    | Skills, project    | Skills, user                | Commands, project       | Commands, user                | `tack init` finds it in           |
-| ------------------ | ---------- | ------------------ | --------------------------- | ----------------------- | ----------------------------- | --------------------------------- |
-| Claude Code        | `claude`   | `.claude/skills`   | `~/.claude/skills`          | -                       | -                             | `~/.claude`                       |
-| Cline              | `cline`    | `.cline/skills`    | `~/.cline/skills`           | `.clinerules/workflows` | `~/Documents/Cline/Workflows` | `~/.cline` or `~/Documents/Cline` |
-| Codex              | `codex`    | `.agents/skills`   | `~/.agents/skills`          | -                       | -                             | `~/.codex` or `~/.agents`         |
-| Cursor             | `cursor`   | `.cursor/skills`   | `~/.cursor/skills`          | `.cursor/commands`      | `~/.cursor/commands`          | `~/.cursor`                       |
-| Gemini CLI         | `gemini`   | `.gemini/skills`   | `~/.gemini/skills`          | -                       | -                             | `~/.gemini`                       |
-| GitHub Copilot CLI | `copilot`  | `.github/skills`   | `~/.copilot/skills`         | -                       | -                             | `~/.copilot`                      |
-| OpenCode           | `opencode` | `.opencode/skills` | `~/.config/opencode/skills` | `.opencode/commands`    | `~/.config/opencode/commands` | `~/.config/opencode`              |
-| Pi                 | `pi`       | `.pi/skills`       | `~/.pi/agent/skills`        | `.pi/prompts`           | `~/.pi/agent/prompts`         | `~/.pi`                           |
+Every adapter links skills, into a project folder and a user folder:
+
+| Agent              | Adapter    | Skills, project    | Skills, user                |
+| ------------------ | ---------- | ------------------ | --------------------------- |
+| Claude Code        | `claude`   | `.claude/skills`   | `~/.claude/skills`          |
+| Cline              | `cline`    | `.cline/skills`    | `~/.cline/skills`           |
+| Codex              | `codex`    | `.agents/skills`   | `~/.agents/skills`          |
+| Cursor             | `cursor`   | `.cursor/skills`   | `~/.cursor/skills`          |
+| Gemini CLI         | `gemini`   | `.gemini/skills`   | `~/.gemini/skills`          |
+| GitHub Copilot CLI | `copilot`  | `.github/skills`   | `~/.copilot/skills`         |
+| OpenCode           | `opencode` | `.opencode/skills` | `~/.config/opencode/skills` |
+| Pi                 | `pi`       | `.pi/skills`       | `~/.pi/agent/skills`        |
+
+Four adapters also link commands, as the same Markdown file:
+
+| Agent    | Adapter    | Commands, project       | Commands, user                | The agent calls them |
+| -------- | ---------- | ----------------------- | ----------------------------- | -------------------- |
+| Cline    | `cline`    | `.clinerules/workflows` | `~/Documents/Cline/Workflows` | workflows            |
+| Cursor   | `cursor`   | `.cursor/commands`      | `~/.cursor/commands`          | commands             |
+| OpenCode | `opencode` | `.opencode/commands`    | `~/.config/opencode/commands` | commands             |
+| Pi       | `pi`       | `.pi/prompts`           | `~/.pi/agent/prompts`         | prompt templates     |
+
+`tack init` enables an adapter when the agent's home folder exists: `~/.claude`, `~/.cline` or
+`~/Documents/Cline`, `~/.codex` or `~/.agents`, `~/.cursor`, `~/.gemini`, `~/.copilot`,
+`~/.config/opencode` or `~/.pi`. `tack adapter enable` adds one at any time.
 
 What to know about each:
 
@@ -47,32 +62,32 @@ What to know about each:
 
 ## Agents reached through a shared folder
 
-These agents have no adapter. Their own docs or source say they read skills from `.agents/skills`
-or `.claude/skills`, so enable the adapter that fills that folder: `tack adapter enable codex` or
-`tack adapter enable claude`. They get skills only; commands reach an agent only through its own
-adapter.
+These agents have no adapter. Their own docs or source say they read skills from `.agents/skills`,
+which the Codex adapter fills, or `.claude/skills`, which the Claude Code adapter fills: enable
+that adapter with `tack adapter enable codex` or `tack adapter enable claude`. They get skills
+only; commands reach an agent only through its own adapter.
 
-| Agent                                                                                                                | Through  | Skills, project  | Skills, user       | Notes                                                                |
-| -------------------------------------------------------------------------------------------------------------------- | -------- | ---------------- | ------------------ | -------------------------------------------------------------------- |
-| [Amp](https://ampcode.com/docs/markdown/customize/skills)                                                            | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user, also `.claude/skills`                              |
-| [Antigravity](https://antigravity.google/docs/skills.md)                                                             | `codex`  | `.agents/skills` | -                  | Project only                                                         |
-| [Auggie](https://docs.augmentcode.com/cli/skills.md)                                                                 | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user, also `.claude/skills`                              |
-| [Continue](https://github.com/continuedev/continue/blob/main/extensions/cli/src/util/loadMarkdownSkills.ts)          | `claude` | `.claude/skills` | -                  | Project only                                                         |
-| [Crush](https://github.com/charmbracelet/crush#agent-skills)                                                         | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user, also `.claude/skills`                              |
-| [Devin CLI and Devin Desktop (Windsurf)](https://docs.devin.ai/cli/extensibility/skills/overview.md)                 | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user                                                     |
-| [Factory Droid](https://docs.factory.com/harness/skills.md)                                                          | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user                                                     |
-| [Goose](https://github.com/aaif-goose/goose/blob/main/documentation/docs/guides/context-engineering/using-skills.md) | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user, also `.claude/skills`                              |
-| [Grok Build](https://docs.x.ai/build/features/skills-plugins-marketplaces)                                           | `codex`  | -                | `~/.agents/skills` | User only                                                            |
-| [Hermes Agent](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/skills.md)    | `codex`  | `.agents/skills` | -                  | Project only, after `hermes skills trust`                            |
-| [Junie](https://junie.jetbrains.com/docs/agent-skills.html)                                                          | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user, project in a trusted project                       |
-| [Kilo Code](https://github.com/Kilo-Org/kilocode/blob/main/packages/kilo-docs/pages/customize/skills.md)             | `codex`  | -                | `~/.agents/skills` | User only, Kilo refuses project links that point outside the project |
-| [Letta Code](https://github.com/letta-ai/letta-code/blob/main/src/agent/skills.ts)                                   | `codex`  | `.agents/skills` | -                  | Project only                                                         |
-| [Mistral Vibe](https://docs.mistral.ai/vibe/code/cli/skills)                                                         | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user, project in a trusted folder                        |
-| [OpenClaw](https://github.com/openclaw/openclaw/blob/main/docs/tools/skills.md)                                      | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user                                                     |
-| [OpenHands](https://docs.openhands.dev/overview/skills.md)                                                           | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user                                                     |
-| [Qwen Code](https://github.com/QwenLM/qwen-code/blob/main/docs/users/features/skills.md)                             | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user                                                     |
-| [Warp](https://docs.warp.dev/agents/capabilities/skills/)                                                            | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user, also `.claude/skills`                              |
-| [Zed](https://zed.dev/docs/ai/skills.md)                                                                             | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user, project in a trusted worktree                      |
+| Agent                                                                                                                | Skills, project  | Skills, user       | Notes                                                                |
+| -------------------------------------------------------------------------------------------------------------------- | ---------------- | ------------------ | -------------------------------------------------------------------- |
+| [Amp](https://ampcode.com/docs/markdown/customize/skills)                                                            | `.agents/skills` | `~/.agents/skills` | Project and user, also `.claude/skills`                              |
+| [Antigravity](https://antigravity.google/docs/skills.md)                                                             | `.agents/skills` | -                  | Project only                                                         |
+| [Auggie](https://docs.augmentcode.com/cli/skills.md)                                                                 | `.agents/skills` | `~/.agents/skills` | Project and user, also `.claude/skills`                              |
+| [Continue](https://github.com/continuedev/continue/blob/main/extensions/cli/src/util/loadMarkdownSkills.ts)          | `.claude/skills` | -                  | Project only                                                         |
+| [Crush](https://github.com/charmbracelet/crush#agent-skills)                                                         | `.agents/skills` | `~/.agents/skills` | Project and user, also `.claude/skills`                              |
+| [Devin CLI and Devin Desktop (Windsurf)](https://docs.devin.ai/cli/extensibility/skills/overview.md)                 | `.agents/skills` | `~/.agents/skills` | Project and user                                                     |
+| [Factory Droid](https://docs.factory.com/harness/skills.md)                                                          | `.agents/skills` | `~/.agents/skills` | Project and user                                                     |
+| [Goose](https://github.com/aaif-goose/goose/blob/main/documentation/docs/guides/context-engineering/using-skills.md) | `.agents/skills` | `~/.agents/skills` | Project and user, also `.claude/skills`                              |
+| [Grok Build](https://docs.x.ai/build/features/skills-plugins-marketplaces)                                           | -                | `~/.agents/skills` | User only                                                            |
+| [Hermes Agent](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/skills.md)    | `.agents/skills` | -                  | Project only, after `hermes skills trust`                            |
+| [Junie](https://junie.jetbrains.com/docs/agent-skills.html)                                                          | `.agents/skills` | `~/.agents/skills` | Project and user, project in a trusted project                       |
+| [Kilo Code](https://github.com/Kilo-Org/kilocode/blob/main/packages/kilo-docs/pages/customize/skills.md)             | -                | `~/.agents/skills` | User only, Kilo refuses project links that point outside the project |
+| [Letta Code](https://github.com/letta-ai/letta-code/blob/main/src/agent/skills.ts)                                   | `.agents/skills` | -                  | Project only                                                         |
+| [Mistral Vibe](https://docs.mistral.ai/vibe/code/cli/skills)                                                         | `.agents/skills` | `~/.agents/skills` | Project and user, project in a trusted folder                        |
+| [OpenClaw](https://github.com/openclaw/openclaw/blob/main/docs/tools/skills.md)                                      | `.agents/skills` | `~/.agents/skills` | Project and user                                                     |
+| [OpenHands](https://docs.openhands.dev/overview/skills.md)                                                           | `.agents/skills` | `~/.agents/skills` | Project and user                                                     |
+| [Qwen Code](https://github.com/QwenLM/qwen-code/blob/main/docs/users/features/skills.md)                             | `.agents/skills` | `~/.agents/skills` | Project and user                                                     |
+| [Warp](https://docs.warp.dev/agents/capabilities/skills/)                                                            | `.agents/skills` | `~/.agents/skills` | Project and user, also `.claude/skills`                              |
+| [Zed](https://zed.dev/docs/ai/skills.md)                                                                             | `.agents/skills` | `~/.agents/skills` | Project and user, project in a trusted worktree                      |
 
 A "Project only" agent sees your skills only through a project's links, so a skill you pick with
 `--user` does not reach it. A "User only" agent sees only the links in your home, so pick a skill

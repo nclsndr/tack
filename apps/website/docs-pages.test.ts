@@ -142,13 +142,17 @@ describe("features reference", () => {
 
 describe("agent support", () => {
   const lines = pageText("/docs/agent-support").split("\n");
-  /** The table row whose first cell names `agent`, as its trimmed cells. */
-  const row = (agent: string) =>
+  /** The table rows whose first cell names `agent`, as their trimmed cells. */
+  const rows = (agent: string) =>
     lines
-      .find((line) => line.startsWith(`| ${agent} `) || line.startsWith(`| [${agent}]`))
-      ?.split("|")
-      .slice(1, -1)
-      .map((cell) => cell.trim());
+      .filter((line) => line.startsWith(`| ${agent} `) || line.startsWith(`| [${agent}]`))
+      .map((line) =>
+        line
+          .split("|")
+          .slice(1, -1)
+          .map((cell) => cell.trim()),
+      );
+  const row = (agent: string) => rows(agent)[0];
   const names: Record<string, string> = {
     claude: "Claude Code",
     cline: "Cline",
@@ -162,29 +166,29 @@ describe("agent support", () => {
   const code = (path: string) => `\`${path}\``;
 
   it.each(agentAdapterDescriptors)("lists the $id adapter's folders", (adapter) => {
-    const cells = row(names[adapter.id] ?? adapter.id);
-    const commandFolders =
-      "projectCommandDirectory" in adapter && adapter.projectCommandDirectory !== undefined
-        ? [
-            code(adapter.projectCommandDirectory.join("/")),
-            code(`~/${adapter.userCommandDirectory?.join("/")}`),
-          ]
-        : ["-", "-"];
-    expect(cells?.slice(1, 6)).toEqual([
+    const [skills, commandRow] = rows(names[adapter.id] ?? adapter.id);
+    expect(skills?.slice(1, 4)).toEqual([
       code(adapter.id),
       code(adapter.projectSkillDirectory.join("/")),
       code(`~/${adapter.userSkillDirectory.join("/")}`),
-      ...commandFolders,
     ]);
+    if ("projectCommandDirectory" in adapter && adapter.projectCommandDirectory !== undefined) {
+      expect(commandRow?.slice(1, 4)).toEqual([
+        code(adapter.id),
+        code(adapter.projectCommandDirectory.join("/")),
+        code(`~/${adapter.userCommandDirectory?.join("/")}`),
+      ]);
+    } else {
+      expect(commandRow).toBeUndefined();
+    }
   });
 
   it.each(sharedAgents.rows)("lists $agent with its folder and scope", (shared) => {
     const cells = row(shared.agent);
     expect(cells?.[0]).toBe(`[${shared.agent}](${shared.href})`);
-    expect(cells?.[1]).toBe(code(shared.folder === ".agents/skills" ? "codex" : "claude"));
-    expect(cells?.[2]).toBe(shared.scope === "User only" ? "-" : code(shared.folder));
-    expect(cells?.[3]).toBe(shared.scope === "Project only" ? "-" : code(`~/${shared.folder}`));
-    expect(cells?.[4]).toBe(`${shared.scope}${"note" in shared ? `, ${shared.note}` : ""}`);
+    expect(cells?.[1]).toBe(shared.scope === "User only" ? "-" : code(shared.folder));
+    expect(cells?.[2]).toBe(shared.scope === "Project only" ? "-" : code(`~/${shared.folder}`));
+    expect(cells?.[3]).toBe(`${shared.scope}${"note" in shared ? `, ${shared.note}` : ""}`);
   });
 });
 
