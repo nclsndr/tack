@@ -320,8 +320,9 @@ or Markdown docs. A source includes declaration/resource validation, the depende
 skills and commands, its published profiles and its docs figures. An edge that names no single
 resource is reported at its line: `dependency-missing`, `dependency-quarantined`,
 `dependency-source-undeclared` and `dependency-ambiguous` are errors, or warnings on an optional
-edge. An edge to a declared source missing from the check is the warning
-`dependency-source-unchecked`, and to an unreadable one `dependency-source-unhealthy`.
+edge. An edge that a declared source missing from the check could resolve is the warning
+`dependency-source-unchecked`, which names that source, and one an unreadable source could
+resolve is `dependency-source-unhealthy`.
 Source/profile linkage and dependency edges use only source folders included in this invocation,
 plus release-owned built-ins. Pass companion sources together; check never reads operator state,
 fetches a source, initializes registrations or executes authored code. Direct profile files need
