@@ -411,10 +411,13 @@ const sourceRemoveView: HumanView = withFailure((envelope, style) =>
             [
               ...cleanupSummary(plan.removal, removal),
               ...intentSummary(plan.picks, plan.docsAttachments, applied !== undefined),
-              applied === undefined ? "registration to remove" : "registration removed",
+              applied === undefined
+                ? "1 source registration to remove"
+                : "1 source registration removed",
             ],
             "Nothing to remove.",
             style,
+            "Add --apply to remove the source.",
           ),
           labelLines("Source", `${name}  ${style.path(plan.source.canonicalPath)}`, style),
           ...cleanupBlocks(plan.removal, removal, style, spansTargets([plan.removal])),
@@ -446,7 +449,7 @@ const projectRemoveView: HumanView = withFailure((envelope, style) =>
             [
               ...cleanupSummary(plan.removal, removal),
               ...intentSummary(plan.picks, plan.docsAttachments, applied !== undefined),
-              // A finalized removal already says "project registration removed".
+              // A finalized removal already says "1 project registration removed".
               ...(removal === undefined || removal.finalizedProject
                 ? []
                 : ["project kept until its cleanup settles"]),
