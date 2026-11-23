@@ -54,6 +54,28 @@ const placeScaffold = Effect.fnUntraced(function* (
   };
 });
 
+/** Each error an entry of a planned declaration finds, as a diagnostic naming its file. */
+const scaffoldProblems = (plan: Parameters<typeof scaffoldPlanJson>[0]) =>
+  plan.entries.flatMap((entry) =>
+    entry.findings.flatMap((finding) =>
+      finding.severity === "error"
+        ? [
+            {
+              code: finding.code,
+              message: finding.message,
+              severity: "error" as const,
+              // The file always, and the field when the finding names one.
+              details: Object.fromEntries(
+                Object.entries({ file: finding.file, field: finding.field }).filter(
+                  (detail): detail is [string, string] => detail[1] !== undefined,
+                ),
+              ),
+            },
+          ]
+        : [],
+    ),
+  );
+
 /**
  * What a preview tells about the state its `--apply` initializes, as plain registration would: the
  * default state directory and the agents found in the home. A preview writes neither.
@@ -95,22 +117,29 @@ export const addSource = Effect.fnUntraced(function* (
   const refusal = plan === undefined ? undefined : scaffoldLoadsNothing(plan);
   // Applying initializes absent default state, as plain registration does.
   const initializes = placed?.stateExists === false && stateAutoInitializes(stateOptions);
-  if (plan !== undefined && invocation.apply !== true)
+  if (plan !== undefined && invocation.apply !== true) {
+    // A resource the declaration finds but cannot read is a problem of the preview, not a success.
+    const problems = scaffoldProblems(plan);
     return refusal === undefined
       ? {
-          classification: "success" as const,
-          diagnostics: initializes ? [yield* plannedInitialization(stateOptions)] : [],
+          classification: problems.length === 0 ? ("success" as const) : ("partial" as const),
+          diagnostics: [
+            ...problems,
+            ...(initializes ? [yield* plannedInitialization(stateOptions)] : []),
+          ],
           next: [applyCommand(plan)],
           plan: toJson(scaffoldPlanJson(plan)),
         }
       : {
           classification: "partial" as const,
           diagnostics: [
+            ...problems,
             { code: refusal.code, message: refusal.message, severity: "warning" as const },
           ],
           next: [],
           plan: toJson(scaffoldPlanJson(plan)),
         };
+  }
   if (refusal !== undefined) return yield* refusal;
   if (plan !== undefined) {
     // State that cannot be read refuses before the tack.yaml is written; absent default state is

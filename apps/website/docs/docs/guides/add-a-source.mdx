@@ -117,10 +117,9 @@ changes nothing:
   output={previewOutput}
 />
 
-Check that every skill, command and docs folder you expect is listed, with no `error:` line under
-it: a file that does not parse is left out, and the preview can still read `✓ success`. Then apply
-it: Tack writes the `tack.yaml` and
-registers the source.
+Check that every skill, command and docs folder you expect is listed. A file that does not parse is
+left out: the preview then reads `! partial` and lists the file under `Problems`. Then apply it:
+Tack writes the `tack.yaml` and registers the source.
 
 <Terminal
   commands={[

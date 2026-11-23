@@ -437,6 +437,40 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
       }),
   );
   test.effect(
+    "source add previews a declared resource that cannot be read as partial, under Problems",
+    () =>
+      Effect.gen(function* () {
+        const { root, state, path, write } = yield* scratch;
+        yield* write(
+          "source/skills/review/SKILL.md",
+          "---\nname: review\ndescription: Review a change.\n---\nReview.\n",
+        );
+        // An unquoted colon in a description is a common hand-written frontmatter mistake.
+        yield* write("source/commands/ship.md", "---\ndescription: Ship it: now\n---\nShip.\n");
+        const directory = path.join(root, "source");
+        const flags = ["--skills", "skills", "--commands", "commands"];
+        yield* run(root, state, ["state", "init"]);
+
+        const preview = yield* json(root, state, ["source", "add", directory, ...flags]);
+        expect(exitCodeForEnvelope(preview)).toBe(1);
+        expect(preview).toMatchObject({
+          classification: "partial",
+          diagnostics: [
+            {
+              code: "command-frontmatter-invalid",
+              severity: "error",
+              details: { file: path.join(directory, "commands", "ship.md") },
+            },
+          ],
+          next: [`tack source add ${directory} ${flags.join(" ")} --apply`],
+        });
+        const text = yield* run(root, state, ["source", "add", directory, ...flags]);
+        // Listed once, under Problems, not again beside its entry.
+        expect(text).toContain("Problems");
+        expect(text.split("command-frontmatter-invalid").length).toBe(2);
+      }),
+  );
+  test.effect(
     "source add previews a declaration that would load nothing as partial and refuses to apply it",
     () =>
       Effect.gen(function* () {
@@ -455,6 +489,8 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
         const preview = yield* json(root, state, ["source", "add", directory, ...flags]);
         expect(exitCodeForEnvelope(preview)).toBe(1);
         expect(preview.diagnostics).toMatchObject([
+          { code: "declaration-path-wrong-type", severity: "error" },
+          { code: "declaration-path-wrong-type", severity: "error" },
           { code: "declaration-loads-nothing", severity: "warning" },
         ]);
         expect(preview.next).toEqual([]);

@@ -218,8 +218,15 @@ describe("source add", () => {
       const brain = `${testHome}/brain`;
       const envelope = {
         ...createPublicEnvelope("source add", {
-          classification: "success",
-          diagnostics: [],
+          classification: "partial",
+          diagnostics: [
+            {
+              code: "skill-name-mismatch",
+              message: "The skill folder name must equal name.",
+              severity: "error",
+              details: { file: `${brain}/personal/skills/lint/SKILL.md`, field: "skills[0]" },
+            },
+          ],
           plan: {
             kind: "source-scaffold",
             sourcePath: brain,
@@ -257,7 +264,7 @@ describe("source add", () => {
       } satisfies PublicEnvelope;
       const output = view(envelope, 120);
       expect(lines(output)).toEqual([
-        "tack source add · ✓ success",
+        "tack source add · ! partial",
         "",
         "Would create ~/brain/tack.yaml and register source brain.",
         "No files or state changed.",
@@ -271,13 +278,15 @@ describe("source add", () => {
         "",
         "skills personal/skills · 4 skills",
         "  code-review, commit-message, deploy, release-notes",
-        "  error: skill-name-mismatch: The skill folder name must equal name.",
-        "    ~/brain/personal/skills/lint/SKILL.md · skills[0]",
         "",
         "docs alpha/documents · 1 docs",
         "  documents",
         "",
         "commands prompts · 0 commands",
+        "",
+        "Problems",
+        "  ✗ The skill folder name must equal name.",
+        "    error skill-name-mismatch · file ~/brain/personal/skills/lint/SKILL.md · field skills[0]",
         "",
         "Next",
         `  tack source add ${brain} --skills personal/skills --docs alpha/documents --apply`,

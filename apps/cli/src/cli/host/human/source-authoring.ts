@@ -59,11 +59,14 @@ export const renderSourceScaffold: HumanView = (envelope, style) => {
       ...(entry.resources.length === 0
         ? []
         : paragraph(entry.resources.join(", "), { width: style.width, indent: 2 })),
-      ...entry.findings.flatMap((finding) =>
-        findingLines(finding, style).flatMap((line, index) =>
-          index === 0 ? wrap(line, 2) : wrap(line.trimStart(), 4),
+      // An error is listed under Problems; a warning stays beside its entry.
+      ...entry.findings
+        .filter((finding) => finding.severity === "warning")
+        .flatMap((finding) =>
+          findingLines(finding, style).flatMap((line, index) =>
+            index === 0 ? wrap(line, 2) : wrap(line.trimStart(), 4),
+          ),
         ),
-      ),
     ]),
     diagnosticLines(envelope.diagnostics, style),
     hintLines(envelope.next, style),
