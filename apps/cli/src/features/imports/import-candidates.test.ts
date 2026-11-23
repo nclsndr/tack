@@ -8,7 +8,7 @@ import { defaultImportLimits, ImportRemote } from "../../services/import-remote.
 import { makeImportRemote } from "../../platform/git/import-remote.ts";
 import { previewImport } from "./import.ts";
 
-const declaration = declare("skills: [{ path: skills }]");
+const declaration = declare("personal-brain", "skills: [{ path: skills }]");
 const files = { "skills/a/SKILL.md": skillText("a") };
 
 it.layer(LiveTestLayer)("import candidates", (test) => {

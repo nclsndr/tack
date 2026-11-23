@@ -15,7 +15,7 @@ const commit = {
     "skills/docx/SKILL.md": skillText("docx"),
   },
 } as const;
-const declaration = declare("skills: [{ path: skills }]");
+const declaration = declare("personal-brain", "skills: [{ path: skills }]");
 const files = { "skills/mine/SKILL.md": skillText("mine") };
 
 const add = (

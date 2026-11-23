@@ -9,8 +9,8 @@ import { enableAdapters } from "../reconciliation/agent.ts";
 import { runStatus } from "./status.ts";
 
 /**
- * A home whose `.claude/skills` is an alias of `.agents/skills`, and a source named `My Notes`,
- * which no source label can spell, with the user-default skill `valid`.
+ * A home whose `.claude/skills` is an alias of `.agents/skills`, and a source in the folder `My Notes`,
+ * which no source label can spell, declared as `notes`, with the user-default skill `valid`.
  */
 const world = Effect.gen(function* () {
   const fs = yield* FileSystem.FileSystem;
@@ -25,7 +25,7 @@ const world = Effect.gen(function* () {
   yield* fs.makeDirectory(path.join(source, "skills", "valid"), { recursive: true });
   yield* fs.writeFileString(
     path.join(source, "tack.yaml"),
-    "version: 1\nskills:\n  - path: skills\n",
+    "version: 1\nname: notes\nskills:\n  - path: skills\n",
   );
   yield* fs.writeFileString(
     path.join(source, "skills", "valid", "SKILL.md"),
@@ -68,12 +68,15 @@ it.layer(LiveTestLayer)("status observation", (test) => {
         ["codex", "expected-absent", "writer"],
         ["claude", "expected-absent", "shared"],
       ]);
-      // A source no label can name reports no label.
+      // The declared name labels the source, whatever its folder is called.
       const registered = before.sources.find(({ registration }) =>
         registration.canonicalPath.endsWith("My Notes"),
       );
-      expect(registered).toMatchObject({ status: "healthy", labelOrigin: "none" });
-      expect(registered).not.toHaveProperty("label");
+      expect(registered).toMatchObject({
+        status: "healthy",
+        label: "notes",
+        labelOrigin: "declared",
+      });
 
       const physical = path.join(home, ".agents", "skills", "valid");
       yield* fs.writeFileString(physical, "operator-owned\n");
@@ -173,13 +176,13 @@ it.layer(LiveTestLayer)("status observation", (test) => {
       const { fs, path, home, source, options } = yield* world;
       yield* fs.writeFileString(
         path.join(source, "tack.yaml"),
-        "version: 1\nimports: []\nskills:\n  - path: skills\n",
+        "version: 1\nname: notes\nimports: []\nskills:\n  - path: skills\n",
       );
       const report = yield* runStatus(options, { cwd: home, selector: { _tag: "user" } });
       expect(report.imports).toMatchObject({
         total: 0,
         locallyChanged: 0,
-        problems: [{ code: "imports-invalid", message: expect.stringContaining("line 2") }],
+        problems: [{ code: "imports-invalid", message: expect.stringContaining("line 3") }],
       });
     }),
   );

@@ -19,7 +19,7 @@ it("initializes default state once after a valid mutation and guards explicit st
   const explicit = join(root, "mistyped-state");
   await mkdir(home);
   await mkdir(source);
-  await writeFile(join(source, "tack.yaml"), "version: 1\n");
+  await writeFile(join(source, "tack.yaml"), "version: 1\nname: source\n");
 
   const run = async (args: ReadonlyArray<string>) => {
     const result = await Effect.runPromise(

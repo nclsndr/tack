@@ -9,10 +9,10 @@ import {
   SourceHealthErrorCodeSchema,
   SourceStorageErrorCodeSchema,
   SourceValidationErrorCodeSchema,
-  SourceLabelSchema,
   SourceRegistrationSchema,
   declarationResourceKeys,
   isCollection,
+  missingSourceNameMessage,
   type SourceDeclaration,
   type SourceRegistration,
   sourceDeclarationVersion,
@@ -305,6 +305,14 @@ const validateSource = Effect.fnUntraced(function* (
     });
   }
 
+  if (Predicate.hasProperty(parsedDeclaration, "name") === false) {
+    return yield* new SourceValidationError({
+      code: "declaration-schema-invalid",
+      message: missingSourceNameMessage(path.basename(canonicalPath)),
+      sourcePath: canonicalPath,
+    });
+  }
+
   const declaration = yield* decodeDeclaration(parsedDeclaration).pipe(
     Effect.mapError(
       (cause) =>
@@ -575,7 +583,6 @@ const inspectSource = (registration: SourceRegistration, sourceService: Source["
 /** Adds local labels and reports clashes without changing source health or registration identity. */
 export const resolveSourceLabels = (
   inspections: ReadonlyArray<DeclaredSourceInspection>,
-  basename: (sourcePath: string) => string,
 ): ReadonlyArray<DeclaredSourceInspection> => {
   const candidates = inspections.map((inspection) => {
     if (inspection.status === "unhealthy") return undefined;
@@ -585,12 +592,7 @@ export const resolveSourceLabels = (
         label: bundleSourceLabel(inspection.registration.bundle),
         origin: "declared" as const,
       };
-    if (inspection.declaration.name !== undefined)
-      return { label: inspection.declaration.name, origin: "declared" as const };
-    const directoryName = basename(inspection.registration.canonicalPath);
-    return Schema.is(SourceLabelSchema)(directoryName)
-      ? { label: directoryName, origin: "derived" as const }
-      : undefined;
+    return { label: inspection.declaration.name, origin: "declared" as const };
   });
   return inspections.map((inspection, index): DeclaredSourceInspection => {
     if (inspection.status === "unhealthy") return inspection;
@@ -642,33 +644,28 @@ export const resolveSourceLabels = (
 
 /**
  * The label a source not yet registered would take beside `inspections`, resolved as
- * `resolveSourceLabels` resolves the registered ones. Undefined when it would have none, or one
- * that is reserved or shared, so a `SOURCE:NAME` reference would need its registration ID.
+ * `resolveSourceLabels` resolves the registered ones. Undefined when its declared name is
+ * reserved or shared, so a `SOURCE:NAME` reference would need its registration ID.
  */
 export const prospectiveSourceLabel = (
   inspections: ReadonlyArray<DeclaredSourceInspection>,
   source: { readonly canonicalPath: string; readonly declaration: SourceDeclaration },
-  basename: (sourcePath: string) => string,
 ) => {
-  const resolved = resolveSourceLabels(
-    [
-      ...inspections,
-      {
-        status: "healthy",
-        declaration: source.declaration,
-        // Not registered yet, so it has no ID; only the other sources' discarded results name it.
-        registration: { id: "", canonicalPath: source.canonicalPath },
-      },
-    ],
-    basename,
-  ).at(-1);
+  const resolved = resolveSourceLabels([
+    ...inspections,
+    {
+      status: "healthy",
+      declaration: source.declaration,
+      // Not registered yet, so it has no ID; only the other sources' discarded results name it.
+      registration: { id: "", canonicalPath: source.canonicalPath },
+    },
+  ]).at(-1);
   return resolved?.labelOrigin === "clashing" ? undefined : resolved?.label;
 };
 
 /** Inspects sources retained by one validated state snapshot, keeping healthy declarations. */
 export const inspectSources = Effect.fnUntraced(function* (state: State) {
   const sourceService = yield* Source;
-  const path = yield* Path.Path;
   const builtInSources = sourceService.builtInSources ?? [];
   const registeredSources = registrationsFrom(state).filter((registration) =>
     builtInSources.every((builtin) => builtin.canonicalPath !== registration.canonicalPath),
@@ -697,7 +694,7 @@ export const inspectSources = Effect.fnUntraced(function* (state: State) {
         ),
       ),
   );
-  return resolveSourceLabels(inspections, (sourcePath) => path.basename(sourcePath));
+  return resolveSourceLabels(inspections);
 });
 
 /** Removes authored declaration data from an inspected source's public facts. */

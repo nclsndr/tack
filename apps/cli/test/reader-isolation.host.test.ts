@@ -56,6 +56,7 @@ it.layer(LiveTestLayer)("reader isolation through the CLI host", (readerIt) => {
             "tack.yaml",
             [
               "version: 1",
+              "name: source",
               "skills:",
               "  - path: skills",
               "docs:",
@@ -135,7 +136,7 @@ it.layer(LiveTestLayer)("reader isolation through the CLI host", (readerIt) => {
         });
         yield* fileSystem.writeFileString(
           path.join(fixture.sourceDirectory, "tack.yaml"),
-          "version: 1\nskills:\n  - path: skills\ndocs:\n  - name: notes\n    path: notes\n",
+          "version: 1\nname: source\nskills:\n  - path: skills\ndocs:\n  - name: notes\n    path: notes\n",
         );
         const search = partialEnvelope(
           yield* hostTack(fixture, ["docs", "search", "anything", "--project", "workspace"]),

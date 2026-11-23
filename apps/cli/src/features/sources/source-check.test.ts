@@ -53,7 +53,7 @@ it.layer(LiveTestLayer)("source check", (test) => {
       const { path, root, write } = yield* folders;
       const nested = `${"[".repeat(depth)}${"]".repeat(depth)}`;
       yield* write("deep/tack.yaml", `version: ${nested}\n`);
-      yield* write("skills/tack.yaml", "version: 1\nskills:\n  - path: skills\n");
+      yield* write("skills/tack.yaml", "version: 1\nname: fixture\nskills:\n  - path: skills\n");
       yield* write("skills/skills/deep/SKILL.md", `---\nname: ${nested}\n---\n`);
       const declaration = yield* checkSource(path.join(root, "deep"));
       const frontmatter = yield* checkSource(path.join(root, "skills"));
@@ -71,7 +71,7 @@ it.layer(LiveTestLayer)("source check", (test) => {
       const { path, root, write } = yield* folders;
       yield* write(
         "docs/tack.yaml",
-        "version: 1\ndocs:\n  - name: guide\n    path: missing\n  - name: Bad\n    path: x\n",
+        "version: 1\nname: fixture\ndocs:\n  - name: guide\n    path: missing\n  - name: Bad\n    path: x\n",
       );
       const report = yield* checkSource(path.join(root, "docs"));
       const declaration = path.join(root, "docs", "tack.yaml");
@@ -93,6 +93,7 @@ it.layer(LiveTestLayer)("source check", (test) => {
         "tack.yaml",
         [
           "version: 1",
+          "name: fixture",
           "skills:",
           "  - path: skills",
           "    exclude: ['**/_*/**']",
@@ -185,6 +186,7 @@ it.layer(LiveTestLayer)("source check", (test) => {
         "tack.yaml",
         [
           "version: 2",
+          "name: fixture",
           "context:",
           "  - path: ctx",
           ...row.exclude,
@@ -207,7 +209,7 @@ it.layer(LiveTestLayer)("source check", (test) => {
   test.effect.each([
     {
       case: "each folder at the top of a skills collection that holds no SKILL.md",
-      declaration: "version: 1\nkind: skills\n",
+      declaration: "version: 1\nname: fixture\nkind: skills\n",
       files: [
         "alpha/SKILL.md",
         "commands/hi.md",
@@ -220,7 +222,7 @@ it.layer(LiveTestLayer)("source check", (test) => {
     },
     {
       case: "no hidden, draft, node_modules or other-source folder of a skills collection",
-      declaration: "version: 1\nkind: skills\n",
+      declaration: "version: 1\nname: fixture\nkind: skills\n",
       files: [
         "alpha/SKILL.md",
         ".git/config",
@@ -233,7 +235,7 @@ it.layer(LiveTestLayer)("source check", (test) => {
     },
     {
       case: "no folder of a commands collection, which never reads folders",
-      declaration: "version: 1\nkind: commands\n",
+      declaration: "version: 1\nname: fixture\nkind: commands\n",
       files: ["hi.md", "commands/hi.md", "team/review/SKILL.md"],
       notSkills: [],
     },
@@ -266,7 +268,7 @@ it.layer(LiveTestLayer)("source check", (test) => {
   test.effect("leaves an unlistable skills collection to the error its reader reports", () =>
     Effect.gen(function* () {
       const { fs, root, write } = yield* folders;
-      yield* write("tack.yaml", "version: 1\nkind: skills\n");
+      yield* write("tack.yaml", "version: 1\nname: fixture\nkind: skills\n");
       yield* write("team/review/SKILL.md", bareSkillText("review"));
       yield* fs.chmod(root, 0o300);
       const report = yield* checkSource(root).pipe(
@@ -279,10 +281,14 @@ it.layer(LiveTestLayer)("source check", (test) => {
   test.effect("says a folder that is not a skill is ignored and how to make it one", () =>
     Effect.gen(function* () {
       const { root, write } = yield* folders;
-      yield* write("tack.yaml", "version: 1\nkind: skills\n");
+      yield* write("tack.yaml", "version: 1\nname: fixture\nkind: skills\n");
       yield* write("alpha/SKILL.md", bareSkillText("alpha"));
       yield* write("commands/hi.md", "# Hi");
-      const [entry] = yield* inspectDeclaration(root, { version: 1, kind: "skills" });
+      const [entry] = yield* inspectDeclaration(root, {
+        version: 1,
+        name: "fixture",
+        kind: "skills",
+      });
       expect(entry?.findings.map((finding) => finding.message)).toEqual([
         "commands/ holds no SKILL.md, so it is not a skill, and a skills collection holds skills only: Tack ignores it. Add a SKILL.md to make it a skill.",
       ]);

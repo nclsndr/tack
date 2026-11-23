@@ -116,14 +116,17 @@ it.layer(LiveTestLayer)("fixed profile authoring", (test) => {
       ).toBe(false);
       expect(yield* fs.exists(path.join(root, "escaped-profiles/escaped.yaml"))).toBe(false);
       expect((yield* check()).summary.errors).toBeGreaterThan(0);
-      yield* write("owner/tack.yaml", "version: 2\nskills: []\ncommands: []\nprofiles: [42]\n");
+      yield* write(
+        "owner/tack.yaml",
+        "version: 2\nname: owner\nskills: []\ncommands: []\nprofiles: [42]\n",
+      );
       expect(
         (yield* saveProfile(options, {
           sourcePath: path.join(root, "owner"),
           profile: { version: 1, name: "ci", members: [] },
         })).saved,
       ).toBe(false);
-      yield* write("owner/tack.yaml", "{version: 1, commands: []}\n");
+      yield* write("owner/tack.yaml", "{version: 1, name: owner, commands: []}\n");
       expect(
         (yield* saveProfile(options, {
           sourcePath: path.join(root, "owner"),
@@ -618,8 +621,12 @@ it.layer(LiveTestLayer)("fixed profile authoring", (test) => {
 });
 
 it("decodes profile publications separately from resources", () => {
-  expect(profilePublications("/source", { version: 1 }).publications).toEqual([]);
+  expect(profilePublications("/source", { version: 1, name: "source" }).publications).toEqual([]);
   expect(
-    profilePublications("/source", { version: 2, profiles: [{ name: "ci", path: "ci.yaml" }, 42] }),
+    profilePublications("/source", {
+      version: 2,
+      name: "source",
+      profiles: [{ name: "ci", path: "ci.yaml" }, 42],
+    }),
   ).toMatchObject({ publications: [{ name: "ci" }], findings: [{ field: "profiles[1]" }] });
 });

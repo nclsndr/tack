@@ -231,7 +231,7 @@ it("builds a movable release from a clean export and runs its complete flow", as
   await mkdir(project, { recursive: true });
   await writeFile(
     join(source, "tack.yaml"),
-    "version: 1\nscripts:\n  - name: check\n    path: scripts/check.ts\n    description: Check nested Tack.\ndocs:\n  - name: handbook\n    path: handbook\n",
+    "version: 1\nname: source\nscripts:\n  - name: check\n    path: scripts/check.ts\n    description: Check nested Tack.\ndocs:\n  - name: handbook\n    path: handbook\n",
   );
   await writeFile(
     join(source, "handbook/index.md"),

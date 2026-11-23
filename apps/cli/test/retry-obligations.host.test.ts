@@ -21,7 +21,7 @@ const mountDocs = Effect.fnUntraced(function* (fixture: TackWorld) {
   yield* fileSystem.makeDirectory(path.join(fixture.sourceDirectory, "knowledge"));
   yield* fileSystem.writeFileString(
     path.join(fixture.sourceDirectory, "tack.yaml"),
-    "version: 1\nskills:\n  - path: skills\ndocs:\n  - name: handbook\n    path: knowledge\n",
+    "version: 1\nname: source\nskills:\n  - path: skills\ndocs:\n  - name: handbook\n    path: knowledge\n",
   );
   const sourceId = (yield* readState(fixture.options)).data.sources?.at(0)?.id ?? "";
   successfulEnvelope(yield* hostTack(fixture, ["adapter", "enable", "codex"]));

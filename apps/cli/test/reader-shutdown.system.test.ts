@@ -108,7 +108,7 @@ it.each<Stop>([
     expect(git.exitCode).toBe(0);
     await writeFile(
       join(source, "tack.yaml"),
-      "version: 1\ndocs:\n  - name: handbook\n    path: knowledge\n",
+      "version: 1\nname: source\ndocs:\n  - name: handbook\n    path: knowledge\n",
     );
     const document = join(source, "knowledge", "index.md");
     await writeFile(document, "# Handbook\n\nOriginal content.\n");

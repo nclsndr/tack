@@ -103,7 +103,7 @@ const writeFixture = async () => {
   );
   await Bun.write(
     join(source, "tack.yaml"),
-    "version: 1\nscripts:\n  - name: gate\n    path: scripts/gate.ts\n    description: Prove the worker runs.\ndocs:\n  - name: handbook\n    path: handbook\n",
+    "version: 1\nname: source\nscripts:\n  - name: gate\n    path: scripts/gate.ts\n    description: Prove the worker runs.\ndocs:\n  - name: handbook\n    path: handbook\n",
   );
   await Bun.write(
     join(source, "handbook/index.md"),

@@ -21,6 +21,7 @@ const single = { files: { "skills/pdf/SKILL.md": skillText("pdf") } } as const;
 
 it.layer(LiveTestLayer)("import destination folders", (test) => {
   const multi = declare(
+    "personal-brain",
     "skills:",
     "  - path: skills",
     '    exclude: ["**/_*/**"]',
@@ -89,7 +90,7 @@ it.layer(LiveTestLayer)("import destination folders", (test) => {
   test.effect("no declared skills folder refuses and writes nothing", () =>
     withImportWorld(
       {
-        declaration: declare("docs: [{ path: docs }]"),
+        declaration: declare("personal-brain", "docs: [{ path: docs }]"),
         files: { "docs/r.md": "# r\n" },
         commits: [single],
       },
@@ -126,7 +127,12 @@ it.layer(LiveTestLayer)("import destination folders", (test) => {
   test.effect("the new path must be selected by the declaration's patterns", () =>
     withImportWorld(
       {
-        declaration: declare("skills:", "  - path: skills", '    include: ["allowed-*"]'),
+        declaration: declare(
+          "personal-brain",
+          "skills:",
+          "  - path: skills",
+          '    include: ["allowed-*"]',
+        ),
         files: { "skills/allowed-one/SKILL.md": skillText("allowed-one") },
         commits: [single],
       },
@@ -144,7 +150,7 @@ it.layer(LiveTestLayer)("import destination folders", (test) => {
 });
 
 it.layer(LiveTestLayer)("import selection", (test) => {
-  const declaration = declare("skills: [{ path: skills }]");
+  const declaration = declare("personal-brain", "skills: [{ path: skills }]");
   const files = { "skills/a/SKILL.md": skillText("a") };
 
   test.effect("--skill matches exactly then case-insensitively", () =>

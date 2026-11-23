@@ -1,4 +1,3 @@
-import { portableSourceName } from "./portable-source-name.ts";
 import {
   builtinProfileSourceIds,
   profileControlledAddresses,
@@ -76,21 +75,7 @@ export const resolveProfile = (
       );
       return undefined;
     }
-    const matched = matches[0];
-    if (
-      bindings === undefined &&
-      matched !== undefined &&
-      portableSourceName(catalog, matched.registration.id) !== name
-    ) {
-      issue(
-        "profile-source-name",
-        `Required source ${name} has only a local directory label.`,
-        `Declare name: ${name} in ${matched.registration.canonicalPath}/tack.yaml and keep that portable name distinct.`,
-        field,
-      );
-      return undefined;
-    }
-    return matched?.registration.id;
+    return matches[0]?.registration.id;
   };
   const requirements = new Map(
     (profile["depends-on"] ?? []).map((name) => [name, sourceId(name, "depends-on")]),

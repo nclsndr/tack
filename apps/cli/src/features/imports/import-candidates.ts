@@ -115,7 +115,7 @@ const catalogVerdict = (identity: SkillIdentity, files: ReadonlyArray<SkillFile>
       const catalog = yield* resolveCatalog([
         {
           status: "healthy",
-          declaration: { version: 1, skills: [{ path: "skills" }] },
+          declaration: { version: 1, name: "candidate", skills: [{ path: "skills" }] },
           registration: { id: "00000000-0000-4000-8000-000000000000", canonicalPath: sourcePath },
         },
       ]);

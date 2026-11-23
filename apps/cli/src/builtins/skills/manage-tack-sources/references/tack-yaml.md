@@ -15,17 +15,18 @@ the folder that holds it is the collection.
 
 ```yaml
 version: 1
+name: review-skills
 kind: skills
 ```
 
 - `kind: skills`: each folder at the top that holds `SKILL.md` is a skill. Nothing deeper is read.
 - `kind: commands`: each `.md` file at the top whose name is a command name, such as `deploy.md`,
   is a command. `README.md` and `CHANGELOG.md` are ignored.
-- `kind: docs`: the whole folder is one docs resource, named by the required `name`, which is also
+- `kind: docs`: the whole folder is one docs resource, named by its `name`, which is also
   the source label. An optional `reader` key tunes it as a docs entry's does.
 
 Names that start with `.` or `_` are never resources, so `_draft/` hides a skill. A collection takes
-`version: 1`, `name`, `maintainers` and, for skills and commands, `depends-on`; a skills collection
+`version: 1` and `name`, both required, `maintainers` and, for skills and commands, `depends-on`; a skills collection
 also holds the `imports` key Tack writes. It takes no resource keys, `include` or `exclude`, and
 publishes no profiles. Context and scripts need the list form. A skills collection whose folder
 holds `SKILL.md` is one skill, and the source is unhealthy with `source-is-one-skill`: register the
@@ -131,7 +132,9 @@ with `source-is-one-skill`. A path that is missing or resolves outside the sourc
 folders with one name, a folder name that is no docs name, or two `--skills`, `--commands` or
 `--context` folders that are equal or nested (`declaration-flags-conflict`: flags carry no
 `exclude`, so write `tack.yaml` by hand to keep both) fails before anything is written.
-There is no flag for scripts.
+There is no flag for scripts. The written `name` comes from the source folder's name in lowercase,
+with hyphens for other characters, such as `my-skills` for `My Skills`; a folder whose name leaves
+nothing usable fails with `declaration-name-invalid`. Edit the `name` afterwards to choose another.
 
 ```sh
 tack init # once per machine; it writes at once

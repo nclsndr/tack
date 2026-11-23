@@ -34,7 +34,7 @@ const capture = Effect.gen(function* () {
       const source = directory(name);
       yield* write(
         path.join(source, "tack.yaml"),
-        `version: 1\nskills:\n  - path: skills\ndocs:\n  - name: ${name}\n    path: notes\n`,
+        `version: 1\nname: ${name}\nskills:\n  - path: skills\ndocs:\n  - name: ${name}\n    path: notes\n`,
       );
       yield* write(path.join(source, "notes", "index.md"), "# Notes\n");
       yield* write(

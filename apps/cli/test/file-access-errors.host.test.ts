@@ -38,7 +38,7 @@ const notFound = (method: string, path: string) =>
   });
 
 const importCommit = { files: { "skills/pdf/SKILL.md": skillText("pdf") } } as const;
-const importDeclaration = declare("skills: [{ path: skills }]");
+const importDeclaration = declare("personal-brain", "skills: [{ path: skills }]");
 const importFiles = { "skills/a/SKILL.md": skillText("a") };
 
 it.layer(LiveTestLayer)("a filesystem failure in a command", (test) => {

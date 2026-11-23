@@ -12,6 +12,7 @@ export const previewOutput = [
   "No files or state changed.",
   "",
   "  version: 1",
+  "  name: agent-setup",
   "  skills:",
   "    - path: skills",
   "  commands:",
@@ -149,14 +150,15 @@ Its `tack.yaml` is a skills collection with a name and its maintainers:
 
 ```yaml
 version: 1
-kind: skills
 name: acme
+kind: skills
 maintainers:
   - platform-team
 ```
 
-The `name` is the label you and other sources type, as in `acme:release-notes`. Without one, Tack
-uses the folder's name. Commit the `tack.yaml` of a repository you share, so every teammate gets the
+The `name` is the label you and other sources type, as in `acme:release-notes`. Every `tack.yaml`
+needs one: Tack never takes the label from the folder, which can be called differently on each
+machine. Commit the `tack.yaml` of a repository you share, so every teammate gets the
 same source.
 
 ## Check it

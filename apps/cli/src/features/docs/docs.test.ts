@@ -50,7 +50,7 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
         );
         yield* fs.writeFileString(
           path.join(source, "tack.yaml"),
-          "version: 1\ndocs:\n  - name: handbook\n    path: knowledge\n    reader:\n      content:\n        - root: knowledge\n          exclude: [hidden.md]\n  - name: linked\n    path: knowledge\n    reader: reader/handbook.yaml\n  - name: invalid\n    path: knowledge\n    reader: reader/handbook.json\n",
+          "version: 1\nname: source\ndocs:\n  - name: handbook\n    path: knowledge\n    reader:\n      content:\n        - root: knowledge\n          exclude: [hidden.md]\n  - name: linked\n    path: knowledge\n    reader: reader/handbook.yaml\n  - name: invalid\n    path: knowledge\n    reader: reader/handbook.json\n",
         );
         for (const name of ["handbook", "linked", "invalid"]) {
           yield* attachDocs(
@@ -87,7 +87,7 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
           yield* fs.makeDirectory(path.join(sourcePath, "notes"), { recursive: true });
           yield* fs.writeFileString(
             path.join(sourcePath, "tack.yaml"),
-            "version: 1\ndocs:\n  - name: handbook\n    path: notes\n  - name: broken\n    path: missing\n",
+            "version: 1\nname: second\ndocs:\n  - name: handbook\n    path: notes\n  - name: broken\n    path: missing\n",
           );
           yield* registerSource(options, { sourcePath });
           const catalog = yield* resolveCatalogAt(options);
@@ -461,7 +461,7 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
           );
           yield* fs.writeFileString(
             path.join(source, "tack.yaml"),
-            "version: 1\nskills:\n  - path: skills\ndocs:\n  - name: handbook\n    path: knowledge\n  - name: malformed\n    path: ../outside\n  - name: duplicate\n    path: knowledge\n  - name: duplicate\n    path: knowledge\n",
+            "version: 1\nname: source\nskills:\n  - path: skills\ndocs:\n  - name: handbook\n    path: knowledge\n  - name: malformed\n    path: ../outside\n  - name: duplicate\n    path: knowledge\n  - name: duplicate\n    path: knowledge\n",
           );
           const catalog = yield* resolveCatalogAt(options);
           expect(catalog.unhealthySources).toEqual([]);
@@ -562,7 +562,7 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
           yield* fs.makeDirectory(path.join(second, "notes"), { recursive: true });
           yield* fs.writeFileString(
             path.join(second, "tack.yaml"),
-            "version: 1\ndocs:\n  - name: handbook\n    path: notes\n",
+            "version: 1\nname: second\ndocs:\n  - name: handbook\n    path: notes\n",
           );
           const secondId = (yield* registerSource(options, { sourcePath: second })).registration.id;
           const ambiguous = yield* Effect.flip(
@@ -634,7 +634,7 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
           });
           yield* fs.writeFileString(
             path.join(source, "tack.yaml"),
-            "version: 1\ndocs:\n  - name: handbook\n    path: knowledge\n  - name: guide\n    path: knowledge\n",
+            "version: 1\nname: source\ndocs:\n  - name: handbook\n    path: knowledge\n  - name: guide\n    path: knowledge\n",
           );
           yield* attachDocs(options, demo, { reference: "guide" });
           const unset = yield* Effect.flip(resolveDocsTarget(options, demo));
@@ -751,7 +751,7 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
           yield* syncDocsReport(options, { projectName: "demo", apply: true });
           yield* fs.writeFileString(
             path.join(source, "tack.yaml"),
-            "version: 1\ndocs:\n  - name: handbook\n    path: ../invalid\n",
+            "version: 1\nname: source\ndocs:\n  - name: handbook\n    path: ../invalid\n",
           );
           expect(
             (yield* resolveProjectDocs(options, { projectName: "demo" })).issues,
@@ -765,7 +765,7 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
             (yield* syncDocsReport(options, { projectName: "demo", apply: false })).complete,
           ).toBe(false);
           expect(docsEvidence(yield* readState(options))).toHaveLength(2);
-          yield* fs.writeFileString(path.join(source, "tack.yaml"), "version: 1\n");
+          yield* fs.writeFileString(path.join(source, "tack.yaml"), "version: 1\nname: source\n");
           expect(
             (yield* resolveProjectDocs(options, { projectName: "demo" })).issues,
           ).toMatchObject([{ message: expect.stringContaining("no longer declared") }]);
@@ -817,14 +817,14 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
         }));
         yield* fs.writeFileString(
           path.join(source, "tack.yaml"),
-          "version: 1\ndocs:\n  - name: handbook\n    extra: true\n    path: knowledge\n",
+          "version: 1\nname: source\ndocs:\n  - name: handbook\n    extra: true\n    path: knowledge\n",
         );
         const unavailable = yield* syncDocs(options, { projectName: "demo", apply: false });
         expect(unavailable.plan.actions.some((action) => action.action === "remove")).toBe(false);
         expect(yield* fs.exists(old)).toBe(true);
         yield* fs.writeFileString(
           path.join(source, "tack.yaml"),
-          "version: 1\ndocs:\n  - name: handbook\n    path: knowledge\n",
+          "version: 1\nname: source\ndocs:\n  - name: handbook\n    path: knowledge\n",
         );
         const preview = yield* syncDocs(options, { projectName: "demo", apply: false });
         expect(preview.plan.actions.map((action) => action.action)).toContain("remove");
@@ -842,7 +842,10 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
         Effect.gen(function* () {
           const fs = yield* FileSystem.FileSystem;
           const path = yield* Path.Path;
-          yield* fs.writeFileString(path.join(source, "tack.yaml"), "version: 1\ndocs: invalid\n");
+          yield* fs.writeFileString(
+            path.join(source, "tack.yaml"),
+            "version: 1\nname: source\ndocs: invalid\n",
+          );
           expect((yield* resolveCatalogAt(options)).quarantined).toMatchObject([
             { code: "declaration-invalid" },
           ]);
@@ -850,7 +853,7 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
           yield* fs.writeFileString(path.join(source, "file"), "not a directory");
           yield* fs.writeFileString(
             path.join(source, "tack.yaml"),
-            "version: 1\ndocs:\n  - name: escape\n    path: escape\n  - name: file\n    path: file\n  - name: INVALID\n    path: knowledge\n  - name: handbook\n    path: knowledge\n    reader: custom.yaml\n",
+            "version: 1\nname: source\ndocs:\n  - name: escape\n    path: escape\n  - name: file\n    path: file\n  - name: INVALID\n    path: knowledge\n  - name: handbook\n    path: knowledge\n    reader: custom.yaml\n",
           );
           const catalog = yield* resolveCatalogAt(options);
           expect(catalog.quarantined).toHaveLength(3);

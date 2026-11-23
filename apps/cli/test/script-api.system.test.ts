@@ -91,7 +91,7 @@ beforeAll(async () => {
   );
   await writeFile(
     join(source, "tack.yaml"),
-    `version: 1\nscripts:\n${Object.keys(scripts)
+    `version: 1\nname: source\nscripts:\n${Object.keys(scripts)
       .map(
         (name) =>
           `  - name: ${name}\n    path: scripts/${name}.ts\n    description: Probe ${name}\n`,

@@ -39,7 +39,7 @@ const machine = Effect.fnUntraced(function* () {
   );
   yield* fileSystem.writeFileString(
     at("source/tack.yaml"),
-    "version: 1\nskills:\n  - path: skills\n",
+    "version: 1\nname: source\nskills:\n  - path: skills\n",
   );
   yield* fileSystem.writeFileString(
     at("source/skills/review/SKILL.md"),

@@ -83,11 +83,14 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
             }),
           )).plan.refused,
         ).toBe(false);
+        // A source without a name is unhealthy, so its members are missing rather than unnamed.
         yield* write("team/tack.yaml", "version: 2\ncommands: [{path: audit.md}]\n");
         expect(
           (yield* runProfileSaveSelection(options, { ...request, name: "unnamed" })).plan.findings,
         ).toEqual(
-          expect.arrayContaining([expect.objectContaining({ code: "profile-copy-source-name" })]),
+          expect.arrayContaining([
+            expect.objectContaining({ code: "profile-copy-input-unresolved" }),
+          ]),
         );
         const unnamedCheck = yield* checkPaths([
           path.join(source, "profiles/portable.yaml"),
@@ -95,8 +98,8 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
         ]);
         expect(unnamedCheck.findings).toContainEqual(
           expect.objectContaining({
-            code: "profile-source-name",
-            remedy: expect.stringContaining("name"),
+            code: "declaration-schema-invalid",
+            message: expect.stringContaining('Add "name: team"'),
           }),
         );
         expect(
@@ -696,7 +699,7 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
   );
   for (const situation of [
     "declared",
-    "derived",
+    "unnamed",
     "missing",
     "duplicate",
     "reserved",
@@ -735,7 +738,7 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
         expect((yield* runProfileSaveSelection(f.options, request)).saved).toBe(true);
         let companion = f.path.join(f.root, "team");
         const extras: string[] = [];
-        if (situation === "derived")
+        if (situation === "unnamed")
           yield* f.write("team/tack.yaml", "version: 1\ncommands: [{path: audit.md}]\n");
         if (situation === "reserved")
           yield* f.write(

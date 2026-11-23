@@ -54,6 +54,7 @@ it.layer(LiveTestLayer)("declaration facts", (test) => {
     withSource(
       [
         "version: 1",
+        "name: source",
         "skills:",
         "  - path: skills",
         "    exclude: ['**/_*/**']",
@@ -104,6 +105,7 @@ it.layer(LiveTestLayer)("declaration facts", (test) => {
     withSource(
       [
         "version: 1",
+        "name: source",
         "skills:",
         "  - path: skills",
         "  - path: more",
@@ -150,6 +152,7 @@ it.layer(LiveTestLayer)("declaration facts", (test) => {
     withSource(
       [
         "version: 1",
+        "name: source",
         "skills:",
         "  - path: vendor/skills",
         "commands:",

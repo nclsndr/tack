@@ -58,7 +58,7 @@ export const withImportedSource = <A, E, R>(
     yield* fs.makeDirectory(path.join(root, "skills", "mine"), { recursive: true });
     yield* fs.writeFileString(
       path.join(root, "tack.yaml"),
-      "version: 1\nskills: [{ path: skills }]\n",
+      "version: 1\nname: personal-brain\nskills: [{ path: skills }]\n",
     );
     yield* fs.writeFileString(path.join(root, "skills", "mine", "SKILL.md"), skillText("mine"));
     yield* registerSource(options, { sourcePath: root });

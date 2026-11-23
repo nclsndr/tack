@@ -23,7 +23,7 @@ const commit = {
   },
 } as const;
 const files = { "skills/a/SKILL.md": skillText("a") };
-const declaration = declare("skills: [{ path: skills }]");
+const declaration = declare("personal-brain", "skills: [{ path: skills }]");
 
 const recordsIn = (text: string) => {
   const section = readImportsSection(text);
@@ -37,7 +37,7 @@ it.layer(LiveTestLayer)("import listing", (test) => {
   test.effect("lists records across sources sorted by reference", () =>
     withImportWorld({ declaration, files, commits: [commit] }, (world) =>
       Effect.gen(function* () {
-        yield* addSource(world, "vault", declare("skills: [{ path: skills }]"), {
+        yield* addSource(world, "vault", declare("vault", "skills: [{ path: skills }]"), {
           "skills/z/SKILL.md": skillText("z"),
         });
         yield* applyImport(world.options, importRequest({ into: "vault", skills: ["docx"] }));
@@ -71,7 +71,7 @@ it.layer(LiveTestLayer)("import listing", (test) => {
   test.effect("an imports key in flow style is a problem, and refuses preview and apply", () =>
     withImportWorld(
       {
-        declaration: "version: 1\nimports: []\nskills:\n  - path: skills\n",
+        declaration: "version: 1\nimports: []\nname: personal-brain\nskills:\n  - path: skills\n",
         files,
         commits: [commit],
       },
@@ -101,9 +101,14 @@ it.layer(LiveTestLayer)("import listing", (test) => {
           world.options,
           importRequest({ into: "personal-brain", skills: ["pdf"] }),
         );
-        yield* addSource(world, "broken", "version: 1\nimports: []\nskills:\n  - path: skills\n", {
-          "skills/z/SKILL.md": skillText("z"),
-        });
+        yield* addSource(
+          world,
+          "broken",
+          "version: 1\nname: broken\nimports: []\nskills:\n  - path: skills\n",
+          {
+            "skills/z/SKILL.md": skillText("z"),
+          },
+        );
         const result = yield* list(world);
         expect(result.imports.map((entry) => entry.reference)).toEqual(["personal-brain:pdf"]);
         expect(result.problems.map((problem) => [problem.source, problem.code])).toEqual([

@@ -22,7 +22,7 @@ const withSource = <A, E, R>(
       homeDirectory: root,
     };
     yield* initializeState(options);
-    yield* fs.writeFileString(path.join(root, "tack.yaml"), "version: 1\n");
+    yield* fs.writeFileString(path.join(root, "tack.yaml"), "version: 1\nname: shared\n");
     return yield* use({ root, options });
   });
 
@@ -43,19 +43,21 @@ const all = [
 ];
 
 it.layer(LiveTestLayer)("unified source catalog", (test) => {
-  test.effect("registers a version-only source without source-wide owner or kind", () =>
-    withSource(({ root, options }) =>
-      Effect.gen(function* () {
-        const result = yield* registerSource(options, { sourcePath: root });
-        expect(Object.keys(result.registration).sort()).toEqual(["canonicalPath", "id"]);
-        expect((yield* readState(options)).format).toBe(1);
-        expect(yield* resolveCatalogAt(options)).toMatchObject({
-          entries: [],
-          quarantined: [],
-          unhealthySources: [],
-        });
-      }),
-    ),
+  test.effect(
+    "registers a source of only a version and a name, without source-wide owner or kind",
+    () =>
+      withSource(({ root, options }) =>
+        Effect.gen(function* () {
+          const result = yield* registerSource(options, { sourcePath: root });
+          expect(Object.keys(result.registration).sort()).toEqual(["canonicalPath", "id"]);
+          expect((yield* readState(options)).format).toBe(1);
+          expect(yield* resolveCatalogAt(options)).toMatchObject({
+            entries: [],
+            quarantined: [],
+            unhealthySources: [],
+          });
+        }),
+      ),
   );
   test.effect(
     "accepts docs beside every declared kind and does not read an undeclared private folder",
@@ -65,7 +67,7 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
           yield* write(
             root,
             "tack.yaml",
-            declare(...all, "docs:", "  - name: handbook", "    path: notes"),
+            declare("shared", ...all, "docs:", "  - name: handbook", "    path: notes"),
           );
           yield* write(root, "notes/guide.md");
           yield* write(root, "skills/valid/SKILL.md", bareSkillText("valid"));
@@ -89,12 +91,12 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
   test.effect("catalogs declared resources without importing scripts or another source", () =>
     withSource(({ root, options }) =>
       Effect.gen(function* () {
-        yield* write(root, "tack.yaml", declare(...all));
+        yield* write(root, "tack.yaml", declare("shared", ...all));
         yield* write(root, "skills/parent/SKILL.md", bareSkillText("parent"));
         yield* write(root, "skills/parent/child/SKILL.md", bareSkillText("child"));
         yield* write(root, "commands/nested/review.md", "# Plain command");
         yield* write(root, "commands/ignored.MD", "ignored");
-        yield* write(root, "context/tack.yaml", "version: 1\n");
+        yield* write(root, "context/tack.yaml", "version: 1\nname: context\n");
         yield* write(root, "scripts/run.ts", 'throw new Error("must never import");');
         yield* write(root, "scripts/unlisted.ts", "invalid syntax");
         yield* write(root, "private/skills/parent/SKILL.md", bareSkillText("parent"));
@@ -118,7 +120,7 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
         Effect.gen(function* () {
           const fs = yield* FileSystem.FileSystem;
           const path = yield* Path.Path;
-          yield* write(root, "tack.yaml", declare("commands:", "  - path: commands"));
+          yield* write(root, "tack.yaml", declare("shared", "commands:", "  - path: commands"));
           const target = yield* write(root, "commands/real.md", "real");
           yield* fs.symlink(target, path.join(root, "commands", "alias.md"));
           yield* fs.symlink(path.join(root, "commands"), path.join(root, "commands", "cycle"));
@@ -152,7 +154,7 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
     withSource(({ root, options }) =>
       Effect.gen(function* () {
         const fs = yield* FileSystem.FileSystem;
-        yield* write(root, "tack.yaml", declare("context:", "  - path: context"));
+        yield* write(root, "tack.yaml", declare("shared", "context:", "  - path: context"));
         const blocked = yield* write(root, "context/blocked.md");
         yield* write(root, "context/healthy.md");
         yield* registerSource(options, { sourcePath: root });
@@ -175,14 +177,18 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
     () =>
       withSource(({ root, options }) =>
         Effect.gen(function* () {
-          yield* write(root, "tack.yaml", declare("commands:", "  - path: commands"));
+          yield* write(root, "tack.yaml", declare("shared", "commands:", "  - path: commands"));
           yield* write(root, "commands/one/review.md", "review");
           yield* write(root, "commands/two/review.md", "review again");
           yield* write(root, "commands/valid.md", "valid");
           yield* write(root, "commands/other/valid.md", "---\nmetadata: false\n---");
           yield* write(root, "commands/Invalid.md", "invalid name");
           const other = `${root}/other-source`;
-          yield* write(other, "tack.yaml", declare("commands:", "  - path: commands"));
+          yield* write(
+            other,
+            "tack.yaml",
+            declare("other-source", "commands:", "  - path: commands"),
+          );
           yield* write(other, "commands/valid.md", "other valid");
           yield* registerSource(options, { sourcePath: root });
           yield* registerSource(options, { sourcePath: other });
@@ -209,7 +215,7 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
         Effect.gen(function* () {
           const fs = yield* FileSystem.FileSystem;
           const path = yield* Path.Path;
-          yield* write(root, "tack.yaml", declare("commands:", "  - path: commands"));
+          yield* write(root, "tack.yaml", declare("shared", "commands:", "  - path: commands"));
           yield* write(root, "private", "not an area");
           yield* write(root, "commands/review.md", "review");
           yield* registerSource(options, { sourcePath: root });
@@ -228,7 +234,7 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
     () =>
       withSource(({ root, options }) =>
         Effect.gen(function* () {
-          yield* write(root, "tack.yaml", declare("skills:", "  - path: skills"));
+          yield* write(root, "tack.yaml", declare("shared", "skills:", "  - path: skills"));
           yield* write(root, "skills/valid/SKILL.md", bareSkillText("valid"));
           const registered = yield* registerSource(options, { sourcePath: root });
           yield* setSkillChoice(options, {
@@ -251,7 +257,7 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
             },
           ]);
           expect(yield* readState(options)).toEqual(before);
-          yield* write(root, "tack.yaml", declare("skills:", "  - path: skills"));
+          yield* write(root, "tack.yaml", declare("shared", "skills:", "  - path: skills"));
           expect(identities(yield* resolveCatalogAt(options))).toEqual(["shared/skill/valid"]);
         }),
       ),
@@ -261,7 +267,7 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
       Effect.gen(function* () {
         const fs = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        yield* write(root, "tack.yaml", declare(...all.slice(0, 3)));
+        yield* write(root, "tack.yaml", declare("shared", ...all.slice(0, 3)));
         yield* write(root, "context/healthy.md");
         yield* write(root, "commands/review.md", "review");
         yield* write(root, "skills/valid/SKILL.md", bareSkillText("valid"));
@@ -292,8 +298,8 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
   );
   test.effect.each([
     "version: [",
-    "version: 1\nextra: true",
-    "version: 2",
+    "version: 1\nname: shared\nextra: true",
+    "version: 2\nname: shared",
     "- scalar",
     "version: 1\n---\nversion: 1",
   ])("makes a malformed root declaration unhealthy: %s", (encoded) =>

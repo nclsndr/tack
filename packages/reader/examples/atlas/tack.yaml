@@ -1,5 +1,6 @@
 # A fake source for the reader's example docs set. Nothing here is a real project.
 version: 1
+name: atlas
 docs:
   - name: specs
     path: docs

@@ -25,7 +25,7 @@ const fixture = Effect.gen(function* () {
   );
   yield* fileSystem.writeFileString(
     path.join(source, "tack.yaml"),
-    "version: 1\nskills:\n  - path: skills\n",
+    "version: 1\nname: source\nskills:\n  - path: skills\n",
   );
   yield* fileSystem.writeFileString(
     path.join(source, "skills", "valid", "SKILL.md"),
@@ -206,7 +206,7 @@ it.layer(LiveTestLayer)("structured partial causes", (causesIt) => {
   );
 
   causesIt.effect.each([
-    ["source-unhealthy", "tack.yaml", "version: 1\nskillz: []\n"],
+    ["source-unhealthy", "tack.yaml", "version: 1\nname: source\nskillz: []\n"],
     ["catalog-quarantined", "skills/valid/SKILL.md", "---\nname: valid\n---\n"],
   ] as const)(
     "names the %s cause beside the removal of a link the operator did not deselect",

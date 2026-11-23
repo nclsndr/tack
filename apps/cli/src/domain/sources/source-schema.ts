@@ -19,6 +19,31 @@ export const SourceLabelSchema = PortableNameSchema.check(
   ),
 );
 
+/**
+ * The source name a folder suggests: its name in lowercase, each run of other characters a hyphen,
+ * cut to the label's length. Undefined when nothing usable is left, as for `___` or an ID.
+ */
+export const suggestedSourceName = (folderName: string): string | undefined => {
+  const name = folderName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .slice(0, 64)
+    .replace(/^-+|-+$/g, "");
+  return Schema.is(SourceLabelSchema)(name) ? name : undefined;
+};
+
+/**
+ * Why a `tack.yaml` without `name` is refused, and the line to add, suggested from the folder. The
+ * name never falls back to the folder itself: `depends-on` and `source:` references name the source
+ * the same way on every machine, whatever its folder is called there.
+ */
+export const missingSourceNameMessage = (folderName: string) => {
+  const suggested = suggestedSourceName(folderName);
+  return suggested === undefined
+    ? `tack.yaml has no name. Add a name: line with lowercase letters, digits and hyphens: the name is the source label that depends-on and source: references use on every machine.`
+    : `tack.yaml has no name. Add "name: ${suggested}" to it: the name is the source label that depends-on and source: references use on every machine.`;
+};
+
 /** A person or team named by a source author, without access-control meaning. */
 const MaintainerSchema = Schema.String.check(
   Schema.makeFilter((value) =>
@@ -32,7 +57,7 @@ const MaintainerSchema = Schema.String.check(
  */
 export const ListDeclarationSchema = Schema.Struct({
   version: Schema.Literals([sourceDeclarationVersion, profileSourceDeclarationVersion]),
-  name: Schema.optionalKey(SourceLabelSchema),
+  name: SourceLabelSchema,
   maintainers: Schema.optionalKey(Schema.Array(MaintainerSchema)),
   "depends-on": Schema.optionalKey(Schema.Array(SourceLabelSchema)),
   // Resource keys are decoded as unknown here and validated entry by entry by discovery, so one
@@ -59,10 +84,13 @@ export const ListDeclarationSchema = Schema.Struct({
 /** The list form of a validated declaration. */
 type ListDeclaration = typeof ListDeclarationSchema.Type;
 
-/** The keys every collection takes: it names no path, because its folder is the collection. */
+/**
+ * The keys every collection takes: it names no path, because its folder is the collection. Its
+ * `name` is the source label, required like the list form's.
+ */
 const collectionFields = {
   version: Schema.Literal(sourceDeclarationVersion),
-  name: Schema.optionalKey(SourceLabelSchema),
+  name: SourceLabelSchema,
   maintainers: Schema.optionalKey(Schema.Array(MaintainerSchema)),
 };
 
@@ -86,7 +114,6 @@ const collectionSchemas = {
   docs: Schema.Struct({
     ...collectionFields,
     kind: Schema.Literal("docs"),
-    name: SourceLabelSchema,
     reader: Schema.optionalKey(Schema.Unknown),
   }),
 } as const;

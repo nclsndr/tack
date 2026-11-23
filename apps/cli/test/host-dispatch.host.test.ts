@@ -139,7 +139,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
       for (const sourceDirectory of [source, relocatedSource]) {
         yield* fileSystem.writeFileString(
           path.join(sourceDirectory, "tack.yaml"),
-          "version: 1\nskills:\n  - path: skills\n",
+          "version: 1\nname: source\nskills:\n  - path: skills\n",
         );
       }
       yield* fileSystem.makeDirectory(path.join(relocatedSource, "skills", "valid"), {
@@ -347,7 +347,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
       );
       yield* fileSystem.writeFileString(
         path.join(source, "tack.yaml"),
-        "version: 1\ncommands:\n  - path: commands\n",
+        "version: 1\nname: source\ncommands:\n  - path: commands\n",
       );
       yield* fileSystem.writeFileString(path.join(source, "commands", "review.md"), "# Review\n");
       const git = fakeGit(yield* fileSystem.realPath(anchor), [
@@ -439,7 +439,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
       );
       yield* fileSystem.writeFileString(
         path.join(source, "tack.yaml"),
-        "version: 1\ndocs:\n  - name: handbook\n    path: knowledge\n",
+        "version: 1\nname: source\ndocs:\n  - name: handbook\n    path: knowledge\n",
       );
       yield* fileSystem.writeFileString(path.join(source, "knowledge", "guide.md"), "# Guide\n");
       const canonicalProjectRoot = yield* fileSystem.realPath(projectRoot);
@@ -559,7 +559,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
       yield* fileSystem.makeDirectory(path.join(second, "notes"), { recursive: true });
       yield* fileSystem.writeFileString(
         path.join(second, "tack.yaml"),
-        "version: 1\ndocs:\n  - name: handbook\n    path: notes\n",
+        "version: 1\nname: second\ndocs:\n  - name: handbook\n    path: notes\n",
       );
       const secondAdded = yield* invoke(["source", "add", second, "--apply"]);
       expect(secondAdded).toMatchObject({ status: "success" });
@@ -1268,7 +1268,10 @@ it.layer(LiveTestLayer)("CLI output format parity", (formatIt) => {
         yield* compare(["--state-dir", state, "catalog"], "success");
         const source = path.join(root, "source");
         yield* fileSystem.makeDirectory(source);
-        yield* fileSystem.writeFileString(path.join(source, "tack.yaml"), "version: 1\n");
+        yield* fileSystem.writeFileString(
+          path.join(source, "tack.yaml"),
+          "version: 1\nname: source\n",
+        );
         yield* runHostRaw(["--state-dir", state, "source", "add", source, "--apply"], git);
         yield* fileSystem.writeFileString(path.join(source, "tack.yaml"), "version: 99\n");
         yield* compare(["--state-dir", state, "source"], "partial");

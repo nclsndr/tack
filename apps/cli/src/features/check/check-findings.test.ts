@@ -269,9 +269,9 @@ it.layer(LiveTestLayer)("check findings", (test) => {
       remedy: "Fix the findings of BASE, or pass the folder of base to the same tack check.",
     },
     {
-      reason: "a missing resource, from a source with no label, named by its folder",
+      reason: "a missing resource, from a source whose reserved name gives it no label",
       files: {
-        "Kit Tools/tack.yaml": "version: 1\nskills: [{path: skills}]\n",
+        "Kit Tools/tack.yaml": "version: 1\nname: tack\nskills: [{path: skills}]\n",
         "Kit Tools/skills/release/SKILL.md": gitEdge(),
       },
       checked: ["Kit Tools"],
@@ -330,10 +330,10 @@ it.layer(LiveTestLayer)("check findings", (test) => {
         yield* write("docs/index.md", "# Welcome\n");
         yield* write("docs/_drafts/wip.md", "# Draft\n");
         yield* write("docs/node_modules/pkg/README.md", "# Package\n");
-        yield* write("docs/example/tack.yaml", "version: 1\n");
+        yield* write("docs/example/tack.yaml", "version: 1\nname: example\n");
         yield* write("docs/example/docs/page.md", "# Example\n");
         yield* write("docs/skill/SKILL.md", "---\nname: skill\n---\n");
-        yield* write("docs/skill/tack.yaml", "version: 1\n");
+        yield* write("docs/skill/tack.yaml", "version: 1\nname: skill\n");
         expect(yield* documentationFiles(path.join(root, "docs"))).toEqual([
           path.join(root, "docs", "index.md"),
           path.join(root, "docs", "skill", "SKILL.md"),
@@ -369,6 +369,7 @@ it.layer(LiveTestLayer)("check findings", (test) => {
         "tack.yaml",
         [
           "version: 1",
+          "name: tools",
           "skills:",
           "  - path: skills",
           "    exclude:",
@@ -391,11 +392,11 @@ it.layer(LiveTestLayer)("check findings", (test) => {
       };
       const lineOf = (field: string) =>
         locateFinding({ ...finding, field }).pipe(Effect.map(({ line }) => line));
-      expect(yield* lineOf("skills[1]")).toBe(6);
-      expect(yield* lineOf("scripts[1]")).toBe(11);
+      expect(yield* lineOf("skills[1]")).toBe(7);
+      expect(yield* lineOf("scripts[1]")).toBe(12);
       // A flow list and an entry past the end anchor at the key.
-      expect(yield* lineOf("docs[0]")).toBe(7);
-      expect(yield* lineOf("skills[2]")).toBe(2);
+      expect(yield* lineOf("docs[0]")).toBe(8);
+      expect(yield* lineOf("skills[2]")).toBe(3);
     }),
   );
 
@@ -406,6 +407,7 @@ it.layer(LiveTestLayer)("check findings", (test) => {
         "tack.yaml",
         [
           "version: 1",
+          "name: tools",
           "scripts:",
           "  - name: run",
           "    path: run.ts",
@@ -425,8 +427,8 @@ it.layer(LiveTestLayer)("check findings", (test) => {
           subject: message.split(" overlaps")[0],
         })),
       ).toEqual([
-        { code: "declaration-path-overlap", line: 3, subject: 'The scripts entry "run"' },
-        { code: "declaration-path-overlap", line: 6, subject: 'The scripts entry "go"' },
+        { code: "declaration-path-overlap", line: 4, subject: 'The scripts entry "run"' },
+        { code: "declaration-path-overlap", line: 7, subject: 'The scripts entry "go"' },
       ]);
     }),
   );

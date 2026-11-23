@@ -19,7 +19,7 @@ import {
 import { makeImportRemote } from "../../platform/git/import-remote.ts";
 import { applyImport, previewImport } from "./import.ts";
 
-const declaration = declare("skills: [{ path: skills }]");
+const declaration = declare("personal-brain", "skills: [{ path: skills }]");
 const files = { "skills/a/SKILL.md": skillText("a") };
 
 /** A remote over the world's fixture repositories with tightened safety limits. */

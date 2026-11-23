@@ -275,6 +275,7 @@ Declare documentation in the registered source's top-level `tack.yaml`:
 
 ```yaml
 version: 1
+name: team-knowledge
 skills:
   - path: skills
 docs:

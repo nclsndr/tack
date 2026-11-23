@@ -30,7 +30,7 @@ const withSources = <A, E, R>(
       yield* fs.makeDirectory(path.join(directory, "notes"), { recursive: true });
       yield* fs.writeFileString(
         path.join(directory, "tack.yaml"),
-        "version: 1\ndocs:\n  - name: handbook\n    path: notes\n",
+        `version: 1\nname: ${path.basename(directory)}\ndocs:\n  - name: handbook\n    path: notes\n`,
       );
       yield* registerSource(options, { sourcePath: directory });
     }
@@ -70,7 +70,7 @@ it.layer(LiveTestLayer)("docs declaration discovery", (test) => {
         const fs = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
         const inspections = yield* inspectSources(yield* readState(options));
-        yield* fs.writeFileString(path.join(source, "tack.yaml"), "version: 1\n");
+        yield* fs.writeFileString(path.join(source, "tack.yaml"), "version: 1\nname: source\n");
 
         const snapshot = yield* resolveCatalog(inspections);
         const fresh = yield* resolveCatalogAt(options);

@@ -34,7 +34,7 @@ const runSearch = Effect.fnUntraced(function* (args: string[], corpus: ReaderCor
     await mkdir(join(root, "docs"), { recursive: true });
     await writeFile(
       join(root, "tack.yaml"),
-      "version: 1\ndocs:\n  - name: docs\n    path: docs\n" +
+      "version: 1\nname: demo\ndocs:\n  - name: docs\n    path: docs\n" +
         (args.includes("--config") ? "    reader: custom.yaml\n" : ""),
     );
     await writeFile(

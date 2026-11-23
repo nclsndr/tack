@@ -23,7 +23,7 @@ import { readState, StateStore } from "../../services/state-store.ts";
 const declarationFileName = "tack.yaml";
 const stateFileName = "state.json";
 
-const validDeclaration = () => "version: 1\nskills:\n  - path: skills\n";
+const validDeclaration = (name: string) => `version: 1\nname: ${name}\nskills:\n  - path: skills\n`;
 
 type SourceRequirements =
   | SecureRandom.SecureRandom
@@ -56,7 +56,7 @@ const platformNotFoundError = (method: string, targetPath: string) =>
 const createSource = Effect.fnUntraced(function* (
   parent: string,
   name: string,
-  declaration = validDeclaration(),
+  declaration = validDeclaration(name),
 ) {
   const fileSystem = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
@@ -68,7 +68,7 @@ const createSource = Effect.fnUntraced(function* (
 });
 
 it.layer(LiveTestLayer)("source registration", (sourceIt) => {
-  sourceIt.effect("reports declared, derived, missing, reserved, and clashing source labels", () =>
+  sourceIt.effect("reports declared, reserved, and clashing source labels", () =>
     withStateFixture(({ options, root }) =>
       Effect.gen(function* () {
         const fs = yield* FileSystem.FileSystem;
@@ -87,7 +87,6 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
           ),
           yield* createSource(root, "second", "version: 1\nname: personal-brain\n"),
           yield* createSource(root, "local-notes"),
-          yield* createSource(root, "My Notes"),
           yield* createSource(
             root,
             "reserved",
@@ -128,10 +127,8 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
         expect(byPath("local-notes")).toMatchObject({
           status: "healthy",
           label: "local-notes",
-          labelOrigin: "derived",
+          labelOrigin: "declared",
         });
-        expect(byPath("My Notes")).toMatchObject({ status: "healthy", labelOrigin: "none" });
-        expect(byPath("My Notes")).not.toHaveProperty("label");
         expect(byPath("reserved")).toMatchObject({
           status: "healthy",
           labelOrigin: "none",
@@ -162,12 +159,15 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
     ),
   );
 
-  sourceIt.effect("rejects ID-shaped names and empty maintainer entries", () =>
+  sourceIt.effect("rejects missing and ID-shaped names and empty maintainer entries", () =>
     withStateFixture(({ options, root }) =>
       Effect.gen(function* () {
         for (const [name, declaration, key] of [
           ["id-name", "version: 1\nname: 0edf1f6f-c71b-40c6-bf98-fde02235a02f\n", "name"],
-          ["empty-maintainer", 'version: 1\nmaintainers: ["", x]\n', "maintainers"],
+          ["empty-maintainer", 'version: 1\nname: x\nmaintainers: ["", x]\n', "maintainers"],
+          ["unnamed", "version: 1\nskills: []\n", 'Add "name: unnamed" to it'],
+          ["My Notes", "version: 1\nskills: []\n", 'Add "name: my-notes" to it'],
+          ["___", "version: 1\nskills: []\n", "Add a name: line"],
         ] as const) {
           const sourcePath = yield* createSource(root, name, declaration);
           const error = yield* Effect.flip(registerSource(options, { sourcePath }));
@@ -219,7 +219,7 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
           {
             observation: Effect.succeed({
               canonicalPath: `${sourcePath}/moved`,
-              declaration: { version: 1 as const },
+              declaration: { version: 1 as const, name: "source" },
             }),
             expected: {
               code: "source-location-changed",
@@ -254,7 +254,7 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
         yield* fileSystem.makeDirectory(path.join(sourcePath, "knowledge"));
         yield* fileSystem.writeFileString(
           path.join(sourcePath, declarationFileName),
-          "version: 1\ndocs:\n  - name: handbook\n    path: knowledge\n  - name: notes\n    owner: private\n    path: knowledge\n  - name: broken\n    path: missing\n",
+          "version: 1\nname: source\ndocs:\n  - name: handbook\n    path: knowledge\n  - name: notes\n    owner: private\n    path: knowledge\n  - name: broken\n    path: missing\n",
         );
         const expected = [{ name: "handbook" }];
         expect((yield* registerSource(options, { sourcePath })).docs).toEqual(expected);
@@ -410,7 +410,7 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
           },
           {
             code: "declaration-schema-invalid",
-            declaration: `${validDeclaration()}extra: true\n`,
+            declaration: `${validDeclaration("extra")}extra: true\n`,
             kind: "declaration",
           },
           {
@@ -460,9 +460,9 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const firstPath = yield* createSource(root, "first", validDeclaration());
-        const secondPath = yield* createSource(root, "second", validDeclaration());
-        const thirdPath = yield* createSource(root, "third", validDeclaration());
+        const firstPath = yield* createSource(root, "first");
+        const secondPath = yield* createSource(root, "second");
+        const thirdPath = yield* createSource(root, "third");
         const first = yield* registerSource(options, { sourcePath: firstPath });
         yield* registerSource(options, { sourcePath: secondPath });
         const statePath = path.join(stateDirectory, stateFileName);

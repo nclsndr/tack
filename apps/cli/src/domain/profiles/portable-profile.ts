@@ -28,7 +28,7 @@ export const portableProfile = (
     if (label === undefined) {
       findings.push({
         code: "profile-copy-source-name",
-        message: `${address.kind} ${address.name} needs distinct portable names for its external sources. Set name in tack.yaml and repair duplicate names; UUIDs and directory names are not portable qualifiers.`,
+        message: `${address.kind} ${address.name} needs distinct portable names for its external sources. Repair duplicate or reserved names in tack.yaml; registration IDs are not portable qualifiers.`,
       });
       continue;
     }

@@ -155,7 +155,7 @@ it.layer(LiveTestLayer)("bundle export findings", (test) => {
         yield* f.write("notes/_partials/intro.md", "Intro\n");
         yield* f.write("notes/.obsidian/app.json", "{}");
         yield* f.write("notes/node_modules/pkg/index.js", "x");
-        yield* f.write("notes/vendor/tack.yaml", "version: 1\nkind: skills\n");
+        yield* f.write("notes/vendor/tack.yaml", "version: 1\nname: vendor\nkind: skills\n");
         yield* f.write("notes/vendor/x.md", "# Vendored\n");
         yield* registerSource(f.options, { sourcePath: f.path.join(f.root, "notes") });
         yield* f.write(
@@ -196,14 +196,14 @@ it.layer(LiveTestLayer)("bundle export findings", (test) => {
       }),
   );
 
-  test.effect("a source without a name exports a projection without one", () =>
+  test.effect("a source's declared name carries into its projection", () =>
     Effect.gen(function* () {
       const f = yield* profileFixture;
       yield* f.write(
         "source/tack.yaml",
-        "version: 2\nskills: [{path: skills}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
+        "version: 2\nname: source\nskills: [{path: skills}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
       );
-      const output = f.path.join(f.root, "unnamed.tar.gz");
+      const output = f.path.join(f.root, "named.tar.gz");
       const result = yield* runBundleExport(f.options, {
         reference: "source:ci",
         output,
@@ -214,8 +214,9 @@ it.layer(LiveTestLayer)("bundle export findings", (test) => {
       const declaration = archive.entries.find(
         (entry) => entry.path === "sources/source-0/tack.yaml",
       );
-      expect(Bun.YAML.parse(new TextDecoder().decode(declaration?.bytes))).not.toHaveProperty(
+      expect(Bun.YAML.parse(new TextDecoder().decode(declaration?.bytes))).toHaveProperty(
         "name",
+        "source",
       );
     }),
   );

@@ -361,7 +361,7 @@ const withWorkspace = Effect.fnUntraced(function* () {
   yield* fs.makeDirectory(project, { recursive: true });
   yield* fs.writeFileString(
     path.join(source, "tack.yaml"),
-    "version: 1\nskills:\n  - path: skills\ndocs:\n  - name: handbook\n    path: knowledge\n",
+    "version: 1\nname: source\nskills:\n  - path: skills\ndocs:\n  - name: handbook\n    path: knowledge\n",
   );
   yield* fs.writeFileString(path.join(source, "knowledge", "hello.md"), "# Hello\n");
   yield* fs.writeFileString(

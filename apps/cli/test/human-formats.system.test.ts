@@ -42,7 +42,7 @@ it(
       await mkdir(join(source, "scripts"), { recursive: true });
       await writeFile(
         join(source, "tack.yaml"),
-        "version: 1\nscripts:\n  - name: run\n    path: scripts/run.ts\n    description: Run fixture\n",
+        "version: 1\nname: source\nscripts:\n  - name: run\n    path: scripts/run.ts\n    description: Run fixture\n",
       );
       await writeFile(join(source, "package.json"), "{}");
       await writeFile(
@@ -127,7 +127,10 @@ it(
       const options = { cwd: root, home, state };
       const source = join(root, "source");
       await mkdir(source);
-      await writeFile(join(source, "tack.yaml"), "version: 1\nskills:\n  - path: skills\n");
+      await writeFile(
+        join(source, "tack.yaml"),
+        "version: 1\nname: source\nskills:\n  - path: skills\n",
+      );
       await mkdir(join(source, "skills", "review"), { recursive: true });
       await writeFile(
         join(source, "skills", "review", "SKILL.md"),

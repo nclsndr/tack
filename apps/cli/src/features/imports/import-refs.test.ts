@@ -20,7 +20,7 @@ const commits = [
   },
   { files: { "skills/pdf/extra.md": "more\n" }, branch: "feature/install" },
 ] as const;
-const declaration = declare("skills: [{ path: skills }]");
+const declaration = declare("personal-brain", "skills: [{ path: skills }]");
 const files = { "skills/a/SKILL.md": skillText("a") };
 
 const recordsOf = (root: string) =>
