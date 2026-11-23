@@ -1261,6 +1261,10 @@ version, which keep their own numbers.
 
 Exit codes are stable: `0` for success, `1` for partial or domain failure, `2` for invalid invocation or configuration, `3` for persistence or internal failure, and `130` when interrupted.
 
+An `internal` failure keeps its cause out of the envelope and names one next step: the same
+command with `TACK_DEBUG=1` before it. With `TACK_DEBUG=1` set, Tack writes the full cause, with
+the use case that failed, to standard error before the output; the envelope is the same either way.
+
 ## Fixed profile authoring
 
 Publish `{ name, path }` entries in `profiles` in a version-2 `tack.yaml`. Each file has its own

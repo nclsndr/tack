@@ -407,6 +407,10 @@ Exit codes are `0` for success, `1` for partial or domain failure, `2` for inval
 configuration, `3` for persistence or internal failure, and `130` for interruption. Do not treat a
 nonzero exit as evidence that no changes occurred.
 
+An `internal-error` hides its cause. Its next step reruns the same command with `TACK_DEBUG=1`
+before it, which writes the full cause and the failing use case to standard error. Put that text in
+the bug report; the command's output does not change.
+
 ## Check a fixed profile
 
 `tack check PROFILE_FILE [COMPANION_SOURCE...]` reports a source-published manifest and its required

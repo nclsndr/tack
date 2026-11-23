@@ -27,6 +27,7 @@ import {
   type StateObserver,
   type StateOptions,
 } from "../../services/state-store.ts";
+import { reportInternalCause, withDebugRerun } from "./debug-cause.ts";
 import { HostConfigurationError, outcomeForError } from "./errors.ts";
 import {
   createPublicEnvelope,
@@ -197,10 +198,13 @@ export const runCli = Effect.fnUntraced(function* () {
                   );
                   return yield* restore(exit.value.serve);
                 }
-                return envelopeFromExit(command, exit, {
+                const routeEnvelope = envelopeFromExit(command, exit, {
                   onFailure: outcomeForError,
                   onSuccess: (value) => ("serve" in value ? value.outcome : value),
                 });
+                if (Exit.isFailure(exit) && routeEnvelope.classification === "internal")
+                  yield* reportInternalCause(exit.cause);
+                return routeEnvelope;
               }),
             ),
         }),
@@ -223,7 +227,7 @@ export const runCli = Effect.fnUntraced(function* () {
               ]),
         ],
       };
-      const validatedEnvelope = yield* validatePublicEnvelope(withNotices);
+      const validatedEnvelope = withDebugRerun(yield* validatePublicEnvelope(withNotices), args);
       yield* render(validatedEnvelope, output);
       const exitCode = exitCodeForEnvelope(validatedEnvelope);
       if (exitCode !== 0) {
