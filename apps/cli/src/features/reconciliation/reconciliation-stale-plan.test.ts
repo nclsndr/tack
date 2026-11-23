@@ -193,6 +193,33 @@ it.layer(LiveTestLayer)("applying a plan the disk moved past", (test) => {
     }),
   );
 
+  test.effect("adopts an unrecorded link only while it is still exactly Tack's", () =>
+    Effect.gen(function* () {
+      const { fs, path, root, options, plan, skills, source, destination, evidence } =
+        yield* staleWorld;
+      yield* fs.makeDirectory(skills, { recursive: true });
+      yield* fs.symlink(path.relative(skills, source), destination);
+      const planned = yield* plan(true);
+      expect(planned.units[0]?.actions.map((action) => action._tag)).toEqual(["link-adopt"]);
+
+      // Another process points the link elsewhere after the preview: nothing is recorded.
+      yield* fs.remove(destination);
+      yield* fs.symlink(path.relative(skills, root), destination);
+      expect(outcomesOf(yield* applyReconciliationPlan(options, planned))).toEqual([
+        ["link-adopt", "failed", "destination-conflict"],
+      ]);
+      expect(managedLinksOf((yield* readState(options)).data.links)).toEqual([]);
+
+      yield* fs.remove(destination);
+      yield* fs.symlink(path.relative(skills, source), destination);
+      expect(outcomesOf(yield* applyReconciliationPlan(options, planned))).toEqual([
+        ["link-adopt", "applied", undefined],
+      ]);
+      expect(managedLinksOf((yield* readState(options)).data.links)).toEqual([evidence]);
+      expect(yield* fs.readLink(destination)).toBe(path.relative(skills, source));
+    }),
+  );
+
   test.effect("skips a destination an interrupted apply left prepared", () =>
     Effect.gen(function* () {
       const { fs, options, plan, skills, destination, evidence } = yield* staleWorld;

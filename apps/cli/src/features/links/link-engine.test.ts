@@ -20,7 +20,9 @@ import { DestinationObservationSchema } from "../../domain/reconciliation/destin
 import { docsChangeFailures } from "../docs/docs-links.ts";
 import { reconciliationLinkFailureCodes } from "../reconciliation/reconciliation-application.ts";
 import {
+  adoptLink,
   createLink,
+  describeAdopt,
   describeCreate,
   describeRemove,
   makeLinkLedger,
@@ -101,6 +103,7 @@ type Scenario = {
   readonly setup: Setup;
   readonly create: string;
   readonly remove: string;
+  readonly adopt: string;
 };
 
 const symlinkTo =
@@ -114,12 +117,19 @@ const symlinkTo =
 
 /** Every way a destination can look, built the same way for both kinds. */
 const scenarios: ReadonlyArray<Scenario> = [
-  { name: "absent", setup: () => Effect.void, create: "created", remove: "removed" },
+  {
+    name: "absent",
+    setup: () => Effect.void,
+    create: "created",
+    remove: "removed",
+    adopt: "changed",
+  },
   {
     name: "an owned link",
     setup: symlinkTo((world, link) => world.textOf(link)),
     create: "occupied",
     remove: "removed",
+    adopt: "adopted",
   },
   {
     name: "a foreign link",
@@ -128,6 +138,7 @@ const scenarios: ReadonlyArray<Scenario> = [
     ),
     create: "occupied",
     remove: "not-owned",
+    adopt: "changed",
   },
   {
     name: "a file",
@@ -138,6 +149,7 @@ const scenarios: ReadonlyArray<Scenario> = [
       }),
     create: "occupied",
     remove: "not-owned",
+    adopt: "changed",
   },
   {
     name: "a directory",
@@ -148,12 +160,14 @@ const scenarios: ReadonlyArray<Scenario> = [
       }),
     create: "occupied",
     remove: "not-owned",
+    adopt: "changed",
   },
   {
     name: "a dangling link with another text",
     setup: symlinkTo(() => "../nowhere"),
     create: "occupied",
     remove: "not-owned",
+    adopt: "changed",
   },
 ];
 
@@ -167,7 +181,25 @@ const withParent = (link: LinkEvidence) =>
 
 it.layer(LiveTestLayer)("one link engine for both delivery kinds", (engine) => {
   for (const kind of kinds) {
-    for (const { name, setup, create, remove } of scenarios) {
+    for (const { name, setup, create, remove, adopt } of scenarios) {
+      engine.effect(`${kind}: adopting over ${name} ends as ${adopt}`, () =>
+        withWorld((world) =>
+          Effect.gen(function* () {
+            const link = world.link(kind);
+            yield* withParent(link);
+            yield* setup(world, link);
+            const before = yield* observeDestination(link.destinationPath);
+            const ledger = makeLinkLedger();
+            const result = yield* adoptLink(ledger, link, world.textOf(link));
+            expect(result._tag).toBe(adopt);
+            // An adoption is learned as recorded, a refusal as unchanged, and neither touches disk.
+            expect(ledger.learned.get(link.destinationPath)).toBe(
+              result._tag === "adopted" ? "record" : "keep",
+            );
+            expect(yield* observeDestination(link.destinationPath)).toStrictEqual(before);
+          }),
+        ),
+      );
       engine.effect(`${kind}: creating over ${name} ends as ${create}`, () =>
         withWorld((world) =>
           Effect.gen(function* () {
@@ -424,6 +456,30 @@ it.layer(LiveTestLayer)("one link engine for both delivery kinds", (engine) => {
     ),
   );
 
+  engine.effect(
+    "adopts only through safe parents, from a usable source, with Tack's exact text",
+    () =>
+      withWorld((world) =>
+        Effect.gen(function* () {
+          const fileSystem = yield* FileSystem.FileSystem;
+          const path = yield* Path.Path;
+          const docs = world.link("docs");
+          yield* withParent(docs);
+          yield* fileSystem.symlink(world.textOf(docs), docs.destinationPath);
+          const adopt = (link: LinkEvidence, text = world.textOf(link)) =>
+            adoptLink(makeLinkLedger(), link, text).pipe(Effect.map((result) => result._tag));
+
+          // The link resolves to the source, but its text is not the text the plan names.
+          expect(yield* adopt(docs, `./${world.textOf(docs)}`)).toBe("changed");
+          expect(
+            yield* adopt({ ...docs, destinationPath: path.join(world.other, "elsewhere") }),
+          ).toBe("parents-unsafe");
+          yield* fileSystem.remove(world.source, { recursive: true });
+          expect(yield* adopt(docs)).toBe("source-refused");
+        }),
+      ),
+  );
+
   engine.effect("reports a source it can stat but not resolve as unreadable", () =>
     withWorld((world) =>
       Effect.gen(function* () {
@@ -522,6 +578,13 @@ it("describes every way a create or remove ends, once for every caller", () => {
     ...atDestination,
   });
   expect(describeCreate({ _tag: "filesystem-failure", error })).toStrictEqual(filesystemFailure);
+
+  expect(describeAdopt({ _tag: "adopted" })).toBeUndefined();
+  expect(describeAdopt({ _tag: "changed", observation })).toStrictEqual({
+    code: "destination-not-owned",
+    ...atDestination,
+  });
+  expect(describeAdopt({ _tag: "parents-unsafe", verdict })).toStrictEqual(parentsUnsafe);
 
   expect(describeRemove({ _tag: "removed" })).toBeUndefined();
   expect(describeRemove({ _tag: "parents-unsafe", verdict })).toStrictEqual(parentsUnsafe);

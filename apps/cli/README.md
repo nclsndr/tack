@@ -965,6 +965,17 @@ foreign text is released the same way. Until then `status` reports the destinati
 `managed-link-drift` until the collision is resolved. A recorded link that is absent is retired with
 reason `absent`.
 
+A link Tack has no record of that is exactly the link Tack would write, with byte-identical text
+that resolves to the selected source, is adopted. A link committed to a repository arrives this way
+in every other clone: Tack wrote it in the clone that committed it. The plan carries a `link-adopt`
+action (counted in the unit summary's `adopt`), the text view shows it as `adopt <path> … already
+linked, record only`, and applying it records the link as Tack's own without touching it. `status`
+reports it as `unrecorded` until then, and afterwards removal, refresh, `status` and `doctor` treat it
+like any link Tack created. Any other entry in the way, such as a link with other text, a file or a
+folder, stays a `foreign-destination` conflict: Tack never replaces it. The conflict names what is
+there and, in `expectedTarget`, the link text Tack would write. `git rm` the entry when the
+repository commits it, or move it away, and ignore Tack's links in `.gitignore`; then sync.
+
 Configure the enabled adapters independently. `adapter enable` cannot remove existing adapters; removing
 one requires `adapter disable` and its cleanup workflow:
 

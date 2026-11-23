@@ -412,6 +412,7 @@
               "skill": "delivered"
             },
             "summary": {
+              "adopt": 0,
               "blocked": 0,
               "collision": 0,
               "conflict": 0,
@@ -516,6 +517,7 @@
               "skill": "delivered"
             },
             "summary": {
+              "adopt": 0,
               "blocked": 0,
               "collision": 0,
               "conflict": 0,

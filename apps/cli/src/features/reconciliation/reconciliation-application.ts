@@ -7,9 +7,11 @@ import {
 import { Destination, observeDestination } from "../../services/destination.ts";
 import { type DestinationObservation } from "../../domain/reconciliation/destination-observation-schema.ts";
 import {
+  adoptLink,
   conclude,
   concludeUnchanged,
   createLink,
+  describeAdopt,
   isBlocked,
   preparedBatchOf,
   removeLink,
@@ -52,6 +54,9 @@ const intentsOf = (plan: ReconciliationPlan): ReadonlyArray<LinkIntent> =>
     .flatMap((action): ReadonlyArray<LinkIntent> => {
       if (action._tag === "link-remove")
         return [{ _tag: "remove", link: agentLink(action.evidence) }];
+      // An adoption is journaled as a creation: recovery records it once the link it names is there.
+      if (action._tag === "link-adopt")
+        return [{ _tag: "create", link: agentLink(action.evidence) }];
       return action._tag === "link-create"
         ? [
             {
@@ -147,7 +152,10 @@ export const reconciliationLinkFailureCodes = {
 
 /** The outcome of a link action, given how it failed if it did. */
 const linkOutcome = (
-  action: Extract<ReconciliationAction, { readonly _tag: "link-create" | "link-remove" }>,
+  action: Extract<
+    ReconciliationAction,
+    { readonly _tag: "link-adopt" | "link-create" | "link-remove" }
+  >,
   failure: LinkFailure | undefined,
 ): ReconciliationActionOutcome =>
   failure === undefined
@@ -176,6 +184,18 @@ const applyLinkCreate = Effect.fnUntraced(function* (
 > {
   const result = yield* createLink(ledger, agentLink(action.evidence), action.relativeTarget);
   return linkOutcome(action, describeCreate(result));
+});
+
+const applyLinkAdopt = Effect.fnUntraced(function* (
+  ledger: LinkLedger,
+  action: Extract<ReconciliationAction, { readonly _tag: "link-adopt" }>,
+): Effect.fn.Return<
+  ReconciliationActionOutcome,
+  never,
+  Destination | FileSystem.FileSystem | Path.Path
+> {
+  const result = yield* adoptLink(ledger, agentLink(action.evidence), action.relativeTarget);
+  return linkOutcome(action, describeAdopt(result));
 });
 
 const applyLinkRemove = Effect.fnUntraced(function* (
@@ -243,6 +263,9 @@ const applyAction = (
   }
   if (action._tag === "link-remove") {
     return applyLinkRemove(ledger, action);
+  }
+  if (action._tag === "link-adopt") {
+    return applyLinkAdopt(ledger, action);
   }
   return applyEvidenceRetire(ledger, action);
 };

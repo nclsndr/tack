@@ -86,6 +86,7 @@ it("names a link whose relative target cannot be derived with its address and de
           ],
           delivery: { command: "unsupported", skill: "delivered" },
           summary: {
+            adopt: 0,
             blocked: 0,
             collision: 0,
             conflict: 1,

@@ -284,6 +284,42 @@ export const createLink = Effect.fnUntraced(function* (
   );
 });
 
+/** How an attempt to adopt one link ended. Nothing changes the destination. */
+export type AdoptResult =
+  | { readonly _tag: "adopted" }
+  | Extract<CreateResult, { readonly _tag: "source-refused" | "parents-unsafe" }>
+  | { readonly _tag: "changed"; readonly observation: DestinationObservation };
+
+/**
+ * Records a link Tack did not create as Tack's own, without touching it. It checks the parents and
+ * the source as a creation does, then observes the destination: only the link Tack writes for this
+ * evidence, with exactly `linkText`, is learned as `record`. Anything else is learned as unchanged.
+ */
+export const adoptLink = Effect.fnUntraced(function* (
+  ledger: LinkLedger,
+  link: LinkEvidence,
+  linkText: string,
+): Effect.fn.Return<AdoptResult, never, Destination | FileSystem.FileSystem | Path.Path> {
+  const refuse = (result: AdoptResult) => {
+    concludeUnchanged(ledger, link);
+    return result;
+  };
+  const kind = deliveryKindOf(link);
+  const verdict = yield* kind.parents(link, false);
+  if (verdict._tag === "unsafe") return refuse({ _tag: "parents-unsafe", verdict });
+  const refusal = yield* refuseSource(link);
+  if (refusal !== undefined) return refuse({ _tag: "source-refused", refusal });
+  const observation = yield* observeDestination(link.destinationPath);
+  if (
+    observation._tag !== "relative-link" ||
+    observation.rawTarget !== linkText ||
+    kind.created(observation, link) === false
+  )
+    return refuse({ _tag: "changed", observation });
+  conclude(ledger, link, "record");
+  return { _tag: "adopted" };
+});
+
 /** How an attempt to remove one link ended. Only `removed` changes the destination. */
 export type RemoveResult =
   | { readonly _tag: "removed" }
@@ -416,6 +452,13 @@ export const describeCreate = (result: CreateResult): LinkFailure | undefined =>
       return exhaustive;
     }
   }
+};
+
+/** Describes how an adoption ended: undefined when the link was recorded. */
+export const describeAdopt = (result: AdoptResult): LinkFailure | undefined => {
+  if (result._tag === "adopted") return undefined;
+  if (result._tag === "changed") return atDestination("destination-not-owned", result.observation);
+  return describeCreate(result);
 };
 
 /** Describes how a remove ended: undefined when the link is gone. */

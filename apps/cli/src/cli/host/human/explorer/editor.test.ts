@@ -338,6 +338,26 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
     }).pipe(Effect.provideService(Git, testGit)),
   );
 
+  test.effect("previews adopting an unrecorded link that is exactly Tack's", () =>
+    Effect.gen(function* () {
+      const { fs, path, root, source, editorFor } = yield* workspace();
+      const skills = path.join(root, ".claude", "skills");
+      yield* fs.makeDirectory(skills, { recursive: true });
+      yield* fs.symlink(
+        path.relative(skills, path.join(source, "skills", "review")),
+        path.join(skills, "review"),
+      );
+      const { editor, review } = yield* editorFor({ _tag: "user" });
+      const preview = yield* editor.preview([
+        { kind: "choice", address: review, decision: "include" },
+      ]);
+      expect(preview).toContain("claude → user: 1 to adopt");
+      expect(preview).toContain(
+        "  adopt       .claude/skills/review  skill source:review (already linked)",
+      );
+    }).pipe(Effect.provideService(Git, testGit)),
+  );
+
   test.effect("previews forgetting the record of a removed link that is no longer selected", () =>
     Effect.gen(function* () {
       const { fs, path, root, editorFor } = yield* workspace();

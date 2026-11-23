@@ -281,69 +281,93 @@ it.layer(LiveTestLayer)("reconciliation planning", (planningIt) => {
     ),
   );
 
-  planningIt.effect("preserves absolute, drifted, and unrecorded symbolic links", () =>
-    Effect.scoped(
-      Effect.gen(function* () {
-        const fileSystem = yield* FileSystem.FileSystem;
-        const path = yield* Path.Path;
-        const temporaryRoot = yield* fileSystem.makeTempDirectoryScoped({
-          prefix: "tack-plan-test-",
-        });
-        const root = yield* fileSystem.realPath(temporaryRoot);
-        const home = path.join(root, "home");
-        const skillDirectory = path.join(home, ".cursor", "skills");
-        const source = path.join(root, "source", "skill");
-        const other = path.join(root, "source", "other");
-        yield* fileSystem.makeDirectory(skillDirectory, { recursive: true });
-        yield* fileSystem.makeDirectory(source, { recursive: true });
-        yield* fileSystem.makeDirectory(other, { recursive: true });
-        const absolute = catalogEntry("absolute", source);
-        const drifted = catalogEntry("drifted", source);
-        const foreign = catalogEntry("foreign", source);
-        yield* fileSystem.symlink(source, path.join(skillDirectory, "absolute"));
-        yield* fileSystem.symlink(
-          path.relative(skillDirectory, other),
-          path.join(skillDirectory, "drifted"),
-        );
-        yield* fileSystem.symlink(
-          path.relative(skillDirectory, source),
-          path.join(skillDirectory, "foreign"),
-        );
+  planningIt.effect(
+    "preserves absolute, drifted and differing links and adopts an unrecorded one exactly Tack's",
+    () =>
+      Effect.scoped(
+        Effect.gen(function* () {
+          const fileSystem = yield* FileSystem.FileSystem;
+          const path = yield* Path.Path;
+          const temporaryRoot = yield* fileSystem.makeTempDirectoryScoped({
+            prefix: "tack-plan-test-",
+          });
+          const root = yield* fileSystem.realPath(temporaryRoot);
+          const home = path.join(root, "home");
+          const skillDirectory = path.join(home, ".cursor", "skills");
+          const source = path.join(root, "source", "skill");
+          const other = path.join(root, "source", "other");
+          yield* fileSystem.makeDirectory(skillDirectory, { recursive: true });
+          yield* fileSystem.makeDirectory(source, { recursive: true });
+          yield* fileSystem.makeDirectory(other, { recursive: true });
+          const absolute = catalogEntry("absolute", source);
+          const drifted = catalogEntry("drifted", source);
+          const exact = catalogEntry("exact", source);
+          const foreign = catalogEntry("foreign", source);
+          const spelled = catalogEntry("spelled", source);
+          const tackText = path.relative(skillDirectory, source);
+          yield* fileSystem.symlink(source, path.join(skillDirectory, "absolute"));
+          yield* fileSystem.symlink(
+            path.relative(skillDirectory, other),
+            path.join(skillDirectory, "drifted"),
+          );
+          yield* fileSystem.symlink(tackText, path.join(skillDirectory, "exact"));
+          yield* fileSystem.symlink(
+            path.relative(skillDirectory, other),
+            path.join(skillDirectory, "foreign"),
+          );
+          // It resolves to the source, but its text is not the text Tack writes.
+          yield* fileSystem.symlink(`./${tackText}`, path.join(skillDirectory, "spelled"));
 
-        const plan = yield* planReconciliation({
-          adapters: [agentAdapterDescriptor("cursor")],
-          catalogEntries: [absolute, drifted, foreign],
-          managedLinks: [
-            evidence("cursor", targetUser(home), absolute),
-            evidence("cursor", targetUser(home), drifted),
-          ],
-          namespaces: reconciliationNamespaces(
-            [
-              namespaceResolution(userNamespace, [
-                absolute.address,
-                drifted.address,
-                foreign.address,
-              ]),
+          const plan = yield* planReconciliation({
+            adapters: [agentAdapterDescriptor("cursor")],
+            catalogEntries: [absolute, drifted, exact, foreign, spelled],
+            managedLinks: [
+              evidence("cursor", targetUser(home), absolute),
+              evidence("cursor", targetUser(home), drifted),
             ],
-            [targetUser(home)],
-          ),
-        });
+            namespaces: reconciliationNamespaces(
+              [
+                namespaceResolution(userNamespace, [
+                  absolute.address,
+                  drifted.address,
+                  exact.address,
+                  foreign.address,
+                  spelled.address,
+                ]),
+              ],
+              [targetUser(home)],
+            ),
+          });
 
-        expect(plan.units[0]?.actions).toEqual([]);
-        expect(plan.units[0]?.conflicts.map((conflict) => conflict._tag)).toEqual([
-          "managed-link-drift",
-          "managed-link-drift",
-          "foreign-destination",
-        ]);
-        expect(
-          plan.units[0]?.conflicts.find(
-            (conflict) =>
-              conflict._tag === "managed-link-drift" &&
-              conflict.destinationPath.endsWith("absolute"),
-          ),
-        ).toMatchObject({ observation: { _tag: "absolute-link", rawTarget: source } });
-      }),
-    ),
+          expect(plan.units[0]?.actions).toEqual([
+            {
+              _tag: "link-adopt",
+              destinationPath: path.join(skillDirectory, "exact"),
+              evidence: evidence("cursor", targetUser(home), exact),
+              relativeTarget: tackText,
+            },
+          ]);
+          expect(plan.units[0]?.summary).toMatchObject({ adopt: 1, conflict: 4, create: 0 });
+          expect(plan.units[0]?.conflicts.map((conflict) => conflict._tag)).toEqual([
+            "managed-link-drift",
+            "managed-link-drift",
+            "foreign-destination",
+            "foreign-destination",
+          ]);
+          expect(
+            plan.units[0]?.conflicts.flatMap((conflict) =>
+              conflict._tag === "foreign-destination" ? [conflict.expectedTarget] : [],
+            ),
+          ).toEqual([tackText, tackText]);
+          expect(
+            plan.units[0]?.conflicts.find(
+              (conflict) =>
+                conflict._tag === "managed-link-drift" &&
+                conflict.destinationPath.endsWith("absolute"),
+            ),
+          ).toMatchObject({ observation: { _tag: "absolute-link", rawTarget: source } });
+        }),
+      ),
   );
 
   planningIt.effect("preserves recorded and unrecorded dangling relative links", () =>
@@ -457,6 +481,7 @@ it.layer(LiveTestLayer)("reconciliation planning", (planningIt) => {
             { _tag: "managed-link-drift", evidence: { address: { name: "kept" } } },
           ]);
           expect(plan.units[0]?.summary).toEqual({
+            adopt: 0,
             blocked: 0,
             collision: 0,
             conflict: 1,
@@ -987,6 +1012,7 @@ it.layer(LiveTestLayer)("reconciliation planning", (planningIt) => {
           }),
         );
         expect(plan.units[0]?.summary).toEqual({
+          adopt: 0,
           blocked: 1,
           collision: 0,
           conflict: 0,

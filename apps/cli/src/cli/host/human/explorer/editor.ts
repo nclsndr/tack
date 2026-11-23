@@ -128,6 +128,8 @@ const actionLine = (
     return `  ${action.previousEvidence === undefined ? "link   " : "replace"}     ${relativeTo(root, action.destinationPath, style)}  ${labelled(action.evidence.address, style)}`;
   if (action._tag === "link-remove")
     return `  unlink      ${relativeTo(root, action.destinationPath, style)}  ${labelled(action.evidence.address, style)} (${action.reason})`;
+  if (action._tag === "link-adopt")
+    return `  adopt       ${relativeTo(root, action.destinationPath, style)}  ${labelled(action.evidence.address, style)} (already linked)`;
   return `  forget      ${relativeTo(root, action.destinationPath, style)}  record only`;
 };
 
@@ -200,6 +202,7 @@ export const makeExplorerEditor = (options: {
           const { summary } = unit;
           const work = [
             ...(summary.create > 0 ? [`${summary.create} to link`] : []),
+            ...(summary.adopt > 0 ? [`${summary.adopt} to adopt`] : []),
             ...(summary.remove > 0 ? [`${summary.remove} to remove`] : []),
             ...(summary.retire > 0 ? [`${summary.retire} to forget`] : []),
             ...(summary.conflict > 0 ? [plural(summary.conflict, "conflict")] : []),

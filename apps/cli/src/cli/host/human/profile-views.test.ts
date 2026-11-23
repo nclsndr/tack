@@ -118,6 +118,7 @@ const syncOf = (
           conflicts: [],
           delivery: { command: "unsupported", skill: "delivered" },
           summary: {
+            adopt: 0,
             blocked: 0,
             collision: 0,
             conflict: 0,

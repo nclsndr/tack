@@ -254,6 +254,20 @@ const retain = (observation: DestinationObservation, evidence: ManagedLinkEviden
     Effect.map((claim): RetainedEvidence => ({ claim, evidence })),
   );
 
+/**
+ * Whether an unrecorded entry is exactly the link Tack would write for the one desired link: a
+ * relative link with byte-identical text that resolves to the selected source. Such a link was
+ * written by Tack elsewhere, such as in the clone that committed it, so Tack records it as its own.
+ */
+const isAdoptable = (
+  observation: DestinationObservation,
+  desired: DesiredLink,
+): observation is Extract<DestinationObservation, { readonly _tag: "relative-link" }> =>
+  observation._tag === "relative-link" &&
+  desired.relativeTarget !== undefined &&
+  observation.rawTarget === desired.relativeTarget &&
+  observation.canonicalTarget === desired.evidence.sourceDirectoryPath;
+
 type Blockers = readonly [RequiredDependencyBlocker, ...Array<RequiredDependencyBlocker>];
 
 /**
@@ -312,19 +326,33 @@ const planDestination = (
 
   if (retained === undefined) {
     if (observation._tag !== "absent") {
-      return desired.length === 0
-        ? { actions: [], conflicts: [] }
-        : {
-            actions: [],
-            conflicts: [
-              {
-                _tag: "foreign-destination",
-                addresses: desiredAddresses,
-                destinationPath,
-                observation,
-              },
-            ],
-          };
+      if (desired.length === 0) return { actions: [], conflicts: [] };
+      const expectedTarget = selected?.relativeTarget;
+      if (selected !== undefined && isAdoptable(observation, selected) === true) {
+        return {
+          actions: [
+            {
+              _tag: "link-adopt",
+              destinationPath,
+              evidence: selected.evidence,
+              relativeTarget: observation.rawTarget,
+            },
+          ],
+          conflicts: [],
+        };
+      }
+      return {
+        actions: [],
+        conflicts: [
+          {
+            _tag: "foreign-destination",
+            addresses: desiredAddresses,
+            destinationPath,
+            ...(expectedTarget === undefined ? {} : { expectedTarget }),
+            observation,
+          },
+        ],
+      };
     }
     if (selected?.relativeTarget !== undefined) {
       return {
@@ -768,6 +796,7 @@ const unitSummary = (
     unit.actions.filter((action) => action._tag === "evidence-retire" && action.reason === reason)
       .length;
   return {
+    adopt: count("link-adopt"),
     blocked,
     collision: unit.collisions.length,
     conflict: unit.conflicts.length,

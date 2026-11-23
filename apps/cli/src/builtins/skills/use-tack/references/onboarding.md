@@ -161,8 +161,10 @@ picked for the user shows as `skip … linked for the user` in each project: it 
 through the user's folder. On yes, run each with `--apply`. "Except project X"
 skips its sync. "Except skill X" is a pick: show it and the new preview first.
 
-Ask about Git: the links point to paths on this machine, so committed links break for teammates.
-Ignore them in this repository, or commit them? Tack never edits `.gitignore`. To ignore them,
+Ask about Git: the links are relative, so a committed link to a source outside the repository
+breaks for teammates. A committed link to a source inside the repository works in every clone, and
+Tack adopts it there when it is exactly the link Tack would write. Ignore them in this repository,
+or commit them? Tack never edits `.gitignore`. To ignore them,
 run `tack status --project NAME --details` and show the lines under "For .gitignore in project
 NAME", as printed: one per link, from the repository root. A link is a file to Git, so a line never
 ends with `/`. Say that each skill linked later needs its own line. The person adds them, or asks

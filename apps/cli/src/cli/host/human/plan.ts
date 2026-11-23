@@ -10,6 +10,7 @@ import {
   type ReconciliationConflict,
   type ReconciliationUnitPlan,
 } from "../../../domain/reconciliation/reconciliation-schema.ts";
+import type { DestinationObservation } from "../../../domain/reconciliation/destination-observation-schema.ts";
 import { agentAdapterDescriptor } from "../../../domain/agents/agent-adapter.ts";
 import type { ManagedLinkTarget } from "../../../domain/links/managed-link-schema.ts";
 import { selectedDependencyAddresses } from "../../../domain/choices/dependency-resolution.ts";
@@ -97,6 +98,16 @@ const actionCells = (
       cell(relativeTo(target, action.destinationPath, style)),
       cell(addressText(action.evidence.address, style), style.dim),
     ];
+  // An adopted link is already on disk, exactly as Tack would write it; only its record is new.
+  if (action._tag === "link-adopt")
+    return [
+      cell("adopt", style.green),
+      cell(relativeTo(target, action.destinationPath, style)),
+      cell(
+        `${addressText(action.evidence.address, style)} · already linked, record only`,
+        style.dim,
+      ),
+    ];
   if (action._tag === "link-remove")
     return [
       cell("remove", style.red),
@@ -154,6 +165,31 @@ const conflictDescriptions: { readonly [K in ReconciliationConflict["_tag"]]: st
   "relative-target-unavailable": "no relative link target can be computed",
 };
 
+/** What an observed entry is, in a few words: `a symbolic link to ../elsewhere`, `a folder`. */
+const observedText = (observation: DestinationObservation) => {
+  if (observation._tag === "relative-link") return `a symbolic link to ${observation.rawTarget}`;
+  if (observation._tag === "unresolved-relative-link")
+    return `a broken symbolic link to ${observation.rawTarget}`;
+  if (observation._tag === "absolute-link")
+    return `an absolute symbolic link to ${observation.rawTarget}`;
+  if (observation._tag === "entry")
+    return observation.entryType === "directory"
+      ? "a folder"
+      : observation.entryType === "file"
+        ? "a file"
+        : "a special file";
+  return "an entry Tack cannot read";
+};
+
+/**
+ * What is in the way of a link and what Tack would write instead, with the ways out. A committed
+ * link that is exactly Tack's is adopted instead, so a link here differs from it.
+ */
+const foreignText = (conflict: Extract<ReconciliationConflict, { _tag: "foreign-destination" }>) =>
+  `foreign-destination: ${observedText(conflict.observation)} is in the way${
+    conflict.expectedTarget === undefined ? "" : `; Tack would link ${conflict.expectedTarget}`
+  }. Tack never replaces it: \`git rm\` it when the repository commits it, or move it away, and ignore Tack's links in .gitignore; then sync.`;
+
 const conflictCells = (
   conflict: ReconciliationConflict,
   target: ManagedLinkTarget,
@@ -166,7 +202,12 @@ const conflictCells = (
   return [
     cell("conflict", style.red),
     cell(relativeTo(target, path, style)),
-    cell(`${conflict._tag}: ${conflictDescriptions[conflict._tag]}`, style.red),
+    cell(
+      conflict._tag === "foreign-destination"
+        ? foreignText(conflict)
+        : `${conflict._tag}: ${conflictDescriptions[conflict._tag]}`,
+      style.red,
+    ),
   ];
 };
 
@@ -181,9 +222,9 @@ export const repeatedByRows: ReadonlySet<string> = new Set([
   "selection-collision",
 ]);
 
-/** The changes one unit plans: links to create, remove, forget or release. */
+/** The changes one unit plans: links to create, adopt, remove, forget or release. */
 export const workOf = ({ summary }: ReconciliationUnitPlan) =>
-  summary.create + summary.remove + summary.retire + summary.release;
+  summary.create + summary.adopt + summary.remove + summary.retire + summary.release;
 
 /** The items of one unit that need the operator: conflicts, collisions and blocked actions. */
 export const attentionOf = ({ summary }: ReconciliationUnitPlan) =>
@@ -193,6 +234,7 @@ const unitSummary = (unit: ReconciliationUnitPlan): string => {
   const { summary } = unit;
   const parts = [
     ...(summary.create > 0 ? [`${summary.create} to link`] : []),
+    ...(summary.adopt > 0 ? [`${summary.adopt} to adopt`] : []),
     ...(summary.remove > 0 ? [`${summary.remove} to remove`] : []),
     ...(summary.retire > 0 ? [`${summary.retire} to forget`] : []),
     ...(summary.release > 0 ? [`${summary.release} to release`] : []),

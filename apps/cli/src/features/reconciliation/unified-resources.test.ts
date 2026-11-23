@@ -210,9 +210,12 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
         const source = f.path.join(f.source, "commands", "review.md");
         if (kind === "file") yield* f.fs.writeFileString(f.command, "foreign");
         else if (kind === "directory") yield* f.fs.makeDirectory(f.command);
+        // The relative link resolves to the source but is not byte-identical to Tack's, so it is foreign.
         else
           yield* f.fs.symlink(
-            kind === "absolute-link" ? source : f.path.relative(f.path.dirname(f.command), source),
+            kind === "absolute-link"
+              ? source
+              : `./${f.path.relative(f.path.dirname(f.command), source)}`,
             f.command,
           );
         const result = yield* f.reconcile();
