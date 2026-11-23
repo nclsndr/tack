@@ -17,7 +17,7 @@ import {
   targetProject,
 } from "../../../test/support/state-fixture.ts";
 import {
-  planRemoval,
+  planRemovalAt,
   removeProject,
   removeProjectRoot,
   retryPendingRemovals,
@@ -252,7 +252,7 @@ it.layer(LiveTestLayer)("one removal is one prepared batch", (removalIt) => {
         const [gone, kept] = world.links;
         if (gone === undefined || kept === undefined) throw new Error("Expected two links.");
         yield* fileSystem.remove(gone);
-        const plan = yield* planRemoval(world.options, {
+        const plan = yield* planRemovalAt(world.options, {
           cause: "root-removal",
           scope: { _tag: "project-root", canonicalRoot: world.projectRoot, projectName: "project" },
         });

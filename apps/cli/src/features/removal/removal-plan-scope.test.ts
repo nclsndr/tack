@@ -1,6 +1,6 @@
 import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
-import { planRemoval } from "../../../test/support/removal.ts";
+import { planRemovalAt } from "../../../test/support/removal.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { docsLink } from "../../domain/docs/docs-schema.ts";
@@ -43,14 +43,14 @@ it.layer(LiveTestLayer)("removal plan scope", (test) => {
   test.effect("retries a docs mount the project or its root still owes", () =>
     Effect.gen(function* () {
       const { options, kept, mount } = yield* owedDocsWorld;
-      const project = yield* planRemoval(options, {
+      const project = yield* planRemovalAt(options, {
         cause: "project-removal",
         scope: { _tag: "project", projectName: "project" },
       });
       expect(project.docsActions?.map((action) => action.evidence.destinationPath)).toEqual([
         mount.destinationPath,
       ]);
-      const root = yield* planRemoval(options, {
+      const root = yield* planRemovalAt(options, {
         cause: "root-removal",
         scope: { _tag: "project-root", projectName: "project", canonicalRoot: kept },
       });
@@ -64,8 +64,8 @@ it.layer(LiveTestLayer)("removal plan scope", (test) => {
     Effect.gen(function* () {
       const { options, kept } = yield* owedDocsWorld;
       const target = { _tag: "project-root" as const, canonicalPath: kept, projectName: "project" };
-      const planned = (scope: Parameters<typeof planRemoval>[1]["scope"]) =>
-        planRemoval(options, { scope }).pipe(Effect.map((plan) => plan.docsActions?.length ?? 0));
+      const planned = (scope: Parameters<typeof planRemovalAt>[1]["scope"]) =>
+        planRemovalAt(options, { scope }).pipe(Effect.map((plan) => plan.docsActions?.length ?? 0));
       expect(yield* planned({ _tag: "maintenance" })).toBe(1);
       expect(yield* planned({ _tag: "retry-targets", targets: [target] })).toBe(1);
       expect(yield* planned({ _tag: "selected-targets", targets: [target] })).toBe(1);
@@ -86,7 +86,7 @@ it.layer(LiveTestLayer)("removal plan scope", (test) => {
       const { options, path, root } = yield* owedDocsWorld;
       expect(
         yield* Effect.flip(
-          planRemoval(options, {
+          planRemovalAt(options, {
             cause: "project-removal",
             scope: { _tag: "project", projectName: "unknown" },
           }),
@@ -95,7 +95,7 @@ it.layer(LiveTestLayer)("removal plan scope", (test) => {
       const elsewhere = path.join(root, "elsewhere");
       expect(
         yield* Effect.flip(
-          planRemoval(options, {
+          planRemovalAt(options, {
             cause: "root-removal",
             scope: { _tag: "project-root", projectName: "project", canonicalRoot: elsewhere },
           }),
@@ -123,16 +123,17 @@ it.layer(LiveTestLayer)("removal plan scope", (test) => {
           projectName: "demo",
         };
         expect(
-          (yield* planRemoval(options, { scope: { _tag: "selected-targets", targets: [target] } }))
-            .docsActions,
+          (yield* planRemovalAt(options, {
+            scope: { _tag: "selected-targets", targets: [target] },
+          })).docsActions,
         ).toHaveLength(1);
         // Retry settles obligations only: a mount on an active root is healthy and stays.
         expect(
-          (yield* planRemoval(options, { scope: { _tag: "retry-targets", targets: [target] } }))
+          (yield* planRemovalAt(options, { scope: { _tag: "retry-targets", targets: [target] } }))
             .docsActions,
         ).toBeUndefined();
         expect(
-          (yield* planRemoval(options, { scope: { _tag: "adapter", adapter: "codex" } }))
+          (yield* planRemovalAt(options, { scope: { _tag: "adapter", adapter: "codex" } }))
             .docsActions,
         ).toBeUndefined();
         yield* mutateStateFixture(options, (state) => ({
@@ -147,11 +148,11 @@ it.layer(LiveTestLayer)("removal plan scope", (test) => {
           },
         }));
         expect(
-          (yield* planRemoval(options, { scope: { _tag: "maintenance" } })).docsActions,
+          (yield* planRemovalAt(options, { scope: { _tag: "maintenance" } })).docsActions,
         ).toHaveLength(1);
         // Once the root is being removed, its mount is evidence retry must settle.
         expect(
-          (yield* planRemoval(options, { scope: { _tag: "retry-targets", targets: [target] } }))
+          (yield* planRemovalAt(options, { scope: { _tag: "retry-targets", targets: [target] } }))
             .docsActions,
         ).toHaveLength(1);
         yield* mutateStateFixture(options, (state) => ({
@@ -166,7 +167,7 @@ it.layer(LiveTestLayer)("removal plan scope", (test) => {
           },
         }));
         expect(
-          (yield* planRemoval(options, { scope: { _tag: "retry-targets", targets: [target] } }))
+          (yield* planRemovalAt(options, { scope: { _tag: "retry-targets", targets: [target] } }))
             .docsActions,
         ).toHaveLength(1);
       }),

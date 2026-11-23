@@ -6,7 +6,7 @@ import { SecureRandom } from "effect/crypto";
 import {
   initializeState,
   makeStateNoticeCollector,
-  mutateStateEffect,
+  mutateState,
   readState,
   resolveStateDirectory,
   StateBusyError,
@@ -25,11 +25,11 @@ import { makeStateStoreService } from "./state.ts";
 import { decodeState, encodeState } from "../../domain/state/state-codec.ts";
 import { agentLink } from "../../domain/links/link-record-schema.ts";
 import { docsLink } from "../../domain/docs/docs-schema.ts";
-import { mutateState, runtimeFixture } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture, runtimeFixture } from "../../../test/support/state-fixture.ts";
 
 it("keeps the pure replacement helper out of the production state module", async () => {
   const production = await import("./state.ts");
-  expect(production).not.toHaveProperty("mutateState");
+  expect(production).not.toHaveProperty("mutateStateFixture");
 });
 
 const stateFileName = "state.json";
@@ -138,7 +138,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
         const dotenvPath = path.join(stateDirectory, dotenvFileName);
         const statePath = path.join(stateDirectory, stateFileName);
         yield* initializeState(options);
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: { ...state.data, projects: [] },
         }));
@@ -197,7 +197,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
         yield* initializeState(options);
         const before = yield* fileSystem.stat(statePath);
 
-        const updated = yield* mutateState(options, (state) => ({
+        const updated = yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: { ...state.data, projects: [] },
         }));
@@ -242,7 +242,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
 
         yield* fileSystem.writeFileString(statePath, validState);
         const mutationError = yield* Effect.flip(
-          mutateState(options, (state) => ({
+          mutateStateFixture(options, (state) => ({
             ...state,
             data: { ...state.data, invalid: Number.NaN },
           })),
@@ -278,7 +278,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
             expect(yield* Effect.flip(initializeState(options))).toBeInstanceOf(StateCorruptError);
             expect(
               yield* Effect.flip(
-                mutateState(options, (state) => {
+                mutateStateFixture(options, (state) => {
                   mutationCalls += 1;
                   return state;
                 }),
@@ -316,7 +316,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
         const errors = [
           yield* Effect.flip(readState(options)),
           yield* Effect.flip(initializeState(options)),
-          yield* Effect.flip(mutateState(options, (state) => state)),
+          yield* Effect.flip(mutateStateFixture(options, (state) => state)),
         ];
         for (const error of errors) {
           expect(error).toBeInstanceOf(StateFormatUnsupportedError);
@@ -351,7 +351,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
           const errors = [
             yield* Effect.flip(readState(options)),
             yield* Effect.flip(initializeState(options)),
-            yield* Effect.flip(mutateState(options, (state) => state)),
+            yield* Effect.flip(mutateStateFixture(options, (state) => state)),
             yield* Effect.flip(withStateCheckpointWriter(options, () => Effect.void)),
           ];
           for (const error of errors) {
@@ -450,7 +450,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
             },
           });
           yield* initializeState(options);
-          yield* mutateState(options, () => expected);
+          yield* mutateStateFixture(options, () => expected);
           const encoded = JSON.parse(yield* fileSystem.readFileString(statePath));
           expect(Object.keys(encoded)).toEqual(["format", "data"]);
           expect(encoded.format).toBe(1);
@@ -588,7 +588,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
         yield* fileSystem.open(path.join(stateDirectory, lockFileName), { flag: "wx" });
 
         const error = yield* Effect.flip(
-          mutateState(options, (state) => ({
+          mutateStateFixture(options, (state) => ({
             ...state,
             data: { ...state.data, projects: [] },
           })),
@@ -610,7 +610,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
         yield* initializeState(options);
         yield* fileSystem.writeFileString(lockPath, "2147483647\n");
         const error = yield* provideTestFileSystem(
-          Effect.flip(mutateState(options, (state) => state)),
+          Effect.flip(mutateStateFixture(options, (state) => state)),
           yield* faultyFileSystem({
             readFileString: (targetPath) =>
               targetPath === lockPath ? platformTestError("readFileString") : undefined,
@@ -667,7 +667,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       const options = stateOptions(stateDirectory);
 
       const error = yield* Effect.flip(
-        mutateState(options, (state) => ({
+        mutateStateFixture(options, (state) => ({
           ...state,
           data: { ...state.data, projects: [] },
         })),
@@ -691,7 +691,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       yield* fileSystem.writeFileString(stateDirectory, "not a directory");
       const initializationError = yield* Effect.flip(initializeState(options));
       const mutationError = yield* Effect.flip(
-        mutateState(options, (state) => ({
+        mutateStateFixture(options, (state) => ({
           ...state,
           data: { ...state.data, projects: [] },
         })),
@@ -729,7 +729,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
         expect(dotenvError).toBeInstanceOf(StateStorageError);
         const lockError = yield* provideTestFileSystem(
           Effect.flip(
-            mutateState(options, (state) => ({
+            mutateStateFixture(options, (state) => ({
               ...state,
               data: { ...state.data, projects: [] },
             })),
@@ -755,7 +755,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
         yield* initializeState(options);
 
         const failed = yield* provideTestFileSystem(
-          Effect.flip(mutateState(options, (state) => state)),
+          Effect.flip(mutateStateFixture(options, (state) => state)),
           {
             ...fileSystem,
             open: (targetPath, openOptions) =>
@@ -782,7 +782,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
           ),
         ).toEqual([]);
         // The next healthy writer is not refused by a leftover lock.
-        yield* mutateState(options, (state) => state);
+        yield* mutateStateFixture(options, (state) => state);
       }),
     ),
   );
@@ -798,7 +798,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
 
         const error = yield* provideTestFileSystem(
           Effect.flip(
-            mutateState(options, (state) => ({
+            mutateStateFixture(options, (state) => ({
               ...state,
               data: { ...state.data, projects: [] },
             })),
@@ -831,7 +831,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
 
         const error = yield* provideTestFileSystem(
           Effect.flip(
-            mutateState(options, (state) => ({
+            mutateStateFixture(options, (state) => ({
               ...state,
               data: { ...state.data, projects: [] },
             })),
@@ -857,7 +857,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
         yield* initializeState(options);
 
         const error = yield* provideTestFileSystem(
-          Effect.flip(mutateState(options, (state) => state)),
+          Effect.flip(mutateStateFixture(options, (state) => state)),
           yield* faultyFileSystem({
             remove: (targetPath) =>
               targetPath === lockPath ? platformTestError("remove") : undefined,
@@ -880,12 +880,12 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
         yield* initializeState(options);
         const persistedStateBeforeMutatorFailures = yield* fileSystem.readFileString(statePath);
         const thrownError = yield* Effect.flip(
-          mutateState(options, () => {
+          mutateStateFixture(options, () => {
             throw new Error("mutation failed");
           }),
         );
         const nonErrorThrown = yield* Effect.flip(
-          mutateState(options, () => {
+          mutateStateFixture(options, () => {
             throw "not an Error";
           }),
         );
@@ -912,7 +912,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
 
         const initializationError = yield* Effect.flip(initializeState(options));
         const mutationError = yield* Effect.flip(
-          mutateState(options, (state) => {
+          mutateStateFixture(options, (state) => {
             mutationCalls.push(undefined);
             return state;
           }),
@@ -947,7 +947,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
 
         yield* Deferred.await(entered);
         expect(yield* fileSystem.exists(lockPath)).toBe(true);
-        const busy = yield* Effect.flip(mutateState(options, (state) => state));
+        const busy = yield* Effect.flip(mutateStateFixture(options, (state) => state));
         expect(busy).toBeInstanceOf(StateBusyError);
         yield* Deferred.succeed(release, undefined);
         yield* Fiber.join(writerFiber);
@@ -1004,7 +1004,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
         expect(yield* fileSystem.exists(lockPath)).toBe(true);
         yield* Fiber.interrupt(writerFiber);
         expect(yield* fileSystem.exists(lockPath)).toBe(false);
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: { ...state.data, enabledAdapters: ["codex"] },
         }));
@@ -1189,7 +1189,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
         const writes: string[] = [];
         const notices = makeStateNoticeCollector(() => writes.push("wrote"));
         const options = { environment: {}, homeDirectory: home, observer: notices.sink };
-        const value = yield* mutateStateEffect(options, (state) =>
+        const value = yield* mutateState(options, (state) =>
           Effect.succeed({ state, value: "first" }),
         );
         const stateDirectory = path.join(home, ".tack");
@@ -1218,7 +1218,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
           observer: notices.sink,
           initialAdapters: Effect.succeed(["claude", "codex"] as const),
         };
-        const adapters = yield* mutateStateEffect(options, (state) =>
+        const adapters = yield* mutateState(options, (state) =>
           Effect.succeed({ state, value: state.data.enabledAdapters }),
         );
 
@@ -1231,7 +1231,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
         });
         // An existing state keeps its adapters.
         const again = makeStateNoticeCollector();
-        yield* mutateStateEffect(
+        yield* mutateState(
           { ...options, observer: again.sink, initialAdapters: Effect.succeed(["pi"] as const) },
           (state) =>
             Effect.succeed({

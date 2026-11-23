@@ -1,6 +1,6 @@
 import { BunCrypto, BunRuntime, BunServices } from "@effect/platform-bun";
 import { Config, ConfigProvider, Effect, FileSystem, Path, Stdio, Stream } from "effect";
-import { mutateStateEffect, type StateOptions } from "../../src/services/state-store.ts";
+import { mutateState, type StateOptions } from "../../src/services/state-store.ts";
 import { StateStoreLive } from "../../src/platform/state/state.ts";
 
 const program = Effect.gen(function* () {
@@ -12,7 +12,7 @@ const program = Effect.gen(function* () {
     homeDirectory,
   } satisfies StateOptions;
 
-  yield* mutateStateEffect(options, () =>
+  yield* mutateState(options, () =>
     Effect.gen(function* () {
       const fileSystem = yield* FileSystem.FileSystem;
       const path = yield* Path.Path;

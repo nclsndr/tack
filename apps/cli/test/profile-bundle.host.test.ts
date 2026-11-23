@@ -5,7 +5,7 @@ import { Effect } from "effect";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { profileFixture } from "./support/profile-fixture.ts";
 import { initializeState, readState } from "../src/services/state-store.ts";
-import { mutateState } from "./support/state-fixture.ts";
+import { mutateStateFixture } from "./support/state-fixture.ts";
 import { runBundleExport, inspectBundle } from "../src/features/profiles/bundle-export.ts";
 import { runBundleApply } from "../src/features/profiles/bundle-apply.ts";
 import { runSyncCommand } from "../src/features/reconciliation/sync-command.ts";
@@ -86,7 +86,7 @@ it.layer(LiveTestLayer)("content-only profile bundles", (test) => {
           (yield* runBundleExport(options, { reference: "tools:ci", output: file, apply: true }))
             .exported,
         ).toBe(true);
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -110,7 +110,7 @@ it.layer(LiveTestLayer)("content-only profile bundles", (test) => {
           false,
         );
         yield* fs.makeDirectory(path.join(root, "second"));
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -351,7 +351,7 @@ it.layer(LiveTestLayer)("content-only profile bundles", (test) => {
           environment: { HOME: home, TACK_STATE_DIR: path.join(home, "state") },
         };
         yield* initializeState(recipient);
-        yield* mutateState(recipient, (state) => ({
+        yield* mutateStateFixture(recipient, (state) => ({
           ...state,
           data: {
             ...state.data,

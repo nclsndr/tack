@@ -17,7 +17,7 @@ import { SourceRegistrationIdSchema } from "../../domain/sources/source-schema.t
 import type { State } from "../../domain/state/state-schema.ts";
 import type { StateCheckpointWriter, StateOptions } from "../../services/state-store.ts";
 import { applyRemovalWithWriter } from "../removal/removal-apply.ts";
-import { planRemovalFromState } from "../removal/removal-plan.ts";
+import { planRemoval } from "../removal/removal-plan.ts";
 import { previewOrApply } from "../writer/recovered-writer.ts";
 
 /** The fixed profile application a removed project drops with it. */
@@ -52,7 +52,7 @@ export type ProjectRemovalPlan = typeof ProjectRemovalPlanSchema.Type;
 const planFromState = Effect.fnUntraced(function* (state: State, projectName: string) {
   const project = state.data.projects.find((candidate) => candidate.name === projectName);
   if (project === undefined) return yield* new RemovalProjectNotFoundError({ projectName });
-  const removal = yield* planRemovalFromState(state, {
+  const removal = yield* planRemoval(state, {
     cause: "project-removal",
     scope: { _tag: "project", projectName },
   });

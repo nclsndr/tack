@@ -21,7 +21,7 @@ import { enableAdapters } from "../src/features/reconciliation/agent.ts";
 import type { RouteServices } from "../src/cli/host/routes/route.ts";
 import { loadExplorer, makeExplorerEditor } from "../src/cli/host/human/explorer/editor.ts";
 import { Source, makeSourceService, registerSource } from "../src/features/sources/source.ts";
-import { mutateState } from "./support/state-fixture.ts";
+import { mutateStateFixture } from "./support/state-fixture.ts";
 import {
   choice,
   key,
@@ -370,7 +370,7 @@ const withWorkspace = Effect.fnUntraced(function* () {
   yield* initializeState(options);
   yield* registerSource(options, { sourcePath: source });
   yield* enableAdapters(options, ["claude"]);
-  yield* mutateState(options, (state) => ({
+  yield* mutateStateFixture(options, (state) => ({
     ...state,
     data: {
       ...state.data,

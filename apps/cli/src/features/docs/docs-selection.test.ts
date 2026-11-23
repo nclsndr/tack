@@ -1,4 +1,4 @@
-import { mutateState } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
@@ -27,7 +27,7 @@ const world = Effect.gen(function* () {
     gitCommonDirectory: path.join(root, "git"),
     roots: [projectRoot],
   };
-  yield* mutateState(options, (state) => ({
+  yield* mutateStateFixture(options, (state) => ({
     ...state,
     data: { ...state.data, projects: [project] },
   }));
@@ -90,7 +90,7 @@ it.layer(LiveTestLayer)("docs selection", (test) => {
       yield* attachDocs(options, { projectName: "demo" }, { reference: `${first}:first-handbook` });
       const mounted = yield* syncDocs(options, { projectName: "demo", apply: true });
       expect(mounted.plan.actions.map(({ action }) => action)).toEqual(["create"]);
-      yield* mutateState(options, (state) => ({
+      yield* mutateStateFixture(options, (state) => ({
         ...state,
         data: {
           ...state.data,

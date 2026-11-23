@@ -4,7 +4,7 @@ import type { State } from "../../src/domain/state/state-schema.ts";
 import { stateFormat } from "../../src/domain/state/state-format.ts";
 import { StateBusyError, type StateOptions } from "../../src/services/state-store.ts";
 import { encodeState } from "../../src/domain/state/state-codec.ts";
-import { initializeState, mutateStateEffect } from "../../src/services/state-store.ts";
+import { initializeState, mutateState } from "../../src/services/state-store.ts";
 import type { JournalEntry, StateProject } from "../../src/domain/state/state-schema.ts";
 import type { ReconciliationAction } from "../../src/domain/reconciliation/reconciliation-schema.ts";
 import type { SkillChoice } from "../../src/domain/choices/choice-schema.ts";
@@ -199,14 +199,11 @@ export const runtimeFixture = (fixture: FlatFixture): State => {
  * Persists a replacement under the writer lock. The replacement may be authored with flat lists and
  * partial projects, and it is carried into the runtime model before validation.
  */
-export const mutateState = (options: StateOptions, update: (state: State) => FlatFixture) =>
-  mutateStateEffect(options, (state) => {
+export const mutateStateFixture = (options: StateOptions, update: (state: State) => FlatFixture) =>
+  mutateState(options, (state) => {
     const candidate = runtimeFixture(update(state));
     return Effect.succeed({ state: candidate, value: candidate });
   });
-
-/** The same lenient replacement, kept under its earlier name. */
-export const mutateStateFixture = mutateState;
 
 /** Compares historical project registration fields while intent is asserted separately. */
 export const projectRecords = (state: State) =>

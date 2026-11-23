@@ -1,8 +1,8 @@
 import { Effect, FileSystem, Path, Result } from "effect";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
-import { resolveCatalogFromInspections } from "../sources/catalog.ts";
+import { resolveCatalog } from "../sources/catalog.ts";
 import type { Catalog } from "../../domain/sources/catalog-schema.ts";
-import { inspectSourcesFromState } from "../sources/source.ts";
+import { inspectSources } from "../sources/source.ts";
 import { type DeclaredSourceInspection } from "../../domain/sources/source-inspection.ts";
 import type { State } from "../../domain/state/state-schema.ts";
 import { sourceDisplayName, type HealthyInspection } from "./import-destination.ts";
@@ -178,8 +178,8 @@ export const summarizeImport = Effect.fnUntraced(function* (
 
 /** The `import` listing: every imported skill of every registered source, offline. */
 export const inspectImports = Effect.fn("imports.inspectImports")(function* (state: State) {
-  const inspections = yield* inspectSourcesFromState(state);
-  const catalog = yield* resolveCatalogFromInspections(inspections);
+  const inspections = yield* inspectSources(state);
+  const catalog = yield* resolveCatalog(inspections);
   const observed = yield* observeImports(inspections);
   const imports = yield* Effect.forEach(observed.imports, (item) => summarizeImport(item, catalog));
   return { kind: "import-list", imports, problems: observed.problems } satisfies ImportList;

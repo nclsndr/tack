@@ -5,7 +5,7 @@ import { readInvocationSnapshot } from "../snapshot/command-snapshot.ts";
 import { managedLinksOf } from "../../domain/links/link-record-schema.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
 import { allSkillChoices } from "../../domain/state/state-intent.ts";
-import { inspectSourcesFromState } from "../sources/source.ts";
+import { inspectSources } from "../sources/source.ts";
 import { sourceDisplayName } from "./import-destination.ts";
 import { importFailure, importFileFailure } from "./import-error.ts";
 import { importStateOf, observeImports, type SourceImport } from "./import-inspect.ts";
@@ -60,7 +60,7 @@ const namespaceText = (namespace: { readonly _tag: string; readonly projectName?
 
 /** Settles the staging folder of every healthy registered source that holds one. */
 const recoverEverywhere = Effect.fnUntraced(function* (state: State) {
-  const inspections = yield* inspectSourcesFromState(state);
+  const inspections = yield* inspectSources(state);
   const lines = yield* Effect.forEach(
     inspections.filter(
       (inspection) => inspection.status === "healthy" && inspection.origin !== "builtin",
@@ -76,7 +76,7 @@ const recoverEverywhere = Effect.fnUntraced(function* (state: State) {
 
 const planFor = Effect.fnUntraced(function* (state: State, reference: string, force: boolean) {
   const path = yield* Path.Path;
-  const inspections = yield* inspectSourcesFromState(state);
+  const inspections = yield* inspectSources(state);
   const observed = yield* observeImports(inspections);
   const item = yield* resolveImport(observed.imports, reference);
   const { record, inspection } = item;

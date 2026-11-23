@@ -5,7 +5,7 @@ import { bundleFixture } from "./support/bundle-fixture.ts";
 import { runBundleApply } from "../src/features/profiles/bundle-apply.ts";
 import { bundleIntegrityIssue } from "../src/features/sources/bundle-integrity.ts";
 import { readState } from "../src/services/state-store.ts";
-import { mutateState } from "./support/state-fixture.ts";
+import { mutateStateFixture } from "./support/state-fixture.ts";
 
 it.layer(LiveTestLayer)("retained bundle integrity", (test) => {
   for (const alteration of [
@@ -81,7 +81,7 @@ it.layer(LiveTestLayer)("retained bundle integrity", (test) => {
           "bundles",
           archive.manifest.identity,
         );
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -101,7 +101,7 @@ it.layer(LiveTestLayer)("retained bundle integrity", (test) => {
         ).toBe("profile-bundle-identity");
         expect(yield* readState(options)).toEqual(before);
         expect(yield* fs.exists(payload)).toBe(false);
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -111,7 +111,7 @@ it.layer(LiveTestLayer)("retained bundle integrity", (test) => {
           },
         }));
         yield* run(runBundleApply(options, { ...request, file }));
-        yield* mutateState(options, (state) => {
+        yield* mutateStateFixture(options, (state) => {
           const source = state.data.sources.find(
             (registration) => registration.bundle !== undefined,
           );

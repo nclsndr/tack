@@ -1,5 +1,5 @@
 import { LiveTestLayer } from "./support/live-test-layer.ts";
-import { mutateState } from "./support/state-fixture.ts";
+import { mutateStateFixture } from "./support/state-fixture.ts";
 import { fakeGit, outsideRepositoryGit } from "./support/fake-git.ts";
 import { inDirectory, runHost } from "./support/host-runner.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
@@ -138,7 +138,7 @@ it.layer(LiveTestLayer)("setup hints", (hintIt) => {
         status: "success",
       });
       // Registration recorded both worktrees; forget the second, as if Git reported it later.
-      yield* mutateState(state, (current) => ({
+      yield* mutateStateFixture(state, (current) => ({
         ...current,
         data: {
           ...current.data,

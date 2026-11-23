@@ -1,5 +1,5 @@
 import { withStateFixture } from "../../../test/support/state-fixture.ts";
-import { inspectSources, resolveCatalog } from "../../../test/support/snapshot-helpers.ts";
+import { inspectSourcesAt, resolveCatalogAt } from "../../../test/support/snapshot-helpers.ts";
 
 import { catalogReport } from "../../domain/sources/catalog-report.ts";
 import { LiveTestLayer, provideTestFileSystem } from "../../../test/support/live-test-layer.ts";
@@ -100,7 +100,7 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
           path.join(reservedSkill, "SKILL.md"),
           "---\nname: reserved\ndescription: Reserved source test\n---\n",
         );
-        const inspections = yield* inspectSources(options).pipe(
+        const inspections = yield* inspectSourcesAt(options).pipe(
           Effect.provideService(Source, makeSourceService(random, fs, path, [builtin])),
         );
         const byPath = (name: string) =>
@@ -144,7 +144,7 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
         });
         expect(byPath("builtin")?.labelIssues).toBeUndefined();
         expect(inspections.filter((source) => source.status === "unhealthy")).toEqual([]);
-        const catalog = yield* resolveCatalog(options).pipe(
+        const catalog = yield* resolveCatalogAt(options).pipe(
           Effect.provideService(Source, makeSourceService(random, fs, path, [builtin])),
         );
         expect(catalog.entries.some((entry) => entry.address.name === "reserved")).toBe(true);
@@ -228,7 +228,7 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
           },
         ];
         for (const { observation, expected } of failures) {
-          const inspected = yield* inspectSources(options).pipe(
+          const inspected = yield* inspectSourcesAt(options).pipe(
             Effect.provideService(Source, { ...service, validate: () => observation }),
           );
           expect(Schema.decodeUnknownSync(Schema.Json)(inspected)).toEqual(inspected);
@@ -308,7 +308,7 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
         const statePath = path.join(stateDirectory, stateFileName);
         const stateBeforeInspection = yield* fileSystem.readFileString(statePath);
 
-        const beforeRelocation = yield* inspectSources(options);
+        const beforeRelocation = yield* inspectSourcesAt(options);
 
         expect(beforeRelocation).toMatchObject([
           {
@@ -323,7 +323,7 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
           registrationId: registered.registration.id,
           sourcePath: movedPath,
         });
-        const afterRelocation = yield* inspectSources(options);
+        const afterRelocation = yield* inspectSourcesAt(options);
 
         expect(relocated.relocated).toBe(true);
         expect(relocated.registration.id).toBe(registered.registration.id);
@@ -346,7 +346,7 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
         const statePath = path.join(stateDirectory, stateFileName);
         const stateBeforeInspection = yield* fileSystem.readFileString(statePath);
 
-        const inspection = yield* inspectSources(options);
+        const inspection = yield* inspectSourcesAt(options);
         const state = yield* readState(options);
 
         expect(inspection).toMatchObject([
@@ -373,7 +373,7 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
         yield* fileSystem.rename(sourcePath, movedPath);
         yield* fileSystem.symlink(movedPath, sourcePath);
 
-        const inspection = yield* inspectSources(options);
+        const inspection = yield* inspectSourcesAt(options);
 
         expect(inspection).toMatchObject([
           {
@@ -583,11 +583,11 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
             registration,
           });
           expect((yield* readState(options)).data.sources).toEqual([]);
-          expect((yield* resolveCatalog(options)).entries).toMatchObject([
+          expect((yield* resolveCatalogAt(options)).entries).toMatchObject([
             { origin: "builtin", address: { name: "use-tack" } },
           ]);
 
-          expect(yield* inspectSources(options)).toMatchObject([
+          expect(yield* inspectSourcesAt(options)).toMatchObject([
             { origin: "builtin", registration, status: "healthy" },
           ]);
           expect(
@@ -612,7 +612,7 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
         const sourcePath = yield* createSource(root, "builtin");
         const registered = yield* registerSource(options, { sourcePath });
         const builtin = { ...registered.registration, id: "00000000-0000-4000-8000-000000000010" };
-        const inspections = yield* inspectSources(options).pipe(
+        const inspections = yield* inspectSourcesAt(options).pipe(
           Effect.provideService(Source, makeSourceService(random, fs, path, [builtin])),
         );
         expect(inspections).toMatchObject([
@@ -635,12 +635,12 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
         const canonicalPath = path.join(yield* fs.realPath(root), "builtin");
         const builtin = { canonicalPath, id: "00000000-0000-4000-8000-000000000010" };
         yield* Effect.gen(function* () {
-          expect(yield* inspectSources(options)).toMatchObject([
+          expect(yield* inspectSourcesAt(options)).toMatchObject([
             { origin: "builtin", status: "unhealthy", issue: { code: "source-missing" } },
             { registration: normal.registration, status: "healthy" },
           ]);
           yield* createSource(root, "builtin");
-          expect(yield* inspectSources(options)).toMatchObject([
+          expect(yield* inspectSourcesAt(options)).toMatchObject([
             { origin: "builtin", registration: builtin, status: "healthy" },
             { registration: normal.registration, status: "healthy" },
           ]);

@@ -1,7 +1,7 @@
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, PlatformError, Schema } from "effect";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
-import { mutateState } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
 import {
   initializeState,
   readState,
@@ -341,7 +341,7 @@ it.layer(LiveTestLayer)("one link engine for both delivery kinds", (engine) => {
             const link = world.link(kind);
             yield* withParent(link);
             yield* setup(world, link);
-            yield* mutateState(world.options, (state) => ({
+            yield* mutateStateFixture(world.options, (state) => ({
               ...state,
               data: { ...state.data, journal: preparedBatchOf([{ _tag: "create", link }]) },
             }));
@@ -371,7 +371,7 @@ it.layer(LiveTestLayer)("one link engine for both delivery kinds", (engine) => {
             recursive: true,
           });
           yield* fileSystem.symlink(world.other, path.join(world.root, ".tack"));
-          yield* mutateState(world.options, (state) => ({
+          yield* mutateStateFixture(world.options, (state) => ({
             ...state,
             data: {
               ...state.data,
@@ -405,7 +405,7 @@ it.layer(LiveTestLayer)("one link engine for both delivery kinds", (engine) => {
           const path = yield* Path.Path;
           const docs = world.link("docs");
           yield* fileSystem.symlink(world.other, path.join(world.root, ".tack"));
-          yield* mutateState(world.options, (state) => ({
+          yield* mutateStateFixture(world.options, (state) => ({
             ...state,
             data: {
               ...state.data,

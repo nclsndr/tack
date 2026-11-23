@@ -45,7 +45,7 @@ import {
   inspectProjectRoot,
   linkTargetsOf,
   selectionEcho,
-  selectTargetsFromState,
+  selectTargets,
   TargetSelectionError,
   type ProjectInspection,
   type ProjectRootInspection,
@@ -624,7 +624,7 @@ export const statusFromSnapshot = Effect.fn("status.statusFromSnapshot")(functio
   Destination | FileSystem.FileSystem | Path.Path | Source | StateStore
 > {
   const { state } = snapshot;
-  const selected = yield* selectTargetsFromState(state, stateOptions, {
+  const selected = yield* selectTargets(state, stateOptions, {
     cwd: options.cwd,
     selector: options.selector,
     ...(options.userTarget === undefined ? {} : { userTarget: options.userTarget }),

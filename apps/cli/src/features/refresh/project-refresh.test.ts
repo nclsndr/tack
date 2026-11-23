@@ -1,4 +1,4 @@
-import { selectTargets } from "../../../test/support/snapshot-helpers.ts";
+import { selectTargetsAt } from "../../../test/support/snapshot-helpers.ts";
 import { fakeGit } from "../../../test/support/fake-git.ts";
 import {
   agentLink,
@@ -482,7 +482,7 @@ it.layer(LiveTestLayer)("project worktree refresh planning", (refreshIt) => {
         }).pipe(Effect.provideService(Git, git));
         const result = execution.applied?.refresh;
         const state = yield* readState(options);
-        const selection = yield* selectTargets(options, {
+        const selection = yield* selectTargetsAt(options, {
           cwd: root,
           selector: { _tag: "project", projectName: "project" },
           userTarget: options.homeDirectory,

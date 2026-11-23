@@ -13,7 +13,7 @@ import { managedLinksOf, pendingRemovalsOf } from "../src/domain/links/link-reco
 import type { ManagedLinkEvidence } from "../src/domain/links/managed-link-schema.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { repositoryRoot, tackEnvironment, type TackIsolation } from "./support/tack-process.ts";
-import { mutateState } from "./support/state-fixture.ts";
+import { mutateStateFixture } from "./support/state-fixture.ts";
 import { retryPendingRemovals } from "./support/removal.ts";
 import { planAndApplyReconciliation } from "./support/reconciliation.ts";
 import { applyCatalogEntries, crashApplyRegistrationId } from "./support/crash-apply-catalog.ts";
@@ -287,7 +287,7 @@ it.layer(LiveTestLayer)("a killed removal converges on the next writer", (crashI
             },
           }));
           yield* initializeState(options);
-          yield* mutateState(options, (state) => ({
+          yield* mutateStateFixture(options, (state) => ({
             ...state,
             data: {
               ...state.data,

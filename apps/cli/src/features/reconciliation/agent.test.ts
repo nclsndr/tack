@@ -1,5 +1,5 @@
 import { pendingRemovalsOf } from "../../domain/links/link-record-schema.ts";
-import { mutateState, withStateFixture } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture, withStateFixture } from "../../../test/support/state-fixture.ts";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Schema } from "effect";
@@ -237,7 +237,7 @@ it.layer(LiveTestLayer)("agent selection", (agentIt) => {
           const destinationPath = managedLinkDestinationPath(evidence);
           yield* fileSystem.makeDirectory(path.dirname(destinationPath), { recursive: true });
           yield* fileSystem.writeFileString(destinationPath, "foreign");
-          yield* mutateState(options, (state) => ({
+          yield* mutateStateFixture(options, (state) => ({
             ...state,
             data: {
               ...state.data,

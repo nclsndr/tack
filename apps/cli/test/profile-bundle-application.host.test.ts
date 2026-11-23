@@ -4,7 +4,7 @@ import { expect, it } from "@effect/vitest";
 import { Effect, PlatformError } from "effect";
 import { LiveTestLayer, provideTestFileSystem } from "./support/live-test-layer.ts";
 import { bundleFixture } from "./support/bundle-fixture.ts";
-import { mutateState } from "./support/state-fixture.ts";
+import { mutateStateFixture } from "./support/state-fixture.ts";
 import { runBundleApply } from "../src/features/profiles/bundle-apply.ts";
 import { runBundleExport } from "../src/features/profiles/bundle-export.ts";
 import { readState } from "../src/services/state-store.ts";
@@ -67,7 +67,7 @@ it.layer(LiveTestLayer)("bundle application parity and retention", (test) => {
           ))["_tag"],
         ).toBe("Failure");
         expect(yield* readState(options)).toEqual(state);
-        yield* mutateState(options, (current) => ({
+        yield* mutateStateFixture(options, (current) => ({
           ...current,
           data: {
             ...current.data,
@@ -263,7 +263,7 @@ it.layer(LiveTestLayer)("bundle application parity and retention", (test) => {
       Effect.gen(function* () {
         const { root, options, request, run, file } = yield* bundleFixture;
         const applied = yield* run(runBundleApply(options, { ...request, file }));
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {
             ...state.data,

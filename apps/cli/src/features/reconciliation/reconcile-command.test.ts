@@ -1,6 +1,6 @@
 import { skillText } from "../../../test/support/source-tree.ts";
 import { managedLinksOf, pendingRemovalsOf } from "../../domain/links/link-record-schema.ts";
-import { mutateState } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
 import { LiveTestLayer, provideTestFileSystem } from "../../../test/support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Deferred, Effect, FileSystem, Fiber, Path, PlatformError, Schema } from "effect";
@@ -75,7 +75,7 @@ it.layer(LiveTestLayer)("reconciliation command lifecycle", (reconcileIt) => {
       const fiber = yield* Effect.forkChild(reconciliation, { startImmediately: true });
       yield* Deferred.await(planningStarted);
 
-      const competingWriter = yield* Effect.flip(mutateState(options, (state) => state));
+      const competingWriter = yield* Effect.flip(mutateStateFixture(options, (state) => state));
 
       expect(competingWriter).toBeInstanceOf(StateBusyError);
       yield* Deferred.succeed(continuePlanning, undefined);
@@ -141,7 +141,7 @@ it.layer(LiveTestLayer)("reconciliation command lifecycle", (reconcileIt) => {
           recursive: true,
         });
         yield* fileSystem.symlink(preparedAction.relativeTarget, preparedAction.destinationPath);
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: { ...state.data, reconciliationJournal: { action: preparedAction } },
         }));

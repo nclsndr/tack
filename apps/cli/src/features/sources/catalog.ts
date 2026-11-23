@@ -201,7 +201,7 @@ const quarantineOrder = (left: CatalogQuarantine, right: CatalogQuarantine) =>
   );
 
 /** Resolves the unified resource catalog for one validated source-inspection snapshot. */
-export const resolveCatalogFromInspections = Effect.fnUntraced(function* (
+export const resolveCatalog = Effect.fnUntraced(function* (
   inspections: ReadonlyArray<DeclaredSourceInspection>,
 ): Effect.fn.Return<Catalog, never, FileSystem.FileSystem | Path.Path> {
   const entries: Array<CatalogEntry> = [];

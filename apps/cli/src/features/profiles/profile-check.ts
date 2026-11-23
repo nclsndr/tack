@@ -8,7 +8,7 @@ import { resolveProfile } from "../../domain/profiles/profile-resolution.ts";
 import { emptyState } from "../../domain/state/state-schema.ts";
 import { type StateOptions } from "../../services/state-store.ts";
 import { resolveSourceLabels, Source } from "../sources/source.ts";
-import { resolveCatalogFromInspections } from "../sources/catalog.ts";
+import { resolveCatalog } from "../sources/catalog.ts";
 import { readProfileFile } from "../sources/profile-files.ts";
 import { profilePublications, profileStructureFinding } from "../sources/profile-publications.ts";
 
@@ -43,7 +43,7 @@ export const profileContext = Effect.fnUntraced(function* (
     source,
     registration,
     inspections,
-    catalog: yield* resolveCatalogFromInspections(inspections),
+    catalog: yield* resolveCatalog(inspections),
   };
 });
 

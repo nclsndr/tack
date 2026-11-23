@@ -1,4 +1,4 @@
-import { mutateState } from "../support/state-fixture.ts";
+import { mutateStateFixture } from "../support/state-fixture.ts";
 import { BunCrypto, BunRuntime, BunServices } from "@effect/platform-bun";
 import { Effect, FileSystem, Path } from "effect";
 import { SecureRandom } from "effect/crypto";
@@ -46,7 +46,7 @@ const program = Effect.gen(function* () {
       ["cursor"],
       ["claude", "codex"],
     ] as const) {
-      yield* mutateState(options, (state) => ({
+      yield* mutateStateFixture(options, (state) => ({
         ...state,
         data: { ...state.data, enabledAdapters },
       }));

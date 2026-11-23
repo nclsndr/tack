@@ -25,11 +25,7 @@ import type {
   SourceWarning,
 } from "../../domain/sources/source-inspection.ts";
 import { SourceCheckReportSchema } from "../../domain/sources/source-check.ts";
-import {
-  mutateStateEffect,
-  type StateMutation,
-  type StateOptions,
-} from "../../services/state-store.ts";
+import { mutateState, type StateMutation, type StateOptions } from "../../services/state-store.ts";
 import { type State } from "../../domain/state/state-schema.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
 import { discoverDocs } from "./docs-discovery.ts";
@@ -428,7 +424,7 @@ export const registerSource = Effect.fn("sources.registerSource")(function* (
       Effect.provideService(FileSystem.FileSystem, fileSystem),
       Effect.provideService(Path.Path, path),
     );
-  return yield* mutateStateEffect(stateOptions, (state) =>
+  return yield* mutateState(stateOptions, (state) =>
     Effect.gen(function* (): Effect.fn.Return<
       StateMutation<SourceMutationResult>,
       SourceStorageError | SourceValidationError
@@ -475,7 +471,7 @@ export const relocateSource = Effect.fn("sources.relocateSource")(function* (
   options: RelocateSourceOptions,
 ) {
   const sourceService = yield* Source;
-  return yield* mutateStateEffect(stateOptions, (state) =>
+  return yield* mutateState(stateOptions, (state) =>
     Effect.gen(function* (): Effect.fn.Return<
       StateMutation<SourceRelocationResult>,
       | SourcePathConflictError
@@ -670,7 +666,7 @@ export const prospectiveSourceLabel = (
 };
 
 /** Inspects sources retained by one validated state snapshot, keeping healthy declarations. */
-export const inspectSourcesFromState = Effect.fnUntraced(function* (state: State) {
+export const inspectSources = Effect.fnUntraced(function* (state: State) {
   const sourceService = yield* Source;
   const path = yield* Path.Path;
   const builtInSources = sourceService.builtInSources ?? [];

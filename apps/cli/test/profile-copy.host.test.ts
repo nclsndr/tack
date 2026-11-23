@@ -10,7 +10,7 @@ import { expect, it } from "@effect/vitest";
 import { Effect } from "effect";
 import { profileFixture } from "./support/profile-fixture.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
-import { mutateState } from "./support/state-fixture.ts";
+import { mutateStateFixture } from "./support/state-fixture.ts";
 import { readState } from "../src/services/state-store.ts";
 import {
   collectProfileInput,
@@ -40,7 +40,7 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
         const external = yield* registerSource(options, {
           sourcePath: path.join(root, "team"),
         });
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -108,7 +108,7 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
         ).toBe(true);
         yield* write("team/tack.yaml", "version: 2\nname: team\ncommands: [{path: audit.md}]\n");
         yield* fs.rename(path.join(root, "team"), path.join(root, "different-checkout"));
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -125,7 +125,7 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
         expect(
           (yield* runProfileSaveSelection(options, { ...request, name: "relocated" })).saved,
         ).toBe(true);
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -296,7 +296,7 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
             projectName: "missing",
           })).findings[0]?.code,
         ).toBe("profile-copy-input");
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -328,7 +328,7 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
         expect(unresolved?.message).toContain(
           "user has missing or blocked identities: command ghost (missing), skill phantom (excluded but missing), skill review needs skill style (excluded).",
         );
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: { ...state.data, userChoices: state.data.userChoices.slice(0, 1) },
         }));
@@ -378,7 +378,7 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
           })).findings[0]?.code,
         ).toBe("profile-copy-input-fixed");
         const ordinary = yield* profileFixture;
-        yield* mutateState(ordinary.options, (state) => ({
+        yield* mutateStateFixture(ordinary.options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -401,7 +401,7 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
     () =>
       Effect.gen(function* () {
         const { options, sourceId, project, root } = yield* profileFixture;
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -500,7 +500,7 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
       Effect.gen(function* () {
         const { options, request, run, sourceId, source, fs, path, project, write } =
           yield* profileFixture;
-        yield* mutateState(options, (state) => ({
+        yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -592,7 +592,7 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
           "---\nname: extra\ndescription: Extra\nmetadata:\n  tack: |\n    version: 1\n    activation: opt-in\n---\n",
         );
         const team = yield* registerSource(f.options, { sourcePath: f.path.join(f.root, "team") });
-        yield* mutateState(f.options, (state) => ({
+        yield* mutateStateFixture(f.options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -703,7 +703,7 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
         yield* f.write("team/tack.yaml", "version: 1\nname: team\ncommands: [{path: audit.md}]\n");
         yield* f.write("team/audit.md", "Audit\n");
         const team = yield* registerSource(f.options, { sourcePath: f.path.join(f.root, "team") });
-        yield* mutateState(f.options, (state) => ({
+        yield* mutateStateFixture(f.options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -744,7 +744,7 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
         if (situation === "relocated") {
           companion = f.path.join(f.root, "another-checkout");
           yield* f.fs.rename(f.path.join(f.root, "team"), companion);
-          yield* mutateState(f.options, (state) => ({
+          yield* mutateStateFixture(f.options, (state) => ({
             ...state,
             data: {
               ...state.data,
@@ -757,7 +757,7 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
           }));
         }
         if (situation === "missing")
-          yield* mutateState(f.options, (state) => ({
+          yield* mutateStateFixture(f.options, (state) => ({
             ...state,
             data: {
               ...state.data,

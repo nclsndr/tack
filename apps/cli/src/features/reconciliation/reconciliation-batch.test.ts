@@ -11,7 +11,7 @@ import {
 import { agentLink, managedLinksOf } from "../../domain/links/link-record-schema.ts";
 import type { ManagedLinkEvidence } from "../../domain/links/managed-link-schema.ts";
 import { LiveTestLayer, provideTestFileSystem } from "../../../test/support/live-test-layer.ts";
-import { mutateState } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
 import type { ChoiceNamespace } from "../../domain/choices/choice-schema.ts";
 import type { DependencyResolution } from "../../domain/choices/dependency-resolution.ts";
 import { withRecoveredWriter } from "../writer/recovered-writer.ts";
@@ -530,7 +530,7 @@ it.layer(LiveTestLayer)("one apply is one prepared batch", (batchIt) => {
           const previous = managedLinksOf((yield* readState(world.options)).data.links);
           const evidence = previous[0];
           if (evidence === undefined) throw new Error("Expected recorded evidence.");
-          yield* mutateState(world.options, (state) => ({
+          yield* mutateStateFixture(world.options, (state) => ({
             ...state,
             data: {
               ...state.data,

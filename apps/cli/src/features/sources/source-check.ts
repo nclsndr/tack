@@ -2,7 +2,7 @@ import { Effect, Path } from "effect";
 import { resourceKinds } from "../../domain/resources/kinds.ts";
 import type { SourceCheckReport, SourceFinding } from "../../domain/sources/source-check.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
-import { resolveCatalogFromInspections } from "./catalog.ts";
+import { resolveCatalog } from "./catalog.ts";
 import { isCollection, type SourceDeclaration } from "../../domain/sources/source-schema.ts";
 import { Source } from "./source.ts";
 import { checkProfilePublications } from "./profile-files.ts";
@@ -63,9 +63,7 @@ export const inspectDeclaration = Effect.fnUntraced(function* (
 ) {
   const path = yield* Path.Path;
   const registration = { id: "00000000-0000-4000-8000-000000000000", canonicalPath };
-  const catalog = yield* resolveCatalogFromInspections([
-    { status: "healthy", registration, declaration },
-  ]);
+  const catalog = yield* resolveCatalog([{ status: "healthy", registration, declaration }]);
   const declarationFile = path.join(canonicalPath, declarationFileName);
   const rows = catalog.declarations?.[registration.id] ?? [];
   const nonSkills =

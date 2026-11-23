@@ -15,7 +15,7 @@ import { managedLinksOf } from "../src/domain/links/link-record-schema.ts";
 import { managedDocsLinksOf } from "../src/domain/docs/docs-schema.ts";
 import { runHost } from "./support/host-runner.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
-import { mutateState } from "./support/state-fixture.ts";
+import { mutateStateFixture } from "./support/state-fixture.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
 import { write } from "./support/source-tree.ts";
 
@@ -268,7 +268,7 @@ it.layer(LiveTestLayer)("source and project removal", (removalIt) => {
             sourceRegistrationId: brainId,
           };
           const bundleId = "00000000-0000-4000-8000-0000000000b1";
-          yield* mutateState(options, (state) => ({
+          yield* mutateStateFixture(options, (state) => ({
             format: 1,
             data: {
               ...state.data,
@@ -416,7 +416,7 @@ it.layer(LiveTestLayer)("source and project removal", (removalIt) => {
             profileName: "ci",
             sourceRegistrationId: brainId,
           };
-          yield* mutateState(options, (state) => ({
+          yield* mutateStateFixture(options, (state) => ({
             format: 1,
             data: {
               ...state.data,

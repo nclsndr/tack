@@ -1,7 +1,7 @@
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "../../../../test/support/live-test-layer.ts";
-import { mutateState } from "../../../../test/support/state-fixture.ts";
+import { mutateStateFixture } from "../../../../test/support/state-fixture.ts";
 import { ExecutionPlatform, type WorkerRequest } from "../../../services/execution-platform.ts";
 import { makeRunCancellation } from "../../../platform/execution/execution-platform.ts";
 import { initializeState, type StateOptions } from "../../../services/state-store.ts";
@@ -64,7 +64,7 @@ const scene = (
     } satisfies StateOptions;
     yield* initializeState(options);
     yield* registerSource(options, { sourcePath: source });
-    yield* mutateState(options, (state) => ({
+    yield* mutateStateFixture(options, (state) => ({
       ...state,
       data: {
         ...state.data,

@@ -317,7 +317,7 @@ const findProject = (state: RemovalFacts, scope: RemovalScope) => {
 };
 
 /** Builds a deterministic removal plan from one validated state snapshot. */
-export const planRemovalFromState = Effect.fnUntraced(function* (
+export const planRemoval = Effect.fnUntraced(function* (
   state: RemovalFacts,
   request: RemovalRequest,
 ): Effect.fn.Return<

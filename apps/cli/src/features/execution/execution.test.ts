@@ -1,4 +1,4 @@
-import { mutateState } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
 import { Effect, FileSystem, Path } from "effect";
 import { expect, it } from "@effect/vitest";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
@@ -68,7 +68,7 @@ const registerProject = (options: StateOptions, root: string, names: ReadonlyArr
     yield* fs.makeDirectory(anchor, { recursive: true });
     const roots = names.map((name) => path.join(root, name));
     yield* Effect.forEach(roots, (directory) => fs.makeDirectory(directory, { recursive: true }));
-    yield* mutateState(options, (state) => ({
+    yield* mutateStateFixture(options, (state) => ({
       ...state,
       data: {
         ...state.data,

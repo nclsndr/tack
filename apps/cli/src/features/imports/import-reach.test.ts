@@ -3,7 +3,7 @@ import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem } from "effect";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { addSource, importRequest, withImportWorld } from "../../../test/support/import-world.ts";
-import { mutateState } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
 import { readState } from "../../services/state-store.ts";
 import { previewImport } from "./import.ts";
 import type { ChoiceNamespace } from "../../domain/choices/choice-schema.ts";
@@ -43,7 +43,7 @@ it.layer(LiveTestLayer)("import reach", (test) => {
               ({ kind: "skill", name: "pdf", sourceRegistrationId }) as const;
             const roots = ["beta", "alpha", "gamma"].map((name) => `${world.base}/${name}`);
             yield* Effect.forEach(roots, (root) => fileSystem.makeDirectory(root));
-            yield* mutateState(world.options, (state) => ({
+            yield* mutateStateFixture(world.options, (state) => ({
               data: {
                 ...state.data,
                 enabledAdapters: ["claude"],
@@ -154,7 +154,7 @@ it.layer(LiveTestLayer)("import reach", (test) => {
               inventory,
               targets: namespace._tag === "project" ? [root(namespace.projectName)] : [],
             });
-            yield* mutateState(world.options, (state) => ({
+            yield* mutateStateFixture(world.options, (state) => ({
               data: {
                 ...state.data,
                 enabledAdapters: ["claude"],

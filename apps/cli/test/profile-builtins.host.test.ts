@@ -14,7 +14,7 @@ import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { profileFixture } from "./support/profile-fixture.ts";
 import { Source } from "../src/features/sources/source.ts";
 import { readState } from "../src/services/state-store.ts";
-import { mutateState } from "./support/state-fixture.ts";
+import { mutateStateFixture } from "./support/state-fixture.ts";
 import { runProfileSaveSelection, runProfileAdopt } from "../src/features/profiles/profile-copy.ts";
 import { checkPaths } from "../src/features/check/check-paths.ts";
 import { runProfileApply } from "../src/features/profiles/profile-apply.ts";
@@ -53,7 +53,7 @@ it.layer(LiveTestLayer)("release-owned profile members", (test) => {
           "source/skills/always-help/SKILL.md",
           "---\nname: always-help\ndescription: Ordinary authored helper\n---\n",
         );
-        yield* mutateState(f.options, (state) => ({
+        yield* mutateStateFixture(f.options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -96,7 +96,7 @@ it.layer(LiveTestLayer)("release-owned profile members", (test) => {
       Effect.gen(function* () {
         const f = yield* fixture;
         yield* f.legacy();
-        yield* mutateState(f.options, (state) => ({
+        yield* mutateStateFixture(f.options, (state) => ({
           ...state,
           data: {
             ...state.data,
@@ -272,7 +272,7 @@ it.layer(LiveTestLayer)("release-owned profile members", (test) => {
             "      - {kind: skill, name: always-help, source: tack}\n      - kind: skill",
           ),
         );
-        yield* mutateState(f.options, (state) => ({
+        yield* mutateStateFixture(f.options, (state) => ({
           ...state,
           data: {
             ...state.data,

@@ -1,10 +1,10 @@
-import { resolveCatalog } from "../../../test/support/snapshot-helpers.ts";
+import { resolveCatalogAt } from "../../../test/support/snapshot-helpers.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, PlatformError } from "effect";
 import { LiveTestLayer, provideTestFileSystem } from "../../../test/support/live-test-layer.ts";
 import { initializeState, readState } from "../../services/state-store.ts";
-import { resolveCatalogFromInspections } from "./catalog.ts";
-import { inspectSourcesFromState, registerSource } from "./source.ts";
+import { resolveCatalog } from "./catalog.ts";
+import { inspectSources, registerSource } from "./source.ts";
 
 const withSources = <A, E, R>(
   use: (fixture: {
@@ -53,7 +53,7 @@ it.layer(LiveTestLayer)("docs declaration discovery", (test) => {
           },
         };
 
-        const catalog = yield* provideTestFileSystem(resolveCatalog(options), counting);
+        const catalog = yield* provideTestFileSystem(resolveCatalogAt(options), counting);
 
         expect(catalog.entries.filter((entry) => entry.address.kind === "docs")).toHaveLength(2);
         expect(Object.fromEntries(reads)).toEqual({
@@ -69,11 +69,11 @@ it.layer(LiveTestLayer)("docs declaration discovery", (test) => {
       Effect.gen(function* () {
         const fs = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const inspections = yield* inspectSourcesFromState(yield* readState(options));
+        const inspections = yield* inspectSources(yield* readState(options));
         yield* fs.writeFileString(path.join(source, "tack.yaml"), "version: 1\n");
 
-        const snapshot = yield* resolveCatalogFromInspections(inspections);
-        const fresh = yield* resolveCatalog(options);
+        const snapshot = yield* resolveCatalog(inspections);
+        const fresh = yield* resolveCatalogAt(options);
 
         expect(
           snapshot.entries
@@ -111,9 +111,9 @@ it.layer(LiveTestLayer)("docs declaration discovery", (test) => {
               : fs.readFileString(target, encoding),
         };
 
-        const unreadable = yield* provideTestFileSystem(resolveCatalog(options), blocked);
+        const unreadable = yield* provideTestFileSystem(resolveCatalogAt(options), blocked);
         yield* fs.remove(declarationPath);
-        const missing = yield* resolveCatalog(options);
+        const missing = yield* resolveCatalogAt(options);
 
         for (const [catalog, code] of [
           [unreadable, "declaration-access-failed"],

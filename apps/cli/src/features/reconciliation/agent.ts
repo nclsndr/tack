@@ -7,11 +7,7 @@ import {
   type AgentAdapterId,
 } from "../../domain/links/agent-adapter-schema.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
-import {
-  mutateStateEffect,
-  type StateMutation,
-  type StateOptions,
-} from "../../services/state-store.ts";
+import { mutateState, type StateMutation, type StateOptions } from "../../services/state-store.ts";
 import { type State } from "../../domain/state/state-schema.ts";
 import { readInvocationSnapshot } from "../snapshot/command-snapshot.ts";
 
@@ -143,7 +139,7 @@ export const enableAdapters = Effect.fn("reconciliation.enableAdapters")(functio
   adapters: unknown,
 ) {
   const decoded = yield* decodeAdapterInput(adapters);
-  return yield* mutateStateEffect(options, (state) => enableAdaptersIn(state, decoded));
+  return yield* mutateState(options, (state) => enableAdaptersIn(state, decoded));
 });
 
 /** Lists the persisted machine-level enabled adapters in canonical order. */

@@ -3,7 +3,7 @@ import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { initializeState, readState, type StateOptions } from "../../services/state-store.ts";
-import { inspectSourcesFromState, registerSource } from "../sources/source.ts";
+import { inspectSources, registerSource } from "../sources/source.ts";
 import {
   destinationChoices,
   resolveDestination,
@@ -19,7 +19,7 @@ const withDestination = <A, E, R>(
   use: (context: {
     readonly root: string;
     readonly options: StateOptions;
-    readonly inspections: Effect.Success<ReturnType<typeof inspectSourcesFromState>>;
+    readonly inspections: Effect.Success<ReturnType<typeof inspectSources>>;
   }) => Effect.Effect<A, E, R>,
 ) =>
   Effect.gen(function* () {
@@ -42,7 +42,7 @@ const withDestination = <A, E, R>(
       yield* fs.writeFileString(target, content);
     }
     yield* registerSource(options, { sourcePath: root });
-    const inspections = yield* inspectSourcesFromState(yield* readState(options));
+    const inspections = yield* inspectSources(yield* readState(options));
     return yield* use({ root, options, inspections });
   });
 
@@ -253,7 +253,7 @@ it.layer(LiveTestLayer)("import destination", (test) => {
             declare("skills: [{ path: skills }]"),
           );
           yield* registerSource(options, { sourcePath: twin });
-          const inspections = yield* inspectSourcesFromState(yield* readState(options));
+          const inspections = yield* inspectSources(yield* readState(options));
           const ids = inspections.map((inspection) => inspection.registration.id);
           expect(inspections.map(sourceDisplayName).sort()).toEqual([...ids].sort());
           const error = yield* resolveDestinationSource(inspections, "personal-brain").pipe(
@@ -274,7 +274,7 @@ it.layer(LiveTestLayer)("import destination", (test) => {
         Effect.gen(function* () {
           const fs = yield* FileSystem.FileSystem;
           yield* fs.writeFileString(`${root}/tack.yaml`, "version: 99\n");
-          const inspections = yield* inspectSourcesFromState(yield* readState(options));
+          const inspections = yield* inspectSources(yield* readState(options));
           const id = inspections[0]?.registration.id ?? "";
           const error = yield* resolveDestinationSource(inspections, id).pipe(Effect.flip);
           expect(error).toMatchObject({ code: "import-destination-invalid" });
@@ -289,7 +289,7 @@ it.layer(LiveTestLayer)("import destination", (test) => {
       Effect.gen(function* () {
         const fs = yield* FileSystem.FileSystem;
         yield* fs.writeFileString(`${root}/tack.yaml`, "version: 99\n");
-        const inspections = yield* inspectSourcesFromState(yield* readState(options));
+        const inspections = yield* inspectSources(yield* readState(options));
         const error = yield* resolveDestinationSource(inspections, "nope").pipe(Effect.flip);
         expect(error.message).toContain(
           "No source is registered that can receive imports. Register one with `tack source add <path>`.",
