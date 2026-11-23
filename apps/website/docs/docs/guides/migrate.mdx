@@ -180,17 +180,25 @@ entries where they are:
 
 ## 2. Move your files into a source
 
+A skill that sits in two agents' folders, such as `~/.claude/skills/pr-review` and
+`~/.cursor/skills/pr-review`, moves once. Before you move it, compare the copies, keep the one you
+trust and delete the other:
+
+```sh
+diff -r ~/.claude/skills/pr-review ~/.cursor/skills/pr-review
+```
+
 Create a folder for your source, ideally a Git repository you push somewhere, and move the skills
 and commands into it:
 
 ```sh
 mkdir -p ~/agent-setup/skills ~/agent-setup/commands
+git -C ~/agent-setup init
 mv ~/.claude/skills/pr-review ~/.claude/skills/standup ~/agent-setup/skills/
 mv ~/.cursor/commands/ship.md ~/agent-setup/commands/
 ```
 
-A skill that sits in two agents' folders, such as `~/.claude/skills/pr-review` and
-`~/.cursor/skills/pr-review`, moves once: keep the copy you trust and delete the other.
+Commit the folder, and push it to a remote of your own when you want a backup or to share it.
 
 ## 3. Register the source
 
