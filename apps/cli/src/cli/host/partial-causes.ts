@@ -33,7 +33,10 @@ export const partialCauseRegistry: { readonly [K in PartialCauseCode]: string } 
     "A hand-made entry is kept where a selected resource would link, so Tack does not link it there. Exclude the resource to keep yours on purpose, or move yours away and sync.",
   "destination-observation-failed": "A destination could not be observed.",
   "destination-target-missing": "The target directory of a managed destination is missing.",
-  "foreign-destination": "An entry Tack does not own occupies a destination.",
+  "destination-unrecorded":
+    "A link Tack would write is in place but not recorded, as when a clone checks out a committed link; sync adopts it.",
+  "foreign-destination":
+    "An entry Tack does not own occupies a destination, and it is not the link Tack would write. Tack never replaces it: `git rm` it when the repository commits it, or move it away, and ignore Tack's links in .gitignore; then sync.",
   "import-folder-missing":
     "An imported skill's folder is gone. Move it back, or remove the import's record.",
   "import-folder-not-cataloged":

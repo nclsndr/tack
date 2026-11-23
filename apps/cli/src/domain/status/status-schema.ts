@@ -206,6 +206,8 @@ const destinationMeanings = {
     "Not healthy: the project root or user home this destination belongs to is missing. Run `tack doctor` for the cause.",
   "expected-absent":
     "Not healthy: a link is expected here and is absent. `tack sync --apply` creates it.",
+  unrecorded:
+    "Not healthy: the link Tack would write is here, but Tack has no record of it, as when a clone checks out a committed link. `tack sync --apply` adopts it as Tack's own and leaves it in place.",
   "evidence-absent":
     "Not healthy: Tack still records a link that is gone from disk. `tack sync --apply` settles it.",
   "evidence-changed":
@@ -238,6 +240,7 @@ const StatusDestinationSchema = Schema.Union([
   destinationVariant("matching", destinationFields),
   destinationVariant("target-missing", destinationFields),
   destinationVariant("expected-absent", destinationFields),
+  destinationVariant("unrecorded", destinationFields),
   destinationVariant("evidence-absent", destinationFields),
   destinationVariant("evidence-changed", destinationFields),
   destinationVariant("drift", destinationFields),
@@ -369,6 +372,7 @@ const StatusPayloadDestinationSchema = Schema.Union([
   destinationVariant("matching", publicDestinationFields),
   destinationVariant("target-missing", publicDestinationFields),
   destinationVariant("expected-absent", publicDestinationFields),
+  destinationVariant("unrecorded", publicDestinationFields),
   destinationVariant("evidence-absent", publicDestinationFields),
   destinationVariant("evidence-changed", publicDestinationFields),
   destinationVariant("drift", publicDestinationFields),

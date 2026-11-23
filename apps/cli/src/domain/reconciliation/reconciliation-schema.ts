@@ -46,6 +46,8 @@ const ReconciliationConflictSchema = Schema.Union([
   Schema.TaggedStruct("foreign-destination", {
     addresses: Schema.Array(LinkableAddressSchema),
     destinationPath: CanonicalPathSchema,
+    /** The link text Tack would write here, present when exactly one resource wants the name. */
+    expectedTarget: Schema.optionalKey(RelativeLinkTargetSchema),
     observation: DestinationObservationSchema,
   }),
   Schema.TaggedStruct("managed-link-drift", {
@@ -101,6 +103,16 @@ export const ReconciliationActionSchema = Schema.Union([
     previousEvidence: Schema.optionalKey(ManagedLinkEvidenceSchema),
     relativeTarget: RelativeLinkTargetSchema,
   }),
+  /**
+   * Records as Tack's own a link Tack has no record of, which is exactly the link Tack would write:
+   * the same text, resolving to the selected source. A link committed to a repository arrives this
+   * way in every other clone. The destination is left untouched.
+   */
+  Schema.TaggedStruct("link-adopt", {
+    destinationPath: CanonicalPathSchema,
+    evidence: ManagedLinkEvidenceSchema,
+    relativeTarget: RelativeLinkTargetSchema,
+  }),
 ]);
 
 const CountSchema = Schema.Number.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0));
@@ -109,8 +121,10 @@ const CountSchema = Schema.Number.check(Schema.isInt(), Schema.isGreaterThanOrEq
  * Counts of one unit's planned work. `blocked` counts selected resources of the unit's delivered
  * kinds that a blocked required dependency keeps from being linked. `retire` counts records of
  * absent links and `release` counts records of links changed outside Tack; both only forget.
+ * `adopt` counts links already on disk that Tack only records.
  */
 const ReconciliationUnitSummarySchema = Schema.Struct({
+  adopt: CountSchema,
   blocked: CountSchema,
   collision: CountSchema,
   conflict: CountSchema,

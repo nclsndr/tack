@@ -349,6 +349,7 @@ const plannedTag = (planned: PlannedDestination, handMade: boolean): StatusDesti
     return "drift";
   }
   if (hasDecision(planned, "link-create")) return "expected-absent";
+  if (hasDecision(planned, "link-adopt")) return "unrecorded";
   if (
     planned.actions.some(
       (action) => action._tag === "evidence-retire" && action.reason === "released",

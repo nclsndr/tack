@@ -198,6 +198,11 @@ After applying, run `status` for the same scope; after a docs change, also check
 Leave foreign files and drifted links in place: Tack's ownership evidence decides which paths it may
 remove. A recorded link changed outside Tack whose resource is no longer selected (`status` tag
 `evidence-changed`) is released by `sync --apply`: Tack forgets the record and keeps the link. A
+link Tack has no record of that is exactly the link Tack would write, such as one a clone checks out
+from the repository, is `unrecorded`: `sync --apply` adopts it as Tack's own and leaves it in place.
+Any other entry in the way is a `foreign-destination` conflict that names the link Tack would write:
+`git rm` it when the repository commits it, or move it away, and ignore Tack's links in
+`.gitignore`. A
 file or folder that was at a destination before Tack linked there is `hand-made`: Tack keeps it,
 links everything else, and `doctor` only warns. `project add` lists the hand-made entries in a new
 project's agent folders before anything is linked. Ask the operator whether to keep theirs with the

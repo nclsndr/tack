@@ -54,6 +54,7 @@ const destinationLabels: { readonly [K in StatusPayloadDestination["_tag"]]: str
   "observation-failed": "unreadable",
   "selection-conflict": "conflict",
   "target-missing": "no target",
+  unrecorded: "unrecorded",
 };
 
 const destinationCell = (destination: StatusPayloadDestination, style: Style): Cell => {
@@ -63,7 +64,8 @@ const destinationCell = (destination: StatusPayloadDestination, style: Style): C
     : destination._tag === "expected-absent" ||
         destination._tag === "evidence-absent" ||
         destination._tag === "evidence-changed" ||
-        destination._tag === "hand-made"
+        destination._tag === "hand-made" ||
+        destination._tag === "unrecorded"
       ? cell(label, style.yellow)
       : cell(label, style.red);
 };

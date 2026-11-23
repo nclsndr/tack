@@ -16,7 +16,7 @@ it("says what the values of each stable payload mean", async () => {
   expect(status.find((text) => text.includes("a link is expected here and is absent"))).toContain(
     "Not healthy",
   );
-  expect(status.filter((text) => text.startsWith("Not healthy"))).toHaveLength(8);
+  expect(status.filter((text) => text.startsWith("Not healthy"))).toHaveLength(9);
   expect(status.some((text) => text.startsWith("Healthy"))).toBe(true);
   expect(status.some((text) => text.includes("says nothing about the link itself"))).toBe(true);
   expect(descriptionsOf(payloads["doctor-report"]).length).toBeGreaterThanOrEqual(3);

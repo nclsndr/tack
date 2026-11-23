@@ -231,6 +231,88 @@ describe("sync plan view", () => {
     expect(flatText).not.toContain(`claude → demo · ${root}`);
   });
 
+  const destinationPath = `${root}/.claude/skills/localized`;
+  it.each([
+    [
+      { _tag: "relative-link", canonicalTarget: root, rawTarget: "../.." },
+      "a symbolic link to ../..",
+    ],
+    [
+      { _tag: "unresolved-relative-link", message: "gone", rawTarget: "../gone" },
+      "a broken symbolic link to ../gone",
+    ],
+    [{ _tag: "absolute-link", rawTarget: "/fx/elsewhere" }, "an absolute symbolic link to"],
+    [{ _tag: "entry", entryType: "directory" }, "a folder"],
+    [{ _tag: "entry", entryType: "file" }, "a file"],
+    [{ _tag: "entry", entryType: "special" }, "a special file"],
+    [{ _tag: "access-failed", message: "denied", operation: "stat" }, "an entry Tack cannot read"],
+  ])(
+    "says what is in the way of a link (%o), what Tack would link, and the ways out",
+    (observation, what) => {
+      const { plan } = planOf("plan-before");
+      const [unit, ...otherUnits] = plan.units;
+      if (unit === undefined) throw new Error("The fixture has no unit.");
+      const conflict = {
+        _tag: "foreign-destination",
+        addresses: [],
+        destinationPath,
+        observation: { ...observation, destinationPath },
+      };
+      const { flatText } = render({
+        plan: {
+          ...plan,
+          units: [
+            {
+              ...unit,
+              actions: [],
+              conflicts: [conflict, { ...conflict, expectedTarget: "../../.ai/skills/localized" }],
+            },
+            ...otherUnits,
+          ],
+        },
+      });
+      expect(flatText).toContain(`foreign-destination: ${what}`);
+      expect(flatText).toContain("is in the way. Tack never replaces it: `git rm` it");
+      expect(flatText).toContain("is in the way; Tack would link ../../.ai/skills/localized.");
+      expect(flatText).toContain("ignore Tack's links in .gitignore; then sync.");
+    },
+  );
+
+  it("previews an adoption as work to apply", () => {
+    const { plan } = planOf("plan-before");
+    const [unit, ...otherUnits] = plan.units;
+    const create = unit?.actions.find((action) => action._tag === "link-create");
+    if (unit === undefined || create?._tag !== "link-create")
+      throw new Error("The fixture has no link creation.");
+    const { flatText, hints } = render({
+      plan: {
+        ...plan,
+        units: [
+          {
+            ...unit,
+            actions: [
+              {
+                _tag: "link-adopt",
+                destinationPath: create.destinationPath,
+                evidence: create.evidence,
+                relativeTarget: create.relativeTarget,
+              },
+            ],
+            summary: { ...unit.summary, adopt: 1, create: 0 },
+          },
+          ...otherUnits.map((other) => ({
+            ...other,
+            actions: [],
+            summary: { ...other.summary, create: 0 },
+          })),
+        ],
+      },
+    });
+    expect(flatText).toContain("1 to adopt");
+    expect(flatText).toContain("already linked, record only");
+    expect(hints).toContain("tack sync --project demo --apply");
+  });
+
   it.each([
     [1, "1 item needs attention."],
     [2, "2 items need attention."],

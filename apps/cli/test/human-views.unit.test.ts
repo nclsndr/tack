@@ -307,6 +307,7 @@ const releaseEnvelopes = () => {
         actions,
         conflicts: [],
         summary: {
+          adopt: 0,
           blocked: 0,
           collision: 0,
           conflict: 0,

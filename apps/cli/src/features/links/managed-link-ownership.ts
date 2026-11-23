@@ -60,5 +60,8 @@ export const destinationObservationMessage = (observation: DestinationObservatio
   if (observation._tag === "entry") {
     return `The destination is an existing ${observation.entryType}.`;
   }
+  if (observation._tag === "relative-link") {
+    return `The destination is a symbolic link to ${observation.rawTarget}.`;
+  }
   return `The destination is ${observation._tag}.`;
 };

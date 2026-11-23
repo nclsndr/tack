@@ -161,7 +161,8 @@ export type DestinationState =
   | "foreign-entry"
   | "hand-made"
   | "observation-failed"
-  | "target-missing";
+  | "target-missing"
+  | "unrecorded";
 
 /** Every code a partial cause can carry. */
 export type PartialCauseCode = PartialCause["code"];
