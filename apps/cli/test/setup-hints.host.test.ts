@@ -1,7 +1,7 @@
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { mutateState } from "./support/state-fixture.ts";
 import { fakeGit, outsideRepositoryGit } from "./support/fake-git.ts";
-import { runHost } from "./support/host-runner.ts";
+import { inDirectory, runHost } from "./support/host-runner.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
 import { hintsIn } from "./support/hints.ts";
 import { expect, it } from "@effect/vitest";
@@ -89,20 +89,6 @@ const projectsCheckOf = (envelope: PublicEnvelope) =>
   Schema.decodeUnknownSync(DoctorReportSchema)(envelope.result).checks.find(
     ({ id }) => id === "projects",
   );
-
-/** Runs `effect` with the process working directory set to `directory`, restoring it after. */
-const inDirectory =
-  (directory: string) =>
-  <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-    Effect.acquireUseRelease(
-      Effect.sync(() => {
-        const previous = process.cwd();
-        process.chdir(directory);
-        return previous;
-      }),
-      () => effect,
-      (previous) => Effect.sync(() => process.chdir(previous)),
-    );
 
 it.layer(LiveTestLayer)("setup hints", (hintIt) => {
   hintIt.effect("names the project add a bare selection needs in an unregistered repository", () =>

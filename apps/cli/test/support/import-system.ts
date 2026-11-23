@@ -5,6 +5,7 @@ import { chmod, mkdir, mkdtemp, readFile, readdir, realpath, writeFile } from "n
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { makeRemoteFixture, type FixtureCommit } from "./git-remote-fixture.ts";
+import { runTackInProcess } from "./host-runner.ts";
 import { runTack } from "./tack-process.ts";
 
 /** The result of one Tack process run. */
@@ -65,6 +66,24 @@ const spawnTack = async (
   return { code: exitCode, stdout, stderr };
 };
 
+/** {@link spawnTack} in the test process; a run that must be killed needs a process. */
+const hostTack = async (
+  world: Pick<SystemWorld, "home" | "state" | "remotes" | "root">,
+  args: ReadonlyArray<string>,
+  options: RunOptions = {},
+): Promise<TackRun> => {
+  if (options.timeoutMillis !== undefined) throw new Error("A run with a timeout needs a process.");
+  const { exitCode, stdout, stderr } = await Effect.runPromise(
+    runTackInProcess(args, {
+      home: world.home,
+      state: world.state,
+      cwd: options.cwd ?? world.root,
+      env: { TACK_IMPORT_FIXTURE_REMOTES: world.remotes, ...options.env },
+    }),
+  );
+  return { code: exitCode, stdout, stderr };
+};
+
 /** Runs git against a fixture and requires success. */
 export const git = async (cwd: string, args: ReadonlyArray<string>): Promise<string> => {
   const child = Bun.spawn(["git", ...args], {
@@ -111,6 +130,12 @@ export const makeSystemWorld = async (input: {
   readonly files?: Readonly<Record<string, string>>;
   readonly commits: ReadonlyArray<FixtureCommit>;
   readonly register?: boolean;
+  /**
+   * Runs every `tack` in the test process, one at a time, in place of a child process. A test
+   * that asserts only envelopes, exit statuses and files sets it; a kill or a held lock needs a
+   * process.
+   */
+  readonly inProcess?: boolean;
 }): Promise<SystemWorld> => {
   const root = await realpath(await mkdtemp(join(tmpdir(), "tack-import-system-")));
   const home = join(root, "home");
@@ -135,7 +160,8 @@ export const makeSystemWorld = async (input: {
     ),
   );
   const base = { root, home, state, remotes };
-  const run = (args: ReadonlyArray<string>, options?: RunOptions) => spawnTack(base, args, options);
+  const run = (args: ReadonlyArray<string>, options?: RunOptions) =>
+    input.inProcess === true ? hostTack(base, args, options) : spawnTack(base, args, options);
   const json = async (args: ReadonlyArray<string>, options?: RunOptions) =>
     decodeJson(await run(["--json", ...args], options));
   const initialized = await run(["state", "init"]);

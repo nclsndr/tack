@@ -5,7 +5,7 @@ const sharded = process.argv.some((argument) => argument.startsWith("--shard"));
 
 // The most uncovered items production source may have: CI's merged counts plus a small allowance
 // for run-to-run noise. Lower these when coverage improves; raising one needs a stated reason in the PR.
-const maxUncovered = { statements: 148, branches: 262, functions: 52, lines: 94 };
+const maxUncovered = { statements: 139, branches: 251, functions: 47, lines: 85 };
 
 export default defineConfig({
   test: {

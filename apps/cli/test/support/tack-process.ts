@@ -65,6 +65,24 @@ const defined = (
   );
 
 /**
+ * What one isolated Tack run changes in the test process's environment: every variable
+ * {@link TackIsolation} drops is removed (`undefined`), then the isolation's directories and the
+ * extra variables are set. A process run and an in-process run apply the same changes.
+ */
+export const isolationChanges = (
+  isolation: TackIsolation,
+  env: Readonly<Record<string, string | undefined>> = {},
+): Readonly<Record<string, string | undefined>> => ({
+  ...Object.fromEntries(
+    Object.keys(process.env).flatMap((name) => (isolated(name) ? [[name, undefined]] : [])),
+  ),
+  HOME: isolation.home,
+  TACK_STATE_DIR: isolation.state,
+  ...(isolation.temporary === undefined ? {} : { TMPDIR: isolation.temporary }),
+  ...env,
+});
+
+/**
  * The environment of one isolated Tack process: the test process's own, minus what
  * {@link TackIsolation} drops, plus the isolation's directories and the extra variables.
  */
@@ -72,18 +90,7 @@ export const tackEnvironment = (
   isolation: TackIsolation,
   env: Readonly<Record<string, string | undefined>> = {},
 ): Record<string, string> =>
-  defined([
-    ...Object.entries(process.env).filter(
-      ([name]) =>
-        isolated(name) === false &&
-        (isolation.temporary === undefined || name !== "TMPDIR") &&
-        Object.hasOwn(env, name) === false,
-    ),
-    ["HOME", isolation.home],
-    ["TACK_STATE_DIR", isolation.state],
-    ...(isolation.temporary === undefined ? [] : ([["TMPDIR", isolation.temporary]] as const)),
-    ...Object.entries(env),
-  ]);
+  defined(Object.entries({ ...process.env, ...isolationChanges(isolation, env) }));
 
 const command = (args: ReadonlyArray<string>, options: TackRunOptions) =>
   options.binary === undefined

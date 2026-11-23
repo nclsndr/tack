@@ -8,7 +8,7 @@ import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { GitLive } from "../src/platform/git/git.ts";
 import {
   partialEnvelope,
-  runTack,
+  hostTack,
   successfulEnvelope,
   withTackWorld,
   type TackWorld,
@@ -30,7 +30,7 @@ it.layer(LiveTestLayer)("doctor in process", (doctorIt) => {
       "version: 1\nskills:\n  - path: skills\ndocs:\n  - name: notes\n    path: notes\n",
     );
     successfulEnvelope(
-      yield* runTack(fixture, ["docs", "--project", "workspace", "attach", "notes"]),
+      yield* hostTack(fixture, ["docs", "--project", "workspace", "attach", "notes"]),
     );
   });
   // The fixture's project is a real repository, so doctor asks the real Git where it runs.
@@ -77,11 +77,11 @@ it.layer(LiveTestLayer)("doctor in process", (doctorIt) => {
           const own = path.join(fixture.primaryRoot, ".claude", "skills", "valid");
           yield* fileSystem.makeDirectory(own, { recursive: true });
           yield* fileSystem.writeFileString(path.join(own, "SKILL.md"), "mine\n");
-          successfulEnvelope(yield* runTack(fixture, ["adapter", "enable", "claude", "codex"]));
-          yield* runTack(fixture, ["sync", "--project", "workspace", "--apply"]);
+          successfulEnvelope(yield* hostTack(fixture, ["adapter", "enable", "claude", "codex"]));
+          yield* hostTack(fixture, ["sync", "--project", "workspace", "--apply"]);
 
           const status = partialEnvelope(
-            yield* runTack(fixture, ["status", "--project", "workspace"]),
+            yield* hostTack(fixture, ["status", "--project", "workspace"]),
           );
           expect(status.result).toMatchObject({
             destinations: [

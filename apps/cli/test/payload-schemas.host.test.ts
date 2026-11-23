@@ -9,7 +9,7 @@ import {
   CommandContractsSchema,
   describeContracts,
 } from "../src/cli/commands/manifest.test-support.ts";
-import { runTackSync } from "./support/tack-process.ts";
+import { runTackInProcess } from "./support/host-runner.ts";
 
 const contracts = (commandPath: ReadonlyArray<string> = []) =>
   describeContracts(commandPath).pipe(Effect.provide(BunServices.layer));
@@ -23,7 +23,7 @@ it.effect("decodes real JSON stdout against the payload schemas of its slots", (
     const state = join(directory, "state");
     const project = join(directory, "project");
     mkdirSync(project);
-    const run = (command: ReadonlyArray<string>, git = false): Record<string, unknown> => {
+    const run = Effect.fnUntraced(function* (command: ReadonlyArray<string>, git = false) {
       if (git) {
         const child = Bun.spawnSync({
           cmd: ["git", ...command],
@@ -33,17 +33,17 @@ it.effect("decodes real JSON stdout against the payload schemas of its slots", (
         expect(child.exitCode, child.stderr.toString()).toBe(0);
         return {};
       }
-      const child = runTackSync([...command, "--state-dir", state, "--json"], {
+      const child = yield* runTackInProcess([...command, "--state-dir", state, "--json"], {
         cwd: project,
         home: directory,
       });
       const value: unknown = JSON.parse(child.stdout);
       return Schema.decodeUnknownSync(Schema.Record(Schema.String, Schema.Unknown))(value);
-    };
+    });
     try {
-      run(["state", "init"]);
-      run(["init", "-q"], true);
-      run(["project", "add", "demo", "--repository-cwd", project]);
+      yield* run(["state", "init"]);
+      yield* run(["init", "-q"], true);
+      yield* run(["project", "add", "demo", "--repository-cwd", project]);
       const published = decodeContracts(yield* contracts());
       const ajv = new Ajv2020({ strict: false, validateFormats: false });
       for (const [command, slots] of [
@@ -68,7 +68,7 @@ it.effect("decodes real JSON stdout against the payload schemas of its slots", (
           },
         ],
       ] as const) {
-        const output = run(command);
+        const output: Record<string, unknown> = yield* run(command);
         for (const [slot, kind] of Object.entries(slots)) {
           const schema = Schema.decodeUnknownSync(Schema.Record(Schema.String, Schema.Unknown))(
             published.payloads[kind],

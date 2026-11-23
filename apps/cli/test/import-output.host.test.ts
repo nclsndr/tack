@@ -40,7 +40,7 @@ const envelopeKeys = [
 
 describe("discovery", () => {
   it("describes the import group in the command contracts and --help, without stable payloads", async () => {
-    const world = await makeSystemWorld({ commits: [commit] });
+    const world = await makeSystemWorld({ inProcess: true, commits: [commit] });
     const contracts = await readContracts();
     const commands = contracts.commands.filter((entry) => entry.commandPath[0] === "import");
     expect(commands.map((entry) => entry.command)).toEqual([
@@ -84,7 +84,7 @@ describe("discovery", () => {
 
 describe("envelopes", () => {
   const imported = async () => {
-    const world = await makeSystemWorld({ commits: [commit] });
+    const world = await makeSystemWorld({ inProcess: true, commits: [commit] });
     const applied = await world.json([...preview, "--apply"]);
     expect(applied.envelope.classification).toBe("success");
     return world;
@@ -107,7 +107,7 @@ describe("envelopes", () => {
   };
 
   it("carries the preview, the apply, the list and the removal in the nine-key envelope", async () => {
-    const world = await makeSystemWorld({ commits: [commit] });
+    const world = await makeSystemWorld({ inProcess: true, commits: [commit] });
     const stateBefore = await readFile(join(world.state, "state.json"), "utf8");
     const treeBefore = await treeSnapshot(world.brain);
 
@@ -209,6 +209,7 @@ describe("envelopes", () => {
 
   it("marks a destination that declares no skills folder as refused, and --apply fails", async () => {
     const world = await makeSystemWorld({
+      inProcess: true,
       declaration: "version: 1\nname: personal-brain\ndocs:\n  - path: docs\n",
       files: { "docs/readme.md": "# Docs\n" },
       commits: [commit],
@@ -272,7 +273,7 @@ describe("envelopes", () => {
   }, 60_000);
 
   it("prints the canonical location beside the URL that was typed, and Next uses it", async () => {
-    const world = await makeSystemWorld({ commits: [commit] });
+    const world = await makeSystemWorld({ inProcess: true, commits: [commit] });
     const url = await world.run([
       "import",
       "add",

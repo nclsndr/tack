@@ -4,7 +4,7 @@ import { Effect, FileSystem, Path, Schema } from "effect";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import {
   partialEnvelope,
-  runTack,
+  hostTack,
   successfulEnvelope,
   withTackWorld,
 } from "./fixtures/tack-world.ts";
@@ -43,7 +43,7 @@ const readerConfig = (content: string, components?: string) =>
     "",
   ].join("\n");
 
-it.layer(LiveTestLayer)("reader isolation through the real CLI", (readerIt) => {
+it.layer(LiveTestLayer)("reader isolation through the CLI host", (readerIt) => {
   readerIt.effect(
     "keeps healthy documents and resources searchable beside broken siblings and render modules",
     () =>
@@ -84,12 +84,12 @@ it.layer(LiveTestLayer)("reader isolation through the real CLI", (readerIt) => {
           yield* write("healthy/visible.md", "# Visible\n\nuniqueneedle visible\n");
           for (const name of ["guides", "broken", "healthy"]) {
             successfulEnvelope(
-              yield* runTack(fixture, ["docs", "attach", name, "--project", "workspace"]),
+              yield* hostTack(fixture, ["docs", "attach", name, "--project", "workspace"]),
             );
           }
 
           const search = partialEnvelope(
-            yield* runTack(fixture, [
+            yield* hostTack(fixture, [
               "docs",
               "search",
               "uniqueneedle",
@@ -118,7 +118,7 @@ it.layer(LiveTestLayer)("reader isolation through the real CLI", (readerIt) => {
           expect(resourceIssues[0]?.message).not.toContain("at line");
 
           const listed = partialEnvelope(
-            yield* runTack(fixture, ["docs", "list", "--project", "workspace"]),
+            yield* hostTack(fixture, ["docs", "list", "--project", "workspace"]),
           );
           expect(listed.result).toMatchObject({ complete: false, documents: 4 });
         }),
@@ -138,7 +138,7 @@ it.layer(LiveTestLayer)("reader isolation through the real CLI", (readerIt) => {
           "version: 1\nskills:\n  - path: skills\ndocs:\n  - name: notes\n    path: notes\n",
         );
         const search = partialEnvelope(
-          yield* runTack(fixture, ["docs", "search", "anything", "--project", "workspace"]),
+          yield* hostTack(fixture, ["docs", "search", "anything", "--project", "workspace"]),
         );
         const result = decodeSearch(search.result);
         expect(result).toMatchObject({ complete: false, total: 0, hits: [] });
@@ -147,9 +147,9 @@ it.layer(LiveTestLayer)("reader isolation through the real CLI", (readerIt) => {
         expect(next).toBe("tack docs attach notes --project workspace");
         // The suggested step is valid as written.
         const [, ...args] = next.split(" ");
-        successfulEnvelope(yield* runTack(fixture, args));
+        successfulEnvelope(yield* hostTack(fixture, args));
         const attached = successfulEnvelope(
-          yield* runTack(fixture, ["docs", "list", "--project", "workspace"]),
+          yield* hostTack(fixture, ["docs", "list", "--project", "workspace"]),
         );
         expect(attached.result).toMatchObject({ complete: true, documents: 0 });
         expect(attached.result).not.toHaveProperty("setup");
