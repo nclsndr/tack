@@ -117,6 +117,10 @@ where the skill will reach at the next sync. The list is cut short here:
 `agent-setup` has one skills folder, so `--into agent-setup` picks it. A source with several needs
 the folder too, such as `--into agent-setup:skills`.
 
+"Delivery at the next sync" counts every registered project. A project that runs a fixed profile,
+here `ci`, still gets only its profile's members: the sync does not link the new skill there. See
+[Share a fixed set with a profile](./profiles).
+
 ## 3. Apply it
 
 <Terminal
