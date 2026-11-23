@@ -4,6 +4,10 @@ import type { UnresolvedDependencyEdge } from "../../domain/choices/dependency-r
 import { catalogEntryPath } from "../../domain/sources/catalog-schema.ts";
 import { dependencyLine } from "./finding-location.ts";
 
+const and = (names: ReadonlyArray<string>) => new Intl.ListFormat("en").format(names);
+const or = (names: ReadonlyArray<string>) =>
+  new Intl.ListFormat("en", { type: "disjunction" }).format(names);
+
 /** The finding code of each reason a dependency edge names no single resource. */
 const findingCodes = {
   missing: "dependency-missing",
@@ -39,20 +43,23 @@ const explanation = (
       why: "which is quarantined",
       remedy: "Fix the finding reported for it.",
     })),
-    Match.when({ reason: "source-undeclared" }, () =>
+    Match.when({ reason: "source-undeclared" }, ({ providers }) =>
       dependency.source === undefined
         ? {
-            why: `which only a source that ${own} does not declare provides`,
-            remedy: `Add the label of the source that provides it to depends-on in the tack.yaml of ${own}.`,
+            why: `which only a source that ${own} does not declare provides: ${and(providers)}`,
+            remedy: `Add ${or(providers)} to depends-on in the tack.yaml of ${own}.`,
           }
         : {
             why: `from ${dependency.source}, which ${own} does not declare`,
             remedy: `Add ${dependency.source} to depends-on in the tack.yaml of ${own}.`,
           },
     ),
-    Match.when({ reason: "source-unregistered" }, () => ({
-      why: "from a declared source that is not among the checked paths",
-      remedy: "Pass the folder of that source to the same tack check to verify the dependency.",
+    Match.when({ reason: "source-unregistered" }, ({ labels }) => ({
+      why:
+        dependency.source === undefined
+          ? `which no checked source provides, while ${own} also declares ${and(labels)}, not among the checked paths`
+          : `from ${dependency.source}, which is not among the checked paths`,
+      remedy: `Pass the folder of ${and(labels)} to the same tack check to verify the dependency.`,
     })),
     Match.when({ reason: "source-unhealthy" }, ({ unhealthySources }) => ({
       why: "from a source Tack cannot read",

@@ -494,6 +494,7 @@ const sourceAt = (
 });
 
 const sharedId = address("x").sourceRegistrationId;
+const privateId = address("x", "private").sourceRegistrationId;
 const bundleIdentity = "a".repeat(64);
 
 it.each([
@@ -611,6 +612,45 @@ it("lists every edge, required or optional, that names no single resource, with 
     ["root", 2, "source-undeclared"],
     ["root", 3, "quarantined"],
     ["root", 4, "ambiguous"],
+  ]);
+});
+
+it("names the declared labels no source carries, and the sources an undeclared edge would need", () => {
+  const { label: _label, ...noLabel } = sourceAt(fourthId, "unused");
+  const unlistedId = "00000000-0000-4000-8000-000000000005";
+
+  const edges = unresolvedDependencyEdges({
+    entries: [
+      entryIn(
+        "root",
+        sharedId,
+        [
+          { kind: "skill", name: "target" },
+          { kind: "skill", name: "target", source: "ghost" },
+        ],
+        "default",
+      ),
+      entryIn("lone", privateId, [{ kind: "skill", name: "audit" }], "default"),
+      entryIn("audit", thirdId),
+      entryIn("audit", fourthId),
+      entryIn("audit", unlistedId),
+    ],
+    quarantined: [],
+    sources: [
+      sourceAt(sharedId, "shared", { dependsOn: ["ghost", "phantom"] }),
+      sourceAt(privateId, "private"),
+      sourceAt(thirdId, "elsewhere"),
+      noLabel,
+    ],
+  });
+
+  expect(edges.map(({ failure }) => failure)).toEqual([
+    { reason: "source-unregistered", labels: ["ghost", "phantom"] },
+    { reason: "source-unregistered", labels: ["ghost"] },
+    {
+      reason: "source-undeclared",
+      providers: [`/sources/${fourthId}`, unlistedId, "elsewhere"],
+    },
   ]);
 });
 

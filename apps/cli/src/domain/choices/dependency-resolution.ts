@@ -150,17 +150,27 @@ const blockerIdentity = (blocker: RequiredDependencyBlocker) =>
 const optionalSkipIdentity = (skip: OptionalDependencySkip) =>
   `${resourceAddressIdentity(skip.requester)}\u0000${JSON.stringify(skip.dependency)}\u0000${skip._tag}`;
 
-/** Why a dependency names no single catalog resource, whatever any namespace selects. */
-type DependencyFindReason =
-  | "missing"
-  | "source-undeclared"
-  | "source-unregistered"
-  | "ambiguous"
-  | "quarantined";
-
-/** Why a dependency names no single catalog resource, as the stateless check reports it. */
+/**
+ * Why a dependency names no single catalog resource, whatever any namespace selects, as the
+ * stateless check reports it. Blockers and skips copy only the reason, never the names.
+ */
 type DependencyFindFailure =
-  | { readonly reason: DependencyFindReason; readonly target?: never }
+  | { readonly reason: "missing" | "ambiguous" | "quarantined"; readonly target?: never }
+  | {
+      readonly reason: "source-undeclared";
+      readonly target?: never;
+      /**
+       * For an edge that names no source, the labels, or paths when unlabelled, of the sources that
+       * provide the resource without being declared, in code-unit order. Empty for a named source.
+       */
+      readonly providers: ReadonlyArray<string>;
+    }
+  | {
+      readonly reason: "source-unregistered";
+      readonly target?: never;
+      /** The declared labels that no registered source carries. */
+      readonly labels: readonly [string, ...Array<string>];
+    }
   | {
       readonly reason: "source-unhealthy";
       readonly target?: never;
@@ -187,13 +197,16 @@ type DependencyLookup =
  * Why a declared source label resolves to no registered source: a registered source Tack cannot
  * read has an unknown label and may be that source, so it is unhealthy, not unregistered.
  */
-const labelUnresolved = (sources: NonNullable<Catalog["sources"]>): DependencyFindFailure => {
+const labelUnresolved = (
+  sources: NonNullable<Catalog["sources"]>,
+  labels: readonly [string, ...Array<string>],
+): DependencyFindFailure => {
   const [first, ...remaining] = sources
     .filter((source) => source.status === "unhealthy" && source.label === undefined)
     .map((source) => source.registration.canonicalPath)
     .sort(compareCodeUnits);
   return first === undefined
-    ? { reason: "source-unregistered" }
+    ? { reason: "source-unregistered", labels }
     : { reason: "source-unhealthy", unhealthySources: [first, ...remaining] };
 };
 
@@ -203,6 +216,8 @@ type DependencyIndex = {
   readonly byKindAndName: ReadonlyMap<string, ReadonlyArray<SelectableCatalogEntry>>;
   /** The identities of the quarantined resources. */
   readonly quarantined: ReadonlySet<string>;
+  /** Each source's label, or its path when it has none, by registration ID. */
+  readonly sourceNames: ReadonlyMap<string, string>;
   readonly sources: NonNullable<Catalog["sources"]>;
 };
 
@@ -223,6 +238,12 @@ const indexDependencies = (
       item.address === undefined ? [] : [resourceAddressIdentity(item.address)],
     ),
   ),
+  sourceNames: new Map(
+    sources.map((source) => [
+      source.registration.id,
+      source.label ?? source.registration.canonicalPath,
+    ]),
+  ),
   sources,
 });
 
@@ -233,7 +254,7 @@ const indexDependencies = (
 const findDependency = (
   requester: SelectableAddress,
   dependency: typeof ResourceDependencySchema.Type,
-  { byKindAndName, quarantined, sources }: DependencyIndex,
+  { byKindAndName, quarantined, sourceNames, sources }: DependencyIndex,
 ): DependencyFind => {
   const candidates = byKindAndName.get(kindAndName(dependency.kind, dependency.name)) ?? [];
   const ownId = requester.sourceRegistrationId;
@@ -266,8 +287,8 @@ const findDependency = (
     )
       allowedIds = ownId === undefined ? [] : [ownId];
     else if (declared.includes(dependency.source)) allowedIds = sourceIds(dependency.source);
-    else return { reason: "source-undeclared" };
-    if (allowedIds.length === 0) return labelUnresolved(sources);
+    else return { reason: "source-undeclared", providers: [] };
+    if (allowedIds.length === 0) return labelUnresolved(sources, [dependency.source]);
     if (allowedIds.length > 1) return { reason: "ambiguous" };
   } else {
     const ownMatch = candidates.find((entry) => entry.sourceRegistrationId === ownId);
@@ -283,9 +304,19 @@ const findDependency = (
   const target = matches[0]?.address;
   if (target === undefined) {
     if (dependency.source === undefined) {
-      if (declared.some((label) => sourceIds(label).length === 0)) return labelUnresolved(sources);
-      if (candidates.some((entry) => allowedIds.includes(entry.sourceRegistrationId) === false))
-        return { reason: "source-undeclared" };
+      const [unresolved, ...moreUnresolved] = declared.filter(
+        (label) => sourceIds(label).length === 0,
+      );
+      if (unresolved !== undefined)
+        return labelUnresolved(sources, [unresolved, ...moreUnresolved]);
+      const providers = candidates
+        .filter((entry) => allowedIds.includes(entry.sourceRegistrationId) === false)
+        .map((entry) => sourceNames.get(entry.sourceRegistrationId) ?? entry.sourceRegistrationId);
+      if (providers.length > 0)
+        return {
+          reason: "source-undeclared",
+          providers: [...new Set(providers)].sort(compareCodeUnits),
+        };
     }
     const quarantinedMatch = allowedIds.some((id) =>
       quarantined.has(
