@@ -20,7 +20,10 @@ export default defineConfig({
   themeConfig: {
     // Dark is the site default; the warm paper light theme is the alternate.
     darkMode: "dark",
-    nav: [{ text: "Docs", link: "/docs/" }],
+    nav: [
+      { text: "Features", link: "/features" },
+      { text: "Docs", link: "/docs/" },
+    ],
     sidebar: {
       "/docs/": [
         {
