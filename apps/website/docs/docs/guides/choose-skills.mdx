@@ -154,6 +154,7 @@ at once and links nothing; `tack sync` then previews the links it calls for.
 | `tack pick exclude incident-report --project app` | Keeps a default skill out of one project                |
 | `tack pick include commit-message --user`         | Links a skill into your user folders, for every project |
 | `tack pick remove incident-report --project app`  | Forgets the pick, so the source's default applies again |
+| `tack pick remove commit-message --user`          | Forgets a user pick                                     |
 | `tack pick`                                       | Lists every pick, for each project and for you          |
 
 ## Keep a skill out of a project
@@ -189,8 +190,12 @@ removes those project links with the reason `linked-for-user`.
 
 <Terminal commands={["tack sync --all"]} output={userSyncOutput} />
 
-Apply it with `tack sync --all --apply`. Some agents read only project folders, or only user
-folders; the [features reference](../features#more-agents-through-folders-they-share) marks them.
+Apply it with `tack sync --all --apply`. To undo it, run `tack pick remove commit-message --user`:
+the next `tack sync --all` removes the user links and links the skill back into each project that
+selects it.
+
+Some agents read only project folders, or only user folders, so a user pick does not reach every
+agent; [Agent support](../agent-support#agents-reached-through-a-shared-folder) marks them.
 
 ## See what a project gets
 
