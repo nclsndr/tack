@@ -129,7 +129,9 @@ Run `tack source add ~/agent-setup` without any flag and Tack refuses with
 When the skill folders sit at the top of the folder, such as `~/skills/review/SKILL.md`, write
 `--skills .` instead. Tack previews a skills collection: a `tack.yaml` that holds `kind: skills`
 and nothing else. A folder of commands or docs beside it is then a source of its own, such as
-`tack source add ~/skills/commands --commands .`.
+`tack source add ~/skills/commands --commands .`. Until it is, the preview warns
+`collection-folder-not-skill` about that folder and leaves it out; the warning changes nothing
+else.
 
 ## A folder that already has a tack.yaml
 
@@ -164,16 +166,26 @@ cannot write them. Your agent's built-in `manage-tack-sources` skill knows the f
 
 ## Deliver it
 
-Registering links nothing. A source's skills and commands are on by default for every project, so
-preview the links for every project and for you, then apply:
+Registering links nothing. Links go into a project, so Tack needs one: if you have not registered a
+project yet, do it from inside the repository. It writes no link either:
+
+```sh
+cd ~/code/app
+tack project add app
+```
+
+A source's skills and commands are on by default for every project, so preview the links for every
+project and for you, then apply:
 
 ```sh
 tack sync --all
 tack sync --all --apply
 ```
 
-A skill can be opt-in instead: it then reaches a project only once you pick it. See
-[Choose what each project gets](./choose-skills).
+With no project registered, the preview plans nothing: at user level a skill is opt-in until you
+pick it. A skill can be opt-in for projects too: it then reaches a project only once you pick it.
+See [Choose what each project gets](./choose-skills). The `handbook` docs are not linked by a sync
+alone: attach them first, as [Link docs into a project](./link-docs) shows.
 
 ## Next
 
