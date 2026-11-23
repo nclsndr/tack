@@ -3,9 +3,10 @@ import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Schema } from "effect";
+import { Effect, Schema } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
-import { decodeEnvelope, runTackSync } from "./support/tack-process.ts";
+import { runTackInProcess } from "./support/host-runner.ts";
+import { decodeEnvelope } from "./support/tack-process.ts";
 
 const roots: Array<string> = [];
 
@@ -46,9 +47,9 @@ const skill = (directory: string, name: string) => {
 /**
  * A throwaway HOME and state directory with two sources that both declare `review`, and one that
  * alone declares `solo`. State is initialized and the sources are registered with the real CLI.
- * State holds only picks that name their source.
+ * State holds only picks that name their source. Tack runs in process.
  */
-const fixture = () => {
+const fixture = async () => {
   const root = realpathSync(mkdtempSync(join(tmpdir(), "tack-source-qualified-picks-test-")));
   roots.push(root);
   const home = join(root, "home");
@@ -65,26 +66,24 @@ const fixture = () => {
   }
   skill(sources.alpha, "solo");
 
-  const run = (args: ReadonlyArray<string>) => {
-    const result = runTackSync(["--json", "--state-dir", stateDirectory, ...args], {
-      cwd: root,
-      home,
-    });
-    expect(result.error).toBeUndefined();
+  const run = async (args: ReadonlyArray<string>) => {
+    const result = await Effect.runPromise(
+      runTackInProcess(["--json", "--state-dir", stateDirectory, ...args], { cwd: root, home }),
+    );
     return { envelope: decodeEnvelope(result.stdout), exitCode: result.exitCode };
   };
 
-  expect(run(["state", "init"]).exitCode).toBe(0);
+  expect((await run(["state", "init"])).exitCode).toBe(0);
   const ids: Record<string, string> = {};
   for (const [label, directory] of Object.entries(sources)) {
-    const added = run(["source", "add", directory]);
+    const added = await run(["source", "add", directory]);
     expect(added.exitCode).toBe(0);
     ids[label] = decodeRegistration(added.envelope.applied).registration.id;
   }
 
   const statePath = join(stateDirectory, "state.json");
-  const picks = (): ReadonlyArray<{ address: Address; decision: string }> =>
-    decodeChoices(run(["pick", "--user"]).envelope.result).choices;
+  const picks = async (): Promise<ReadonlyArray<{ address: Address; decision: string }>> =>
+    decodeChoices((await run(["pick", "--user"])).envelope.result).choices;
 
   return { ids, picks, root, run, statePath, stateDirectory, home };
 };
@@ -96,16 +95,16 @@ const userPick = (id: string | undefined, name: string, decision = "include") =>
 });
 
 describe("source-qualified picks", () => {
-  it("pins a unique bare name to its source and keeps the other source's pick apart", () => {
-    const { ids, picks, run } = fixture();
+  it("pins a unique bare name to its source and keeps the other source's pick apart", async () => {
+    const { ids, picks, run } = await fixture();
 
-    expect(run(["pick", "include", "solo", "--user"]).exitCode).toBe(0);
-    expect(run(["pick", "include", "alpha:review", "--user"]).exitCode).toBe(0);
-    expect(run(["pick", "exclude", "beta:review", "--user"]).exitCode).toBe(0);
+    expect((await run(["pick", "include", "solo", "--user"])).exitCode).toBe(0);
+    expect((await run(["pick", "include", "alpha:review", "--user"])).exitCode).toBe(0);
+    expect((await run(["pick", "exclude", "beta:review", "--user"])).exitCode).toBe(0);
 
     // The order follows the source registration IDs, which are random, so the picks are unordered.
-    expect(picks()).toHaveLength(3);
-    expect(picks()).toEqual(
+    expect(await picks()).toHaveLength(3);
+    expect(await picks()).toEqual(
       expect.arrayContaining([
         userPick(ids["alpha"], "review"),
         userPick(ids["beta"], "review", "exclude"),
@@ -114,48 +113,54 @@ describe("source-qualified picks", () => {
     );
   });
 
-  it("replaces the decision of the same source's pick", () => {
-    const { ids, picks, run } = fixture();
-    expect(run(["pick", "include", "alpha:review", "--user"]).exitCode).toBe(0);
+  it("replaces the decision of the same source's pick", async () => {
+    const { ids, picks, run } = await fixture();
+    expect((await run(["pick", "include", "alpha:review", "--user"])).exitCode).toBe(0);
 
-    expect(run(["pick", "exclude", "alpha:review", "--user"]).exitCode).toBe(0);
+    expect((await run(["pick", "exclude", "alpha:review", "--user"])).exitCode).toBe(0);
 
-    expect(picks()).toEqual([userPick(ids["alpha"], "review", "exclude")]);
+    expect(await picks()).toEqual([userPick(ids["alpha"], "review", "exclude")]);
   });
 
-  it("still names a working command when two picks share a name", () => {
-    const { ids, picks, run } = fixture();
+  it("still names a working command when two picks share a name", async () => {
+    const { ids, picks, run } = await fixture();
     for (const label of ["alpha", "beta"]) {
-      expect(run(["pick", "include", `${label}:review`, "--user"]).exitCode).toBe(0);
+      expect((await run(["pick", "include", `${label}:review`, "--user"])).exitCode).toBe(0);
     }
 
-    const failed = run(["pick", "remove", "review", "--user", "--kind", "skill"]);
+    const failed = await run(["pick", "remove", "review", "--user", "--kind", "skill"]);
     expect(failed.envelope.diagnostics[0]).toMatchObject({ code: "resource-ambiguous" });
     const [command] = /tack pick remove (alpha:review --kind skill)/.exec(
       failed.envelope.diagnostics[0]?.message ?? "",
     ) ?? [undefined];
     expect(command).toBeDefined();
 
-    expect(run(["pick", "remove", "alpha:review", "--kind", "skill", "--user"]).exitCode).toBe(0);
-    expect(picks().map(({ address }) => address.sourceRegistrationId)).toEqual([ids["beta"]]);
+    expect(
+      (await run(["pick", "remove", "alpha:review", "--kind", "skill", "--user"])).exitCode,
+    ).toBe(0);
+    expect((await picks()).map(({ address }) => address.sourceRegistrationId)).toEqual([
+      ids["beta"],
+    ]);
   });
 });
 
 describe("release-owned picks", () => {
-  it("allows a registered skill with a built-in name to keep its own picks", () => {
-    const { root, run } = fixture();
+  it("allows a registered skill with a built-in name to keep its own picks", async () => {
+    const { root, run } = await fixture();
     skill(join(root, "alpha"), "use-tack");
     for (const operation of ["include", "exclude", "remove"]) {
-      expect(run(["pick", operation, "alpha:use-tack", "--user"]).exitCode).toBe(0);
+      expect((await run(["pick", operation, "alpha:use-tack", "--user"])).exitCode).toBe(0);
     }
   });
 
-  it("refuses include, exclude and remove at user and project scope without writing picks", () => {
-    const { root, run, statePath } = fixture();
+  it("refuses include, exclude and remove at user and project scope without writing picks", async () => {
+    const { root, run, statePath } = await fixture();
     const repository = join(root, "demo");
     mkdirSync(repository);
     expect(spawnSync("git", ["init", "--quiet"], { cwd: repository }).status).toBe(0);
-    expect(run(["project", "add", "demo", "--repository-cwd", repository]).exitCode).toBe(0);
+    expect((await run(["project", "add", "demo", "--repository-cwd", repository])).exitCode).toBe(
+      0,
+    );
     const before = readFileSync(statePath, "utf8");
     const references = [
       "use-tack",
@@ -166,7 +171,7 @@ describe("release-owned picks", () => {
     for (const scope of [["--user"], ["--project", "demo"]]) {
       for (const operation of ["include", "exclude", "remove"]) {
         for (const reference of references) {
-          const result = run(["pick", operation, reference, ...scope]);
+          const result = await run(["pick", operation, reference, ...scope]);
           expect(result.exitCode).not.toBe(0);
           expect(result.envelope.diagnostics).toMatchObject([
             {
