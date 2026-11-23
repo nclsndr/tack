@@ -220,7 +220,7 @@ export const withTackWorld = <A, E, R>(use: (fixture: TackWorld) => Effect.Effec
       worktreeRoot,
     } satisfies TackWorld;
     successfulEnvelope(yield* hostTack(fixture, ["state", "init"]));
-    successfulEnvelope(yield* hostTack(fixture, ["source", "add", sourceDirectory]));
+    successfulEnvelope(yield* hostTack(fixture, ["source", "add", sourceDirectory, "--apply"]));
     successfulEnvelope(
       yield* hostTack(fixture, [
         "project",

@@ -527,7 +527,8 @@ contract are ready. Commands are recursive `.md` files with portable basename id
 optional frontmatter.
 
 ```sh
-tack source add /path/to/my-source
+tack source add /path/to/my-source   # preview registering a source that has tack.yaml
+tack source add /path/to/my-source --apply   # register it
 tack source add /path/to/folder --skills skills --docs handbook   # preview its tack.yaml
 tack source add /path/to/skills --skills .   # skill folders at its top: preview a collection
 tack source
@@ -559,8 +560,9 @@ folders to resolve external profile members. Declaration validation errors stop 
 inspection, while other explicit inputs continue. Resources, published profiles and source-owned
 docs use one combined file:line report, without state or execution.
 
-`source add` registers an existing declaration immediately, reporting counts, issues and a
-`tack check` hint. For a folder without `tack.yaml`, name what it holds with `--skills`,
+`source add` previews registering an existing declaration: the name the source would take, its
+counts and issues, and any state its `--apply` would set up. `--apply` registers it and adds a
+`tack check` hint when the check found issues. For a folder without `tack.yaml`, name what it holds with `--skills`,
 `--commands`, `--context` and `--docs`, each a repeatable path inside the source. It previews the
 `tack.yaml` it would write, one folder entry per flag with docs named after their folder, the name
 the source would take, and what each entry finds: resource names, counts and problems.

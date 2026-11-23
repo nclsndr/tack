@@ -34,7 +34,7 @@ const addSource = async (
     await mkdir(join(directory, "skills", skill), { recursive: true });
     await writeFile(join(directory, "skills", skill, "SKILL.md"), text);
   }
-  const added = await world.run(["source", "add", directory]);
+  const added = await world.run(["source", "add", directory, "--apply"]);
   expect(added.code).toBe(0);
   return directory;
 };

@@ -38,8 +38,7 @@ Depth, chosen after step 1:
 - One yes per step that changes something: Machine, Sources, Scope, Projects, Link, and the
   agent instructions of step 6b.
 - Before asking, show every preview of the step together, and name every command of the step that
-  writes at once (`init`, `project add`, `pick`, a `source add` of a folder that already has
-  `tack.yaml`).
+  writes at once (`init`, `project add`, `pick`).
 - The person may answer "yes except X". Drop X and apply the rest. When dropping X changes another
   command (an adapter flag, a pick), show that command and its new preview, and ask again.
 - Never apply or run anything that was not shown in that step.
@@ -100,9 +99,9 @@ For each folder:
    Full: ask the person to confirm what each folder is and which ones Tack should serve. Quick:
    take it from the layout, ask only about a folder it does not explain, and let the preview show
    the rest. Worker: use only what your instructions name.
-2. With `tack.yaml`, `tack source add PATH` registers it at once: name it as a command that writes
-   at once. Without one, pick the command from the layout; each previews the `tack.yaml` it would
-   write and what each entry finds: names, counts, problems.
+2. With `tack.yaml`, `tack source add PATH` previews the registration: the name, counts and
+   problems. Without one, pick the command from the layout; each previews the `tack.yaml` it would
+   write and what each entry finds: names, counts, problems. `--apply` registers either.
    - `PATH/SKILL.md`: PATH is one skill. Offer its parent folder as a skills collection, or
      `tack import add` for a remote repository. Ask.
    - Folders with `SKILL.md` at the top of PATH: `tack source add PATH --skills .`, a skills

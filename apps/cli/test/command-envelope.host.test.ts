@@ -66,8 +66,8 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
           );
           for (const args of [
             ["state", "init"],
-            ["source", "add", fixture.sourceDirectory],
-            ["source", "add", independent],
+            ["source", "add", fixture.sourceDirectory, "--apply"],
+            ["source", "add", independent, "--apply"],
             ["adapter", "enable", "cursor"],
             ["sync", "--user", "--apply"],
           ]) {
@@ -233,7 +233,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
 
           for (const args of [
             ["state", "init"],
-            ["source", "add", fixture.sourceDirectory],
+            ["source", "add", fixture.sourceDirectory, "--apply"],
             ["adapter", "enable", "codex"],
           ] satisfies ReadonlyArray<ReadonlyArray<string>>) {
             expectSuccess(yield* hostTack(fixture, args));
@@ -531,7 +531,12 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
         const sourceBefore = yield* fileSystem.readFileString(sourceDeclaration);
         const destinationBefore = yield* fileSystem.readFileString(destinationPath);
 
-        const result = yield* hostTack(fixture, ["source", "add", fixture.sourceDirectory]);
+        const result = yield* hostTack(fixture, [
+          "source",
+          "add",
+          fixture.sourceDirectory,
+          "--apply",
+        ]);
         const plan = yield* hostTack(fixture, ["sync", "--user"]);
 
         for (const failure of [result, plan]) {
@@ -588,7 +593,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
 
           for (const args of [
             ["state", "init"],
-            ["source", "add", fixture.sourceDirectory],
+            ["source", "add", fixture.sourceDirectory, "--apply"],
             ["project", "add", "workspace", "--repository-cwd", fixture.repositoryDirectory],
             ["adapter", "enable", "cursor", "codex"],
             ["pick", "include", "valid", "--project", "workspace"],
@@ -724,7 +729,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
         const path = yield* Path.Path;
         for (const args of [
           ["state", "init"],
-          ["source", "add", fixture.sourceDirectory],
+          ["source", "add", fixture.sourceDirectory, "--apply"],
           ["adapter", "enable", "codex", "cursor"],
         ] satisfies ReadonlyArray<ReadonlyArray<string>>) {
           expectSuccess(yield* hostTack(fixture, args));
@@ -776,7 +781,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
 
         for (const args of [
           ["state", "init"],
-          ["source", "add", fixture.sourceDirectory],
+          ["source", "add", fixture.sourceDirectory, "--apply"],
           ["adapter", "enable", "codex", "cursor"],
         ] satisfies ReadonlyArray<ReadonlyArray<string>>) {
           expectSuccess(yield* hostTack(fixture, args));
@@ -822,8 +827,8 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
 
         for (const args of [
           ["state", "init"],
-          ["source", "add", fixture.sourceDirectory],
-          ["source", "add", privateSource],
+          ["source", "add", fixture.sourceDirectory, "--apply"],
+          ["source", "add", privateSource, "--apply"],
           ["adapter", "enable", "cursor"],
           // Both candidates are included: one explicit include would win over the default twin.
           ["pick", "include", "private-source:valid", "--user"],
@@ -894,7 +899,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
         );
         for (const args of [
           ["state", "init"],
-          ["source", "add", fixture.sourceDirectory],
+          ["source", "add", fixture.sourceDirectory, "--apply"],
           ["project", "add", "workspace", "--repository-cwd", fixture.repositoryDirectory],
           ["adapter", "enable", "codex", "cursor"],
           // The skill is a default for the user too; out of the user's folders, the project links it.
@@ -994,7 +999,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
           );
           for (const args of [
             ["state", "init"],
-            ["source", "add", fixture.sourceDirectory],
+            ["source", "add", fixture.sourceDirectory, "--apply"],
             ["adapter", "enable", "cursor"],
             ["pick", "include", "personal", "--user"],
             ["pick", "include", "blocked", "--user"],
@@ -1159,7 +1164,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
           for (const args of [
             ["state", "init"],
             ["catalog"],
-            ["source", "add", fixture.sourceDirectory],
+            ["source", "add", fixture.sourceDirectory, "--apply"],
             ["state", "reset", "--apply"],
           ]) {
             const result = yield* hostTack(fixture, args);

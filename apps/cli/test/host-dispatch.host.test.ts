@@ -95,7 +95,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
         const git = testGit(root, root);
         const args = (command: string) => ["--state-dir", stateDirectory, command];
         yield* runJson(args("state").concat("init"), git);
-        yield* runJson(args("source").concat("add", source), git);
+        yield* runJson(args("source").concat("add", source, "--apply"), git);
         const sourceOutput = envelopeFrom(yield* runJson(args("source"), git));
         const catalogOutput = envelopeFrom(yield* runJson(args("catalog"), git));
         const sourceHuman = (yield* runHostRaw(args("source"), git)).stdout;
@@ -161,7 +161,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
         runJson(["--state-dir", stateDirectory, ...arguments_], git);
 
       const initialized = yield* invocation(["state", "init"]);
-      const registered = yield* invocation(["source", "add", source]);
+      const registered = yield* invocation(["source", "add", source, "--apply"]);
       const appliedRegistration = envelopeFrom(registered).applied;
       expect(envelopeFrom(registered)).toMatchObject({ classification: "success" });
       if (
@@ -363,7 +363,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
         runJson(["--state-dir", stateDirectory, ...arguments_], git);
       for (const setup of [
         ["state", "init"],
-        ["source", "add", source],
+        ["source", "add", source, "--apply"],
         ["project", "add", "workspace", "--repository-cwd", projectRoot],
         ["adapter", "enable", "claude", "cursor"],
       ])
@@ -453,7 +453,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
       const invoke = (arguments_: ReadonlyArray<string>) =>
         runJson(["--state-dir", stateDirectory, ...arguments_], git).pipe(Effect.map(envelopeFrom));
       expect(yield* invoke(["state", "init"])).toMatchObject({ status: "success" });
-      const added = (yield* invoke(["source", "add", source])).applied;
+      const added = (yield* invoke(["source", "add", source, "--apply"])).applied;
       expect(added).toMatchObject({ docs: [{ name: "handbook" }] });
       const sourceId = Schema.decodeUnknownSync(
         Schema.Struct({ registration: Schema.Struct({ id: Schema.String }) }),
@@ -567,7 +567,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
         path.join(second, "tack.yaml"),
         "version: 1\ndocs:\n  - name: handbook\n    path: notes\n",
       );
-      const secondAdded = yield* invoke(["source", "add", second]);
+      const secondAdded = yield* invoke(["source", "add", second, "--apply"]);
       expect(secondAdded).toMatchObject({ status: "success" });
       const secondId = Schema.decodeUnknownSync(
         Schema.Struct({
@@ -1278,7 +1278,7 @@ it.layer(LiveTestLayer)("CLI output format parity", (formatIt) => {
         const source = path.join(root, "source");
         yield* fileSystem.makeDirectory(source);
         yield* fileSystem.writeFileString(path.join(source, "tack.yaml"), "version: 1\n");
-        yield* runHostRaw(["--state-dir", state, "source", "add", source], git);
+        yield* runHostRaw(["--state-dir", state, "source", "add", source, "--apply"], git);
         yield* fileSystem.writeFileString(path.join(source, "tack.yaml"), "version: 99\n");
         yield* compare(["--state-dir", state, "source"], "partial");
         yield* compare(["--state-dir", state, "catalog", "--bogus"], "invalid-invocation");

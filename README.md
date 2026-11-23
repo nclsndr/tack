@@ -59,7 +59,7 @@ and writes nothing until you add `--apply`.
   each under its own version control. Each teammate clones the team's repository, adds it with
   `tack source add` beside their own sources and links both into the agent they use. Edits arrive
   with `git pull`.
-- **Preview first.** `tack sync` shows the plan. Nothing changes until you add `--apply`.
+- **Preview first.** `tack sync` and `tack source add` show the plan. Nothing changes until you add `--apply`.
 - **Every project, every worktree.** Each registered project picks its own skills, and every
   worktree of a project gets the same links.
 - **Every agent.** Your sources reach Claude Code, Codex, Cursor, GitHub Copilot CLI, Gemini CLI,
@@ -103,7 +103,7 @@ A source with one of each kind. In the project `app`, `tack sync` links the skil
 links the command into Cursor and mounts the docs:
 
 ```text
-$ tack source add ~/agent-setup
+$ tack source add ~/agent-setup --apply
 tack source add · ✓ success
 
 Registered source ~/agent-setup.

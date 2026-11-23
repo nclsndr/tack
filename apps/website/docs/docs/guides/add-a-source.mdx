@@ -139,10 +139,11 @@ else.
 
 ## A folder that already has a tack.yaml
 
-A folder with a `tack.yaml` registers at once, with no preview: registering writes nothing into the
-folder and links nothing. This is how you add a team repository you cloned.
+A folder with a `tack.yaml` previews like any other: `tack source add ~/code/acme-agent-skills`
+shows the name the source takes and what it holds. Apply it to register the source; registering
+writes nothing into the folder and links nothing. This is how you add a team repository you cloned.
 
-<Terminal commands={["tack source add ~/code/acme-agent-skills"]} output={teamOutput} />
+<Terminal commands={["tack source add ~/code/acme-agent-skills --apply"]} output={teamOutput} />
 
 Its `tack.yaml` is a skills collection with a name and its maintainers:
 

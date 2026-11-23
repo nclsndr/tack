@@ -68,8 +68,8 @@ const fixture = Effect.gen(function* () {
       Effect.map(({ stdout }) => stdout),
     );
   yield* tack(["state", "init"]);
-  yield* tack(["source", "add", team]);
-  yield* tack(["source", "add", me]);
+  yield* tack(["source", "add", team, "--apply"]);
+  yield* tack(["source", "add", me, "--apply"]);
   yield* tack(["project", "add", "workspace", "--repository-cwd", projectRoot]);
   yield* tack(["adapter", "enable", "claude"]);
   return { tack };

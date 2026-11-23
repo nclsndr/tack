@@ -37,6 +37,59 @@ const scratch = Effect.gen(function* () {
 });
 
 it.layer(LiveTestLayer)("local source authoring", (test) => {
+  test.effect(
+    "source add previews registering a source that has a tack.yaml, and --apply registers it",
+    () =>
+      Effect.gen(function* () {
+        const { root, state, path, write } = yield* scratch;
+        const fs = yield* FileSystem.FileSystem;
+        yield* write("source/tack.yaml", "version: 1\nname: tools\nskills:\n  - path: skills\n");
+        yield* write(
+          "source/skills/review/SKILL.md",
+          "---\nname: review\ndescription: Review changes\n---\n",
+        );
+        const directory = path.join(root, "source");
+        yield* run(root, state, ["state", "init"]);
+        const stateFile = path.join(state, "state.json");
+        const initial = yield* fs.readFileString(stateFile);
+
+        const preview = yield* json(root, state, ["source", "add", directory]);
+        expect(preview).toMatchObject({
+          classification: "success",
+          applied: null,
+          plan: {
+            kind: "source-registration-plan",
+            sourcePath: directory,
+            name: "tools",
+            alreadyRegistered: false,
+            inspection: { counts: { skill: 1 }, findings: [] },
+          },
+          next: [`tack source add ${directory} --apply`],
+        });
+        expect(yield* fs.readFileString(stateFile)).toBe(initial);
+        const text = (yield* run(root, state, ["source", "add", directory])).replaceAll(
+          /\s+/g,
+          " ",
+        );
+        expect(text).toContain("Would register source tools (");
+        expect(text).toContain("No files or state changed.");
+
+        const applied = yield* json(root, state, ["source", "add", directory, "--apply"]);
+        expect(applied).toMatchObject({
+          classification: "success",
+          applied: { kind: "source-registration", alreadyRegistered: false, name: "tools" },
+        });
+        // A source that is registered already previews as such; applying changes nothing.
+        const again = yield* json(root, state, ["source", "add", directory]);
+        expect(again).toMatchObject({
+          classification: "success",
+          plan: { alreadyRegistered: true, name: "tools" },
+        });
+        expect(
+          (yield* run(root, state, ["source", "add", directory])).replaceAll(/\s+/g, " "),
+        ).toContain(") is already registered.");
+      }),
+  );
   test.effect("checks an unregistered source without initialized state and does not write", () =>
     Effect.gen(function* () {
       const { root, state, path, write } = yield* scratch;
@@ -214,7 +267,12 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
       const { root, state, path, write } = yield* scratch;
       yield* write("source/tack.yaml", "version: 1\nskills:\n  - path: missing\n");
       yield* run(root, state, ["state", "init"]);
-      const result = yield* json(root, state, ["source", "add", path.join(root, "source")]);
+      const result = yield* json(root, state, [
+        "source",
+        "add",
+        path.join(root, "source"),
+        "--apply",
+      ]);
       expect(exitCodeForEnvelope(result)).toBe(0);
       expect(result.applied).toMatchObject({
         inspection: {
@@ -223,7 +281,7 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
         },
       });
       expect(result.next.join(" ")).toContain("tack check");
-      const text = yield* run(root, state, ["source", "add", path.join(root, "source")]);
+      const text = yield* run(root, state, ["source", "add", path.join(root, "source"), "--apply"]);
       expect(text).toContain("declaration-path-missing");
       expect(text).toContain("0 skills");
     }),
@@ -253,7 +311,7 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
           "--docs",
           "alpha/documents",
         ];
-        const bare = yield* json(root, state, ["source", "add", directory]);
+        const bare = yield* json(root, state, ["source", "add", directory, "--apply"]);
         expect(exitCodeForEnvelope(bare)).toBe(2);
         expect(bare.diagnostics).toMatchObject([{ code: "declaration-flags-required" }]);
         expect(bare.next).toEqual([`tack source add ${directory} --skills FOLDER`]);
@@ -289,7 +347,12 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
         const stateFile = path.join(state, "state.json");
         const initial = yield* fs.readFileString(stateFile);
         yield* write("present/tack.yaml", "version: 1\n");
-        const registered = yield* json(root, state, ["source", "add", path.join(root, "present")]);
+        const registered = yield* json(root, state, [
+          "source",
+          "add",
+          path.join(root, "present"),
+          "--apply",
+        ]);
         expect(registered.applied).not.toBe(null);
         const afterRegistration = yield* fs.readFileString(stateFile);
         expect(afterRegistration).not.toBe(initial);
@@ -317,7 +380,7 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
         yield* write("one/team/tack.yaml", "version: 1\nkind: skills\n");
         yield* write("two/team/review/SKILL.md", "---\nname: review\ndescription: R\n---\n");
         yield* run(root, state, ["state", "init"]);
-        yield* json(root, state, ["source", "add", path.join(root, "one", "team")]);
+        yield* json(root, state, ["source", "add", path.join(root, "one", "team"), "--apply"]);
         const flags = ["source", "add", path.join(root, "two", "team"), "--skills", "."];
         const preview = yield* json(root, state, flags);
         expect(preview.plan).toMatchObject({ kind: "source-scaffold" });
@@ -329,6 +392,15 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
           applied.applied,
         );
         expect(registration.name).toBe(registration.registration.id);
+        // The same holds for a source that has its tack.yaml: its preview names it by path only.
+        yield* write("three/team/tack.yaml", "version: 1\nkind: skills\n");
+        const third = path.join(root, "three", "team");
+        const registering = yield* json(root, state, ["source", "add", third]);
+        expect(registering.plan).toMatchObject({ kind: "source-registration-plan" });
+        expect(registering.plan).not.toHaveProperty("name");
+        expect(
+          (yield* run(root, state, ["source", "add", third])).replaceAll(/\s+/g, " "),
+        ).toContain("Would register source /");
       }),
   );
   test.effect(
@@ -417,7 +489,7 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
           "---\nname: lint\ndescription: L\n---\n",
         );
         yield* run(root, state, ["state", "init"]);
-        yield* json(root, state, ["source", "add", path.join(root, "parent")]);
+        yield* json(root, state, ["source", "add", path.join(root, "parent"), "--apply"]);
         const vendor = path.join(root, "parent", "skills", "vendor");
         const refused = yield* json(root, state, ["source", "add", vendor, "--skills", "skills"]);
         expect(exitCodeForEnvelope(refused)).toBe(2);
@@ -520,7 +592,7 @@ it.layer(LiveTestLayer)("source declaration output", (test) => {
       const { root, state, path, write } = yield* scratch;
       yield* write("bare/tack.yaml", "version: 1\nname: bare\n");
       yield* run(root, state, ["state", "init"]);
-      yield* run(root, state, ["source", "add", path.join(root, "bare")]);
+      yield* run(root, state, ["source", "add", path.join(root, "bare"), "--apply"]);
 
       const source = yield* json(root, state, ["source"]);
       expect(source.classification).toBe("success");
@@ -547,7 +619,7 @@ it.layer(LiveTestLayer)("source declaration output", (test) => {
       const { root, state, path, write } = yield* scratch;
       yield* write("broken/tack.yaml", "version: 1\nskills:\n  - path: missing\n");
       yield* run(root, state, ["state", "init"]);
-      yield* run(root, state, ["source", "add", path.join(root, "broken")]);
+      yield* run(root, state, ["source", "add", path.join(root, "broken"), "--apply"]);
 
       const source = yield* json(root, state, ["source"]);
       expect(exitCodeForEnvelope(source)).toBe(1);
@@ -566,7 +638,7 @@ it.layer(LiveTestLayer)("source declaration output", (test) => {
       yield* write("old/tack.yaml", "version: 1\nname: old\nskills:\n  - path: skills\n");
       yield* write("old/skills/adhd/SKILL.md", "---\nname: adhd\ndescription: Adhd\n---\n");
       yield* run(root, state, ["state", "init"]);
-      yield* run(root, state, ["source", "add", path.join(root, "old")]);
+      yield* run(root, state, ["source", "add", path.join(root, "old"), "--apply"]);
       yield* run(root, state, ["adapter", "enable", "claude"]);
       yield* run(root, state, ["pick", "include", "adhd", "--user"]);
       yield* run(root, state, ["sync", "--user", "--apply"]);
@@ -617,7 +689,7 @@ it.layer(LiveTestLayer)("source declaration output", (test) => {
       const check = yield* run(root, state, ["check", directory]);
       expect(check).toContain("skill: 2");
       yield* run(root, state, ["state", "init"]);
-      yield* run(root, state, ["source", "add", directory]);
+      yield* run(root, state, ["source", "add", directory, "--apply"]);
       expect(yield* run(root, state, ["source"])).toMatch(/skills +\(collection\) +2 resources/);
       expect(yield* run(root, state, ["catalog", "--details"])).toContain("skills collection");
       expect(yield* run(root, state, ["catalog"])).not.toContain("collection");
@@ -662,7 +734,7 @@ it.layer(LiveTestLayer)("source declaration output", (test) => {
       yield* write("mixed/skills/nested/other/SKILL.md", "---\nname: other\ndescription: O\n---\n");
       yield* write("mixed/labs/solo/SKILL.md", "---\nname: solo\ndescription: S\n---\n");
       yield* run(root, state, ["state", "init"]);
-      yield* run(root, state, ["source", "add", path.join(root, "mixed")]);
+      yield* run(root, state, ["source", "add", path.join(root, "mixed"), "--apply"]);
       const fs = yield* FileSystem.FileSystem;
       yield* fs.symlink(path.dirname(root), path.join(root, "mixed", "escape"));
       yield* write(
@@ -715,7 +787,7 @@ it.layer(LiveTestLayer)("source declaration output", (test) => {
         yield* write("lib/vendor/skills/pdf/SKILL.md", "---\nname: pdf\ndescription: Pdf\n---\n");
         yield* write("lib/tools/report.ts", "export {}");
         yield* run(root, state, ["state", "init"]);
-        yield* run(root, state, ["source", "add", path.join(root, "lib")]);
+        yield* run(root, state, ["source", "add", path.join(root, "lib"), "--apply"]);
 
         const source = yield* json(root, state, ["source"]);
         const lib = Schema.decodeUnknownSync(

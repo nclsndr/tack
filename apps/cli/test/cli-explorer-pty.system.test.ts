@@ -51,7 +51,7 @@ beforeAll(() => {
   expect(built.status, built.stdout + built.stderr).toBe(0);
   for (const args of [
     ["state", "init"],
-    ["source", "add", source],
+    ["source", "add", source, "--apply"],
     ["adapter", "enable", "claude"],
   ]) {
     const result = command(...args);

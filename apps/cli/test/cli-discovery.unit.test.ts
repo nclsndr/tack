@@ -315,7 +315,7 @@ it.effect("types only the stable commands' payloads and leaves every other comma
     ]);
     expect(slotsOf("script list")).toBeUndefined();
     expect(slotsOf("source add")).toEqual([
-      { mode: "default", slots: { applied: "json", plan: "json" } },
+      { mode: "default", slots: { plan: "json" } },
       { mode: "apply", slots: { applied: "json", plan: "json" } },
     ]);
     for (const contract of payload.commands) {

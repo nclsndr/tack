@@ -76,7 +76,7 @@ const fixture = Effect.gen(function* () {
       Effect.map(({ stdout }) => decodeEnvelope(stdout)),
     );
   yield* tack(["state", "init"]);
-  yield* tack(["source", "add", source]);
+  yield* tack(["source", "add", source, "--apply"]);
   yield* tack(["project", "add", "workspace", "--repository-cwd", projectRoot]);
   return { fileSystem, path, source, tack };
 });

@@ -228,29 +228,29 @@ it.layer(LiveTestLayer)("setup hints", (hintIt) => {
       const { at, json } = yield* machine();
       // Inside a repository no project registers, register it by its folder's name, as project
       // add does from there; outside any repository, name the project and its path.
-      expect((yield* json(["source", "add", at("source")], "other")).next).toEqual([
+      expect((yield* json(["source", "add", at("source"), "--apply"], "other")).next).toEqual([
         "tack project add other",
       ]);
-      expect((yield* json(["source", "add", at("source")], "loose")).next).toEqual([
+      expect((yield* json(["source", "add", at("source"), "--apply"], "loose")).next).toEqual([
         "tack project add NAME --repository-cwd PATH",
       ]);
       expect(yield* json(["project", "add", "app", "--repository-cwd", at("app")])).toMatchObject({
         status: "success",
       });
-      expect((yield* json(["source", "add", at("source")], "loose")).next).toEqual([
+      expect((yield* json(["source", "add", at("source"), "--apply"], "loose")).next).toEqual([
         "tack sync --project app",
       ]);
-      expect((yield* json(["source", "add", at("source")], "other")).next).toEqual([
+      expect((yield* json(["source", "add", at("source"), "--apply"], "other")).next).toEqual([
         "tack project add other",
       ]);
       expect(
         yield* json(["project", "add", "second", "--repository-cwd", at("other")]),
       ).toMatchObject({ status: "success" });
       // With projects: the one holding the directory; outside every one of several, the list.
-      expect((yield* json(["source", "add", at("source")], "other")).next).toEqual([
+      expect((yield* json(["source", "add", at("source"), "--apply"], "other")).next).toEqual([
         "tack sync --project second",
       ]);
-      expect((yield* json(["source", "add", at("source")], "loose")).next).toEqual([
+      expect((yield* json(["source", "add", at("source"), "--apply"], "loose")).next).toEqual([
         "tack project",
       ]);
     }),
@@ -260,7 +260,7 @@ it.layer(LiveTestLayer)("setup hints", (hintIt) => {
     Effect.gen(function* () {
       const { at, json, text } = yield* machine();
       yield* json(["adapter", "enable", "claude"]);
-      yield* json(["source", "add", at("source")]);
+      yield* json(["source", "add", at("source"), "--apply"]);
       yield* json(["project", "add", "app", "--repository-cwd", at("app")]);
       const unitOf = (envelope: PublicEnvelope, target: string) =>
         Schema.decodeUnknownSync(SyncPlanSchema)(envelope.plan).resources?.units.find(
@@ -377,7 +377,9 @@ it.layer(LiveTestLayer)("setup hints", (hintIt) => {
       expect(hintsIn(yield* text(["check", at("skills-folder")]))).toEqual(commands);
       // check and a bare source add on the same folder suggest the same flags.
       if (next !== undefined)
-        expect((yield* json(["source", "add", at("skills-folder")])).next).toEqual(commands);
+        expect((yield* json(["source", "add", at("skills-folder"), "--apply"])).next).toEqual(
+          commands,
+        );
     }),
   );
 

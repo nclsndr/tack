@@ -124,9 +124,9 @@ metadata.
 3. Edit `tack.yaml` by hand only for what flags cannot say: patterns, `scripts`, `depends-on`, a
    docs name other than its folder's. Run `tack check /absolute/path` with any companion source
    folders until clean: it reads no state and runs no authored code. Errors exit 1.
-4. With an existing `tack.yaml`, `tack source add /absolute/path` registers at once; run `tack init`
-   first when Tack has no state. It reports resource issues with counts and a `tack check` hint. A
-   kind flag on such a source fails and writes nothing.
+4. With an existing `tack.yaml`, `tack source add /absolute/path` previews the registration: the
+   name the source takes, its counts and issues. `--apply` registers it, and sets up state when Tack
+   has none. A kind flag on such a source fails and writes nothing.
 5. Run `tack catalog --details` to verify registration; fix every issue and repeat. `doctor` and
    `status` show health. Deliver the resources with `use-tack`: `tack sync --all`, then `--apply`.
 

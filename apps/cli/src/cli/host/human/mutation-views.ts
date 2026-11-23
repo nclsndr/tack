@@ -1,5 +1,9 @@
 import { Option, Schema } from "effect";
-import { sourceCheckLines, renderSourceScaffold } from "./source-authoring.ts";
+import {
+  renderSourceRegistrationPlan,
+  renderSourceScaffold,
+  sourceCheckLines,
+} from "./source-authoring.ts";
 import type { DocsResourceReference } from "../../../domain/docs/docs-schema.ts";
 import type { SelectableAddress } from "../../../domain/sources/catalog-schema.ts";
 import {
@@ -348,6 +352,8 @@ export const mutationViews: HumanViewRegistry = {
   "state init": initView,
   "project add": projectAddView,
   "source add": (envelope, style) =>
-    renderSourceScaffold(envelope, style) ?? sourceRegistrationView(envelope, style),
+    renderSourceScaffold(envelope, style) ??
+    renderSourceRegistrationPlan(envelope, style) ??
+    sourceRegistrationView(envelope, style),
   "source relocate": sourceRelocateView,
 };

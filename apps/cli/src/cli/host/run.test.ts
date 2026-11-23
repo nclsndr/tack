@@ -65,7 +65,7 @@ const world = Effect.gen(function* () {
   const setUp = Effect.gen(function* () {
     for (const words of [
       ["state", "init"],
-      ["source", "add", source],
+      ["source", "add", source, "--apply"],
       ["project", "add", "demo", "--repository-cwd", project],
       ["docs", "attach", "tools:handbook", "--project", "demo"],
     ])
@@ -180,7 +180,7 @@ it.layer(LiveTestLayer)("CLI host environment", (test) => {
       const { fs, path, root, source, tack } = yield* world;
       const home = path.join(root, "home");
       yield* fs.makeDirectory(home);
-      const first = yield* inHome(home, tack(["source", "add", source], false));
+      const first = yield* inHome(home, tack(["source", "add", source, "--apply"], false));
       const stateDirectory = path.join(home, ".tack");
       expect(first.diagnostics).toContainEqual({
         code: "state-initialized",
@@ -197,7 +197,7 @@ it.layer(LiveTestLayer)("CLI host environment", (test) => {
       const { fs, path, root, source, tack } = yield* world;
       const home = path.join(root, "home");
       yield* fs.makeDirectory(path.join(home, ".claude"), { recursive: true });
-      const first = yield* inHome(home, tack(["source", "add", source], false));
+      const first = yield* inHome(home, tack(["source", "add", source, "--apply"], false));
       const stateDirectory = path.join(home, ".tack");
       expect(first.diagnostics).toContainEqual({
         code: "state-initialized",

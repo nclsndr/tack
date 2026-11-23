@@ -47,8 +47,8 @@ const fixture = Effect.gen(function* () {
   const tack = (arguments_: ReadonlyArray<string>) =>
     runHost({ args: ["--state-dir", stateDirectory, ...arguments_], git });
   yield* tack(["state", "init"]);
-  yield* tack(["source", "add", team]);
-  yield* tack(["source", "add", me]);
+  yield* tack(["source", "add", team, "--apply"]);
+  yield* tack(["source", "add", me, "--apply"]);
   yield* tack(["project", "add", "workspace", "--repository-cwd", projectRoot]);
   /** The values completion offers for the last word `partial` after `words`, in this state. */
   const complete = (words: ReadonlyArray<string>, partial: string) =>

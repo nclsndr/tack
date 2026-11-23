@@ -50,7 +50,7 @@ const prepare = Effect.fnUntraced(function* (prefix: string) {
     runHost({ args: ["--state-dir", state, ...arguments_], git, terminal });
   for (const setup of [
     ["state", "init"],
-    ["source", "add", source],
+    ["source", "add", source, "--apply"],
     ["project", "add", "demo", "--repository-cwd", project],
     ["adapter", "enable", "claude"],
     ["pick", "include", "review", "--project", "demo"],

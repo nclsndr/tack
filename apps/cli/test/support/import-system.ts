@@ -167,7 +167,7 @@ export const makeSystemWorld = async (input: {
   const initialized = await run(["state", "init"]);
   if (initialized.code !== 0) throw new Error(initialized.stderr);
   if (input.register !== false) {
-    const registered = await run(["source", "add", brain]);
+    const registered = await run(["source", "add", brain, "--apply"]);
     if (registered.code !== 0) throw new Error(registered.stdout + registered.stderr);
   }
   return { ...base, brain, revisions: fixture.revisions, run, json };

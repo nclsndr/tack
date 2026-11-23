@@ -225,7 +225,7 @@ const gate = async () => {
     }
   });
   await check("script-run", () => {
-    expectSuccess("script-run", ["source", "add", source]);
+    expectSuccess("script-run", ["source", "add", source, "--apply"]);
     expectSuccess("script-run", ["project", "add", "gate"], project);
     const envelope = expectSuccess("script-run", [
       "script",

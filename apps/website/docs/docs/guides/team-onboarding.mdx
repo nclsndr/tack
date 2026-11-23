@@ -158,14 +158,18 @@ git clone git@github.com:acme/agent-skills.git ~/code/acme-agent-skills
 git clone git@github.com:acme/app.git ~/code/app
 ```
 
-Register the team source:
+Register the team source. `tack source add ~/code/acme-agent-skills` previews what it holds and the
+name it takes; `--apply` registers it:
 
-<Terminal commands={["tack source add ~/code/acme-agent-skills"]} output={teamSourceOutput} />
+<Terminal
+  commands={["tack source add ~/code/acme-agent-skills --apply"]}
+  output={teamSourceOutput}
+/>
 
 From the project's root, register the repository as a source, then as a project, under the name
 its `AGENTS.md` gives:
 
-<Terminal commands={["tack source add ."]} output={repoSourceOutput} />
+<Terminal commands={["tack source add . --apply"]} output={repoSourceOutput} />
 
 ```sh
 tack project add app
@@ -215,7 +219,7 @@ selects loads and links. Name the agent with `--adapter`, since a runner has no 
 
 ```sh
 tack init --adapter claude
-tack source add .
+tack source add . --apply
 tack project add app
 tack sync --project app --apply
 tack doctor
@@ -227,7 +231,7 @@ tack doctor
 names the skill under `Warnings`. `tack doctor` exits with code `1` on a failed check, such as a
 link that differs from what Tack expects; it only warns about a quarantined skill. A project whose
 skills depend on another team source needs that source on the runner too: clone it and run
-`tack source add` for it before the sync.
+`tack source add PATH --apply` for it before the sync.
 
 A GitHub Actions job that runs both checks:
 
@@ -245,7 +249,7 @@ jobs:
       - run: npm install --global @tackup/cli
       - run: tack check .
       - run: tack init --adapter claude
-      - run: tack source add .
+      - run: tack source add . --apply
       - run: tack project add app
       - run: tack sync --project app --apply
       - run: tack doctor

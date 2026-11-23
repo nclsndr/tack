@@ -3,13 +3,7 @@ import { ResourceKindSchema } from "../../domain/resources/kinds.ts";
 import { listAlias } from "./list-alias.ts";
 import { booleanFlag, optionalFlag, repeatableStringFlag } from "./flag-utils.ts";
 import { receive } from "./invocation-receiver.ts";
-import {
-  applyFlag,
-  immediate,
-  operationContract,
-  previewApply,
-  readOnly,
-} from "./operation-contract.ts";
+import { applyFlag, immediate, previewApply, readOnly } from "./operation-contract.ts";
 
 /** Adds each catalog resource's complete authored frontmatter to `catalog`. */
 const detailsFlag = booleanFlag("details", "Include each resource's complete authored frontmatter");
@@ -71,10 +65,14 @@ const sourceAddCommand = Command.make(
     }),
 ).pipe(
   Command.withDescription(
-    "Register a source that has a tack.yaml at once. For a folder without one, name what it holds with --skills, --commands, --context and --docs, each a path inside it, or one of --skills ., --commands . or --docs . alone to make the folder a collection: source add previews the tack.yaml it would write and what each entry finds, and --apply writes it and registers the source. Kind flags never write over an existing tack.yaml.",
+    "Preview registering a source: for a folder that has a tack.yaml, what it holds and the name it takes; --apply registers it. For a folder without one, name what it holds with --skills, --commands, --context and --docs, each a path inside it, or one of --skills ., --commands . or --docs . alone to make the folder a collection: source add previews the tack.yaml it would write and what each entry finds, and --apply writes it and registers the source. Kind flags never write over an existing tack.yaml.",
   ),
   Command.withExamples([
-    { command: "tack source add /path/to/source" },
+    {
+      command: "tack source add /path/to/source",
+      description: "Preview registering a source that has a tack.yaml",
+    },
+    { command: "tack source add /path/to/source --apply", description: "Register it" },
     {
       command: "tack source add ~/brain --skills personal/skills --docs alpha/documents",
       description: "Preview the tack.yaml for a folder without one",
@@ -88,11 +86,7 @@ const sourceAddCommand = Command.make(
       description: "Preview a skills collection for a folder with skill folders at its top",
     },
   ]),
-  operationContract({
-    mutation: "conditional",
-    slots: ["plan", "applied"],
-    applySlots: ["plan", "applied"],
-  }),
+  previewApply,
 );
 const sourceRelocateCommand = Command.make(
   "relocate",

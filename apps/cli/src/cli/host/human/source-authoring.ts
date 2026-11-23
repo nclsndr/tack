@@ -1,6 +1,7 @@
 import { Option, Schema } from "effect";
 import type { SourceCheckReport, SourceFinding } from "../../../domain/sources/source-check.ts";
 import { SourceScaffoldPlanSchema } from "../../../features/sources/source-scaffold.ts";
+import { SourceRegistrationPlanSchema } from "../../../features/sources/source.ts";
 import type { HumanView } from "./render.ts";
 import { diagnosticLines, headerLines, hintLines, kindPlurals, sections, plural } from "./view.ts";
 import { ResourceKindSchema, resourceKinds } from "../../../domain/resources/kinds.ts";
@@ -28,6 +29,36 @@ export const sourceCheckLines = (
 ];
 
 const decodeScaffold = Schema.decodeUnknownOption(SourceScaffoldPlanSchema);
+const decodeRegistrationPlan = Schema.decodeUnknownOption(SourceRegistrationPlanSchema);
+
+/**
+ * The preview of registering a source that has its tack.yaml: what would be registered, or that it
+ * is registered already, then its counts and warnings. Errors are listed under Problems.
+ */
+export const renderSourceRegistrationPlan: HumanView = (envelope, style) => {
+  if (envelope.applied !== null) return undefined;
+  const decoded = decodeRegistrationPlan(envelope.plan);
+  if (Option.isNone(decoded)) return undefined;
+  const plan = decoded.value;
+  const folder = style.path(plan.sourcePath);
+  const source = plan.name === undefined ? folder : `${plan.name} (${folder})`;
+  return sections(
+    headerLines(envelope, undefined, style),
+    (plan.alreadyRegistered
+      ? [`Source ${source} is already registered.`]
+      : [`Would register source ${source}.`, "No files or state changed."]
+    ).flatMap((line) => paragraph(line, { width: style.width, hang: 2 })),
+    sourceCheckLines(
+      {
+        ...plan.inspection,
+        findings: plan.inspection.findings.filter((finding) => finding.severity === "warning"),
+      },
+      style,
+    ),
+    diagnosticLines(envelope.diagnostics, style),
+    hintLines(envelope.next, style),
+  );
+};
 
 /**
  * A declaration that kind flags describe is always shown before --apply writes it: the file, then

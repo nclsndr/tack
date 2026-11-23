@@ -319,7 +319,7 @@ if (process.env["GATE_PACKAGE"] === "1")
     return left;
   });
 await check("source-add", () => {
-  succeed(["source", "add", source]);
+  succeed(["source", "add", source, "--apply"]);
   succeed(["project", "add", "gate"], project);
 });
 await check("script-run", () => {
@@ -338,7 +338,7 @@ await check("script-shell", () => {
   if (output.includes("shell-ran") === false) throw new Error(`No Shell output: ${output}`);
 });
 await check("script-api", () => {
-  succeed(["source", "add", plain]);
+  succeed(["source", "add", plain, "--apply"]);
   const envelope = succeed([
     "script",
     "run",

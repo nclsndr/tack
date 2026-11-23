@@ -251,7 +251,7 @@ export const questions = [
   {
     question: "Can I share a setup with my team?",
     answer:
-      "Yes. Keep the team's skills and docs in a Git repository. Each teammate clones it, registers it with tack source add beside their own sources, and gets edits with git pull. Fixed profiles and portable bundles reproduce an exact setup.",
+      "Yes. Keep the team's skills and docs in a Git repository. Each teammate clones it, registers it with tack source add --apply beside their own sources, and gets edits with git pull. Fixed profiles and portable bundles reproduce an exact setup.",
   },
   {
     question: "What if I stop using Tack?",

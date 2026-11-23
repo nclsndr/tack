@@ -1,4 +1,6 @@
-import { Effect, Path } from "effect";
+import { Effect, Path, Schema } from "effect";
+import type { SourceFinding } from "../../../domain/sources/source-check.ts";
+import { emptyState } from "../../../domain/state/state-schema.ts";
 import { checkSource } from "../../../features/sources/source-check.ts";
 import {
   applyCommand,
@@ -10,9 +12,11 @@ import {
 } from "../../../features/sources/source-scaffold.ts";
 import type { SourceFolders } from "../../../domain/sources/source-folders.ts";
 import {
+  planSourceRegistration,
   prospectiveSourceLabel,
   registerSource,
   SourceRegistrationPayloadSchema,
+  SourceRegistrationPlanSchema,
 } from "../../../features/sources/source.ts";
 import { sourceQualifier } from "../../../features/sources/resource-reference.ts";
 import {
@@ -54,27 +58,29 @@ const placeScaffold = Effect.fnUntraced(function* (
   };
 });
 
+/** Each error a source's check finds, as a diagnostic naming its file. */
+const findingProblems = (findings: ReadonlyArray<SourceFinding>) =>
+  findings.flatMap((finding) =>
+    finding.severity === "error"
+      ? [
+          {
+            code: finding.code,
+            message: finding.message,
+            severity: "error" as const,
+            // The file always, and the field when the finding names one.
+            details: Object.fromEntries(
+              Object.entries({ file: finding.file, field: finding.field }).filter(
+                (detail): detail is [string, string] => detail[1] !== undefined,
+              ),
+            ),
+          },
+        ]
+      : [],
+  );
+
 /** Each error an entry of a planned declaration finds, as a diagnostic naming its file. */
 const scaffoldProblems = (plan: Parameters<typeof scaffoldPlanJson>[0]) =>
-  plan.entries.flatMap((entry) =>
-    entry.findings.flatMap((finding) =>
-      finding.severity === "error"
-        ? [
-            {
-              code: finding.code,
-              message: finding.message,
-              severity: "error" as const,
-              // The file always, and the field when the finding names one.
-              details: Object.fromEntries(
-                Object.entries({ file: finding.file, field: finding.field }).filter(
-                  (detail): detail is [string, string] => detail[1] !== undefined,
-                ),
-              ),
-            },
-          ]
-        : [],
-    ),
-  );
+  findingProblems(plan.entries.flatMap((entry) => entry.findings));
 
 /**
  * What a preview tells about the state its `--apply` initializes, as plain registration would: the
@@ -96,11 +102,67 @@ const plannedInitialization = Effect.fnUntraced(function* (stateOptions: StateOp
   };
 });
 
+const encodeRegistrationPlan = Schema.encodeSync(SourceRegistrationPlanSchema);
+
 /**
- * Registers a source that has its tack.yaml at once. For a folder without one, previews the
- * tack.yaml its kind flags declare, and writes it and registers the source with --apply. A
- * tack.yaml that a registered source's declaration reaches is refused before either. A
- * declaration in which every entry has a problem and finds no resource is never written.
+ * Previews registering a source that has its tack.yaml: the name it would take, whether it is
+ * registered already, its check, and the state its `--apply` would initialize. It writes nothing.
+ */
+const previewRegistration = Effect.fnUntraced(function* (
+  stateOptions: StateOptions,
+  sourcePath: string,
+) {
+  const path = yield* Path.Path;
+  // Without state no source is registered, so a preview still needs none.
+  const known = yield* readInvocationSnapshot(stateOptions).pipe(
+    Effect.flatMap((snapshot) =>
+      Effect.map(snapshot.sourceInspections, (inspections) => ({
+        stateExists: true,
+        state: snapshot.state,
+        inspections,
+      })),
+    ),
+    Effect.catchTag("StateNotInitializedError", () =>
+      Effect.succeed({ stateExists: false, state: emptyState(), inspections: [] }),
+    ),
+  );
+  const { source, existing } = yield* planSourceRegistration(known.state, sourcePath);
+  const inspection = yield* checkSource(source.canonicalPath);
+  const name =
+    existing === undefined
+      ? prospectiveSourceLabel(known.inspections, source, (folder) => path.basename(folder))
+      : sourceQualifier({ sources: known.inspections }, existing.id);
+  const problems = findingProblems(inspection.findings);
+  const initializes = known.stateExists === false && stateAutoInitializes(stateOptions);
+  return {
+    classification: problems.length === 0 ? ("success" as const) : ("partial" as const),
+    diagnostics: [
+      ...problems,
+      ...(initializes ? [yield* plannedInitialization(stateOptions)] : []),
+    ],
+    // A registered source has nothing to apply: its resources go where the next step links them.
+    next:
+      existing === undefined
+        ? [["tack", "source", "add", source.canonicalPath, "--apply"]]
+        : [yield* linkingNext(known.state, yield* cwdOrCurrent(undefined))],
+    plan: toJson(
+      encodeRegistrationPlan({
+        kind: "source-registration-plan",
+        sourcePath: source.canonicalPath,
+        ...(name === undefined ? {} : { name }),
+        alreadyRegistered: existing !== undefined,
+        inspection,
+      }),
+    ),
+  };
+});
+
+/**
+ * Previews registering a source, and registers it with --apply. A source that has its tack.yaml
+ * previews its check; for a folder without one, the preview shows the tack.yaml its kind flags
+ * declare, and --apply writes it before registering. A tack.yaml that a registered source's
+ * declaration reaches is refused before either. A declaration in which every entry has a problem
+ * and finds no resource is never written.
  */
 export const addSource = Effect.fnUntraced(function* (
   stateOptions: StateOptions,
@@ -111,6 +173,8 @@ export const addSource = Effect.fnUntraced(function* (
   },
 ) {
   const scaffold = yield* planSourceScaffold(invocation.sourcePath, invocation.folders);
+  if (scaffold === undefined && invocation.apply !== true)
+    return yield* previewRegistration(stateOptions, invocation.sourcePath);
   const placed = scaffold === undefined ? undefined : yield* placeScaffold(stateOptions, scaffold);
   const plan = placed?.plan;
   // A declaration that would load nothing previews as partial, without --apply, and never applies.

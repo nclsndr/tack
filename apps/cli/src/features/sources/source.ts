@@ -115,6 +115,19 @@ export const SourceRegistrationPayloadSchema = Schema.Struct({
   scaffolded: Schema.optionalKey(Schema.String),
 });
 
+/**
+ * The `source add` preview for a source that has its tack.yaml: where it is, the name a
+ * `SOURCE:NAME` reference would type (absent when it would need the registration ID), whether it is
+ * registered already, and its check. Nothing is written until `--apply`.
+ */
+export const SourceRegistrationPlanSchema = Schema.Struct({
+  kind: Schema.Literal("source-registration-plan"),
+  sourcePath: Schema.String,
+  name: Schema.optionalKey(Schema.String),
+  alreadyRegistered: Schema.Boolean,
+  inspection: SourceCheckReportSchema,
+});
+
 /** What registering one source reports, before its name, check and scaffold are added. */
 export type SourceMutationResult = Omit<
   typeof SourceRegistrationPayloadSchema.Type,
@@ -376,6 +389,32 @@ export const makeSourceService = (
       ),
   });
 
+/** The registration, built-in or registered, that already holds `canonicalPath`, if any. */
+const registrationAt = (
+  sourceService: Source["Service"],
+  registrations: ReadonlyArray<SourceRegistration>,
+  canonicalPath: string,
+) =>
+  [...(sourceService.builtInSources ?? []), ...registrations].find(
+    (registration) => registration.canonicalPath === canonicalPath,
+  );
+
+/**
+ * What registering a declared source would do, without writing: the validated source, and the
+ * registration that already holds it in `state`.
+ */
+export const planSourceRegistration = Effect.fnUntraced(function* (
+  state: State,
+  sourcePath: string,
+) {
+  const sourceService = yield* Source;
+  const source = yield* sourceService.validate(sourcePath);
+  return {
+    source,
+    existing: registrationAt(sourceService, registrationsFrom(state), source.canonicalPath),
+  };
+});
+
 /** Registers a declared source by canonical path, returning the existing identity on repeats. */
 export const registerSource = Effect.fn("sources.registerSource")(function* (
   stateOptions: StateOptions,
@@ -396,9 +435,7 @@ export const registerSource = Effect.fn("sources.registerSource")(function* (
     > {
       const source = yield* sourceService.validate(options.sourcePath);
       const registrations = registrationsFrom(state);
-      const existing = [...(sourceService.builtInSources ?? []), ...registrations].find(
-        (registration) => registration.canonicalPath === source.canonicalPath,
-      );
+      const existing = registrationAt(sourceService, registrations, source.canonicalPath);
 
       if (existing !== undefined) {
         return {

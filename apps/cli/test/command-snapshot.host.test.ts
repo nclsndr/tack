@@ -109,7 +109,7 @@ const fixture = Effect.gen(function* () {
       };
     });
   yield* tack(["state", "init"]);
-  yield* tack(["source", "add", source]);
+  yield* tack(["source", "add", source, "--apply"]);
   yield* tack(["adapter", "enable", "claude"]);
   yield* Effect.forEach(projectNames, (name) =>
     tack(["project", "add", name, "--repository-cwd", projectRoot(name)]),

@@ -60,7 +60,8 @@ nothing, so it works before `init`. A topic it does not have fails with `guide-t
 ```sh
 tack check /absolute/path/to/source
 tack init # if the machine is not set up
-tack source add /absolute/path/to/source  # a source that has tack.yaml
+tack source add /absolute/path/to/source  # preview a source that has tack.yaml
+tack source add /absolute/path/to/source --apply  # register it
 tack source add /absolute/path/to/folder --skills skills --docs handbook  # preview its tack.yaml
 tack source add /absolute/path/to/skills --skills .  # skill folders at its top: a collection
 tack project add PROJECT --repository-cwd /absolute/path/to/repository
