@@ -34,6 +34,25 @@ Guides: [Add a source](./guides/add-a-source), [Get a teammate's new skill](./gu
 [Write a skill](./guides/write-a-skill), [Import skills from GitHub](./guides/import-skills),
 [Move an existing setup into Tack](./guides/migrate), [Onboard a team](./guides/team-onboarding).
 
+## Projects
+
+**Each project picks its own. Every worktree follows.** Register a Git repository once and Tack
+finds its worktrees. Include or exclude skills for that project, and every worktree gets the same
+links. `tack sync --all` previews the changes for every project and for you before it writes.
+
+| Feature                   | What it does                                                                                                                          | Command                                      |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Register a project        | Records the Git repository in the current folder and every worktree it has, so `--project app` works from any folder. Writes no link. | `tack project add app`                       |
+| Pick for one project      | Includes or excludes a resource for one project. An explicit pick always wins over the skill's default.                               | `tack pick include review --project app`     |
+| Preview, then link        | Plans every link the picks call for; `--apply` writes them.                                                                           | `tack sync --project app`                    |
+| New worktree, same setup  | After you add a worktree, refresh the project and the next sync links it like the others.                                             | `tack project refresh --project app --apply` |
+| Browse and pick           | Lists every resource with its state in the project, in the terminal. Stage picks and docs, review the sync, then apply.               | `tack explore --project app`                 |
+| Skills that choose        | A skill can be on by default or opt-in, and can limit its default to named projects.                                                  |                                              |
+| Every link, accounted for | Shows each link's health. A file you made by hand is listed and left alone. `--details` prints the lines for `.gitignore`.            | `tack status --project app`                  |
+| Setup for `AGENTS.md`     | Prints a section for the repository's `AGENTS.md`, so an agent in a fresh clone links the repository's skills before it starts.       | `tack guide agent-instructions`              |
+
+Guides: [Choose what each project gets](./guides/choose-skills), [Add a worktree or clone](./guides/worktrees).
+
 ## Agents
 
 **One skill, in every agent's folder.** Each coding agent looks for skills in its own folder. Tack
@@ -109,24 +128,22 @@ these folders often: read the agent's own docs before you rely on one.
 for you. Guides: [Add or turn off an agent](./guides/agents),
 [Choose what each project gets](./guides/choose-skills).
 
-## Projects
+## Profiles
 
-**Each project picks its own. Every worktree follows.** Register a Git repository once and Tack
-finds its worktrees. Include or exclude skills for that project, and every worktree gets the same
-links. `tack sync --all` previews the changes for every project and for you before it writes.
+**The exact same set, for a teammate, a CI runner or a remote agent.** A profile is a file in your
+source that lists the exact resources a project gets. You review it like any other change. Each
+teammate or runner applies it themselves, and a bundle carries it to a machine without the source.
 
-| Feature                   | What it does                                                                                                                          | Command                                      |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| Register a project        | Records the Git repository in the current folder and every worktree it has, so `--project app` works from any folder. Writes no link. | `tack project add app`                       |
-| Pick for one project      | Includes or excludes a resource for one project. An explicit pick always wins over the skill's default.                               | `tack pick include review --project app`     |
-| Preview, then link        | Plans every link the picks call for; `--apply` writes them.                                                                           | `tack sync --project app`                    |
-| New worktree, same setup  | After you add a worktree, refresh the project and the next sync links it like the others.                                             | `tack project refresh --project app --apply` |
-| Browse and pick           | Lists every resource with its state in the project, in the terminal. Stage picks and docs, review the sync, then apply.               | `tack explore --project app`                 |
-| Skills that choose        | A skill can be on by default or opt-in, and can limit its default to named projects.                                                  |                                              |
-| Every link, accounted for | Shows each link's health. A file you made by hand is listed and left alone. `--details` prints the lines for `.gitignore`.            | `tack status --project app`                  |
-| Setup for `AGENTS.md`     | Prints a section for the repository's `AGENTS.md`, so an agent in a fresh clone links the repository's skills before it starts.       | `tack guide agent-instructions`              |
+| Feature            | What it does                                                                                                        | Command                                                                         |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Save what you use  | Copies the set you use now, defaults and picks, into a profile file, after a preview.                               | `tack profile save ~/agent-setup reviewer --project app`                        |
+| A fixed set        | Previews the profile's exact list at one explicit target; `--apply` writes it, and ordinary picks cannot change it. | `tack profile apply agent-setup:reviewer --project ci --target-root ~/ci/app`   |
+| One file to carry  | Previews, then packs the profile's files into one `.tar.gz` with checksums. No code, hook or installer runs.        | `tack profile export agent-setup:reviewer reviewer.tar.gz`                      |
+| Look inside        | Reads a bundle's inventory before you apply it; `tack check` validates it.                                          | `tack profile inspect-bundle reviewer.tar.gz`                                   |
+| A fresh machine    | Links the same set on a CI runner or in a container, without the original source and without fetching anything.     | `tack profile apply-bundle reviewer.tar.gz --project ci --target-root ~/ci/app` |
+| Visible everywhere | `tack status` and `tack doctor` show the profile a project runs, with its links.                                    |                                                                                 |
 
-Guides: [Choose what each project gets](./guides/choose-skills), [Add a worktree or clone](./guides/worktrees).
+Guide: [Share a fixed set with a profile](./guides/profiles).
 
 ## Docs
 
@@ -162,23 +179,6 @@ secrets the script declares, and leaves a history.
 | Stops on time        | `--timeout` interrupts a run and waits for its cleanup.                                                  | `tack script run report --project app --timeout 30000`   |
 
 Guide: [Run a script](./guides/run-a-script).
-
-## Profiles
-
-**The exact same set, for a teammate, a CI runner or a remote agent.** A profile is a file in your
-source that lists the exact resources a project gets. You review it like any other change. Each
-teammate or runner applies it themselves, and a bundle carries it to a machine without the source.
-
-| Feature            | What it does                                                                                                        | Command                                                                         |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Save what you use  | Copies the set you use now, defaults and picks, into a profile file, after a preview.                               | `tack profile save ~/agent-setup reviewer --project app`                        |
-| A fixed set        | Previews the profile's exact list at one explicit target; `--apply` writes it, and ordinary picks cannot change it. | `tack profile apply agent-setup:reviewer --project ci --target-root ~/ci/app`   |
-| One file to carry  | Previews, then packs the profile's files into one `.tar.gz` with checksums. No code, hook or installer runs.        | `tack profile export agent-setup:reviewer reviewer.tar.gz`                      |
-| Look inside        | Reads a bundle's inventory before you apply it; `tack check` validates it.                                          | `tack profile inspect-bundle reviewer.tar.gz`                                   |
-| A fresh machine    | Links the same set on a CI runner or in a container, without the original source and without fetching anything.     | `tack profile apply-bundle reviewer.tar.gz --project ci --target-root ~/ci/app` |
-| Visible everywhere | `tack status` and `tack doctor` show the profile a project runs, with its links.                                    |                                                                                 |
-
-Guide: [Share a fixed set with a profile](./guides/profiles).
 
 ## Under everything
 
