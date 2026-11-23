@@ -654,6 +654,35 @@ it("names the declared labels no source carries, and the sources an undeclared e
   ]);
 });
 
+it("names the sources an ambiguous edge matches, once per source", () => {
+  const edges = unresolvedDependencyEdges({
+    entries: [
+      entryIn(
+        "root",
+        sharedId,
+        [
+          { kind: "skill", name: "target" },
+          { kind: "skill", name: "target", source: "twin" },
+        ],
+        "default",
+      ),
+      entryIn("target", thirdId),
+      entryIn("target", fourthId),
+    ],
+    quarantined: [],
+    sources: [
+      sourceAt(sharedId, "shared", { dependsOn: ["twin"] }),
+      sourceAt(thirdId, "twin"),
+      sourceAt(fourthId, "twin"),
+    ],
+  });
+
+  expect(edges.map(({ failure }) => failure)).toEqual([
+    { reason: "ambiguous", providers: ["twin", "twin"] },
+    { reason: "ambiguous", providers: ["twin", "twin"] },
+  ]);
+});
+
 it("lists an unresolved edge of a catalog that reports no sources", () => {
   const edges = unresolvedDependencyEdges({
     entries: [entry("root", { dependencies: [dependency("absent")] })],

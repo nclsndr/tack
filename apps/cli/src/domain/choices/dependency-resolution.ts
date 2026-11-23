@@ -155,7 +155,16 @@ const optionalSkipIdentity = (skip: OptionalDependencySkip) =>
  * stateless check reports it. Blockers and skips copy only the reason, never the names.
  */
 type DependencyFindFailure =
-  | { readonly reason: "missing" | "ambiguous" | "quarantined"; readonly target?: never }
+  | { readonly reason: "missing" | "quarantined"; readonly target?: never }
+  | {
+      readonly reason: "ambiguous";
+      readonly target?: never;
+      /**
+       * The name of each source the edge matches, once per source, in code-unit order. A name seen
+       * twice is a label that several sources share.
+       */
+      readonly providers: ReadonlyArray<string>;
+    }
   | {
       readonly reason: "source-undeclared";
       readonly target?: never;
@@ -257,6 +266,9 @@ const findDependency = (
   { byKindAndName, quarantined, sourceNames, sources }: DependencyIndex,
 ): DependencyFind => {
   const candidates = byKindAndName.get(kindAndName(dependency.kind, dependency.name)) ?? [];
+  /** The names of the given sources, in code-unit order. */
+  const namesOf = (ids: ReadonlyArray<string>) =>
+    ids.map((id) => sourceNames.get(id) ?? id).sort(compareCodeUnits);
   const ownId = requester.sourceRegistrationId;
   const own = sources.find((source) => source.registration.id === ownId);
   const declared = own?.dependsOn ?? [];
@@ -289,7 +301,7 @@ const findDependency = (
     else if (declared.includes(dependency.source)) allowedIds = sourceIds(dependency.source);
     else return { reason: "source-undeclared", providers: [] };
     if (allowedIds.length === 0) return labelUnresolved(sources, [dependency.source]);
-    if (allowedIds.length > 1) return { reason: "ambiguous" };
+    if (allowedIds.length > 1) return { reason: "ambiguous", providers: namesOf(allowedIds) };
   } else {
     const ownMatch = candidates.find((entry) => entry.sourceRegistrationId === ownId);
     if (ownMatch !== undefined) allowedIds = [ownMatch.sourceRegistrationId];
@@ -300,7 +312,11 @@ const findDependency = (
       ];
   }
   const matches = candidates.filter((entry) => allowedIds.includes(entry.sourceRegistrationId));
-  if (matches.length > 1) return { reason: "ambiguous" };
+  if (matches.length > 1)
+    return {
+      reason: "ambiguous",
+      providers: namesOf(matches.map((entry) => entry.sourceRegistrationId)),
+    };
   const target = matches[0]?.address;
   if (target === undefined) {
     if (dependency.source === undefined) {
@@ -309,14 +325,12 @@ const findDependency = (
       );
       if (unresolved !== undefined)
         return labelUnresolved(sources, [unresolved, ...moreUnresolved]);
-      const providers = candidates
-        .filter((entry) => allowedIds.includes(entry.sourceRegistrationId) === false)
-        .map((entry) => sourceNames.get(entry.sourceRegistrationId) ?? entry.sourceRegistrationId);
-      if (providers.length > 0)
-        return {
-          reason: "source-undeclared",
-          providers: [...new Set(providers)].sort(compareCodeUnits),
-        };
+      const providers = namesOf(
+        candidates
+          .filter((entry) => allowedIds.includes(entry.sourceRegistrationId) === false)
+          .map((entry) => entry.sourceRegistrationId),
+      );
+      if (providers.length > 0) return { reason: "source-undeclared", providers };
     }
     const quarantinedMatch = allowedIds.some((id) =>
       quarantined.has(

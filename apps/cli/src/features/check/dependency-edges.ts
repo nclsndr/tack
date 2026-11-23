@@ -4,9 +4,10 @@ import type { UnresolvedDependencyEdge } from "../../domain/choices/dependency-r
 import { catalogEntryPath } from "../../domain/sources/catalog-schema.ts";
 import { dependencyLine } from "./finding-location.ts";
 
-const and = (names: ReadonlyArray<string>) => new Intl.ListFormat("en").format(names);
+const unique = (names: ReadonlyArray<string>) => [...new Set(names)];
+const and = (names: ReadonlyArray<string>) => new Intl.ListFormat("en").format(unique(names));
 const or = (names: ReadonlyArray<string>) =>
-  new Intl.ListFormat("en", { type: "disjunction" }).format(names);
+  new Intl.ListFormat("en", { type: "disjunction" }).format(unique(names));
 
 /** The finding code of each reason a dependency edge names no single resource. */
 const findingCodes = {
@@ -65,10 +66,18 @@ const explanation = (
       why: "from a source Tack cannot read",
       remedy: `Fix the findings of ${unhealthySources.join(" and ")}.`,
     })),
-    Match.when({ reason: "ambiguous" }, () => ({
-      why: "which several sources provide",
-      remedy: "Name the source in the dependency, as source: LABEL.",
-    })),
+    Match.when({ reason: "ambiguous" }, ({ providers }) => {
+      const shared = unique(providers.filter((name, index) => providers.indexOf(name) !== index));
+      return shared.length > 0
+        ? {
+            why: `which several sources named ${and(shared)} provide`,
+            remedy: `Give each source named ${and(shared)} its own name in its tack.yaml.`,
+          }
+        : {
+            why: `which several sources provide: ${and(providers)}`,
+            remedy: `Name one in the dependency, as ${or(providers.map((name) => `source: ${name}`))}.`,
+          };
+    }),
     Match.exhaustive,
   );
 
