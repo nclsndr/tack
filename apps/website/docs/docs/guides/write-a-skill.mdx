@@ -112,7 +112,7 @@ folder's name, and a `description` that tells the agent when to use it:
 
 ```markdown
 ---
-name: triage-issues
+name: triage-issue
 description: Label a new issue, find a duplicate, and ask for the missing reproduction steps.
 ---
 
@@ -123,14 +123,16 @@ Search for a duplicate first. Then label the issue and ask for what is missing t
 
 ## 2. Check it
 
-`tack check` reads the source as the catalog will, without changing anything. Here it catches the
-name that does not match the folder:
+`tack check` reads the source as the catalog will, without changing anything:
+
+<Terminal commands={["tack check ~/agent-setup"]} output={checkOutput} />
+
+It reports each problem by file and line. Had the frontmatter said `name: triage-issues`, one letter
+off the folder's name, the check would fail like this:
 
 <Terminal commands={["tack check ~/agent-setup"]} output={checkErrorOutput} />
 
-Change the name to `triage-issue` and check again until it is clean:
-
-<Terminal commands={["tack check ~/agent-setup"]} output={checkOutput} />
+Fix the file and check again until it is clean.
 
 A skill that fails the check is quarantined: the rest of the source keeps working, and
 `tack catalog` lists the problem.
@@ -138,7 +140,7 @@ A skill that fails the check is quarantined: the rest of the source keeps workin
 ## 3. Choose who gets it
 
 A skill without Tack metadata is on by default in every project, and opt-in at user level. To make
-it opt-in for projects too, add `metadata.tack` to the frontmatter:
+it opt-in for projects too, add `metadata.tack` to the frontmatter. The whole file now reads:
 
 ```markdown
 ---
@@ -149,6 +151,10 @@ metadata:
     version: 1
     activation: opt-in
 ---
+
+# Triage an issue
+
+Search for a duplicate first. Then label the issue and ask for what is missing to reproduce it.
 ```
 
 | Setting           | Applies to                                         | When omitted  |
@@ -158,8 +164,22 @@ metadata:
 | `projects`        | Limits `activation: default` to the named projects | every project |
 | `dependencies`    | Skills or commands it needs, selected with it      | none          |
 
-A dependency names a `kind` and a `name`, and a `source` when it lives in another source; that
-source must be listed in your `tack.yaml` under `depends-on`.
+A dependency names a `kind` and a `name`. Here `triage-issue` needs `pr-review` from the same
+source, so including `triage-issue` in a project selects `pr-review` too:
+
+```yaml
+metadata:
+  tack: |
+    version: 1
+    activation: opt-in
+    dependencies:
+      - kind: skill
+        name: pr-review
+```
+
+A dependency in another source also names its `source`, and that source must be listed in your
+`tack.yaml` under `depends-on`. If a project excludes `pr-review`, the sync preview reports
+`triage-issue` as blocked and names the pick that lifts it.
 
 ## 4. Link it
 
