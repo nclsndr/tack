@@ -252,7 +252,9 @@ it("renders script list as scripts only", () => {
 
 it("states that a preview wrote nothing and lists one row per action", () => {
   const text = view("plan-before", 200);
-  expect(text).toContain("Nothing was written. 12 changes planned.");
+  // The headline counts every row, the directories with the links, as the applied count does.
+  expect(text).toContain("Nothing was written. 14 changes planned.");
+  expect(linesOf(text).filter((line) => /^ {2}create {2}/.test(line))).toHaveLength(14);
   expect(text).toContain("claude → demo · 6 to link");
   expect(text).toMatch(/create {2}\.claude\/skills\/review\s+skill [0-9a-f-]{36}:review/);
   expect(text).toMatch(/create {2}\.claude\/skills\/\s+directory/);

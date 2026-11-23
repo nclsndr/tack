@@ -194,7 +194,7 @@ export const agentWalkthrough: ReadonlyArray<AgentBeat> = [
       {
         kind: "assistant",
         text: [
-          "**Preview:** 7 changes in each project, no conflicts:",
+          "**Preview:** 11 changes in each project, 7 links and their folders, no conflicts:",
           "- `commit` and `review` for Claude Code, Codex and Cursor.",
           "- The `release` command for Cursor only: Claude Code and Codex take no commands.",
           "",
