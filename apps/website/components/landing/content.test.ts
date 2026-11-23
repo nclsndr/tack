@@ -66,6 +66,20 @@ describe("the problem the site states", () => {
     },
   );
 
+  it.each(["in one repository", "one folder of", "a repository you own", "One repository holds"])(
+    "never puts the whole setup in a single source: %s",
+    (phrase) => {
+      for (const text of [...copy, definingSentence]) expect(text).not.toContain(phrase);
+    },
+  );
+
+  it("says Tack combines personal and team sources, in the lead line and the defining sentence", () => {
+    for (const text of [hero.subhead, definingSentence]) {
+      expect(text).toMatch(/combine/iu);
+      expect(text).toMatch(/team/u);
+    }
+  });
+
   it("names the team's pain, then one developer's, on the features page and in the README", () => {
     const team = "A team's skills end up copied";
     const alone = "Working alone,";

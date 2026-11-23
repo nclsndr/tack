@@ -10,8 +10,9 @@
 <p align="center"><strong>One setup. Every agent, project and worktree.</strong></p>
 
 <p align="center">
-  Keep your skills and docs in one repository, yours or your team's. Tack links them into every
-  project and worktree, for each agent you use, and shows the plan before it writes.
+  Combine your own skills and docs with your team's, from as many repositories as you keep. Tack
+  links them into every project and worktree, for each agent you use, and shows the plan before it
+  writes.
 </p>
 
 <p align="center">
@@ -30,7 +31,8 @@ A team's skills end up copied into each repository, each worktree and each lapto
 the CI runner. Working alone, you copy the same skills into each project and each new worktree, or
 write a link script that covers one folder. You fix one copy and the others drift.
 
-Tack keeps one copy, in a repository you own, and links it where it is needed:
+Tack combines your own sources with your team's into one setup. It keeps one copy of each skill,
+where you maintain it, and links it where it is needed:
 
 - into the agent each teammate uses: Claude Code, Codex, Cursor, GitHub Copilot CLI, Gemini CLI,
   Cline, OpenCode or Pi;
@@ -53,13 +55,14 @@ and writes nothing until you add `--apply`.
 
 ## How it works
 
-- **One setup for the whole team.** Keep the setup in one Git repository, yours or your team's,
-  under your own version control. Each teammate clones it, adds it with `tack source add` and links
-  it into the agent they use. Edits arrive with `git pull`.
+- **One setup for the whole team.** Keep your own skills in one source and the team's in another,
+  each under its own version control. Each teammate clones the team's repository, adds it with
+  `tack source add` beside their own sources and links both into the agent they use. Edits arrive
+  with `git pull`.
 - **Preview first.** `tack sync` shows the plan. Nothing changes until you add `--apply`.
 - **Every project, every worktree.** Each registered project picks its own skills, and every
   worktree of a project gets the same links.
-- **Every agent.** One source reaches Claude Code, Codex, Cursor, GitHub Copilot CLI, Gemini CLI,
+- **Every agent.** Your sources reach Claude Code, Codex, Cursor, GitHub Copilot CLI, Gemini CLI,
   Cline, OpenCode and Pi, for you and in each registered project. Agents get symbolic links, never
   copies. Tack records each link it creates and removes only those.
 - **Your agent can run it.** Tack ships a `use-tack` skill that teaches agents its commands. Every

@@ -326,11 +326,11 @@ export const lenses = [
   {
     id: "sources",
     name: "Sources",
-    when: "You keep skills, docs and scripts in folders, alone or as a team.",
-    claim: "Write it once, in a folder you own.",
+    when: "You keep skills, docs and scripts in folders of your own and in your team's.",
+    claim: "Your sources and your team's, in one setup.",
     lines: [
-      "Skills, commands, context, docs and scripts live in a source: a folder with a `tack.yaml`, under your own version control. Tack reads it where it is and moves nothing.",
-      "Keep the source in a Git repository and your team shares it. Each teammate clones it and adds it; edits arrive with their own `git pull`.",
+      "Skills, commands, context, docs and scripts live in sources: folders with a `tack.yaml`, each under its own version control. Tack reads each one where it is and moves nothing.",
+      "Add as many as you keep: your own beside your team's. A team source is a Git repository each teammate clones and adds; edits arrive with their own `git pull`.",
     ],
     proof: "tack source add ~/agent-setup",
     details: [

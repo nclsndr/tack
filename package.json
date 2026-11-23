@@ -2,7 +2,7 @@
   "name": "tack",
   "version": "0.1.0",
   "private": true,
-  "description": "Tack is an open-source CLI that keeps one folder of agent skills, commands, docs and scripts, in a Git repository you or your team own, linked into every coding agent, project and Git worktree, and shows every change before it writes.",
+  "description": "Tack is an open-source CLI that combines the agent skills, commands, docs and scripts in the folders and Git repositories you and your team own into one setup, links it into every coding agent, project and Git worktree, and shows every change before it writes.",
   "license": "MIT",
   "workspaces": {
     "packages": [
