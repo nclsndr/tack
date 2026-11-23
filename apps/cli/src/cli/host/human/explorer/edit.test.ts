@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { State } from "../../../../domain/state/state-schema.ts";
-import { namespaceText, stagedState } from "./edit.ts";
+import { destinationText, stagedState } from "./edit.ts";
 
 const sourceRegistrationId = "00000000-0000-4000-8000-000000000001";
 const skill = (name: string) => ({ kind: "skill", name, sourceRegistrationId }) as const;
@@ -18,10 +18,10 @@ const state = (overrides: Partial<State["data"]> = {}): State => ({
   },
 });
 
-describe("namespace text", () => {
+describe("destination text", () => {
   it("names which selections a copy saves", () => {
     const copy = (input: { user: boolean; projectName?: string }) =>
-      namespaceText({ _tag: "copy", input });
+      destinationText({ _tag: "copy", input });
     expect(copy({ user: true, projectName: "demo" })).toBe("save selection: user + project demo");
     expect(copy({ user: false, projectName: "demo" })).toBe("save selection: project demo");
     expect(copy({ user: true })).toBe("save selection: user");

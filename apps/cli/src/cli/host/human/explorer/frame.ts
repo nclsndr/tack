@@ -2,7 +2,7 @@ import type { Style } from "../style.ts";
 import { rowActivityText, type ExplorerActivity } from "./activity.ts";
 import {
   fixedSelectionReason,
-  namespaceText,
+  destinationText,
   pendingText,
   type EditState,
   type PendingChange,
@@ -312,7 +312,7 @@ export const renderExplorerFrame = (
   const heading = ` ${state.heading}${
     edit === undefined
       ? ""
-      : `  ·  editing ${namespaceText(edit.namespace)}  ·  ${edit.fixedBy === undefined ? `${edit.pending.size} staged` : `fixed by ${edit.fixedBy}, read-only`}`
+      : `  ·  editing ${destinationText(edit.namespace)}  ·  ${edit.fixedBy === undefined ? `${edit.pending.size} staged` : `fixed by ${edit.fixedBy}, read-only`}`
   }`;
   const filter =
     state.query.length > 0 || state.filtering

@@ -23,7 +23,9 @@ import type { Catalog } from "../../../../domain/sources/catalog-schema.ts";
 import { explorerActivity, scopeKey } from "./activity.ts";
 import { publishedProfiles } from "./published-profiles.ts";
 import { explorerEntries, labelledAddress } from "./entries.ts";
-import { namespaceText, pendingText, stagedState, type PendingChange } from "./edit.ts";
+import { pendingText, stagedState, type PendingChange } from "./edit.ts";
+import { unitSummary } from "../plan.ts";
+import { namespaceText } from "../view.ts";
 import type { ExplorerState, ExplorerEntry } from "./model.ts";
 import type { RouteServices } from "../../routes/route.ts";
 
@@ -138,7 +140,7 @@ const changeLines = (
   namespace: ChoiceNamespace,
   style: Style,
 ) => [
-  `Staged changes in ${namespaceText(namespace)}`,
+  `Staged changes in ${namespaceText(namespace, "prose")}`,
   ...pending.map((change) =>
     change.kind === "docs"
       ? `  ${pendingText(change)}  ${labelled({ kind: "docs", ...change.resource }, style)}`
@@ -199,21 +201,8 @@ export const makeExplorerEditor = (options: {
         ];
         const prepared = plan.resources;
         for (const unit of prepared?.plan.units ?? []) {
-          const { summary } = unit;
-          const work = [
-            ...(summary.create > 0 ? [`${summary.create} to link`] : []),
-            ...(summary.adopt > 0 ? [`${summary.adopt} to adopt`] : []),
-            ...(summary.remove > 0 ? [`${summary.remove} to remove`] : []),
-            ...(summary.retire > 0 ? [`${summary.retire} to forget`] : []),
-            ...(summary.conflict > 0 ? [plural(summary.conflict, "conflict")] : []),
-            ...(summary.collision > 0 ? [plural(summary.collision, "collision")] : []),
-            ...(summary.blocked > 0 ? [`${summary.blocked} blocked`] : []),
-            ...(unit.linkedForUser === undefined
-              ? []
-              : [`${unit.linkedForUser.length} linked for the user`]),
-          ];
           lines.push(
-            `${unit.adapter} → ${unit.target._tag === "user" ? "user" : unit.target.projectName}: ${work.length === 0 ? "up to date" : work.join(", ")}`,
+            `${unit.adapter} → ${unit.target._tag === "user" ? "user" : unit.target.projectName}: ${unitSummary(unit)}`,
           );
           for (const action of unit.actions) {
             const line = actionLine(action, unit.target.canonicalPath, style);
