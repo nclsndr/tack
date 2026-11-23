@@ -167,6 +167,10 @@ Tack then links them back. This guide moves:
   project;
 - the skill `app-conventions` from the repository `~/code/app`, which only that project used.
 
+Leave Claude Code's own commands, in `~/.claude/commands` or a repository's `.claude/commands`,
+where they are: Tack links no commands for Claude Code, so a command moved into a source would no
+longer reach it. Turn one into a skill if you want Tack to manage it.
+
 ## 1. See what you have
 
 `tack init` sets up Tack and lists what it found in the agents' user folders. It leaves those
@@ -239,7 +243,7 @@ git mv .claude/skills/app-conventions .ai/skills/app-conventions
 ```
 
 A skill with no metadata would reach every project that registers this source. Limit it to this
-project in its `SKILL.md` frontmatter:
+project with `metadata.tack` in its frontmatter, and keep the rest of the file:
 
 ```markdown
 ---
@@ -250,6 +254,10 @@ metadata:
     version: 1
     projects: [app]
 ---
+
+# App conventions
+
+Components live in `src/components`, one per file, with a test beside each.
 ```
 
 Register the repository, from its root:
@@ -262,9 +270,12 @@ twice:
 
 <Terminal commands={["tack sync --project app"]} output={projectSyncOutput} />
 
-Apply it with `tack sync --project app --apply`. Commit `tack.yaml` and `.ai/skills`, and decide
-whether the repository commits or ignores the links: `tack status --project app --details` prints
-the `.gitignore` lines. Teammates then follow [Onboard a team](./team-onboarding).
+Apply it with `tack sync --project app --apply`. Commit `tack.yaml` and `.ai/skills`, and ignore
+the links: `tack status --project app --details` prints the `.gitignore` lines. Do not commit them,
+even `.claude/skills/app-conventions -> ../../.ai/skills/app-conventions`, which stays inside the
+repository: in a teammate's clone Tack did not make that link, so their sync reports it as a
+`foreign-destination` conflict. Teammates then follow [Onboard a team](./team-onboarding), and
+their own sync makes the same links.
 
 ## 6. Check
 
