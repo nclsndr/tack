@@ -238,12 +238,13 @@ Make the repository a source of its own. Move the skill to a folder no agent rea
 `.ai/skills`, with Git so its history follows:
 
 ```sh
+cd ~/code/app
 mkdir -p .ai/skills
 git mv .claude/skills/app-conventions .ai/skills/app-conventions
 ```
 
 A skill with no metadata would reach every project that registers this source. Limit it to this
-project with `metadata.tack` in its frontmatter, and keep the rest of the file:
+project: add the four `metadata` lines to its frontmatter. The file then reads:
 
 ```markdown
 ---
