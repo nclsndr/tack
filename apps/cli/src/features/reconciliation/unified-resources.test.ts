@@ -536,6 +536,7 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
           address: { kind, name: "review", sourceRegistrationId: f.sourceRegistrationId },
           decision: "include",
         });
+      yield* enableAdapters(f.options, ["opencode", "pi"]);
 
       const result = yield* syncResources(f.options, {
         adapterOverride: ["opencode", "pi"],

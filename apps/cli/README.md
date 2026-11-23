@@ -79,8 +79,8 @@ adapter already fills: `.agents/skills` from the `codex` adapter, or `.claude/sk
 The features page on the website shows the same list. Vendors move these folders often: re-read an
 agent's docs before relying on one.
 
-Configure enabled adapters as shown below, or use `tack sync --adapter claude --user --apply`
-to select one for a single invocation.
+Enable adapters as shown below. `tack sync --adapter claude --user --apply` limits one sync to an
+enabled adapter; sync refuses an adapter that is not enabled and names `tack adapter enable`.
 
 ## Run it
 

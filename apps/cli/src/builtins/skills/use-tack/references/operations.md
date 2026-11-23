@@ -144,8 +144,10 @@ return `choice-change`, `choice-removal` and `adapter-settings` payloads.
 `tack sync --project PROJECT` previews without writing.
 `sync --include-optional` adds optional dependency edges; it does not select every opt-in
 skill; inspect the result with `status --include-optional`. `--adapter ID` (`claude`, `cline`,
-`codex`, `copilot`, `cursor`, `gemini`, `opencode` or `pi`) limits reconciliation; repeat it to name
-several. `--no-adapters` plans docs mounts only, for a project: it cannot be combined with `--adapter`, `--no-docs` or `--user`.
+`codex`, `copilot`, `cursor`, `gemini`, `opencode` or `pi`) limits reconciliation to that enabled
+adapter; repeat it to name several. Sync refuses an adapter that is not enabled with
+`adapter-not-enabled` and writes nothing: run `tack adapter enable ID` first, so later syncs keep
+its links. `--no-adapters` plans docs mounts only, for a project: it cannot be combined with `--adapter`, `--no-docs` or `--user`.
 `--require-capability command-links` blocks every plan unit whose adapter cannot link commands.
 With no enabled adapter, sync reports `no-adapters-enabled` and delivers nothing.
 A project does not link a skill or command that the same adapter links for the user, so agents in

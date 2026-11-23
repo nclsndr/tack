@@ -21,6 +21,7 @@ import {
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
 import { disableAdapter } from "../maintenance/adapter-disablement.ts";
 import {
+  AdapterNotEnabledError,
   AgentDisablementRequiredError,
   enableAdapters,
   listEnabledAdapters,
@@ -283,15 +284,26 @@ it.layer(LiveTestLayer)("agent selection", (agentIt) => {
 });
 
 it("uses persisted adapters unless an invocation override is explicitly supplied", () => {
-  expect(resolveEffectiveAdapters(["codex", "cursor"], {})).toEqual(["codex", "cursor"]);
-  expect(
-    resolveEffectiveAdapters(["codex", "cursor"], { adapterOverride: ["cursor", "codex"] }),
-  ).toEqual(["codex", "cursor"]);
-  expect(resolveEffectiveAdapters(["codex", "cursor"], { adapterOverride: [] })).toEqual([]);
   const persisted = ["codex", "cursor"] as const;
-  expect(resolveEffectiveAdapters(persisted, { adapterOverride: ["cursor", "codex"] })).toEqual([
-    "codex",
-    "cursor",
-  ]);
+  const resolve = (options: Parameters<typeof resolveEffectiveAdapters>[1]) =>
+    Effect.runSync(resolveEffectiveAdapters(persisted, options));
+  expect(resolve({})).toEqual(["codex", "cursor"]);
+  expect(resolve({ adapterOverride: ["cursor", "codex"] })).toEqual(["codex", "cursor"]);
+  expect(resolve({ adapterOverride: ["cursor"] })).toEqual(["cursor"]);
+  expect(resolve({ adapterOverride: [] })).toEqual([]);
   expect(persisted).toEqual(["codex", "cursor"]);
+});
+
+it("refuses an invocation override that names an adapter the machine has not enabled", () => {
+  const error = Effect.runSync(
+    Effect.flip(
+      resolveEffectiveAdapters(["cursor"], { adapterOverride: ["opencode", "cursor", "claude"] }),
+    ),
+  );
+  expect(error).toBeInstanceOf(AdapterNotEnabledError);
+  expect(error).toMatchObject({
+    adapters: ["claude", "opencode"],
+    code: "adapter-not-enabled",
+    enabledAdapters: ["cursor"],
+  });
 });

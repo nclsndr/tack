@@ -24,6 +24,7 @@ import type {
 } from "../../features/projects/project-observation.ts";
 import type { ProjectRefreshEvidenceError } from "../../features/refresh/project-refresh.ts";
 import type {
+  AdapterNotEnabledError,
   AgentDisablementRequiredError,
   AgentSelectionValidationError,
 } from "../../features/reconciliation/agent.ts";
@@ -74,6 +75,7 @@ export type HostFailure =
   | BundleError
   | FixedProfileError
   | AdapterDisablementValidationError
+  | AdapterNotEnabledError
   | AgentDisablementRequiredError
   | AgentSelectionValidationError
   | ChoiceProjectNotFoundError
@@ -202,6 +204,14 @@ const projectNotFound = {
 const refreshRegistration = (projectName: string) =>
   invocation("project-refresh", "--project", projectName, "--apply");
 
+const enableAdapters = (adapters: ReadonlyArray<string>) => invocation("adapter-set", ...adapters);
+
+/** Names the adapters a sync was asked to narrow to but that are not enabled, and the fix. */
+const adapterNotEnabledMessage = (adapters: ReadonlyArray<string>) => {
+  const one = adapters.length === 1;
+  return `${one ? "Adapter" : "Adapters"} ${new Intl.ListFormat("en").format(adapters)} ${one ? "is" : "are"} not enabled, so sync does not link for ${one ? "it" : "them"}. Run \`${argvLine(enableAdapters(adapters))}\`, then sync again.`;
+};
+
 const listSources = invocation("source-list");
 const previewSync = invocation("sync");
 const update = invocation("upgrade");
@@ -221,6 +231,12 @@ export const errorRegistry: ErrorRegistry = {
   AdapterDisablementValidationError: {
     classification: "internal",
     code: "adapter-disablement-plan-invalid",
+  },
+  // `--adapter` only narrows a sync to enabled adapters; the operator enables the others first.
+  AdapterNotEnabledError: {
+    classification: "invalid-configuration",
+    message: (error) => adapterNotEnabledMessage(error.adapters),
+    next: (error) => [enableAdapters(error.adapters)],
   },
   AgentDisablementRequiredError: { classification: "domain" },
   AgentSelectionValidationError: { classification: "invalid-invocation" },

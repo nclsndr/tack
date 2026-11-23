@@ -304,6 +304,7 @@ it.layer(LiveTestLayer)("command envelope at the process boundary", (cliIt) => {
           for (const args of [
             ["state", "init"],
             ["source", "add", fixture.sourceDirectory],
+            ["adapter", "enable", "codex"],
           ] satisfies ReadonlyArray<ReadonlyArray<string>>) {
             expectSuccess(yield* runTack(sourceEntrypoint, fixture, args));
           }

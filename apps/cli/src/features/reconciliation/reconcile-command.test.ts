@@ -48,6 +48,7 @@ it.layer(LiveTestLayer)("reconciliation command lifecycle", (reconcileIt) => {
         "---\nname: valid\ndescription: Valid skill\nmetadata:\n  tack: |\n    version: 1\n    user-activation: default\n---\n",
       );
       yield* initializeState(options);
+      yield* enableAdapters(options, ["cursor"]);
       yield* registerSource(options, { sourcePath: sourceDirectory });
       const planningStarted = yield* Deferred.make<void>();
       const continuePlanning = yield* Deferred.make<void>();
@@ -118,6 +119,7 @@ it.layer(LiveTestLayer)("reconciliation command lifecycle", (reconcileIt) => {
           "---\nname: valid\ndescription: Valid skill\nmetadata:\n  tack: |\n    version: 1\n    user-activation: default\n---\n",
         );
         yield* initializeState(options);
+        yield* enableAdapters(options, ["cursor"]);
         yield* registerSource(options, { sourcePath: sourceDirectory });
         const commandOptions = {
           adapterOverride: ["cursor"],
@@ -184,6 +186,7 @@ it.layer(LiveTestLayer)("reconciliation command lifecycle", (reconcileIt) => {
         "---\nname: valid\ndescription: Valid skill\nmetadata:\n  tack: |\n    version: 1\n    user-activation: default\n---\n",
       );
       yield* initializeState(options);
+      yield* enableAdapters(options, ["claude"]);
       yield* registerSource(options, { sourcePath: sourceDirectory });
 
       const result = yield* syncResources(options, {
@@ -233,6 +236,7 @@ it.layer(LiveTestLayer)("reconciliation command lifecycle", (reconcileIt) => {
         "---\ndescription: Review\nmetadata:\n  tack: |\n    version: 1\n    user-activation: default\n---\n# Review\n",
       );
       yield* initializeState(options);
+      yield* enableAdapters(options, ["claude", "cursor"]);
       yield* registerSource(options, { sourcePath: sourceDirectory });
 
       const result = yield* syncResources(options, {
