@@ -447,16 +447,21 @@ const run = Effect.fnUntraced(function* (
 });
 
 /** Previews an import: nothing is written to the destination or to state. */
-export const previewImport = (stateOptions: StateOptions, request: ImportRequest) =>
-  Effect.gen(function* () {
-    const { state } = yield* readInvocationSnapshot(stateOptions);
-    const result = yield* Effect.scoped(run(request, state, "preview"));
-    return result.plan;
-  });
+export const previewImport = Effect.fn("imports.previewImport")(function* (
+  stateOptions: StateOptions,
+  request: ImportRequest,
+) {
+  const { state } = yield* readInvocationSnapshot(stateOptions);
+  const result = yield* Effect.scoped(run(request, state, "preview"));
+  return result.plan;
+});
 
 /** Applies an import under the writer lock, re-resolving the ref and validating against the live destination. */
-export const applyImport = (stateOptions: StateOptions, request: ImportRequest) =>
-  withStateCheckpointWriter(stateOptions, (writer) =>
+export const applyImport = Effect.fn("imports.applyImport")(function* (
+  stateOptions: StateOptions,
+  request: ImportRequest,
+) {
+  return yield* withStateCheckpointWriter(stateOptions, (writer) =>
     Effect.scoped(run(request, writer.current(), "apply")).pipe(
       Effect.flatMap((result) =>
         result.applied === undefined
@@ -465,3 +470,4 @@ export const applyImport = (stateOptions: StateOptions, request: ImportRequest) 
       ),
     ),
   );
+});

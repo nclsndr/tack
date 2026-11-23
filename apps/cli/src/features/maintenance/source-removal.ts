@@ -287,13 +287,14 @@ const applyPlan = Effect.fnUntraced(function* (
  * every link and docs mount Tack made for its resources, in every project and at user level, and
  * then its registration and the intent that names it. The source directory is never touched.
  */
-export const removeSource = (
+export const removeSource = Effect.fn("maintenance.removeSource")(function* (
   stateOptions: StateOptions,
   reference: string,
   options: { readonly apply: boolean },
-) =>
-  previewOrApply(stateOptions, {
+) {
+  return yield* previewOrApply(stateOptions, {
     apply: options.apply,
     plan: (snapshot) => planFromSnapshot(snapshot, reference),
     applyPlan,
   });
+});

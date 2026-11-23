@@ -177,7 +177,7 @@ export const summarizeImport = Effect.fnUntraced(function* (
 });
 
 /** The `import` listing: every imported skill of every registered source, offline. */
-export const inspectImports = Effect.fnUntraced(function* (state: State) {
+export const inspectImports = Effect.fn("imports.inspectImports")(function* (state: State) {
   const inspections = yield* inspectSourcesFromState(state);
   const catalog = yield* resolveCatalogFromInspections(inspections);
   const observed = yield* observeImports(inspections);

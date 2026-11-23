@@ -98,7 +98,7 @@ export const tsconfigCovers = (text: string): boolean | undefined => {
  * Plans, and with `apply` writes, the editor stub and a `tsconfig.json` in one source folder. An
  * existing `tsconfig.json` is never changed; the plan says whether it includes the stub.
  */
-export const writeTypes = Effect.fnUntraced(function* (
+export const writeTypes = Effect.fn("execution.writeTypes")(function* (
   directory: string,
   version: string,
   apply: boolean,

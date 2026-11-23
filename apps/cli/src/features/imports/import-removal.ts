@@ -141,20 +141,27 @@ const refuseLocalChanges = (item: SourceImport, change: LocalChange, force: bool
  * Previews the removal of one imported skill, offline: what is deleted and what it affects. A
  * locally changed folder is refused unless `force`, which lists every change that will be lost.
  */
-export const planImportRemoval = (stateOptions: StateOptions, reference: string, force: boolean) =>
-  Effect.gen(function* () {
-    const { state } = yield* readInvocationSnapshot(stateOptions);
-    const { plan, item, change } = yield* planFor(state, reference, force);
-    const refusal = refuseLocalChanges(item, change, force);
-    return refusal === undefined ? plan : yield* refusal;
-  });
+export const planImportRemoval = Effect.fn("imports.planImportRemoval")(function* (
+  stateOptions: StateOptions,
+  reference: string,
+  force: boolean,
+) {
+  const { state } = yield* readInvocationSnapshot(stateOptions);
+  const { plan, item, change } = yield* planFor(state, reference, force);
+  const refusal = refuseLocalChanges(item, change, force);
+  return refusal === undefined ? plan : yield* refusal;
+});
 
 /**
  * Deletes one imported skill's folder and record under the writer lock. A locally changed folder
  * needs `force`; Tack keeps no copy of what it deletes. A record whose folder is gone drops alone.
  */
-export const removeImport = (stateOptions: StateOptions, reference: string, force: boolean) =>
-  withStateCheckpointWriter(stateOptions, (writer) =>
+export const removeImport = Effect.fn("imports.removeImport")(function* (
+  stateOptions: StateOptions,
+  reference: string,
+  force: boolean,
+) {
+  return yield* withStateCheckpointWriter(stateOptions, (writer) =>
     Effect.gen(function* () {
       const first = yield* planFor(writer.current(), reference, force).pipe(Effect.result);
       // A removal killed after its record was rewritten leaves a reference that no longer
@@ -197,3 +204,4 @@ export const removeImport = (stateOptions: StateOptions, reference: string, forc
       return { plan, applied };
     }),
   );
+});

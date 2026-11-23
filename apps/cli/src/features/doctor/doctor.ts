@@ -113,7 +113,10 @@ const stateCheck = Effect.fnUntraced(function* (stateOptions: StateOptions) {
  * readable, everything the status, source, project and docs observations report. It never
  * initializes state, prompts, fetches or repairs; each problem names the command that addresses it.
  */
-export const runDoctor = Effect.fnUntraced(function* (stateOptions: StateOptions, home: string) {
+export const runDoctor = Effect.fn("doctor.runDoctor")(function* (
+  stateOptions: StateOptions,
+  home: string,
+) {
   const version = currentVersionReport();
   const release = releaseCheck();
   const state = yield* stateCheck(stateOptions);

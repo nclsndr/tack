@@ -154,7 +154,9 @@ export const observeImportsDisplay = Effect.fnUntraced(function* (
  * Resolves the catalog and the imports display from one read of the sources, so the `imported`
  * tags and the counts agree with the catalog they describe.
  */
-export const resolveCatalogWithImports = Effect.fnUntraced(function* (stateOptions: StateOptions) {
+export const resolveCatalogWithImports = Effect.fn("imports.resolveCatalogWithImports")(function* (
+  stateOptions: StateOptions,
+) {
   const snapshot = yield* readInvocationSnapshot(stateOptions);
   const inspections = yield* snapshot.sourceInspections;
   const catalog = yield* snapshot.catalog;
@@ -163,7 +165,7 @@ export const resolveCatalogWithImports = Effect.fnUntraced(function* (stateOptio
 });
 
 /** Lists every source with its declarations and, when it has any, its imports. */
-export const listSources = Effect.fnUntraced(function* (stateOptions: StateOptions) {
+export const listSources = Effect.fn("imports.listSources")(function* (stateOptions: StateOptions) {
   const { catalog, display } = yield* resolveCatalogWithImports(stateOptions);
   return inspectSourcesWithDeclarations(catalog).map((source): SourceListEntry => {
     const facts = display.bySource.get(source.registration.id);

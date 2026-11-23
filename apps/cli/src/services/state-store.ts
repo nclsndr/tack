@@ -184,7 +184,9 @@ export const resolveStateDirectory = Effect.fnUntraced(function* (options: State
 });
 
 /** Creates the initial state and dotenv file through the state capability. */
-export const initializeState = Effect.fnUntraced(function* (options: StateOptions) {
+export const initializeState = Effect.fn("state.initializeState")(function* (
+  options: StateOptions,
+) {
   return yield* (yield* StateStore).initialize(options);
 });
 

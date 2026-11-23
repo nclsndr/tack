@@ -165,7 +165,7 @@ export const BundleExportPlanSchema = Schema.Struct({
 });
 
 /** Previews exact content and findings, then writes a new artifact only with explicit apply. */
-export const runBundleExport = Effect.fnUntraced(function* (
+export const runBundleExport = Effect.fn("profiles.runBundleExport")(function* (
   options: StateOptions,
   request: { readonly reference: string; readonly output: string; readonly apply: boolean },
 ) {

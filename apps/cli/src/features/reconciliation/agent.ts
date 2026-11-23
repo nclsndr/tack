@@ -138,7 +138,7 @@ export const enableAdaptersIn = (
 };
 
 /** Adds adapters atomically without changing other enabled adapters. */
-export const enableAdapters = Effect.fnUntraced(function* (
+export const enableAdapters = Effect.fn("reconciliation.enableAdapters")(function* (
   options: StateOptions,
   adapters: unknown,
 ) {
@@ -147,7 +147,9 @@ export const enableAdapters = Effect.fnUntraced(function* (
 });
 
 /** Lists the persisted machine-level enabled adapters in canonical order. */
-export const listEnabledAdapters = Effect.fnUntraced(function* (options: StateOptions) {
+export const listEnabledAdapters = Effect.fn("reconciliation.listEnabledAdapters")(function* (
+  options: StateOptions,
+) {
   const { state } = yield* readInvocationSnapshot(options);
   return enabledAdaptersFrom(state);
 });

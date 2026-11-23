@@ -221,7 +221,7 @@ export const collectProfileInput = Effect.fnUntraced(function* (
 });
 
 /** Previews source file/publication changes and saves only after explicit acceptance. */
-export const runProfileSaveSelection = Effect.fnUntraced(function* (
+export const runProfileSaveSelection = Effect.fn("profiles.runProfileSaveSelection")(function* (
   options: StateOptions,
   request: {
     readonly input: ProfileCopyInput;
@@ -448,7 +448,7 @@ const planAdoption = Effect.fnUntraced(function* (
 });
 
 /** Copies profile content into ordinary intent once; never applies exact inventory or syncs. */
-export const runProfileAdopt = Effect.fnUntraced(function* (
+export const runProfileAdopt = Effect.fn("profiles.runProfileAdopt")(function* (
   options: StateOptions,
   request: ProfileAdoptRequest,
 ) {

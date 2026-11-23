@@ -313,12 +313,16 @@ const runWithCancellation = Effect.fnUntraced(function* (
 });
 
 /** Records and executes a run while owning operator cancellation through terminal history. */
-export const runOperatorScript = (stateOptions: StateOptions, request: OperatorRunRequest) =>
-  Effect.acquireUseRelease(
+export const runOperatorScript = Effect.fn("execution.runOperatorScript")(function* (
+  stateOptions: StateOptions,
+  request: OperatorRunRequest,
+) {
+  return yield* Effect.acquireUseRelease(
     Effect.flatMap(ExecutionPlatform, (platform) => platform.cancellation()),
     (cancellation) => runWithCancellation(stateOptions, request, cancellation),
     (cancellation) => Effect.sync(() => cancellation.close()),
   );
+});
 
 /** How long loading a script to read its declarations may take before Tack stops it. */
 const describeTimeoutMs = 15_000;
@@ -327,7 +331,7 @@ const describeTimeoutMs = 15_000;
  * Loads one exact declared script in a fresh worker and reports what it declares: its arguments
  * and secrets, with its catalog description and file. The script's `run` never starts.
  */
-export const describeScript = Effect.fnUntraced(function* (
+export const describeScript = Effect.fn("execution.describeScript")(function* (
   stateOptions: StateOptions,
   address: OperatorRunRequest["address"],
 ) {
@@ -386,7 +390,7 @@ const newestFirst = (left: HistorySummary, right: HistorySummary) =>
  * Lists one newest-first page of retained run summaries without importing script modules.
  * Unreadable or invalid record files are skipped and reported as issues.
  */
-export const listScriptHistory = Effect.fnUntraced(function* (
+export const listScriptHistory = Effect.fn("execution.listScriptHistory")(function* (
   stateOptions: StateOptions,
   page: { readonly limit?: number; readonly offset?: number } = {},
 ) {
@@ -406,7 +410,7 @@ export const listScriptHistory = Effect.fnUntraced(function* (
   } satisfies HistoryList;
 });
 /** Reads one retained run with bounded local diagnostic evidence. */
-export const showScriptHistory = Effect.fnUntraced(function* (
+export const showScriptHistory = Effect.fn("execution.showScriptHistory")(function* (
   stateOptions: StateOptions,
   runId: string,
 ) {
@@ -436,7 +440,7 @@ type HistoryClearExecution = {
 };
 
 /** Previews the retained record count, then removes every record file when explicitly applied. */
-export const clearScriptHistory = Effect.fnUntraced(function* (
+export const clearScriptHistory = Effect.fn("execution.clearScriptHistory")(function* (
   stateOptions: StateOptions,
   apply = false,
 ) {

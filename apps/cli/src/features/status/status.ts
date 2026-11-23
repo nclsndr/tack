@@ -606,7 +606,7 @@ export const statusPartialCauses = (report: StatusReport): ReadonlyArray<Partial
  * Produces a deterministic status report from one snapshot without acquiring a writer or
  * repairing any state.
  */
-export const statusFromSnapshot = Effect.fnUntraced(function* (
+export const statusFromSnapshot = Effect.fn("status.statusFromSnapshot")(function* (
   snapshot: CommandSnapshot,
   stateOptions: StateOptions,
   options: StatusOptions,

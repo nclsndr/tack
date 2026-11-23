@@ -361,7 +361,7 @@ export const makeSourceService = (
   });
 
 /** Registers a declared source by canonical path, returning the existing identity on repeats. */
-export const registerSource = Effect.fnUntraced(function* (
+export const registerSource = Effect.fn("sources.registerSource")(function* (
   stateOptions: StateOptions,
   options: RegisterSourceOptions,
 ) {
@@ -417,7 +417,7 @@ export const registerSource = Effect.fnUntraced(function* (
 });
 
 /** Moves an existing registration to a validated canonical path while preserving its identity. */
-export const relocateSource = Effect.fnUntraced(function* (
+export const relocateSource = Effect.fn("sources.relocateSource")(function* (
   stateOptions: StateOptions,
   options: RelocateSourceOptions,
 ) {

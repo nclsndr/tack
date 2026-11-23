@@ -18,7 +18,7 @@ import { removalViews } from "./removal-views.ts";
 import { runViews } from "./run-views.ts";
 import { renderUpgradeGuide } from "./upgrade.ts";
 import type { Style } from "./style.ts";
-import { diagnosticLines, headerLines, sections } from "./view.ts";
+import { diagnosticLines, headerLines, sections, withoutPayload } from "./view.ts";
 import { renderExplore } from "./explorer/result.ts";
 
 /** A dedicated view can decline an envelope it cannot decode. */
@@ -74,9 +74,13 @@ export const renderHuman = (
   views: HumanViewRegistry = humanViews,
   options: { readonly statusDetails?: boolean } = {},
 ): string =>
-  envelope.command === "status" && options.statusDetails === true
-    ? (renderStatus(envelope, style, true) ?? renderGeneric(envelope, style))
-    : (views[envelope.command]?.(envelope, style) ?? renderGeneric(envelope, style));
+  // An internal failure carries no payload a dedicated view could read, and every command shows
+  // it the same way: the redacted diagnostic and the rerun that prints its cause.
+  envelope.classification === "internal"
+    ? (withoutPayload(envelope, undefined, style) ?? renderGeneric(envelope, style))
+    : envelope.command === "status" && options.statusDetails === true
+      ? (renderStatus(envelope, style, true) ?? renderGeneric(envelope, style))
+      : (views[envelope.command]?.(envelope, style) ?? renderGeneric(envelope, style));
 
 /**
  * The commands a view lists under Next, in order and without repeats. An envelope publishes them

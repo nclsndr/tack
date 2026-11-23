@@ -7,7 +7,7 @@ import { bundleLimits } from "../../domain/bundles/tar.ts";
 import { Compression } from "../../services/compression.ts";
 
 /** Reads and validates a bounded artifact in memory before any extraction or recipient mutation. */
-export const readBundleArchive = Effect.fnUntraced(function* (file: string) {
+export const readBundleArchive = Effect.fn("profiles.readBundleArchive")(function* (file: string) {
   const fs = yield* FileSystem.FileSystem;
   if (Number((yield* fs.stat(file)).size) > bundleLimits.compressedBytes)
     return yield* new BundleError({

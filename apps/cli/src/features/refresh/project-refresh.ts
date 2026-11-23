@@ -527,7 +527,7 @@ const applyCommand = Effect.fnUntraced(function* (
 });
 
 /** Plans, and optionally applies, one scoped refresh and its cleanup under one state-writer lock. */
-export const runProjectRefreshCommand = Effect.fnUntraced(function* (
+export const runProjectRefreshCommand = Effect.fn("refresh.runProjectRefreshCommand")(function* (
   stateOptions: StateOptions,
   options: ProjectRefreshCommandOptions,
 ) {

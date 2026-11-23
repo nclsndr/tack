@@ -242,7 +242,7 @@ const notInRepository = (name: string, repositoryCwd: string) =>
  * Registers a project from Git's current reachable non-bare worktrees, and reports the hand-made
  * entries in their agent folders without touching them.
  */
-export const registerProject = Effect.fnUntraced(function* (
+export const registerProject = Effect.fn("projects.registerProject")(function* (
   stateOptions: StateOptions,
   options: RegisterProjectOptions,
 ): Effect.fn.Return<

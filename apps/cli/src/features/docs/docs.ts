@@ -81,7 +81,7 @@ export const DocsSettingsPayloadSchema = Schema.Struct({
 });
 
 /** Attaches one catalog resource as local intent; materialization requires reconcile --apply. */
-export const attachDocs = Effect.fnUntraced(function* (
+export const attachDocs = Effect.fn("docs.attachDocs")(function* (
   options: StateOptions,
   selector: DocsSelector,
   request: DocsResourceRequest,
@@ -110,7 +110,7 @@ export const attachDocs = Effect.fnUntraced(function* (
 });
 
 /** Removes attachment intent and its writing default while retaining link deletion authority. */
-export const detachDocs = Effect.fnUntraced(function* (
+export const detachDocs = Effect.fn("docs.detachDocs")(function* (
   options: StateOptions,
   selector: DocsSelector,
   request: DocsResourceRequest,
@@ -142,7 +142,7 @@ export const detachDocs = Effect.fnUntraced(function* (
 });
 
 /** Sets local destination or default-writing intent without writing project files. */
-export const configureDocs = Effect.fnUntraced(function* (
+export const configureDocs = Effect.fn("docs.configureDocs")(function* (
   options: StateOptions,
   selector: DocsSelector,
   changes: {
@@ -241,7 +241,7 @@ export type DocsList = Omit<typeof DocsListPayloadSchema.Type, "kind">;
  * every selected document loads, so a bad document shows here with its path and cause while its
  * healthy siblings stay counted.
  */
-export const inspectDocs = Effect.fnUntraced(function* (
+export const inspectDocs = Effect.fn("docs.inspectDocs")(function* (
   options: StateOptions,
   selector: DocsSelector,
 ) {
@@ -330,7 +330,7 @@ type DocsTarget = Omit<typeof DocsTargetPayloadSchema.Type, "kind">;
  * target. Without an explicit resource, the default writing resource is used, or the only
  * attachment when no default is set.
  */
-export const resolveDocsTarget = Effect.fnUntraced(function* (
+export const resolveDocsTarget = Effect.fn("docs.resolveDocsTarget")(function* (
   options: StateOptions,
   selector: DocsSelector & { readonly resource?: DocsResourceRequest },
 ) {

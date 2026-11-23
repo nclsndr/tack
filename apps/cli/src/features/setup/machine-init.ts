@@ -154,7 +154,7 @@ const planMachineInit = Effect.fnUntraced(function* (
  * the user sync. A rerun on a set-up machine writes nothing. Sources, projects and picks are never
  * touched, and hand-made entries are only reported.
  */
-export const runMachineInit = Effect.fnUntraced(function* (
+export const runMachineInit = Effect.fn("setup.runMachineInit")(function* (
   stateOptions: StateOptions,
   request: MachineInitRequest,
 ) {
