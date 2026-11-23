@@ -678,10 +678,34 @@ describe("profile views", () => {
       "profile inspect-bundle": renderBundleInspection,
     };
     for (const [commandPath, view] of Object.entries(views)) {
-      for (const candidate of [{ unexpected: true }, { kind: "other" }, [], null]) {
+      // An inspection with no payload at all is a failure, which its own view shows.
+      const candidates =
+        commandPath === "profile inspect-bundle"
+          ? [{ unexpected: true }, { kind: "other" }, []]
+          : [{ unexpected: true }, { kind: "other" }, [], null];
+      for (const candidate of candidates) {
         const envelope = envelopeOf({ command: commandPath, plan: candidate, result: candidate });
         expect(view(envelope, plainStyle), commandPath).toBeUndefined();
       }
     }
+  });
+
+  it("ends a bundle that cannot be inspected with the command its failure names", () => {
+    const failure = envelopeOf({
+      command: "profile inspect-bundle",
+      classification: "domain",
+      diagnostics: [
+        {
+          code: "profile-bundle-file-access-failed",
+          severity: "error",
+          message: "Bundle file /ci.tgz cannot be read: it does not exist.",
+        },
+      ],
+    });
+    const text = renderBundleInspection(
+      { ...failure, next: ["tack profile export --help"] },
+      plainStyle,
+    );
+    expect(text?.trimEnd().split("\n").slice(-2)).toEqual(["Next", "  tack profile export --help"]);
   });
 });

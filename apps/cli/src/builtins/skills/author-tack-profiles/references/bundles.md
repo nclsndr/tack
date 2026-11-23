@@ -102,6 +102,11 @@ cannot overwrite or rebind it. Retained projections are immutable: save into an 
 instead of editing them. Status/doctor expose `source-bundle-changed` when retained integrity fails.
 Do not remove payloads still referenced by links or recovery.
 
+`profile-bundle-file-access-failed` means a file the command reads or writes cannot be accessed: the
+bundle named on the command line, the export output or a retained payload path. The message names
+the path and the reason, such as "it does not exist". Correct the path or its permissions and run
+the command again.
+
 The initial bundle version is 1, using bounded POSIX ustar regular files/directories in gzip:
 8 MiB compressed, 32 MiB expanded, 8 MiB per file, 5,000 entries. Unsafe/absolute/traversing paths,
 duplicates, case/Unicode conflicts, unsafe parents, links, special files, unsupported versions and

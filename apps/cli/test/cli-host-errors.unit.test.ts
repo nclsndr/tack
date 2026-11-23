@@ -1,7 +1,6 @@
 import { BundleError } from "../src/domain/bundles/bundle-error.ts";
 import { FixedProfileError } from "../src/domain/profiles/profile-application.ts";
 import { describe, expect, it } from "@effect/vitest";
-import { PlatformError } from "effect";
 import { InvocationError } from "../src/cli/commands/index.ts";
 import {
   errorRegistry,
@@ -82,6 +81,21 @@ const cases: ReadonlyArray<Case> = [
     classification: "domain",
     code: "profile-bundle-invalid",
     message: "Repair the artifact.",
+  },
+  {
+    error: new BundleError({
+      code: "profile-bundle-file-access-failed",
+      message: "Bundle file /ci.tgz cannot be read: it does not exist.",
+      path: "/ci.tgz",
+      reason: "NotFound",
+      operation: "stat",
+      next: [["tack", "profile", "export", "--help"]],
+    }),
+    classification: "domain",
+    code: "profile-bundle-file-access-failed",
+    message: "Bundle file /ci.tgz cannot be read: it does not exist.",
+    details: { path: "/ci.tgz", reason: "NotFound", operation: "stat" },
+    next: [["tack", "profile", "export", "--help"]],
   },
   {
     error: new FixedProfileError({
@@ -327,12 +341,6 @@ const cases: ReadonlyArray<Case> = [
     code: "invalid-selector",
     message: "--project takes a project name.",
     next: [["tack", "project"]],
-  },
-  {
-    error: PlatformError.badArgument({ module: "FileSystem", method: "secret /path" }),
-    classification: "internal",
-    code: "internal-error",
-    message: "An unexpected internal error occurred.",
   },
   {
     error: new ProjectNotFoundError({ code: "project-not-found", projectName: "nope" }),

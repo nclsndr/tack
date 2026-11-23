@@ -7,7 +7,7 @@ import { compareCodeUnits } from "../../domain/identity/ordering.ts";
 import { allSkillChoices } from "../../domain/state/state-intent.ts";
 import { inspectSourcesFromState } from "../sources/source.ts";
 import { sourceDisplayName } from "./import-destination.ts";
-import { importFailure } from "./import-error.ts";
+import { importFailure, importFileFailure } from "./import-error.ts";
 import { importStateOf, observeImports, type SourceImport } from "./import-inspect.ts";
 import type {
   ImportRemovalApplication,
@@ -203,5 +203,7 @@ export const removeImport = Effect.fn("imports.removeImport")(function* (
       };
       return { plan, applied };
     }),
+  ).pipe(
+    Effect.catchTag("PlatformError", (error) => Effect.fail(importFileFailure(reference)(error))),
   );
 });

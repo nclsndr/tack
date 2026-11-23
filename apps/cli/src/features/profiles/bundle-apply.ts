@@ -2,6 +2,7 @@ import { Effect, FileSystem, Path, Schema } from "effect";
 import { BundleManifestSchema } from "../../domain/bundles/bundle-schema.ts";
 import type { SyncPlan } from "../reconciliation/sync-command.ts";
 import { readBundleArchive } from "./bundle-read.ts";
+import { bundleFileFailure } from "./bundle-file-failure.ts";
 import {
   inspectProfileTarget,
   withProfileApplication,
@@ -163,6 +164,10 @@ export const runBundleApply = Effect.fn("profiles.runBundleApply")(function* (
       );
     }),
   ).pipe(
+    // Every write that can fail here runs before the state checkpoint, so nothing was applied.
+    Effect.catchTag("PlatformError", (error) =>
+      Effect.fail(bundleFileFailure(request.file)(error)),
+    ),
     Effect.catchTag("BundleError", (error) =>
       Effect.succeed({
         plan: refusal(request.file, [{ code: error.code, message: error.message }]),

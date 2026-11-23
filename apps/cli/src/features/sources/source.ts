@@ -1,6 +1,7 @@
 import { Yaml } from "../../domain/runtime-neutral.ts";
 import { bundleSourceLabel } from "../../domain/bundles/bundle-registration.ts";
 import { bundleIntegrityIssue } from "./bundle-integrity.ts";
+import { fileAccessFailure } from "../file-access.ts";
 import { constFalse } from "effect/Function";
 import { Context, Effect, FileSystem, Path, PlatformError, Predicate, Schema } from "effect";
 import type { SecureRandom } from "effect/crypto";
@@ -186,6 +187,21 @@ const platformError = (
     operation,
     path,
   });
+
+/**
+ * A file a command reads or writes in a source folder cannot be accessed. The diagnostic names the
+ * path the failed call touched, and the message gives the reason.
+ */
+export const sourceFileFailure =
+  (operation: string, fallbackPath: string) => (error: PlatformError.PlatformError) => {
+    const failure = fileAccessFailure(error, fallbackPath);
+    return new SourceStorageError({
+      code: "source-access-failed",
+      message: `Tack could not access ${failure.path}: ${failure.explanation}.`,
+      operation,
+      path: failure.path,
+    });
+  };
 
 /** Why a folder that holds `SKILL.md` cannot be a skills collection, and what to do instead. */
 export const oneSkillMessage = (folder: string) =>

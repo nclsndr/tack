@@ -24,6 +24,7 @@ import {
   type ProfilePlanFinding,
 } from "../../domain/profiles/profile-schema.ts";
 import { collectBundleSource } from "./bundle-source.ts";
+import { bundleFileFailure } from "./bundle-file-failure.ts";
 import type { StateOptions } from "../../services/state-store.ts";
 
 const planExport = Effect.fnUntraced(function* (options: StateOptions, reference: string) {
@@ -165,56 +166,64 @@ export const BundleExportPlanSchema = Schema.Struct({
 });
 
 /** Previews exact content and findings, then writes a new artifact only with explicit apply. */
-export const runBundleExport = Effect.fn("profiles.runBundleExport")(function* (
-  options: StateOptions,
-  request: { readonly reference: string; readonly output: string; readonly apply: boolean },
-) {
-  const fs = yield* FileSystem.FileSystem;
-  const path = yield* Path.Path;
-  const content = yield* planExport(options, request.reference);
-  const findings = [...content.findings];
-  const output = path.resolve(request.output);
-  if (yield* fs.exists(output))
-    findings.push({
-      code: "profile-bundle-identity",
-      message: `${output} is occupied. Choose a new artifact path; export never overwrites existing content.`,
-    });
-  let archive: Uint8Array | undefined;
-  const manifest = content.manifest;
-  if (manifest !== undefined && findings.length === 0) {
-    const codec = yield* Compression;
-    const encoded = yield* Effect.gen(function* () {
-      const bytes = yield* Effect.try({
-        try: () => encodeBundle(codec, manifest, content.entries),
-        catch: (error) =>
+export const runBundleExport = Effect.fn("profiles.runBundleExport")(
+  function* (
+    options: StateOptions,
+    request: { readonly reference: string; readonly output: string; readonly apply: boolean },
+  ) {
+    const fs = yield* FileSystem.FileSystem;
+    const path = yield* Path.Path;
+    const content = yield* planExport(options, request.reference);
+    const findings = [...content.findings];
+    const output = path.resolve(request.output);
+    if (yield* fs.exists(output))
+      findings.push({
+        code: "profile-bundle-identity",
+        message: `${output} is occupied. Choose a new artifact path; export never overwrites existing content.`,
+      });
+    let archive: Uint8Array | undefined;
+    const manifest = content.manifest;
+    if (manifest !== undefined && findings.length === 0) {
+      const codec = yield* Compression;
+      const encoded = yield* Effect.gen(function* () {
+        const bytes = yield* Effect.try({
+          try: () => encodeBundle(codec, manifest, content.entries),
+          catch: (error) =>
+            error instanceof BundleError
+              ? error
+              : new BundleError({ code: "profile-bundle-invalid", message: String(error) }),
+        });
+        yield* checkBundleProjection({ manifest, entries: content.entries });
+        return bytes;
+      }).pipe(
+        Effect.mapError((error) =>
           error instanceof BundleError
             ? error
-            : new BundleError({ code: "profile-bundle-invalid", message: String(error) }),
-      });
-      yield* checkBundleProjection({ manifest, entries: content.entries });
-      return bytes;
-    }).pipe(
-      Effect.mapError((error) =>
-        error instanceof BundleError
-          ? error
-          : new BundleError({ code: "profile-bundle-incomplete", message: error.message }),
+            : new BundleError({ code: "profile-bundle-incomplete", message: error.message }),
+        ),
+        Effect.result,
+      );
+      if (Result.isSuccess(encoded)) archive = encoded.success;
+      else findings.push({ code: encoded.failure.code, message: encoded.failure.message });
+    }
+    const plan: typeof BundleExportPlanSchema.Type = {
+      kind: BundleExportPlanSchema.fields.kind.literal,
+      reference: request.reference,
+      output,
+      ...(manifest === undefined ? {} : { manifest }),
+      files: manifest?.files ?? [],
+      findings,
+      refused: findings.length > 0,
+    };
+    if (request.apply === false || archive === undefined || findings.length > 0)
+      return { plan, exported: false };
+    yield* fs.writeFile(output, archive, { flag: "wx" });
+    return { plan, exported: true };
+  },
+  (effect, _options, request) =>
+    effect.pipe(
+      Effect.catchTag("PlatformError", (error) =>
+        Effect.fail(bundleFileFailure(request.output)(error)),
       ),
-      Effect.result,
-    );
-    if (Result.isSuccess(encoded)) archive = encoded.success;
-    else findings.push({ code: encoded.failure.code, message: encoded.failure.message });
-  }
-  const plan: typeof BundleExportPlanSchema.Type = {
-    kind: BundleExportPlanSchema.fields.kind.literal,
-    reference: request.reference,
-    output,
-    ...(manifest === undefined ? {} : { manifest }),
-    files: manifest?.files ?? [],
-    findings,
-    refused: findings.length > 0,
-  };
-  if (request.apply === false || archive === undefined || findings.length > 0)
-    return { plan, exported: false };
-  yield* fs.writeFile(output, archive, { flag: "wx" });
-  return { plan, exported: true };
-});
+    ),
+);

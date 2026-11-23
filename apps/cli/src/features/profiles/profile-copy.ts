@@ -57,6 +57,7 @@ import {
 } from "../../domain/profiles/profile-schema.ts";
 import type { State } from "../../domain/state/state-schema.ts";
 import { readDeclarationText } from "../sources/declaration-file.ts";
+import { sourceFileFailure } from "../sources/source.ts";
 
 /** Explicit copy composition: user, one named project, or both; never every project. */
 const ProfileCopyInputSchema = Schema.Struct({
@@ -221,100 +222,110 @@ export const collectProfileInput = Effect.fnUntraced(function* (
 });
 
 /** Previews source file/publication changes and saves only after explicit acceptance. */
-export const runProfileSaveSelection = Effect.fn("profiles.runProfileSaveSelection")(function* (
-  options: StateOptions,
-  request: {
-    readonly input: ProfileCopyInput;
-    readonly sourcePath: string;
-    readonly name: string;
-    readonly edit: boolean;
-    readonly apply: boolean;
-  },
-) {
-  const fs = yield* FileSystem.FileSystem;
-  const path = yield* Path.Path;
-  const snapshot = yield* readInvocationSnapshot(options);
-  const input = yield* collectProfileInput(snapshot, request.input);
-  const context = yield* profileContext(options, request.sourcePath);
-  const portable = portableProfile(
-    request.name,
-    context.registration.id,
-    input.members.map((member) => member.address),
-    context.catalog,
-  );
-  const published = profilePublications(context.source.canonicalPath, context.source.declaration);
-  const publication = published.publications.find((entry) => entry.name === request.name);
-  const findings = [...input.findings, ...portable.findings, ...published.findings];
-  if (context.registration.bundle !== undefined)
-    findings.push({
-      code: "profile-bundle-immutable",
-      message:
-        "Choose an authored source for save. Verified bundle projections retain immutable artifact bytes.",
-    });
-  if (publication !== undefined && request.edit === false)
-    findings.push({
-      code: "profile-copy-edit-required",
-      message:
-        "This profile is already published. Choose its explicit edit entry or use --edit after reviewing its membership diff.",
-    });
-  const file = path.join(
-    context.source.canonicalPath,
-    publication?.path ?? `profiles/${request.name}.yaml`,
-  );
-  const profileBefore = publication === undefined ? "" : yield* fs.readFileString(file);
-  const profileAfter = `${Yaml.stringify(portable.profile).trimEnd()}\n`;
-  const publicationBefore = yield* readDeclarationText(context.source.canonicalPath);
-  const publicationAfter =
-    publication === undefined
-      ? (publishProfileText(publicationBefore, [
-          ...published.publications,
-          { name: request.name, path: `profiles/${request.name}.yaml` },
-        ]).text ?? publicationBefore)
-      : publicationBefore;
-  const previous =
-    publication === undefined
-      ? undefined
-      : yield* readProfileFile(
-          context.source.canonicalPath,
-          context.source.declaration,
-          publication,
-        );
-  const prior =
-    previous?.profile === undefined
-      ? []
-      : resolveProfile(previous.profile, context.registration.id, context.catalog, file).direct;
-  const nextKeys = new Set(input.members.map((member) => resourceAddressIdentity(member.address)));
-  const priorKeys = new Set(prior.map(resourceAddressIdentity));
-  const plan: ProfileSavePlan = {
-    kind: ProfileSavePlanSchema.fields.kind.literal,
-    input: request.input,
-    members: input.members,
-    notes: input.notes,
-    file,
-    profileBefore,
-    profileAfter,
-    publicationBefore,
-    publicationAfter,
-    findings,
-    added: input.members.flatMap((member) =>
-      priorKeys.has(resourceAddressIdentity(member.address)) ? [] : [member.address],
-    ),
-    removed: prior.filter((address) => nextKeys.has(resourceAddressIdentity(address)) === false),
-  };
-  if (request.apply === false || findings.length > 0) return { plan, saved: false };
-  const result = yield* saveProfile(options, {
-    sourcePath: context.source.canonicalPath,
-    profile: portable.profile,
-    ...(publication === undefined ? {} : { expectedContent: profileBefore }),
-  });
-  return {
-    plan: {
-      ...plan,
-      findings: result.report.findings.filter((finding) => finding.severity === "error"),
+export const runProfileSaveSelection = Effect.fn("profiles.runProfileSaveSelection")(
+  function* (
+    options: StateOptions,
+    request: {
+      readonly input: ProfileCopyInput;
+      readonly sourcePath: string;
+      readonly name: string;
+      readonly edit: boolean;
+      readonly apply: boolean;
     },
-    saved: result.saved,
-  };
-});
+  ) {
+    const fs = yield* FileSystem.FileSystem;
+    const path = yield* Path.Path;
+    const snapshot = yield* readInvocationSnapshot(options);
+    const input = yield* collectProfileInput(snapshot, request.input);
+    const context = yield* profileContext(options, request.sourcePath);
+    const portable = portableProfile(
+      request.name,
+      context.registration.id,
+      input.members.map((member) => member.address),
+      context.catalog,
+    );
+    const published = profilePublications(context.source.canonicalPath, context.source.declaration);
+    const publication = published.publications.find((entry) => entry.name === request.name);
+    const findings = [...input.findings, ...portable.findings, ...published.findings];
+    if (context.registration.bundle !== undefined)
+      findings.push({
+        code: "profile-bundle-immutable",
+        message:
+          "Choose an authored source for save. Verified bundle projections retain immutable artifact bytes.",
+      });
+    if (publication !== undefined && request.edit === false)
+      findings.push({
+        code: "profile-copy-edit-required",
+        message:
+          "This profile is already published. Choose its explicit edit entry or use --edit after reviewing its membership diff.",
+      });
+    const file = path.join(
+      context.source.canonicalPath,
+      publication?.path ?? `profiles/${request.name}.yaml`,
+    );
+    const profileBefore = publication === undefined ? "" : yield* fs.readFileString(file);
+    const profileAfter = `${Yaml.stringify(portable.profile).trimEnd()}\n`;
+    const publicationBefore = yield* readDeclarationText(context.source.canonicalPath);
+    const publicationAfter =
+      publication === undefined
+        ? (publishProfileText(publicationBefore, [
+            ...published.publications,
+            { name: request.name, path: `profiles/${request.name}.yaml` },
+          ]).text ?? publicationBefore)
+        : publicationBefore;
+    const previous =
+      publication === undefined
+        ? undefined
+        : yield* readProfileFile(
+            context.source.canonicalPath,
+            context.source.declaration,
+            publication,
+          );
+    const prior =
+      previous?.profile === undefined
+        ? []
+        : resolveProfile(previous.profile, context.registration.id, context.catalog, file).direct;
+    const nextKeys = new Set(
+      input.members.map((member) => resourceAddressIdentity(member.address)),
+    );
+    const priorKeys = new Set(prior.map(resourceAddressIdentity));
+    const plan: ProfileSavePlan = {
+      kind: ProfileSavePlanSchema.fields.kind.literal,
+      input: request.input,
+      members: input.members,
+      notes: input.notes,
+      file,
+      profileBefore,
+      profileAfter,
+      publicationBefore,
+      publicationAfter,
+      findings,
+      added: input.members.flatMap((member) =>
+        priorKeys.has(resourceAddressIdentity(member.address)) ? [] : [member.address],
+      ),
+      removed: prior.filter((address) => nextKeys.has(resourceAddressIdentity(address)) === false),
+    };
+    if (request.apply === false || findings.length > 0) return { plan, saved: false };
+    const result = yield* saveProfile(options, {
+      sourcePath: context.source.canonicalPath,
+      profile: portable.profile,
+      ...(publication === undefined ? {} : { expectedContent: profileBefore }),
+    });
+    return {
+      plan: {
+        ...plan,
+        findings: result.report.findings.filter((finding) => finding.severity === "error"),
+      },
+      saved: result.saved,
+    };
+  },
+  (effect, _options, request) =>
+    effect.pipe(
+      Effect.catchTag("PlatformError", (error) =>
+        Effect.fail(sourceFileFailure("save profile", request.sourcePath)(error)),
+      ),
+    ),
+);
 
 export type ProfileAdoptRequest = {
   readonly reference: string;

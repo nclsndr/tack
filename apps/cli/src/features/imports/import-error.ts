@@ -1,5 +1,6 @@
-import { Schema } from "effect";
+import { type PlatformError, Schema } from "effect";
 import { NextCommandsSchema, type NextCommands } from "../../domain/hints/next-commands.ts";
+import { fileAccessFailure } from "../file-access.ts";
 
 /** Stable reasons an import operation fails for the operator, each with a message that names the fix. */
 const importErrorCodes = [
@@ -45,3 +46,16 @@ export const importFailure = (
     ...(details === undefined ? {} : { details: JSON.parse(JSON.stringify(details)) }),
     ...(next === undefined ? {} : { next }),
   });
+
+/**
+ * A file an import reads or writes cannot be accessed: the path the failed call touched, the
+ * platform's reason and the call, as the repair facts of an `import-write-failed`.
+ */
+export const importFileFailure = (fallbackPath: string) => (error: PlatformError.PlatformError) => {
+  const failure = fileAccessFailure(error, fallbackPath);
+  return importFailure(
+    "import-write-failed",
+    `Tack could not access ${failure.path}: ${failure.explanation}.`,
+    { path: failure.path, reason: failure.reason, operation: failure.operation },
+  );
+};
