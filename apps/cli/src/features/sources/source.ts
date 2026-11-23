@@ -365,7 +365,7 @@ type SourceService = {
 
 /** External source inspection and identity operations used by source workflows. */
 export class Source extends Context.Service<Source, SourceService>()(
-  "tack/cli/features/sources/Source",
+  "tack/cli/features/sources/source/Source",
 ) {}
 
 /** Builds source operations over explicit platform services. */

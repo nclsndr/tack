@@ -34,5 +34,5 @@ export type ReaderCorpusService = {
 
 /** Saved project documents load independently from the browser lifecycle. */
 export class ReaderCorpus extends Context.Service<ReaderCorpus, ReaderCorpusService>()(
-  "tack/cli/ReaderCorpus",
+  "tack/cli/services/reader-corpus/ReaderCorpus",
 ) {}

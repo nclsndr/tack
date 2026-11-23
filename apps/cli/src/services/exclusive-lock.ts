@@ -56,19 +56,22 @@ export type LockProcessShape = {
  * The process that takes locks. It defaults to the operating-system process; a host without one,
  * such as the in-memory browser build, provides its own.
  */
-export const LockProcess = Context.Reference<LockProcessShape>("tack/cli/LockProcess", {
-  defaultValue: () => ({
-    pid: process.pid,
-    isGone: (pid) => {
-      try {
-        process.kill(pid, 0);
-        return false;
-      } catch (error) {
-        return error instanceof Error && "code" in error && error.code === "ESRCH";
-      }
-    },
-  }),
-});
+export const LockProcess = Context.Reference<LockProcessShape>(
+  "tack/cli/services/exclusive-lock/LockProcess",
+  {
+    defaultValue: () => ({
+      pid: process.pid,
+      isGone: (pid) => {
+        try {
+          process.kill(pid, 0);
+          return false;
+        } catch (error) {
+          return error instanceof Error && "code" in error && error.code === "ESRCH";
+        }
+      },
+    }),
+  },
+);
 
 const processIsGone = (pid: number) =>
   LockProcess.use((owner) => Effect.sync(() => owner.isGone(pid)));

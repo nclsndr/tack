@@ -48,7 +48,7 @@ export type GitService = {
 };
 
 /** Injectable Git capability. */
-export class Git extends Context.Service<Git, GitService>()("tack/cli/Git") {}
+export class Git extends Context.Service<Git, GitService>()("tack/cli/services/git/Git") {}
 
 const worktreeCommand = "git worktree list --porcelain -z";
 

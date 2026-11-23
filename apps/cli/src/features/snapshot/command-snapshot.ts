@@ -89,7 +89,7 @@ export const makeSnapshotCell = (): SnapshotCell => {
  * a unit test, finds none and works from a fresh snapshot each time.
  */
 export class InvocationSnapshot extends Context.Service<InvocationSnapshot, SnapshotCell>()(
-  "tack/cli/features/InvocationSnapshot",
+  "tack/cli/features/snapshot/command-snapshot/InvocationSnapshot",
 ) {}
 
 /**

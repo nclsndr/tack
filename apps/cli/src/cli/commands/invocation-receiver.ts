@@ -19,7 +19,7 @@ type InvocationReceiverService = {
 export class InvocationReceiver extends Context.Service<
   InvocationReceiver,
   InvocationReceiverService
->()("tack/cli/commands/InvocationReceiver") {}
+>()("tack/cli/cli/commands/invocation-receiver/InvocationReceiver") {}
 
 /** Constructs a typed command-transport failure for the enclosing {@link handle} to attribute. */
 export const invalid = (code: (typeof invocationErrorCodes)[number], message: string) =>

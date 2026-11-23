@@ -30,4 +30,6 @@ export type ReaderService = {
 };
 
 /** Local document reader capability. */
-export class Reader extends Context.Service<Reader, ReaderService>()("tack/cli/Reader") {}
+export class Reader extends Context.Service<Reader, ReaderService>()(
+  "tack/cli/services/reader/Reader",
+) {}

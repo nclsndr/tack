@@ -114,5 +114,5 @@ export type ImportRemoteService = {
 
 /** The fetch boundary: the only place Tack talks to a remote. */
 export class ImportRemote extends Context.Service<ImportRemote, ImportRemoteService>()(
-  "tack/cli/platform/ImportRemote",
+  "tack/cli/services/import-remote/ImportRemote",
 ) {}

@@ -78,7 +78,7 @@ export class ExecutionWorker extends Context.Service<
     ) => Effect.Effect<void, ExecutionError>;
     readonly worker: (request: WorkerRequest) => Effect.Effect<WorkerExecution, ExecutionError>;
   }
->()("tack/cli/ExecutionWorker") {}
+>()("tack/cli/services/execution-platform/ExecutionWorker") {}
 
 /** Replaceable store of run records in the state directory. */
 export class RunHistory extends Context.Service<
@@ -109,7 +109,7 @@ export class RunHistory extends Context.Service<
     /** Removes retained record files without decoding them and returns the removed count. */
     readonly clearHistory: (directory: string) => Effect.Effect<number, ExecutionError>;
   }
->()("tack/cli/RunHistory") {}
+>()("tack/cli/services/execution-platform/RunHistory") {}
 
 /** Projects an operational adapter failure to the stable run outcome contract. */
 export const executionFailureOutcome = (error: ExecutionError): RunFailure => ({

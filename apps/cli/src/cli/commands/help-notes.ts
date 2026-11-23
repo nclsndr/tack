@@ -11,7 +11,7 @@ export type HelpNote = {
 export class HelpNotesAnnotation extends Context.Service<
   HelpNotesAnnotation,
   ReadonlyArray<HelpNote>
->()("tack/cli/commands/HelpNotes") {}
+>()("tack/cli/cli/commands/help-notes/HelpNotes") {}
 
 /** Declares the notes a command's help page prints. */
 export const helpNotes = (notes: ReadonlyArray<HelpNote>) =>

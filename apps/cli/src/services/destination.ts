@@ -13,7 +13,7 @@ export class Destination extends Context.Service<
     readonly linkDirectory: (directoryPath: string) => Effect.Effect<string>;
     readonly observe: (destinationPath: string) => Effect.Effect<DestinationObservation>;
   }
->()("tack/cli/features/reconciliation/Destination") {}
+>()("tack/cli/services/destination/Destination") {}
 
 /** Observes one prospective managed destination through the configured adapter. */
 export const observeDestination = Effect.fnUntraced(function* (destinationPath: string) {

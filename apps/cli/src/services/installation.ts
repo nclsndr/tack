@@ -27,4 +27,4 @@ export class Installation extends Context.Service<
     /** Ends the process at a named import step when a crash-recovery test asks for it. */
     readonly crashPoint: (step: string) => Effect.Effect<void>;
   }
->()("tack/cli/Installation") {}
+>()("tack/cli/services/installation/Installation") {}

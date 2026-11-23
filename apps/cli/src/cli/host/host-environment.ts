@@ -9,7 +9,7 @@ export type HostEnvironmentShape = Readonly<Record<string, string | undefined>>;
  * such as the in-memory browser build, provides its own record.
  */
 export const HostEnvironment = Context.Reference<HostEnvironmentShape>(
-  "tack/cli/host/HostEnvironment",
+  "tack/cli/cli/host/host-environment/HostEnvironment",
   {
     defaultValue: () =>
       (globalThis as { readonly process?: { readonly env: HostEnvironmentShape } }).process?.env ??
