@@ -1,13 +1,11 @@
 import { expect, it } from "@effect/vitest";
-import { Effect, FileSystem, Path, Ref, Schema, Sink, Stdio, Stream } from "effect";
+import { Effect, FileSystem, Path, Ref, Sink, Stdio, Stream } from "effect";
 import { vi } from "vitest";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
 import { Git } from "../../services/git.ts";
-import { PublicEnvelopeSchema } from "./public-outcome.ts";
+import { decodeEnvelope } from "../../../test/support/tack-process.ts";
 import { runCli } from "./run.ts";
-
-const decodeEnvelope = Schema.decodeUnknownSync(PublicEnvelopeSchema);
 const text = (chunk: string | Uint8Array) =>
   typeof chunk === "string" ? chunk : new TextDecoder().decode(chunk);
 
@@ -60,7 +58,7 @@ const world = Effect.gen(function* () {
           ),
         ),
       );
-      return decodeEnvelope(JSON.parse(yield* Ref.get(stdout)));
+      return decodeEnvelope(yield* Ref.get(stdout));
     });
   const setUp = Effect.gen(function* () {
     for (const words of [

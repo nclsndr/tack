@@ -1,13 +1,11 @@
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
-import { Effect, FileSystem, Path, Schema } from "effect";
+import { Effect, FileSystem, Path } from "effect";
 import { type GitService } from "../src/services/git.ts";
-import { PublicEnvelopeSchema } from "../src/cli/host/public-outcome.ts";
+import { decodeEnvelope } from "./support/tack-process.ts";
 import { type TerminalContextShape } from "../src/cli/host/human/terminal-context.ts";
 import { displayWidth } from "../src/cli/host/human/text.ts";
 import { runHost } from "./support/host-runner.ts";
-
-const decodeEnvelope = Schema.decodeUnknownSync(PublicEnvelopeSchema);
 
 const interactive: TerminalContextShape = {
   columns: 80,
@@ -81,7 +79,7 @@ it.layer(LiveTestLayer)("core human views through the CLI host", (hostIt) => {
           const automatic = yield* run(arguments_, pipe);
           expect(plain(automatic.stdout), arguments_.join(" ")).toContain(`tack ${command} ·`);
           expect(automatic.stdout).not.toBe(explicit.stdout);
-          expect(decodeEnvelope(JSON.parse(explicit.stdout)).command).toBe(command);
+          expect(decodeEnvelope(explicit.stdout).command).toBe(command);
 
           const human = yield* run([...arguments_], interactive);
           const label = arguments_.join(" ");

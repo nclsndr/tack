@@ -1,8 +1,7 @@
-import type { ProcessResult } from "./support/tack-process.ts";
+import { decodeEnvelope, type ProcessResult } from "./support/tack-process.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Schema } from "effect";
 import { DoctorReportSchema } from "../src/domain/doctor/doctor-schema.ts";
-import { PublicEnvelopeSchema } from "../src/cli/host/public-outcome.ts";
 import { recordFilesOf, type SkillFile } from "../src/features/imports/import-files.ts";
 import { writeImports } from "../src/features/imports/import-write.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
@@ -14,11 +13,9 @@ import {
 } from "./support/tack-world.ts";
 
 const decodeReport = Schema.decodeUnknownSync(DoctorReportSchema, { onExcessProperty: "error" });
-const decodeEnvelope = Schema.decodeUnknownSync(PublicEnvelopeSchema);
-
 const doctorOf = (result: ProcessResult) => {
   expect(result.stderr).toBe("");
-  const envelope = decodeEnvelope(JSON.parse(result.stdout));
+  const envelope = decodeEnvelope(result.stdout);
   return { envelope, report: decodeReport(envelope.result), exitCode: Number(result.exitCode) };
 };
 
@@ -343,7 +340,7 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
         );
         const result = yield* hostTack(fixture, ["doctor"]);
         expect(Number(result.exitCode)).toBe(3);
-        expect(decodeEnvelope(JSON.parse(result.stdout))).toMatchObject({
+        expect(decodeEnvelope(result.stdout)).toMatchObject({
           classification: "persistence",
           result: null,
         });
