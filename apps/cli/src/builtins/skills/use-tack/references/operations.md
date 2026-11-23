@@ -239,8 +239,10 @@ candidates, and `--full-depth` searches every folder to five levels.
   the user namespace will receive the skill at the next `sync`, name collisions with another
   source, old picks that would select nothing, and dependencies on sources the destination does
   not declare in `depends-on`. The copy follows the destination's normal activation, so a skill
-  without Tack metadata reaches every project at the next `sync`. Report the reach to the operator
-  before applying.
+  without Tack metadata reaches every project at the next `sync`. A project a fixed profile holds
+  is listed apart as not delivered, with its profile: the skill reaches it only after the operator
+  adds it to that profile and re-applies the profile with the command the preview names. Report the
+  reach to the operator before applying.
 - **Apply.** It re-resolves the ref, fetches, validates against the live destination and writes
   only `FOLDER/NAME/` and one record in the `imports` section of the destination's `tack.yaml`,
   byte for byte, through a staging folder. An interrupted write is finished or rolled back by the

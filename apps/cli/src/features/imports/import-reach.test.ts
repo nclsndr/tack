@@ -6,6 +6,7 @@ import { addSource, importRequest, withImportWorld } from "../../../test/support
 import { mutateState } from "../../../test/support/state-fixture.ts";
 import { readState } from "../../services/state-store.ts";
 import { previewImport } from "./import.ts";
+import type { ChoiceNamespace } from "../../domain/choices/choice-schema.ts";
 
 const declaration = declare("skills: [{ path: skills }]");
 
@@ -87,6 +88,7 @@ it.layer(LiveTestLayer)("import reach", (test) => {
                   { namespace: "user", with: "other:pdf" },
                 ],
                 undeclaredDependencies: [],
+                fixedProfileProjects: [],
               },
               {
                 name: "docx",
@@ -98,6 +100,7 @@ it.layer(LiveTestLayer)("import reach", (test) => {
                 user: { receives: false, reason: "user activation is opt-in" },
                 collisions: [],
                 undeclaredDependencies: [],
+                fixedProfileProjects: [],
               },
               {
                 name: "xlsx",
@@ -109,8 +112,86 @@ it.layer(LiveTestLayer)("import reach", (test) => {
                 user: { receives: false, reason: "user activation is opt-in" },
                 collisions: [],
                 undeclaredDependencies: [],
+                fixedProfileProjects: [],
               },
             ]);
+          }),
+      ),
+  );
+
+  test.effect(
+    "lists a project a fixed profile holds apart, with the profile and the re-apply command",
+    () =>
+      withImportWorld(
+        {
+          declaration,
+          files: { "skills/a/SKILL.md": skillText("a") },
+          commits: [
+            {
+              files: {
+                "skills/pdf/SKILL.md": skillText("pdf", { tack: ["user-activation: default"] }),
+              },
+            },
+          ],
+        },
+        (world) =>
+          Effect.gen(function* () {
+            const fileSystem = yield* FileSystem.FileSystem;
+            const brain =
+              (yield* readState(world.options)).data.sources.find(
+                (source) => source.canonicalPath === world.root,
+              )?.id ?? "";
+            const root = (name: string) => `${world.base}/${name}`;
+            yield* Effect.forEach(["alpha", "ci", "kept"], (name) =>
+              fileSystem.makeDirectory(root(name)),
+            );
+            const pdf = { kind: "skill", name: "pdf", sourceRegistrationId: brain } as const;
+            const fixed = (namespace: ChoiceNamespace, inventory: ReadonlyArray<typeof pdf>) => ({
+              namespace,
+              profileName: "ci",
+              sourceRegistrationId: brain,
+              direct: inventory,
+              inventory,
+              targets: namespace._tag === "project" ? [root(namespace.projectName)] : [],
+            });
+            yield* mutateState(world.options, (state) => ({
+              data: {
+                ...state.data,
+                enabledAdapters: ["claude"],
+                projects: ["alpha", "ci", "kept"].map((name) => ({
+                  name,
+                  gitCommonDirectory: root(name),
+                  roots: [root(name)],
+                })),
+                profileApplications: [
+                  fixed({ _tag: "project", projectName: "ci" }, []),
+                  // A retained member that the import restores is delivered by the profile.
+                  fixed({ _tag: "project", projectName: "kept" }, [pdf]),
+                  fixed({ _tag: "user" }, []),
+                ],
+              },
+            }));
+            const plan = yield* previewImport(
+              world.options,
+              importRequest({ into: "personal-brain", skills: ["pdf"] }),
+            );
+            expect(plan.reach[0]).toMatchObject({
+              projects: [
+                { project: "alpha", receives: true },
+                { project: "kept", receives: true },
+              ],
+              fixedProfileProjects: [
+                {
+                  project: "ci",
+                  profile: "personal-brain:ci",
+                  deliver: [
+                    ...["tack", "profile", "apply", "personal-brain:ci", "--project", "ci"],
+                    ...["--target-root", root("ci"), "--force"],
+                  ],
+                },
+              ],
+              user: { receives: false, reason: "fixed by profile personal-brain:ci" },
+            });
           }),
       ),
   );
