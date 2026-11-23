@@ -130,8 +130,20 @@ worktree's links and leaves the others as they are:
 
 <Terminal commands={["tack sync"]} output={syncOutput} />
 
-Apply it with `tack sync --apply`. When you remove a worktree, `tack project refresh --apply` drops
-its root from the project. `tack doctor` warns about a worktree that refresh has not added yet.
+Apply it with `tack sync --apply`. `tack doctor` warns about a worktree that refresh has not added
+yet.
+
+## Remove a worktree
+
+Git refuses to remove a worktree that holds untracked files, and Tack's links are untracked unless
+the repository ignores them. Remove it with `--force`, then drop its root from the project:
+
+```sh
+git -C ~/code/app worktree remove --force ~/code/app-hotfix
+tack project refresh --project app --apply
+```
+
+The refresh forgets the root and the links Tack had recorded in it.
 
 ## A separate clone
 
