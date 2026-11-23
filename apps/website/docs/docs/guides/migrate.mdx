@@ -281,11 +281,12 @@ twice:
 
 Apply it with `tack sync --project app --apply`. Commit `tack.yaml` and `.ai/skills`, and ignore
 the links: run `tack status --project app --details`, add the lines it prints under
-"For .gitignore" to the repository's `.gitignore`, and commit it. Do not commit the links,
-even `.claude/skills/app-conventions -> ../../.ai/skills/app-conventions`, which stays inside the
-repository: in a teammate's clone Tack did not make that link, so their sync reports it as a
-`foreign-destination` conflict. Teammates then follow [Onboard a team](./team-onboarding), and
-their own sync makes the same links.
+"For .gitignore" to the repository's `.gitignore`, and commit it. Teammates then follow
+[Onboard a team](./team-onboarding), and their own sync makes the same links. A link already
+committed that is exactly the one Tack writes, such as
+`.claude/skills/app-conventions -> ../../.ai/skills/app-conventions`, which stays inside the
+repository, keeps working: a teammate's sync adopts it as Tack's own. Any other committed link is a
+`foreign-destination` conflict; `git rm` it, then sync.
 
 ## 6. Check
 

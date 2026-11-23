@@ -116,9 +116,8 @@ Each link points back to your file:
 Repeat this section for each project. After you register another folder of skills, run
 `tack sync --all` and then `tack sync --all --apply`, so every project gets its skills.
 
-The links point to paths on your machine. Ignore them and commit the `.gitignore`: a committed link
-is one Tack did not make on a teammate's machine, so their sync reports it as a
-`foreign-destination` conflict. Tack does not edit `.gitignore`; `tack status --project app --details` prints
+The links point to a folder on your machine, so a committed one would not work in a teammate's
+clone. Ignore them and commit the `.gitignore`. Tack does not edit `.gitignore`; `tack status --project app --details` prints
 the lines to add under "For .gitignore", one per link; create `.gitignore` if the repository has
 none. A link is a file to Git, so a line has no trailing `/`, and each skill you link later needs
 its own line.

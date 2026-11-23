@@ -100,7 +100,8 @@ command that fixes it. Run inside a project, it reads that project:
 | --------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
 | `missing`             | A selected resource has no link yet.                                                           | `tack sync --project app`, then `--apply`                        |
 | `hand-made`           | A file or folder you made sits where Tack would link a skill of the same name. Tack leaves it. | Keep yours with `tack pick exclude`, or move yours away and sync |
-| `foreign-destination` | Something Tack did not make sits at a link's path.                                             | Move it away and sync                                            |
+| `unrecorded`          | The link Tack would write is there, but Tack has no record of it, as in a clone of a commit.   | `tack sync --project app --apply` adopts it                      |
+| `foreign-destination` | Something Tack did not make, and not the link it would write, sits at a link's path.           | `git rm` it if it is committed, or move it away, then sync       |
 | `managed-link-drift`  | A link Tack made was changed outside Tack.                                                     | Put it back with sync, or deselect the resource                  |
 | `selection-collision` | Two sources give a selected resource the same name.                                            | `tack pick exclude SOURCE:NAME` for the one you do not want      |
 | `dependency-blocked`  | A selected skill needs a skill that is excluded or missing.                                    | The diagnostic names the blocker and the step that lifts it      |
