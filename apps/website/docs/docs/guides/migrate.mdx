@@ -1,0 +1,281 @@
+---
+title: Move an existing setup into Tack
+description: Turn the skills and commands you keep in ~/.claude, ~/.cursor or a repository's .claude folder into a Tack source, and let Tack link them back for every agent.
+---
+
+import { Terminal } from "../../../components/terminal.tsx";
+
+export const initOutput = [
+  "tack init · user · ✓ success",
+  "",
+  "Created ~/.tack. Enabled claude, cursor. Linked 10 skills at user scope.",
+  "",
+  "  found  claude ~/.claude, cline not found (~/.cline), codex not found",
+  "         (~/.codex), copilot not found (~/.copilot), cursor ~/.cursor, gemini",
+  "         not found (~/.gemini), opencode not found (~/.config/opencode), pi not",
+  "         found (~/.pi)",
+  "",
+  "claude → user · 5 to link",
+  "  applied  create  .claude/skills/author-tack-profiles  skill",
+  "                                                        author-tack-profiles",
+  "  applied  create  .claude/skills/manage-tack-sources   skill",
+  "                                                        manage-tack-sources",
+  "  applied  create  .claude/skills/prepare-tack-         skill",
+  "                   checkout                             prepare-tack-checkout",
+  "  applied  create  .claude/skills/use-tack              skill use-tack",
+  "  applied  create  .claude/skills/write-reader-figures  skill",
+  "                                                        write-reader-figures",
+  "",
+  "cursor → user · 5 to link",
+  "  applied  create  .cursor/skills/author-tack-profiles  skill",
+  "                                                        author-tack-profiles",
+  "  applied  create  .cursor/skills/manage-tack-sources   skill",
+  "                                                        manage-tack-sources",
+  "  applied  create  .cursor/skills/prepare-tack-         skill",
+  "                   checkout                             prepare-tack-checkout",
+  "  applied  create  .cursor/skills/use-tack              skill use-tack",
+  "  applied  create  .cursor/skills/write-reader-figures  skill",
+  "                                                        write-reader-figures",
+  "",
+  "Hand-made, left untouched",
+  "  ~/.claude/skills/pr-review  folder · claude skill",
+  "  ~/.claude/skills/standup    folder · claude skill",
+  "  ~/.cursor/commands/ship.md  file · cursor command",
+  "",
+  "Next",
+  "  tack guide onboarding",
+  "  tack source add PATH",
+].join("\n");
+
+export const sourceOutput = [
+  "tack source add · ✓ success",
+  "",
+  "Would create ~/agent-setup/tack.yaml and register source agent-setup.",
+  "No files or state changed.",
+  "",
+  "  version: 1",
+  "  skills:",
+  "    - path: skills",
+  "  commands:",
+  "    - path: commands",
+  "",
+  "skills skills · 2 skills",
+  "  pr-review, standup",
+  "",
+  "commands commands · 1 command",
+  "  ship",
+  "",
+  "Next",
+  "  tack source add /Users/ada/agent-setup --skills skills --commands commands \\",
+  "    --apply",
+].join("\n");
+
+export const userSyncOutput = [
+  "tack sync · user · ✓ success",
+  "",
+  "Nothing was written. 5 changes planned.",
+  "",
+  "claude → user · 2 to link",
+  "  create  .claude/skills/pr-review  skill pr-review",
+  "  create  .claude/skills/standup    skill standup",
+  "",
+  "cursor → user · 3 to link",
+  "  create  .cursor/commands/ship.md  command ship",
+  "  create  .cursor/skills/pr-review  skill pr-review",
+  "  create  .cursor/skills/standup    skill standup",
+  "",
+  "Commands reach cursor only: Tack does not link commands for claude.",
+  "",
+  "Next",
+  "  tack sync --user --apply",
+].join("\n");
+
+export const userLinksOutput = [
+  "pr-review -> ../../agent-setup/skills/pr-review",
+  "standup -> ../../agent-setup/skills/standup",
+].join("\n");
+
+export const projectAddOutput = [
+  "tack project add · app · ✓ success",
+  "",
+  "Registered project app.",
+  "",
+  "  anchor  ~/code/app/.git",
+  "  roots   ~/code/app",
+  "",
+  "Hand-made, left untouched",
+  "  ~/code/app/.claude/skills/app-conventions  folder · claude skill",
+  "",
+  "Next",
+  "  tack catalog",
+  "  tack sync --project app",
+].join("\n");
+
+export const repoSourceOutput = [
+  "tack source add · ✓ success",
+  "",
+  "Would create ~/code/app/tack.yaml and register source app.",
+  "No files or state changed.",
+  "",
+  "  version: 1",
+  "  skills:",
+  "    - path: .ai/skills",
+  "",
+  "skills .ai/skills · 1 skill",
+  "  app-conventions",
+  "",
+  "Next",
+  "  tack source add /Users/ada/code/app --skills .ai/skills --apply",
+].join("\n");
+
+export const projectSyncOutput = [
+  "tack sync · project app · ✓ success",
+  "",
+  "Nothing was written. 2 changes planned.",
+  "",
+  "claude → app · 1 to link, 2 linked for the user",
+  "  create  .claude/skills/app-conventions  skill app-conventions",
+  "  skip    skill pr-review                 linked for the user",
+  "  skip    skill standup                   linked for the user",
+  "",
+  "cursor → app · 1 to link, 3 linked for the user",
+  "  create  .cursor/skills/                 directory",
+  "  create  .cursor/skills/app-conventions  skill app-conventions",
+  "  skip    skill pr-review                 linked for the user",
+  "  skip    skill standup                   linked for the user",
+  "  skip    command ship                    linked for the user",
+  "",
+  "Commands reach cursor only: Tack does not link commands for claude.",
+  "",
+  "Preview only: nothing was written. There are no docs links to reconcile.",
+  "",
+  "Next",
+  "  tack sync --project app --apply",
+].join("\n");
+
+# Move an existing setup into Tack
+
+You may already keep skills in `~/.claude/skills`, commands in `~/.cursor/commands`, or a skill in a
+repository's own `.claude/skills`. Each one then serves one agent, and a copy for another agent
+drifts. Moving them into a Tack source keeps one copy of each, and Tack links it back into every
+agent's folder.
+
+Tack never moves or adopts a file it did not make. You move the folders yourself with `mv`, once;
+Tack then links them back. This guide moves:
+
+- two skills from `~/.claude/skills` and one command from `~/.cursor/commands`, which reached every
+  project;
+- the skill `app-conventions` from the repository `~/code/app`, which only that project used.
+
+## 1. See what you have
+
+`tack init` sets up Tack and lists what it found in the agents' user folders. It leaves those
+entries where they are:
+
+<Terminal commands={["tack init"]} output={initOutput} />
+
+## 2. Move your files into a source
+
+Create a folder for your source, ideally a Git repository you push somewhere, and move the skills
+and commands into it:
+
+```sh
+mkdir -p ~/agent-setup/skills ~/agent-setup/commands
+mv ~/.claude/skills/pr-review ~/.claude/skills/standup ~/agent-setup/skills/
+mv ~/.cursor/commands/ship.md ~/agent-setup/commands/
+```
+
+A skill that sits in two agents' folders, such as `~/.claude/skills/pr-review` and
+`~/.cursor/skills/pr-review`, moves once: keep the copy you trust and delete the other.
+
+## 3. Register the source
+
+<Terminal
+  commands={["tack source add ~/agent-setup --skills skills --commands commands"]}
+  output={sourceOutput}
+/>
+
+```sh
+tack source add ~/agent-setup --skills skills --commands commands --apply
+```
+
+## 4. Link them back for every project
+
+Skills in `~/.claude/skills` reached every project. In Tack that is a user pick: a skill is opt-in
+at user level until you include it.
+
+```sh
+tack pick include pr-review --user
+tack pick include standup --user
+tack pick include ship --user
+```
+
+<Terminal commands={["tack sync --user"]} output={userSyncOutput} />
+
+Cursor now gets the skills too, and Claude Code gets nothing for `ship`, because it takes no
+commands. Apply it with `tack sync --user --apply`. The skills are back in `~/.claude/skills`, as
+links:
+
+<Terminal commands={["ls -l ~/.claude/skills"]} output={userLinksOutput} />
+
+`ls` also lists the built-in skills Tack linked there.
+
+To have a skill reach your user folders without a pick, set `user-activation: default` in its
+metadata, as [Write a skill](./write-a-skill#3-choose-who-gets-it) shows.
+
+## 5. Move a repository's own skill
+
+A skill committed in a repository's `.claude/skills` serves only Claude Code. Registering the
+project lists it, and leaves it where it is:
+
+<Terminal commands={["tack project add app"]} output={projectAddOutput} />
+
+Make the repository a source of its own. Move the skill to a folder no agent reads, such as
+`.ai/skills`, with Git so its history follows:
+
+```sh
+mkdir -p .ai/skills
+git mv .claude/skills/app-conventions .ai/skills/app-conventions
+```
+
+A skill with no metadata would reach every project that registers this source. Limit it to this
+project in its `SKILL.md` frontmatter:
+
+```markdown
+---
+name: app-conventions
+description: Follow this repository's naming, folder and test conventions when you change its code.
+metadata:
+  tack: |
+    version: 1
+    projects: [app]
+---
+```
+
+Register the repository, from its root:
+
+<Terminal commands={["tack source add . --skills .ai/skills"]} output={repoSourceOutput} />
+
+Apply it with `tack source add . --skills .ai/skills --apply`, then sync the project. The skill
+comes back in `.claude/skills` as a link, and Cursor gets it too; the user skills are not linked
+twice:
+
+<Terminal commands={["tack sync --project app"]} output={projectSyncOutput} />
+
+Apply it with `tack sync --project app --apply`. Commit `tack.yaml` and `.ai/skills`, and decide
+whether the repository commits or ignores the links: `tack status --project app --details` prints
+the `.gitignore` lines. Teammates then follow [Onboard a team](./team-onboarding).
+
+## 6. Check
+
+```sh
+tack doctor
+```
+
+A skill left behind in an agent's folder under the same name as one you moved is reported as
+`hand-made`: Tack keeps it and does not link over it. Delete the old copy and sync again.
+
+## Next
+
+- [Import skills from GitHub](./import-skills) for skills you copied from a repository.
+- [Onboard a team](./team-onboarding) onto the sources you just made.

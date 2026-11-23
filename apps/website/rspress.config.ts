@@ -32,12 +32,15 @@ export default defineConfig({
             { text: "Overview", link: "/docs/" },
             { text: "Get started", link: "/docs/getting-started" },
             { text: "Features", link: "/docs/features" },
+            { text: "Agent support", link: "/docs/agent-support" },
           ],
         },
         {
           text: "Guides",
           items: [
             { text: "Add a source", link: "/docs/guides/add-a-source" },
+            { text: "Move an existing setup into Tack", link: "/docs/guides/migrate" },
+            { text: "Onboard a team", link: "/docs/guides/team-onboarding" },
             { text: "Get a teammate's new skill", link: "/docs/guides/team-source" },
             { text: "Write a skill", link: "/docs/guides/write-a-skill" },
             { text: "Choose what each project gets", link: "/docs/guides/choose-skills" },

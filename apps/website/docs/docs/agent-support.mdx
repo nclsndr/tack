@@ -1,0 +1,91 @@
+---
+title: Agent support
+description: Every coding agent Tack reaches, the folders it links into for a project and for you, whether it gets skills and commands, and how tack init finds it.
+---
+
+# Agent support
+
+Tack reaches an agent in one of two ways. Eight agents have an adapter of their own: Tack links
+into their folders, and four of them also get commands. Nineteen more read skills from a folder an
+adapter already fills, `.agents/skills` from the Codex adapter or `.claude/skills` from the Claude
+Code adapter, so they get skills once that adapter is enabled.
+
+A project folder sits at the root of every worktree of a registered project, and Tack fills it with
+`tack sync --project NAME`. A user folder sits in your home, every project's agent loads it, and
+Tack fills it with `tack sync --user`. A dash means the agent does not read that folder.
+
+## Agents with an adapter
+
+| Agent              | Adapter    | Skills, project    | Skills, user                | Commands, project       | Commands, user                | `tack init` finds it in           |
+| ------------------ | ---------- | ------------------ | --------------------------- | ----------------------- | ----------------------------- | --------------------------------- |
+| Claude Code        | `claude`   | `.claude/skills`   | `~/.claude/skills`          | -                       | -                             | `~/.claude`                       |
+| Cline              | `cline`    | `.cline/skills`    | `~/.cline/skills`           | `.clinerules/workflows` | `~/Documents/Cline/Workflows` | `~/.cline` or `~/Documents/Cline` |
+| Codex              | `codex`    | `.agents/skills`   | `~/.agents/skills`          | -                       | -                             | `~/.codex` or `~/.agents`         |
+| Cursor             | `cursor`   | `.cursor/skills`   | `~/.cursor/skills`          | `.cursor/commands`      | `~/.cursor/commands`          | `~/.cursor`                       |
+| Gemini CLI         | `gemini`   | `.gemini/skills`   | `~/.gemini/skills`          | -                       | -                             | `~/.gemini`                       |
+| GitHub Copilot CLI | `copilot`  | `.github/skills`   | `~/.copilot/skills`         | -                       | -                             | `~/.copilot`                      |
+| OpenCode           | `opencode` | `.opencode/skills` | `~/.config/opencode/skills` | `.opencode/commands`    | `~/.config/opencode/commands` | `~/.config/opencode`              |
+| Pi                 | `pi`       | `.pi/skills`       | `~/.pi/agent/skills`        | `.pi/prompts`           | `~/.pi/agent/prompts`         | `~/.pi`                           |
+
+What to know about each:
+
+- **Claude Code, Codex, Gemini CLI and GitHub Copilot CLI get skills only.** Copilot CLI reads
+  Markdown commands only from Claude Code's `.claude/commands`, and Gemini CLI reads commands only
+  as TOML files. The `tack sync` preview names the agents a selected command does not reach.
+- **Cline** calls commands workflows and runs a linked one as `/NAME.md`, extension included.
+- **Pi** calls commands prompt templates. It reads a project's `.pi` folders from the folder it
+  starts in, so start it at the project root, and it loads project resources only after you trust
+  the project. Run `/reload` in Pi to see a new link.
+- **Another agent's folder.** OpenCode also reads `.claude/skills` and `.agents/skills`; Pi, Gemini
+  CLI and Copilot CLI read `.agents/skills`; Copilot CLI and Cline also read `.claude/skills`. A
+  skill the Claude Code or Codex adapter links can then show up twice in those agents, and turning
+  one adapter off can leave it visible through another.
+- **Standard folders only.** Tack does not follow `XDG_CONFIG_HOME` or `OPENCODE_CONFIG_DIR` for
+  OpenCode, `PI_CODING_AGENT_DIR` for Pi, `COPILOT_HOME` for Copilot CLI, `GEMINI_CLI_HOME` for
+  Gemini CLI or `CLINE_DIR` for Cline.
+- An open agent session can need a restart to see a new link.
+
+## Agents reached through a shared folder
+
+These agents have no adapter. Their own docs or source say they read skills from `.agents/skills`
+or `.claude/skills`, so enable the adapter that fills that folder: `tack adapter enable codex` or
+`tack adapter enable claude`. They get skills only; commands reach an agent only through its own
+adapter.
+
+| Agent                                                                                                                | Through  | Skills, project  | Skills, user       | Notes                                                                |
+| -------------------------------------------------------------------------------------------------------------------- | -------- | ---------------- | ------------------ | -------------------------------------------------------------------- |
+| [Amp](https://ampcode.com/docs/markdown/customize/skills)                                                            | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user, also `.claude/skills`                              |
+| [Antigravity](https://antigravity.google/docs/skills.md)                                                             | `codex`  | `.agents/skills` | -                  | Project only                                                         |
+| [Auggie](https://docs.augmentcode.com/cli/skills.md)                                                                 | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user, also `.claude/skills`                              |
+| [Continue](https://github.com/continuedev/continue/blob/main/extensions/cli/src/util/loadMarkdownSkills.ts)          | `claude` | `.claude/skills` | -                  | Project only                                                         |
+| [Crush](https://github.com/charmbracelet/crush#agent-skills)                                                         | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user, also `.claude/skills`                              |
+| [Devin CLI and Devin Desktop (Windsurf)](https://docs.devin.ai/cli/extensibility/skills/overview.md)                 | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user                                                     |
+| [Factory Droid](https://docs.factory.com/harness/skills.md)                                                          | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user                                                     |
+| [Goose](https://github.com/aaif-goose/goose/blob/main/documentation/docs/guides/context-engineering/using-skills.md) | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user, also `.claude/skills`                              |
+| [Grok Build](https://docs.x.ai/build/features/skills-plugins-marketplaces)                                           | `codex`  | -                | `~/.agents/skills` | User only                                                            |
+| [Hermes Agent](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/skills.md)    | `codex`  | `.agents/skills` | -                  | Project only, after `hermes skills trust`                            |
+| [Junie](https://junie.jetbrains.com/docs/agent-skills.html)                                                          | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user, project in a trusted project                       |
+| [Kilo Code](https://github.com/Kilo-Org/kilocode/blob/main/packages/kilo-docs/pages/customize/skills.md)             | `codex`  | -                | `~/.agents/skills` | User only, Kilo refuses project links that point outside the project |
+| [Letta Code](https://github.com/letta-ai/letta-code/blob/main/src/agent/skills.ts)                                   | `codex`  | `.agents/skills` | -                  | Project only                                                         |
+| [Mistral Vibe](https://docs.mistral.ai/vibe/code/cli/skills)                                                         | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user, project in a trusted folder                        |
+| [OpenClaw](https://github.com/openclaw/openclaw/blob/main/docs/tools/skills.md)                                      | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user                                                     |
+| [OpenHands](https://docs.openhands.dev/overview/skills.md)                                                           | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user                                                     |
+| [Qwen Code](https://github.com/QwenLM/qwen-code/blob/main/docs/users/features/skills.md)                             | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user                                                     |
+| [Warp](https://docs.warp.dev/agents/capabilities/skills/)                                                            | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user, also `.claude/skills`                              |
+| [Zed](https://zed.dev/docs/ai/skills.md)                                                                             | `codex`  | `.agents/skills` | `~/.agents/skills` | Project and user, project in a trusted worktree                      |
+
+A "Project only" agent sees your skills only through a project's links, so a skill you pick with
+`--user` does not reach it. A "User only" agent sees only the links in your home, so pick a skill
+for it with `tack pick include NAME --user`.
+
+## Agent versions
+
+The folders above come from each agent's own docs or source, linked in the table, as they read when
+the adapter or the row was added. Tack records no agent version for them, and vendors move these
+folders often: read the agent's docs before you rely on one, and check what Tack linked with
+`tack status --project NAME --details`.
+
+## Next
+
+- [Add or turn off an agent](./guides/agents).
+- [Choose what each project gets](./guides/choose-skills), for you or for one project.

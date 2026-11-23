@@ -1,0 +1,245 @@
+---
+title: Onboard a team
+description: Share skills through Git repositories, bring a new teammate from nothing to linked skills in a few commands, and check the shared skills in CI.
+---
+
+import { Terminal } from "../../../components/terminal.tsx";
+
+export const teamSourceOutput = [
+  "tack source add · ✓ success",
+  "",
+  "Registered source acme (~/code/acme-agent-skills).",
+  "",
+  "  id  ed6c54a9-ed70-4a81-97d8-507fcdc5a004",
+  "",
+  "2 skills · 0 commands · 0 context · 0 scripts · 0 docs",
+  "",
+  "Next",
+  "  tack project add NAME --repository-cwd PATH",
+].join("\n");
+
+export const repoSourceOutput = [
+  "tack source add · ✓ success",
+  "",
+  "Registered source app (~/code/app).",
+  "",
+  "  id  0a76b8f1-0853-4143-863b-c1924adfa6ed",
+  "",
+  "1 skill · 0 commands · 0 context · 0 scripts · 0 docs",
+  "",
+  "Next",
+  "  tack project add NAME --repository-cwd PATH",
+].join("\n");
+
+export const syncOutput = [
+  "tack sync · project app · ✓ success",
+  "",
+  "Nothing was written. 3 changes planned.",
+  "",
+  "claude → app · 3 to link",
+  "  create  .claude/skills/                 directory",
+  "  create  .claude/skills/app-conventions  skill app-conventions",
+  "  create  .claude/skills/commit-message   skill commit-message",
+  "  create  .claude/skills/release-notes    skill release-notes",
+  "",
+  "Preview only: nothing was written. There are no docs links to reconcile.",
+  "",
+  "Next",
+  "  tack sync --project app --apply",
+].join("\n");
+
+export const statusOutput = [
+  "tack status · project app · ✓ success",
+  "",
+  "Destinations 3 linked, 0 need attention",
+  "",
+  "  Adapters  claude",
+  "  Sources   3 sources, all healthy",
+  "  Catalog   8 resources",
+  "  Projects  app (1 root)",
+  "  State     ~/.tack",
+].join("\n");
+
+export const ciCheckOutput = [
+  "tack check · ✗ domain",
+  "",
+  "Checks 1 · errors 1 · warnings 0",
+  "",
+  "source ~/app",
+  "  skill: 0",
+  "  command: 0",
+  "  context: 0",
+  "  script: 0",
+  "  docs: 0",
+  "",
+  "",
+  "~/app/.ai/skills/app-conventions/SKILL.md:1: error skill-name-mismatch: The SKILL.md name must match its directory basename.",
+  "",
+  "Write files, run tack check with the relevant paths, and repeat until clean.",
+].join("\n");
+
+export const ciSyncOutput = [
+  "tack sync · project app · ✓ success",
+  "",
+  "Applied 1 unit: 2 actions applied, 0 failed, 0 skipped.",
+  "",
+  "claude → app · 1 to link",
+  "  applied  create  .claude/skills/                 directory",
+  "  applied  create  .claude/skills/app-conventions  skill app-conventions",
+  "",
+  "Applied. There are no docs links to reconcile.",
+].join("\n");
+
+# Onboard a team
+
+A team shares skills the way it shares code: in Git repositories. Each teammate clones them and
+registers them once; Tack links them into each teammate's agents, and every `git pull` brings the
+edits. Nothing is hosted and no account is needed.
+
+This guide uses two repositories:
+
+- `acme-agent-skills`, a skills collection the whole team uses, as in
+  [Add a source](./add-a-source#a-folder-that-already-has-a-tackyaml);
+- `app`, a project repository that keeps its own skill in `.ai/skills` and declares it in its own
+  `tack.yaml`, as [Move an existing setup into Tack](./migrate#5-move-a-repositorys-own-skill)
+  shows.
+
+## What the repositories hold
+
+The team repository commits its `tack.yaml`, with a `name` every teammate types the same way and
+its `maintainers`:
+
+```yaml
+version: 1
+kind: skills
+name: acme
+maintainers:
+  - platform-team
+```
+
+The project repository commits its `tack.yaml`, its skills, and an `AGENTS.md` with the Tack
+section that `tack guide agent-instructions` prints. It names the project, so every teammate
+registers it under the same name:
+
+```md
+<!-- tack-block v1 -->
+
+## Tack
+
+This repository's agent skills and docs come from Tack (project `app`). Before you work in a
+new clone or worktree, load the `prepare-tack-checkout` skill. Without it, run from the
+repository root: `tack project refresh --apply`, then `tack sync` and `tack sync --apply`. In a
+clone Tack does not know, run `tack project add app` first. If `tack` is missing, tell the
+user: it installs with `npm install --global @tackup/cli`.
+<!-- /tack-block -->
+```
+
+Decide once whether the repository commits the links or ignores them. A link to another source,
+such as `acme`, points at a path on the teammate's machine; `tack status --project app --details`
+prints the `.gitignore` lines. Tack never edits `.gitignore`.
+
+## A new teammate
+
+Install Tack and set up the machine:
+
+```sh
+npm install --global @tackup/cli
+tack init
+```
+
+Clone both repositories, here to `~/code/acme-agent-skills` and `~/code/app`. Register the team
+source:
+
+<Terminal commands={["tack source add ~/code/acme-agent-skills"]} output={teamSourceOutput} />
+
+From the project's root, register the repository as a source, then as a project, under the name
+its `AGENTS.md` gives:
+
+<Terminal commands={["tack source add ."]} output={repoSourceOutput} />
+
+```sh
+tack project add app
+```
+
+Preview the links, then apply them:
+
+<Terminal commands={["tack sync --project app"]} output={syncOutput} />
+
+```sh
+tack sync --project app --apply
+```
+
+<Terminal commands={["tack status"]} output={statusOutput} />
+
+That is the whole setup. An agent can run it too: with the `AGENTS.md` section, an agent that
+starts in a fresh clone loads `prepare-tack-checkout` and runs these steps, and
+`tack guide onboarding` walks an agent through a new machine with the teammate.
+
+## Day to day
+
+| When                                    | Each teammate runs                                       |
+| --------------------------------------- | -------------------------------------------------------- |
+| A teammate edited a skill               | `git pull` in the source; no sync                        |
+| A teammate added or deleted a skill     | `git pull`, then `tack sync --all` and `--apply`         |
+| A new worktree of the project           | `tack project refresh --apply`, then `tack sync --apply` |
+| Someone wants a skill the others do not | `tack pick include NAME --project app` on their machine  |
+
+Picks are local to each machine. When every teammate and every CI runner must get exactly the same
+set, publish a profile: see [Share a fixed set with a profile](./profiles).
+
+## Check the skills in CI
+
+Two checks catch a broken skill before it reaches a teammate, and both use only Tack's own commands.
+Run them on every change to a repository that holds skills.
+
+**Check the files.** `tack check` reads the source as the catalog will, without state, network or
+running any code, and exits with code `1` on an error. Here a skill's `name` no longer matches its
+folder:
+
+<Terminal commands={["tack check ."]} output={ciCheckOutput} />
+
+**Link them on a clean machine.** A sync on a fresh runner proves that every skill the project
+selects loads and links. Name the agent with `--adapter`, since a runner has no agent folders:
+
+```sh
+tack init --adapter claude
+tack source add .
+tack project add app
+tack sync --project app --apply
+tack doctor
+```
+
+<Terminal commands={["tack sync --project app --apply"]} output={ciSyncOutput} />
+
+`tack sync` exits with code `1` when its result is partial, such as when a skill is quarantined, and
+names the skill under `Warnings`. `tack doctor` exits with code `1` on a failed check, such as a
+link that differs from what Tack expects; it only warns about a quarantined skill. A project whose
+skills depend on another team source needs that source on the runner too: clone it and run
+`tack source add` for it before the sync.
+
+A GitHub Actions job that runs both checks:
+
+```yaml
+name: skills
+on: [push, pull_request]
+jobs:
+  tack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --global @tackup/cli
+      - run: tack check .
+      - run: tack init --adapter claude
+      - run: tack source add .
+      - run: tack project add app
+      - run: tack sync --project app --apply
+      - run: tack doctor
+```
+
+## Next
+
+- [Get a teammate's new skill](./team-source) for the pull-and-sync step in detail.
+- [Share a fixed set with a profile](./profiles) for runners that must match exactly.
