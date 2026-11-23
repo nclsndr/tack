@@ -15,7 +15,11 @@ import {
   SourceRegistrationPayloadSchema,
 } from "../../../features/sources/source.ts";
 import { sourceQualifier } from "../../../features/sources/resource-reference.ts";
-import { type StateOptions } from "../../../services/state-store.ts";
+import {
+  resolveStateDirectory,
+  stateAutoInitializes,
+  type StateOptions,
+} from "../../../services/state-store.ts";
 import { readInvocationSnapshot } from "../../../features/snapshot/command-snapshot.ts";
 import { appliedAs, toJson } from "../outcomes.ts";
 import { linkingNext } from "../../../features/projects/checkout.ts";
@@ -33,15 +37,41 @@ const placeScaffold = Effect.fnUntraced(function* (
   // Without state no source is registered, so a preview still needs none.
   const inspections = yield* readInvocationSnapshot(stateOptions).pipe(
     Effect.flatMap((snapshot) => snapshot.sourceInspections),
-    Effect.catchTag("StateNotInitializedError", () => Effect.succeed([])),
+    Effect.map((found) => ({ stateExists: true, found })),
+    Effect.catchTag("StateNotInitializedError", () =>
+      Effect.succeed({ stateExists: false, found: [] }),
+    ),
   );
-  yield* refuseScaffoldInsideSources(scaffold.sourcePath, inspections);
+  yield* refuseScaffoldInsideSources(scaffold.sourcePath, inspections.found);
   const name = prospectiveSourceLabel(
-    inspections,
+    inspections.found,
     { canonicalPath: scaffold.sourcePath, declaration: scaffold.declaration },
     (sourcePath) => path.basename(sourcePath),
   );
-  return name === undefined ? scaffold : { ...scaffold, name };
+  return {
+    plan: name === undefined ? scaffold : { ...scaffold, name },
+    stateExists: inspections.stateExists,
+  };
+});
+
+/**
+ * What a preview tells about the state its `--apply` initializes, as plain registration would: the
+ * default state directory and the agents found in the home. A preview writes neither.
+ */
+const plannedInitialization = Effect.fnUntraced(function* (stateOptions: StateOptions) {
+  const stateDirectory = yield* resolveStateDirectory(stateOptions);
+  const enabledAdapters =
+    stateOptions.initialAdapters === undefined ? [] : [...(yield* stateOptions.initialAdapters)];
+  const enables =
+    enabledAdapters.length === 0
+      ? "; no agent folder was found in this home, so no agent is enabled"
+      : ` and enables the agents found in this home: ${enabledAdapters.join(", ")}`;
+  return {
+    code: "state-initialization-planned",
+    severity: "info" as const,
+    message: `Tack state does not exist yet: --apply initializes it at ${stateDirectory}${enables}.`,
+    details: { stateDirectory, enabledAdapters },
+  };
 });
 
 /**
@@ -59,14 +89,17 @@ export const addSource = Effect.fnUntraced(function* (
   },
 ) {
   const scaffold = yield* planSourceScaffold(invocation.sourcePath, invocation.folders);
-  const plan = scaffold === undefined ? undefined : yield* placeScaffold(stateOptions, scaffold);
+  const placed = scaffold === undefined ? undefined : yield* placeScaffold(stateOptions, scaffold);
+  const plan = placed?.plan;
   // A declaration that would load nothing previews as partial, without --apply, and never applies.
   const refusal = plan === undefined ? undefined : scaffoldLoadsNothing(plan);
+  // Applying initializes absent default state, as plain registration does.
+  const initializes = placed?.stateExists === false && stateAutoInitializes(stateOptions);
   if (plan !== undefined && invocation.apply !== true)
     return refusal === undefined
       ? {
           classification: "success" as const,
-          diagnostics: [],
+          diagnostics: initializes ? [yield* plannedInitialization(stateOptions)] : [],
           next: [applyCommand(plan)],
           plan: toJson(scaffoldPlanJson(plan)),
         }
@@ -80,7 +113,9 @@ export const addSource = Effect.fnUntraced(function* (
         };
   if (refusal !== undefined) return yield* refusal;
   if (plan !== undefined) {
-    yield* readInvocationSnapshot(stateOptions);
+    // State that cannot be read refuses before the tack.yaml is written; absent default state is
+    // initialized by the registration.
+    if (initializes === false) yield* readInvocationSnapshot(stateOptions);
     yield* writeSourceScaffold(plan);
   }
   const registered = yield* registerSource(stateOptions, invocation);

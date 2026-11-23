@@ -163,6 +163,8 @@ it.layer(LiveTestLayer)("structured partial causes", (causesIt) => {
             {
               code: "no-adapters-enabled",
               details: { subject: { enabledAdapters: [] } },
+              message:
+                "No agent adapter is enabled, so nothing is delivered. Run `tack init` to enable the agents found in this home, or `tack adapter enable <adapter>` to enable one.",
               severity: "warning",
             },
           ],

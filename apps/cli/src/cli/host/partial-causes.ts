@@ -45,7 +45,7 @@ export const partialCauseRegistry: { readonly [K in PartialCauseCode]: string } 
   "imports-invalid": "A source's imports section cannot be read.",
   "link-action-failed": "A planned link change failed.",
   "managed-link-drift": "A managed link changed after Tack recorded it.",
-  "no-adapters-enabled": `No agent adapter is enabled, so nothing is delivered. Run \`${commandLine("adapter-set")} <adapter>\` to enable one.`,
+  "no-adapters-enabled": `No agent adapter is enabled, so nothing is delivered. Run \`${commandLine("machine-init")}\` to enable the agents found in this home, or \`${commandLine("adapter-set")} <adapter>\` to enable one.`,
   "pending-removal": "A cleanup obligation is pending.",
   "project-anchor-unhealthy": "A project's repository anchor cannot be observed.",
   "project-removing":

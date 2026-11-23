@@ -19,6 +19,7 @@ import {
   StateNotInitializedError,
   StateStorageError,
   StateStore,
+  stateAutoInitializes,
   type StateCheckpointWriter,
   type StateOptions,
 } from "../../services/state-store.ts";
@@ -359,7 +360,7 @@ export const makeStateStoreService = (
   ) =>
     Effect.gen(function* () {
       const paths = yield* provideInternal(resolveStatePaths(options));
-      const mayInitialize = autoInitialize && options.environment["TACK_STATE_DIR"] === undefined;
+      const mayInitialize = autoInitialize && stateAutoInitializes(options);
       if (mayInitialize) yield* provideInternal(ensureStateDirectory(paths.stateDirectory));
       else yield* provideInternal(ensureStateExists(paths.statePath));
 
@@ -378,7 +379,20 @@ export const makeStateStoreService = (
                 ),
               );
               yield* provideInternal(removeOrphanedStateFiles(paths));
-              let currentState = document ?? emptyState();
+              // A state this session creates starts with the adapters the options name.
+              const initialAdapters =
+                document === undefined && options.initialAdapters !== undefined
+                  ? yield* options.initialAdapters
+                  : undefined;
+              const initialState = emptyState();
+              let currentState =
+                document ??
+                (initialAdapters === undefined
+                  ? initialState
+                  : {
+                      ...initialState,
+                      data: { ...initialState.data, enabledAdapters: initialAdapters },
+                    });
               let stateExists = document !== undefined;
               let deleted = false;
 
@@ -411,7 +425,7 @@ export const makeStateStoreService = (
                     options.observer?.wrote();
                     if (!stateExists) {
                       yield* provideInternal(createDotenvIfMissing(paths.dotenvPath));
-                      options.observer?.initialized(paths.stateDirectory);
+                      options.observer?.initialized(paths.stateDirectory, initialAdapters);
                     }
                     currentState = candidate.state;
                     stateExists = true;

@@ -58,6 +58,16 @@ const detectAgents = Effect.fnUntraced(function* (home: string) {
   );
 });
 
+/** The adapters a detection found, in canonical order. */
+const foundAdapters = (detection: ReadonlyArray<AgentDetection>) =>
+  detection.flatMap(({ adapter, found }) => (found === true ? [adapter] : []));
+
+/**
+ * The adapters whose agent folder exists in `home`, as `tack init` finds them; the state that a
+ * first mutation initializes enables them.
+ */
+export const agentsFoundIn = (home: string) => detectAgents(home).pipe(Effect.map(foundAdapters));
+
 /** What one `tack init` asks for. */
 export type MachineInitRequest = {
   /** The adapters `--adapter` named; they replace detection. Absent, detection decides. */
@@ -116,9 +126,7 @@ const planMachineInit = Effect.fnUntraced(function* (
   const user = { _tag: "user", canonicalPath: path.resolve(home) } as const;
   const detection = yield* detectAgents(user.canonicalPath);
   const enabled = snapshot.state.data.enabledAdapters;
-  const wanted =
-    request.adapters ??
-    detection.flatMap(({ adapter, found }) => (found === true ? [adapter] : []));
+  const wanted = request.adapters ?? foundAdapters(detection);
   const enabling = yield* enableAdaptersIn(snapshot.state, wanted);
   const adapters = enabling.state.data.enabledAdapters;
   const sync = yield* planSync(

@@ -68,7 +68,9 @@ tack catalog --details
 ```
 
 `tack state init` creates state and an operator-owned `.env` without overwriting existing files,
-and nothing else; `init` uses it. Projects are Git repositories; registration records the repository
+and nothing else; `init` uses it. Without state, the first `source add`, `project add` or other
+registration initializes the default state and enables the agents found in the home, and its
+`state-initialized` note names them; run `tack init` to link the built-in skills too. Projects are Git repositories; registration records the repository
 and its reachable non-bare worktrees. `project add` registers at once, with no preview, and lists, as
 information, the hand-made entries in the enabled agents' project skill and command folders of every
 worktree; `project refresh` lists them for the worktrees it adds. Both leave them untouched. `tack adapter enable claude codex cursor` adds adapters to the

@@ -134,6 +134,13 @@ other root flags.
 `state init` creates the state directory, a `state.json` file, and an operator-owned `.env` file,
 and nothing else; `init` runs it first. It does not overwrite existing state or `.env` files.
 
+On a machine without state, the first command that registers something, such as `source add` or
+`project add`, initializes the default state itself and enables the agents it finds in the home, as
+`init` does. Its `state-initialized` note names them; it links nothing, so run `init` to link the
+built-in skills. A `source add` preview writes nothing and says what its `--apply` initializes.
+`adapter enable` enables only the adapters it names. With `--state-dir` or `TACK_STATE_DIR`, absent
+state is refused with `state-not-initialized`, so a mistyped directory is never created.
+
 ### Guides for agents
 
 `tack guide onboarding` prints the onboarding guide of the running version: how an agent sets up

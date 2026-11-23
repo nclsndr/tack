@@ -1196,13 +1196,51 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
 
         expect(value).toBe("first");
         expect(writes).toEqual(["wrote"]);
-        expect(notices.collected()).toEqual({ initializedPath: stateDirectory });
+        expect(notices.collected()).toEqual({ initialized: { stateDirectory } });
         expect(yield* readState(options)).toEqual(emptyState());
         expect(yield* fileSystem.exists(path.join(stateDirectory, dotenvFileName))).toBe(true);
         // A collector without a write callback ignores writes and reports no initialization.
         const silent = makeStateNoticeCollector();
         silent.sink.wrote();
         expect(silent.collected()).toEqual({});
+      }),
+    ),
+  );
+
+  stateIt.effect("enables the initial adapters only in a state the first mutation creates", () =>
+    withStateDirectory((home) =>
+      Effect.gen(function* () {
+        const path = yield* Path.Path;
+        const notices = makeStateNoticeCollector();
+        const options = {
+          environment: {},
+          homeDirectory: home,
+          observer: notices.sink,
+          initialAdapters: Effect.succeed(["claude", "codex"] as const),
+        };
+        const adapters = yield* mutateStateEffect(options, (state) =>
+          Effect.succeed({ state, value: state.data.enabledAdapters }),
+        );
+
+        expect(adapters).toEqual(["claude", "codex"]);
+        expect(notices.collected()).toEqual({
+          initialized: {
+            stateDirectory: path.join(home, ".tack"),
+            enabledAdapters: ["claude", "codex"],
+          },
+        });
+        // An existing state keeps its adapters.
+        const again = makeStateNoticeCollector();
+        yield* mutateStateEffect(
+          { ...options, observer: again.sink, initialAdapters: Effect.succeed(["pi"] as const) },
+          (state) =>
+            Effect.succeed({
+              state: { ...state, data: { ...state.data, sources: [] } },
+              value: undefined,
+            }),
+        );
+        expect((yield* readState(options)).data.enabledAdapters).toEqual(["claude", "codex"]);
+        expect(again.collected()).toEqual({});
       }),
     ),
   );

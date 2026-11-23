@@ -88,9 +88,9 @@ A source is a folder you own that holds skills, commands, context, docs or scrip
 `tack.yaml` at its top that says where each kind lives. Tack reads the folder where it is: it
 never moves or copies your files. Register each folder once; every project then picks from it.
 
-Run `tack init` once first, as [Get started](../getting-started) shows. It creates Tack's state and
-enables the agents it finds; without it, applying a new `tack.yaml` stops with
-`state-not-initialized`, and a sync has no agent to link into.
+Run `tack init` once first, as [Get started](../getting-started) shows. It creates Tack's state,
+enables the agents it finds and links the built-in skills. If you skip it, the first `source add`
+that registers creates the state and enables the agents it finds, and says so in a note.
 
 This guide registers two sources: `~/agent-setup`, a folder of your own without a `tack.yaml`, and
 `~/code/acme-agent-skills`, a team repository that already has one.

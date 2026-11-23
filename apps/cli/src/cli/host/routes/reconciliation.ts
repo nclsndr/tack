@@ -90,7 +90,8 @@ export const reconciliationRoutes: RoutesFor<
 > = {
   "adapter-set": {
     needsHome: false,
-    run: (invocation, stateOptions) =>
+    // The named adapters replace detection, as `init --adapter` does, when this initializes state.
+    run: (invocation, { initialAdapters: _detected, ...stateOptions }) =>
       enableAdapters(stateOptions, invocation.adapters).pipe(
         Effect.map(appliedAs(AdapterSettingsPayloadSchema)),
       ),

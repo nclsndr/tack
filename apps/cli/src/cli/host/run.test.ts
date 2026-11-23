@@ -180,22 +180,118 @@ it.layer(LiveTestLayer)("CLI host environment", (test) => {
       const { fs, path, root, source, tack } = yield* world;
       const home = path.join(root, "home");
       yield* fs.makeDirectory(home);
-      const first = yield* withEnvironment(
-        { HOME: home, TACK_STATE_DIR: undefined },
-        Effect.gen(function* () {
-          // Never let this test reach a real home directory.
-          if (process.env["HOME"] !== home) return yield* Effect.die("HOME is not isolated.");
-          return yield* tack(["source", "add", source], false);
-        }),
-      );
+      const first = yield* inHome(home, tack(["source", "add", source], false));
       const stateDirectory = path.join(home, ".tack");
       expect(first.diagnostics).toContainEqual({
+        code: "state-initialized",
+        severity: "info",
+        message: `Initialized Tack state at ${stateDirectory}. No agent folder was found in this home, so no agent is enabled: run \`tack init --adapter <adapter>\` to enable one.`,
+        details: { stateDirectory, enabledAdapters: [] },
+      });
+      expect(yield* fs.exists(path.join(stateDirectory, "state.json"))).toBe(true);
+    }),
+  );
+
+  test.effect("enables the agents found in the home when it initializes the default state", () =>
+    Effect.gen(function* () {
+      const { fs, path, root, source, tack } = yield* world;
+      const home = path.join(root, "home");
+      yield* fs.makeDirectory(path.join(home, ".claude"), { recursive: true });
+      const first = yield* inHome(home, tack(["source", "add", source], false));
+      const stateDirectory = path.join(home, ".tack");
+      expect(first.diagnostics).toContainEqual({
+        code: "state-initialized",
+        severity: "info",
+        message: `Initialized Tack state at ${stateDirectory} and enabled the agents found in this home: claude. \`tack init\` also links the built-in skills.`,
+        details: { stateDirectory, enabledAdapters: ["claude"] },
+      });
+      const adapters = yield* inHome(home, tack(["adapter", "list"], false));
+      expect(JSON.stringify(adapters.result)).toContain('"claude"');
+    }),
+  );
+
+  test.effect("enables only the named adapter when adapter enable initializes the state", () =>
+    Effect.gen(function* () {
+      const { fs, path, root, tack } = yield* world;
+      const home = path.join(root, "home");
+      yield* fs.makeDirectory(path.join(home, ".claude"), { recursive: true });
+      const enabled = yield* inHome(home, tack(["adapter", "enable", "codex"], false));
+      const stateDirectory = path.join(home, ".tack");
+      expect(enabled.diagnostics).toContainEqual({
         code: "state-initialized",
         severity: "info",
         message: `Initialized Tack state at ${stateDirectory}.`,
         details: { stateDirectory },
       });
-      expect(yield* fs.exists(path.join(stateDirectory, "state.json"))).toBe(true);
+      const adapters = yield* inHome(home, tack(["adapter", "list"], false));
+      expect(JSON.stringify(adapters.result)).not.toContain('"claude"');
+    }),
+  );
+
+  test.effect("scaffolds a source on a new machine as plain registration does", () =>
+    Effect.gen(function* () {
+      const { fs, path, root, tack } = yield* world;
+      const home = path.join(root, "home");
+      const folder = path.join(root, "agent-setup");
+      yield* fs.makeDirectory(path.join(home, ".claude"), { recursive: true });
+      yield* fs.makeDirectory(path.join(folder, "skills", "review"), { recursive: true });
+      yield* fs.writeFileString(
+        path.join(folder, "skills", "review", "SKILL.md"),
+        "---\nname: review\ndescription: Review a change.\n---\nReview.\n",
+      );
+      const stateDirectory = path.join(home, ".tack");
+      const words = ["source", "add", folder, "--skills", "skills"];
+      const preview = yield* inHome(home, tack(words, false));
+      expect(preview).toMatchObject({ classification: "success" });
+      expect(preview.diagnostics).toEqual([
+        {
+          code: "state-initialization-planned",
+          severity: "info",
+          message: `Tack state does not exist yet: --apply initializes it at ${stateDirectory} and enables the agents found in this home: claude.`,
+          details: { stateDirectory, enabledAdapters: ["claude"] },
+        },
+      ]);
+      expect(yield* fs.exists(stateDirectory)).toBe(false);
+      expect(yield* fs.exists(path.join(folder, "tack.yaml"))).toBe(false);
+
+      const applied = yield* inHome(home, tack([...words, "--apply"], false));
+      expect(applied).toMatchObject({ classification: "success" });
+      expect(applied.diagnostics).toContainEqual(
+        expect.objectContaining({
+          code: "state-initialized",
+          details: { stateDirectory, enabledAdapters: ["claude"] },
+        }),
+      );
+      expect(yield* fs.exists(path.join(folder, "tack.yaml"))).toBe(true);
+    }),
+  );
+
+  test.effect("refuses to scaffold a source into an explicit state directory that is absent", () =>
+    Effect.gen(function* () {
+      const { fs, path, root, tack } = yield* world;
+      const folder = path.join(root, "agent-setup");
+      yield* fs.makeDirectory(path.join(folder, "skills", "review"), { recursive: true });
+      yield* fs.writeFileString(
+        path.join(folder, "skills", "review", "SKILL.md"),
+        "---\nname: review\ndescription: Review a change.\n---\nReview.\n",
+      );
+      const applied = yield* tack(["source", "add", folder, "--skills", "skills", "--apply"]);
+      expect(applied).toMatchObject({
+        classification: "invalid-configuration",
+        diagnostics: [{ code: "state-not-initialized" }],
+      });
+      expect(yield* fs.exists(path.join(folder, "tack.yaml"))).toBe(false);
     }),
   );
 });
+
+/** Runs a host invocation against the default state under `home`, never the real home. */
+const inHome = <A, E, R>(home: string, effect: Effect.Effect<A, E, R>) =>
+  withEnvironment(
+    { HOME: home, TACK_STATE_DIR: undefined },
+    Effect.gen(function* () {
+      // Never let this test reach a real home directory.
+      if (process.env["HOME"] !== home) return yield* Effect.die("HOME is not isolated.");
+      return yield* effect;
+    }),
+  );
