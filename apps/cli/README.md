@@ -41,9 +41,12 @@ standard folders only: it does not follow `XDG_CONFIG_HOME` or `OPENCODE_CONFIG_
 `PI_CODING_AGENT_DIR` for Pi, `COPILOT_HOME` for Copilot CLI, `GEMINI_CLI_HOME` for Gemini CLI or
 `CLINE_DIR` for Cline. Pi reads the project's `.pi` folders from the folder it starts in, so start
 it at the project root, and it loads project resources only after you trust the project.
-Several agents also read another agent's folder: OpenCode reads `.claude/skills` and
-`.agents/skills`; Pi, Gemini CLI and Copilot CLI read `.agents/skills`; Copilot CLI and Cline also
-read `.claude/skills`. A skill that the `claude` or `codex` adapter links can then show up twice.
+Several agents also read another agent's folder: Cursor and OpenCode read `.claude/skills` and
+`.agents/skills` (Cursor reads `.claude/skills` and `.codex/skills` only when its _Include
+Third-Party Plugins, Skills, and Other Configs_ setting is on); Pi, Gemini CLI and Copilot CLI read
+`.agents/skills`; Copilot CLI and Cline also read `.claude/skills`. Because each link points at the
+same skill folder, these agents list the skill once, but Gemini CLI warns of a skill conflict when
+the `codex` and `gemini` adapters both link it.
 Disabling one adapter removes only its own links, so the agent can still see the skill through
 another one. An open agent session can need a restart, or `/reload` in Pi, to see a new link.
 
