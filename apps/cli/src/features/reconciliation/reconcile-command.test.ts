@@ -151,7 +151,7 @@ it.layer(LiveTestLayer)("reconciliation command lifecycle", (reconcileIt) => {
         yield* fileSystem.symlink(preparedAction.relativeTarget, preparedAction.destinationPath);
         yield* mutateStateFixture(options, (state) => ({
           ...state,
-          data: { ...state.data, reconciliationJournal: { action: preparedAction } },
+          data: { ...state.data, preparedAgentAction: { action: preparedAction } },
         }));
 
         const result = yield* syncResources(options, {

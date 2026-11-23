@@ -115,7 +115,7 @@ it.layer(LiveTestLayer)("reset and pending-removal retry", (resetIt) => {
                 },
               ],
               enabledAdapters: ["codex", "cursor"],
-              managedLinks: [projectEvidence, userEvidence],
+              agentLinks: [projectEvidence, userEvidence],
               projects: [
                 {
                   gitCommonDirectory: path.join(projectRoot, ".git"),
@@ -212,7 +212,7 @@ it.layer(LiveTestLayer)("reset and pending-removal retry", (resetIt) => {
                 },
               ],
               enabledAdapters: ["codex", "cursor"],
-              managedLinks: [matching, blocked],
+              agentLinks: [matching, blocked],
               projects: [
                 {
                   gitCommonDirectory: path.join(projectRoot, ".git"),
@@ -664,7 +664,7 @@ it.layer(LiveTestLayer)("reset and pending-removal retry", (resetIt) => {
         );
         yield* mutateStateFixture(options, (state) => ({
           ...state,
-          data: { ...state.data, managedLinks: [evidence] },
+          data: { ...state.data, agentLinks: [evidence] },
         }));
         const deletion = yield* stallAt("remove", statePath);
         const fiber = yield* provideTestFileSystem(
@@ -727,7 +727,7 @@ it.layer(LiveTestLayer)("reset and pending-removal retry", (resetIt) => {
           data: {
             ...state.data,
             enabledAdapters: ["codex"],
-            managedLinks: [evidence],
+            agentLinks: [evidence],
           },
         }));
         const failingFileSystem = FileSystem.makeNoop({

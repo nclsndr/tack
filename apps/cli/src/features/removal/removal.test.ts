@@ -118,7 +118,7 @@ it.layer(LiveTestLayer)("removal lifecycle", (removalIt) => {
             runtimeFixture({
               version: 1,
               data: {
-                managedLinks: [evidence],
+                agentLinks: [evidence],
                 pendingRemovals: [
                   { ...pending, evidence: { ...evidence, sourceDirectoryPath: "/repo/other" } },
                 ],
@@ -162,7 +162,7 @@ it.layer(LiveTestLayer)("removal lifecycle", (removalIt) => {
                 namespace: { _tag: "project" as const, projectName: "project" },
               },
             ],
-            managedLinks: [evidence],
+            agentLinks: [evidence],
             projects: [project(canonicalRoot)],
           },
         }));
@@ -220,7 +220,7 @@ it.layer(LiveTestLayer)("removal lifecycle", (removalIt) => {
           ...state,
           data: {
             ...state.data,
-            managedLinks: [firstEvidence, secondEvidence],
+            agentLinks: [firstEvidence, secondEvidence],
             projects: [project(registeredRoot)],
           },
         }));
@@ -276,7 +276,7 @@ it.layer(LiveTestLayer)("removal lifecycle", (removalIt) => {
           ...state,
           data: {
             ...state.data,
-            managedLinks: [handoffEvidence, orphanEvidence],
+            agentLinks: [handoffEvidence, orphanEvidence],
             projects: [
               {
                 ...project(handoffRoot),
@@ -331,7 +331,7 @@ it.layer(LiveTestLayer)("removal lifecycle", (removalIt) => {
                 namespace: { _tag: "project" as const, projectName: "project" },
               },
             ],
-            managedLinks: [evidence],
+            agentLinks: [evidence],
             projects: [
               {
                 ...project(handoffRoot),
@@ -449,7 +449,7 @@ it.layer(LiveTestLayer)("removal lifecycle", (removalIt) => {
                 namespace: { _tag: "project" as const, projectName: "project" },
               },
             ],
-            managedLinks: [evidence],
+            agentLinks: [evidence],
             projects: [
               { ...project(canonicalFirstRoot), roots: [canonicalFirstRoot, canonicalSecondRoot] },
             ],
@@ -503,7 +503,7 @@ it.layer(LiveTestLayer)("removal lifecycle", (removalIt) => {
           );
           yield* mutateStateFixture(options, (state) => ({
             ...state,
-            data: { ...state.data, managedLinks: [evidence], projects: [project(canonicalRoot)] },
+            data: { ...state.data, agentLinks: [evidence], projects: [project(canonicalRoot)] },
           }));
 
           const execution = yield* removeProjectRoot(options, {
@@ -542,7 +542,7 @@ it.layer(LiveTestLayer)("removal lifecycle", (removalIt) => {
         );
         yield* mutateStateFixture(options, (state) => ({
           ...state,
-          data: { ...state.data, managedLinks: [evidence], projects: [project(canonicalRoot)] },
+          data: { ...state.data, agentLinks: [evidence], projects: [project(canonicalRoot)] },
         }));
         let stateRenames = 0;
         const racingFileSystem = FileSystem.makeNoop({
@@ -609,7 +609,7 @@ it.layer(LiveTestLayer)("removal lifecycle", (removalIt) => {
         yield* fileSystem.writeFileString(destinationPath, "foreign");
         yield* mutateStateFixture(options, (state) => ({
           ...state,
-          data: { ...state.data, managedLinks: [evidence], projects: [project(canonicalRoot)] },
+          data: { ...state.data, agentLinks: [evidence], projects: [project(canonicalRoot)] },
         }));
 
         const execution = yield* removeProject(options, { apply: true, projectName: "project" });
@@ -667,7 +667,7 @@ it.layer(LiveTestLayer)("removal lifecycle", (removalIt) => {
           ...state,
           data: {
             ...state.data,
-            managedLinks: [first, second],
+            agentLinks: [first, second],
             projects: [project(canonicalRoot)],
           },
         }));
@@ -740,7 +740,7 @@ it.layer(LiveTestLayer)("removal lifecycle", (removalIt) => {
             ...state,
             data: {
               ...state.data,
-              managedLinks: [first, second],
+              agentLinks: [first, second],
               projects: [project(projectRoot)],
             },
           }));
@@ -819,7 +819,7 @@ it.layer(LiveTestLayer)("removal lifecycle", (removalIt) => {
         );
         yield* mutateStateFixture(options, (state) => ({
           ...state,
-          data: { ...state.data, managedLinks: [evidence], projects: [project(canonicalRoot)] },
+          data: { ...state.data, agentLinks: [evidence], projects: [project(canonicalRoot)] },
         }));
         const before = yield* fileSystem.readFileString(statePath);
         const execution = yield* removeProjectRoot(options, {
@@ -854,7 +854,7 @@ it.layer(LiveTestLayer)("removal lifecycle", (removalIt) => {
         );
         yield* mutateStateFixture(options, (state) => ({
           ...state,
-          data: { ...state.data, managedLinks: [evidence], projects: [project(canonicalRoot)] },
+          data: { ...state.data, agentLinks: [evidence], projects: [project(canonicalRoot)] },
         }));
         yield* expectWriterGuarded(
           stateDirectory,
@@ -886,7 +886,7 @@ it.layer(LiveTestLayer)("removal lifecycle", (removalIt) => {
         );
         yield* mutateStateFixture(options, (state) => ({
           ...state,
-          data: { ...state.data, managedLinks: [evidence], projects: [project(canonicalRoot)] },
+          data: { ...state.data, agentLinks: [evidence], projects: [project(canonicalRoot)] },
         }));
         yield* mutateStateFixture(options, (state) => ({
           ...state,
@@ -926,7 +926,7 @@ it.layer(LiveTestLayer)("removal lifecycle", (removalIt) => {
         const canonicalDestination = managedLinkDestinationPath(evidence);
         yield* mutateStateFixture(options, (state) => ({
           ...state,
-          data: { ...state.data, managedLinks: [evidence], projects: [project(canonicalRoot)] },
+          data: { ...state.data, agentLinks: [evidence], projects: [project(canonicalRoot)] },
         }));
         const stall = yield* stallAt("remove", canonicalDestination, { when: "after" });
         const fiber = yield* removeProjectRoot(options, {

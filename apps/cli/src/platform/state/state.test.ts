@@ -429,7 +429,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
               projects: [{ name: "active", gitCommonDirectory: "/repo/.git", roots: ["/repo"] }],
               sources: [{ id: sourceRegistrationId, canonicalPath: "/active-source" }],
               choices: [{ namespace: { _tag: "user" }, address, decision: "include" }],
-              managedLinks: [evidence],
+              agentLinks: [evidence],
               pendingRemovals: [
                 {
                   cause: "reset",
@@ -437,7 +437,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
                   lastResult: { _tag: "blocked", message: "Retain this obligation." },
                 },
               ],
-              docsManagedLinks: [docsEvidence],
+              docsLinks: [docsEvidence],
               journal: [{ _tag: "remove", link: docsLink(docsEvidence) }],
               docsProjects: [
                 {

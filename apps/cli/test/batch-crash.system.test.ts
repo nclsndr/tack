@@ -291,7 +291,7 @@ it.layer(LiveTestLayer)("a killed removal converges on the next writer", (crashI
             ...state,
             data: {
               ...state.data,
-              managedLinks: evidence,
+              agentLinks: evidence,
               projects: [
                 {
                   gitCommonDirectory: `${canonicalRoot}/.git`,

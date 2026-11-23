@@ -349,7 +349,7 @@ it.layer(LiveTestLayer)("project worktree refresh planning", (refreshIt) => {
           ...state,
           data: {
             ...state.data,
-            managedLinks: [],
+            agentLinks: [],
             projects: [
               {
                 gitCommonDirectory: canonicalAnchor,
@@ -471,7 +471,7 @@ it.layer(LiveTestLayer)("project worktree refresh planning", (refreshIt) => {
                 namespace: { _tag: "project" as const, projectName: "project" },
               },
             ],
-            managedLinks: [evidence],
+            agentLinks: [evidence],
             projects: [{ gitCommonDirectory: anchor, name: "project", roots: [kept, stale] }],
           },
         }));
@@ -745,7 +745,7 @@ it.layer(LiveTestLayer)("project worktree refresh planning", (refreshIt) => {
                 namespace: { _tag: "project" as const, projectName: "project" },
               },
             ],
-            managedLinks: [managedEvidence(missingPath)],
+            agentLinks: [managedEvidence(missingPath)],
             projects: [{ gitCommonDirectory: anchor, name: "project", roots: [missingPath] }],
           },
         }));
@@ -864,7 +864,7 @@ it.layer(LiveTestLayer)("project worktree refresh planning", (refreshIt) => {
           ...state,
           data: {
             ...state.data,
-            managedLinks: [managedEvidence(missingPath), managedEvidence(unregisteredRoot)],
+            agentLinks: [managedEvidence(missingPath), managedEvidence(unregisteredRoot)],
             projects: [{ gitCommonDirectory: anchor, name: "project", roots: [missingPath] }],
           },
         }));
@@ -1044,7 +1044,7 @@ it.layer(LiveTestLayer)("project worktree refresh planning", (refreshIt) => {
           ...state,
           data: {
             ...state.data,
-            managedLinks: [evidence],
+            agentLinks: [evidence],
             projects: [{ gitCommonDirectory: anchor, name: "project", roots: [projectRoot] }],
           },
         }));
@@ -1183,7 +1183,7 @@ it.layer(LiveTestLayer)("project worktree refresh planning", (refreshIt) => {
           ...state,
           data: {
             ...state.data,
-            managedLinks: [kept],
+            agentLinks: [kept],
             pendingRemovals: [
               { cause: "root-removal" as const, evidence: kept },
               { cause: "root-removal" as const, evidence: owedOnly },

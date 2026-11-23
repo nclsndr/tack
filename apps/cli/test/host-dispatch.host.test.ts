@@ -1128,7 +1128,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
         ...state,
         data: {
           ...state.data,
-          managedLinks: [evidence("alpha", sourceAlpha), evidence("beta", sourceBeta)],
+          agentLinks: [evidence("alpha", sourceAlpha), evidence("beta", sourceBeta)],
           projects: [
             {
               gitCommonDirectory: path.join(projectRoot, ".git"),

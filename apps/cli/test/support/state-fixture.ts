@@ -54,16 +54,18 @@ type PreparedAgentAction =
 /** The data of a flat fixture: runtime collections, optional, plus the parallel lists and flat intent. */
 export type FixtureData = Partial<Omit<State["data"], "projects" | "journal">> & {
   readonly projects?: ReadonlyArray<FixtureProject>;
-  /** Evidence that is managed with nothing owed, unless `pendingRemovals` also names it. */
-  readonly managedLinks?: ReadonlyArray<ManagedLinkEvidence>;
+  /** Agent links of the ledger, with nothing owed unless `pendingRemovals` also names them. */
+  readonly agentLinks?: ReadonlyArray<ManagedLinkEvidence>;
   /** Owed removals, which merge into the link record of the same destination. */
   readonly pendingRemovals?: ReadonlyArray<PendingRemoval>;
   /** Docs mounts, recorded in the same ledger as agent links. */
-  readonly docsManagedLinks?: ReadonlyArray<DocsManagedLink>;
+  readonly docsLinks?: ReadonlyArray<DocsManagedLink>;
   readonly choices?: ReadonlyArray<SkillChoice>;
   readonly docsProjects?: ReadonlyArray<DocsProject>;
-  readonly reconciliationJournal?: PreparedAgentAction;
-  readonly docsJournal?: {
+  /** An agent action prepared in the journal. */
+  readonly preparedAgentAction?: PreparedAgentAction;
+  /** A docs mount action prepared in the journal. */
+  readonly preparedDocsAction?: {
     readonly action: "create" | "remove";
     readonly evidence: DocsManagedLink;
   };
@@ -97,7 +99,7 @@ const linkRecordsFrom = (
 
 const journalFrom = (fixture: FixtureData): ReadonlyArray<JournalEntry> | undefined => {
   const entries: JournalEntry[] = [...(fixture.journal ?? [])];
-  const action = fixture.reconciliationJournal?.action;
+  const action = fixture.preparedAgentAction?.action;
   if (action?._tag === "link-create")
     entries.push(
       action.previousEvidence === undefined
@@ -110,10 +112,10 @@ const journalFrom = (fixture: FixtureData): ReadonlyArray<JournalEntry> | undefi
     );
   if (action?._tag === "link-remove")
     entries.push({ _tag: "remove", link: agentLink(action.evidence) });
-  if (fixture.docsJournal !== undefined)
+  if (fixture.preparedDocsAction !== undefined)
     entries.push({
-      _tag: fixture.docsJournal.action,
-      link: docsLink(fixture.docsJournal.evidence),
+      _tag: fixture.preparedDocsAction.action,
+      link: docsLink(fixture.preparedDocsAction.evidence),
     });
   return entries.length === 0 ? undefined : entries;
 };
@@ -122,15 +124,15 @@ const journalFrom = (fixture: FixtureData): ReadonlyArray<JournalEntry> | undefi
 export const runtimeFixture = (fixture: FlatFixture): State => {
   const {
     choices,
-    docsJournal: _docsJournal,
-    docsManagedLinks,
+    preparedDocsAction: _preparedDocsAction,
+    docsLinks,
     docsProjects,
     journal: _journal,
     links,
-    managedLinks,
+    agentLinks,
     pendingRemovals,
     projects: authoredProjects,
-    reconciliationJournal: _reconciliationJournal,
+    preparedAgentAction: _preparedAgentAction,
     ...data
   } = fixture.data;
   const projects = (authoredProjects ?? []).map((project) => {
@@ -169,11 +171,11 @@ export const runtimeFixture = (fixture: FlatFixture): State => {
   const journal = journalFrom(fixture.data);
   // Parallel agent lists replace the agent records only: docs mounts in `links` stay.
   const agentRecords =
-    managedLinks === undefined && pendingRemovals === undefined
+    agentLinks === undefined && pendingRemovals === undefined
       ? (links ?? [])
       : [
           ...linkRecordsFrom(
-            managedLinks ?? managedLinksOf(links ?? []),
+            agentLinks ?? managedLinksOf(links ?? []),
             pendingRemovals ?? pendingRemovalsOf(links ?? []),
           ),
           ...(links ?? []).filter((record) => record.delivery._tag === "docs"),
@@ -189,7 +191,7 @@ export const runtimeFixture = (fixture: FlatFixture): State => {
       ...(journal === undefined ? {} : { journal }),
       links: canonicalLinkOrder([
         ...agentRecords,
-        ...(docsManagedLinks ?? []).map((evidence) => docsLink(evidence)),
+        ...(docsLinks ?? []).map((evidence) => docsLink(evidence)),
       ]),
     },
   };

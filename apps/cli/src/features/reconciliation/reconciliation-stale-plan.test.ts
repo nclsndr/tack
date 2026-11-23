@@ -229,7 +229,7 @@ it.layer(LiveTestLayer)("applying a plan the disk moved past", (test) => {
         ...state,
         data: {
           ...state.data,
-          reconciliationJournal: { action: { _tag: "link-create", evidence } },
+          preparedAgentAction: { action: { _tag: "link-create", evidence } },
         },
       }));
       // Applying without recovering first: the prepared destination is left for recovery.

@@ -102,7 +102,7 @@ const withLinks = <A, E, R>(count: number, use: (world: World) => Effect.Effect<
       data: {
         ...state.data,
         enabledAdapters: ["codex"],
-        managedLinks: evidence,
+        agentLinks: evidence,
         projects: [
           { gitCommonDirectory: `${canonicalRoot}/.git`, name: "project", roots: [canonicalRoot] },
         ],

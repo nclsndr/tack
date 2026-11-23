@@ -290,7 +290,7 @@ it.layer(LiveTestLayer)("status agrees with the reconciliation planner", (agreem
           ...state,
           data: {
             ...state.data,
-            managedLinks: [
+            agentLinks: [
               ...current,
               {
                 ...oldEvidence,

@@ -73,7 +73,7 @@ const interruptResetAt = Effect.fnUntraced(function* (
   const evidence = yield* interruptionEvidence(fixture);
   yield* mutateStateFixture(fixture.options, (state) => ({
     ...state,
-    data: { ...state.data, managedLinks: evidence },
+    data: { ...state.data, agentLinks: evidence },
   }));
 
   const process = yield* ChildProcess.make(

@@ -98,8 +98,8 @@ it.effect("orders every collection canonically whatever order it arrives in", ()
           { name: "zeta", gitCommonDirectory: "/z/.git", roots: ["/z/a", "/z/b"] },
           { name: "alpha", gitCommonDirectory: "/a/.git", roots: ["/a"] },
         ],
-        managedLinks: [evidence("zed"), evidence("able")],
-        docsManagedLinks: [mount("guide")],
+        agentLinks: [evidence("zed"), evidence("able")],
+        docsLinks: [mount("guide")],
       },
     });
     const document = yield* encodeState(state);

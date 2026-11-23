@@ -121,7 +121,7 @@ it.layer(LiveTestLayer)("status observation", (test) => {
       // Both adapters linked the skill before `.claude/skills` became an alias.
       yield* mutateStateFixture(options, (state) => ({
         ...state,
-        data: { ...state.data, managedLinks: [evidenceFor("claude"), evidenceFor("codex")] },
+        data: { ...state.data, agentLinks: [evidenceFor("claude"), evidenceFor("codex")] },
       }));
       const report = yield* runStatus(options, { cwd: home, selector: { _tag: "user" } });
       // The first adapter holding a record writes the physical link; the other only shares it.
@@ -153,7 +153,7 @@ it.layer(LiveTestLayer)("status observation", (test) => {
           projects: [
             { gitCommonDirectory: path.join(root, "git"), name: "demo", roots: [blocked] },
           ],
-          managedLinks: [recorded],
+          agentLinks: [recorded],
         },
       }));
       const report = yield* runStatus(options, {

@@ -120,7 +120,7 @@ it.layer(LiveTestLayer)("clean managed links", (cleanIt) => {
               ...state.data,
               choices,
               enabledAdapters: ["codex"],
-              managedLinks: [firstEvidence, disabledAdapterEvidence, blockedEvidence, userEvidence],
+              agentLinks: [firstEvidence, disabledAdapterEvidence, blockedEvidence, userEvidence],
               projects: [project],
               sources,
             },
@@ -219,7 +219,7 @@ it.layer(LiveTestLayer)("clean managed links", (cleanIt) => {
           ...state,
           data: {
             ...state.data,
-            managedLinks: [projectEvidence, userEvidence],
+            agentLinks: [projectEvidence, userEvidence],
             projects: [project],
           },
         }));
@@ -280,7 +280,7 @@ it.layer(LiveTestLayer)("clean managed links", (cleanIt) => {
           ...state,
           data: {
             ...state.data,
-            managedLinks: [projectEvidence, userEvidence, otherEvidence],
+            agentLinks: [projectEvidence, userEvidence, otherEvidence],
             projects: [project, other],
           },
         }));
@@ -359,7 +359,7 @@ it.layer(LiveTestLayer)("clean managed links", (cleanIt) => {
             data: {
               ...state.data,
               choices,
-              managedLinks: [evidence],
+              agentLinks: [evidence],
               pendingRemovals: [{ cause: "project-removal" as const, evidence }],
               projects: [removingProject],
             },
@@ -407,7 +407,7 @@ it.layer(LiveTestLayer)("clean managed links", (cleanIt) => {
           ...state,
           data: {
             ...state.data,
-            managedLinks: [evidence],
+            agentLinks: [evidence],
             pendingRemovals: [{ cause: "adapter-disable" as const, evidence }],
           },
         }));
