@@ -1,5 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "@rspress/core";
+import { definingSentence } from "./components/landing/content.ts";
 
 /** Resolves a path inside this package. */
 const local = (path: string) => fileURLToPath(new URL(path, import.meta.url));
@@ -8,8 +9,7 @@ export default defineConfig({
   root: local("./docs"),
   outDir: local("./dist"),
   title: "Tack",
-  description:
-    "Tack links the skills, commands and docs you maintain wherever your coding agents look.",
+  description: definingSentence,
   icon: "/favicon.svg",
   logo: "/favicon.svg",
   logoText: "tack",

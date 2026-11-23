@@ -1,12 +1,20 @@
 import { FeaturesPage } from "../components/features-page/features-page.tsx";
+import { socialHead } from "../components/social-head.ts";
 
-/** The features page renders without the docs navigation, sidebar or outline, as the landing does. */
+const title = "Tack features: every part, every command";
+const description =
+  "Every Tack feature, by what you care about: one repository for the team, every project and worktree, every agent, a fixed set for a CI runner, docs and scripts.";
+
+/**
+ * The features page renders without the docs navigation, sidebar or outline, as the landing does,
+ * and carries its own title and description in its head.
+ */
 export const frontmatter = {
   pageType: "custom",
   navbar: false,
-  title: "Tack features: every lens, every command",
-  description:
-    "Every Tack feature, by what you care about: set up once, reach every agent, per project, docs, scripts and profiles.",
+  title,
+  description,
+  head: socialHead({ title, description }),
 };
 
 export default function Features() {

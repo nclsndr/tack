@@ -39,7 +39,8 @@
 }
 
 /* The facts: short and plain, set off by brass ticks as the drafting marks are. */
-.fp-facts {
+.fp-facts,
+.landing-facts {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 24px;
@@ -51,13 +52,15 @@
   font-size: 13px;
 }
 
-.fp-facts li {
+.fp-facts li,
+.landing-facts li {
   display: inline-flex;
   align-items: center;
   gap: 10px;
 }
 
-.fp-facts li::before {
+.fp-facts li::before,
+.landing-facts li::before {
   content: "";
   width: 7px;
   height: 7px;

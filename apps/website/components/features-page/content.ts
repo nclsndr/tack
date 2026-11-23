@@ -34,10 +34,15 @@ export const keyDetails = 3;
 export const intro = {
   label: "Features",
   heading: "Everything Tack does, in six parts.",
+  /** The team's pain, then one developer's, then what both share. */
   problem:
-    "Every coding agent looks for your setup in its own folder, in every project and every worktree. You fix one copy and the others drift.",
-  tagline: "Write a skill once. Tack links it wherever your agents look, in every project.",
-  facts: ["Local CLI", "No account, no telemetry", "Open source, MIT"],
+    "A team's skills end up copied into each repository, each worktree and each laptop, and never reach the CI runner. Working alone, you copy the same skills into each project and each new worktree, or write a link script that covers one folder. You fix one copy and the others drift.",
+  tagline: "One setup, in every agent, project, worktree and CI runner.",
+  facts: [
+    "Preview before every write",
+    "No account, no registry, no telemetry",
+    "Open source, MIT",
+  ],
   limitsLink: "What Tack does not do yet ↓",
   indexLabel: "Jump to",
 } as const;
@@ -313,7 +318,10 @@ export const docsFigure = {
   alt: "Screenshot: the Tack docs reader showing an architecture walkthrough, with its document index, metadata and a figure.",
 } as const;
 
-/** The parts, in the order the page shows them. */
+/**
+ * The parts, in the order the page shows them: where the set lives, then what reaches each
+ * project and agent, the fixed set for a runner, then the docs and scripts the skills need.
+ */
 export const lenses = [
   {
     id: "sources",
@@ -338,7 +346,7 @@ export const lenses = [
       },
       {
         title: "Skills from GitHub, copied into your source.",
-        text: "Tack copies the skills you choose into a source you own and records where they came from. The next sync links them into your projects; at user level a skill is opt-in by default, so it reaches you there only once you pick it.",
+        text: "Tack copies the skills you choose into a source you own and records where they came from. The copy is yours: it changes only when you commit a change. The next sync links them into your projects; at user level a skill is opt-in by default, so it reaches you there only once you pick it.",
         command: "tack import add github:org/repo --skill pdf --into agent-setup",
       },
       {
@@ -357,47 +365,6 @@ export const lenses = [
       {
         title: "Move the folder, keep the setup.",
         text: "`tack source relocate` points a registered source at its new folder. It keeps its registration, so every pick stays, and the next sync points the links at the new folder.",
-      },
-    ],
-  },
-  {
-    id: "agents",
-    name: "Agents",
-    when: "You use more than one coding agent, or want to try the next one.",
-    claim: "One skill, in every agent's folder.",
-    lines: [
-      "Claude Code, Cline, Codex, GitHub Copilot CLI, Cursor, Gemini CLI, OpenCode and Pi each look for skills in their own folder. Tack links one skill folder into each of them.",
-      "Edit the skill once and every agent sees the change, because each one reads the same folder.",
-    ],
-    proof: "tack sync --project app",
-    details: [
-      {
-        title: "Add an agent at any time.",
-        text: "Enable it, and the next sync links every skill you already use into its folder.",
-        command: "tack adapter enable opencode pi",
-      },
-      {
-        title: "Commands where agents read them.",
-        text: "Cline, Cursor, OpenCode and Pi also get your commands, as the same Markdown file; Cline calls them workflows and Pi prompt templates. Claude Code, Codex, Copilot CLI and Gemini CLI get skills only.",
-      },
-      {
-        title: "Your agent can run Tack.",
-        text: "After `tack init`, every enabled agent has Tack's built-in skills, `use-tack` among them, and `tack guide onboarding` prints setup steps for an agent to follow.",
-        command: "tack guide onboarding",
-      },
-      {
-        title: "Turn an agent off cleanly.",
-        text: "Disabling an agent previews removing its links. Tack removes only the links it made.",
-        command: "tack adapter disable cursor",
-      },
-      {
-        title: "Finds the agents you have.",
-        text: "`tack init` enables each agent whose folder exists in your home: `~/.claude`, `~/.cline` or `~/Documents/Cline`, `~/.codex` or `~/.agents`, `~/.copilot`, `~/.cursor`, `~/.gemini`, `~/.config/opencode`, `~/.pi`.",
-      },
-      {
-        title: "For you, or for one project.",
-        text: "Pick a skill for yourself with `--user` and every project sees it, or pick it for one project's own agent folders; the next sync links it.",
-        command: "tack pick include review --user",
       },
     ],
   },
@@ -444,85 +411,43 @@ export const lenses = [
     ],
   },
   {
-    id: "docs",
-    name: "Docs",
-    when: "Your agents should read the same docs your team does.",
-    claim: "Docs your agents can search and you can read.",
+    id: "agents",
+    name: "Agents",
+    when: "You use more than one coding agent, or want to try the next one.",
+    claim: "One skill, whatever agent reads it.",
     lines: [
-      "Attach a source's docs to a project, then sync: every worktree gets them under `.tack/docs`, as links to the one copy you maintain.",
-      "Agents search them from the terminal. You read them in a local reader that reloads when you save.",
+      "Agents read skills from a few folders: most read `.agents/skills`, Claude Code reads `.claude/skills`, and some read a folder of their own. Tack links one skill folder into the folder of each agent you turn on, so nobody has to know which agent reads what.",
+      "Edit the skill once and every agent sees the change, because each one reads the same folder.",
     ],
-    proof: "tack docs attach handbook --project app",
+    proof: "tack sync --project app",
     details: [
       {
-        title: "Search with sources.",
-        text: "Each hit names its file and the lines it came from, without starting a server.",
-        command: 'tack docs search "release process" --project app',
+        title: "Add an agent at any time.",
+        text: "Enable it, and the next sync links every skill you already use into its folder.",
+        command: "tack adapter enable opencode pi",
       },
       {
-        title: "A local reader.",
-        text: "One view of every attached source, with search, metadata filters and an Open in editor menu for Zed, Cursor and VSCode.",
-        command: "tack docs serve --project app",
+        title: "Commands where agents read them.",
+        text: "Cline, Cursor, OpenCode and Pi also get your commands, as the same Markdown file; Cline calls them workflows and Pi prompt templates. Claude Code, Codex, Copilot CLI and Gemini CLI get skills only.",
       },
       {
-        title: "Where to write new docs.",
-        text: "`tack docs target` gives an agent the verified folder to write new documents into.",
-        command: "tack docs target --project app",
+        title: "Your agent can run Tack.",
+        text: "After `tack init`, every enabled agent has Tack's built-in skills, `use-tack` among them, and `tack guide onboarding` prints setup steps for an agent to follow.",
+        command: "tack guide onboarding",
       },
       {
-        title: "Copy that cites its source.",
-        text: "Copy a passage as rendered text with its source lines, as raw Markdown, or as references only, ready to hand to an agent.",
+        title: "Turn an agent off cleanly.",
+        text: "Disabling an agent previews removing its links. Tack removes only the links it made.",
+        command: "tack adapter disable cursor",
       },
       {
-        title: "Figures that stay true.",
-        text: "Docs can draw architecture maps, systems, schemas, file trees, walkthroughs and charts. The built-in `write-reader-figures` skill teaches agents to write them.",
+        title: "Finds the agents you have.",
+        text: "`tack init` enables each agent whose folder exists in your home: `~/.claude`, `~/.cline` or `~/Documents/Cline`, `~/.codex` or `~/.agents`, `~/.copilot`, `~/.cursor`, `~/.gemini`, `~/.config/opencode`, `~/.pi`.",
       },
       {
-        title: "Checked like code.",
-        text: "`tack check` reads a document's figures and components without a browser and reports each issue by line.",
-        command: "tack check docs/architecture.mdx",
-      },
-    ],
-  },
-  {
-    id: "scripts",
-    name: "Scripts",
-    when: "Your agents should run your tools without seeing every secret.",
-    claim: "Scripts, run by name, with only the secrets they declare.",
-    lines: [
-      "Declare a TypeScript script in your source. Run it by name in any registered project.",
-      "Each run gets a fresh worker and only the secrets the script declares, and leaves a history.",
-    ],
-    proof: "tack script run report --project app",
-    details: [
-      {
-        title: "See before you run.",
-        text: "`tack script show` prints a script's arguments and secrets. It loads the script but never runs it.",
-        command: "tack script show report",
-      },
-      {
-        title: "Secrets stay redacted.",
-        text: "Secret values come from `TACK_<NAME>` in Tack's `.env` or your environment. Logs and results show `<redacted>`.",
-      },
-      {
-        title: "Every run, on record.",
-        text: "History keeps each run's input, logs and outcome until you clear it.",
-        command: "tack script history",
-      },
-      {
-        title: "Arguments, checked.",
-        text: "Pass arguments after `--`, or as JSON. Every problem is reported at once, before the script runs.",
-        command: "tack script run report --project app -- --repo org/app",
-      },
-      {
-        title: "Typed in your editor.",
-        text: "`tack types` writes the script API's types into the source, from the Tack you run.",
-        command: "tack types ~/agent-setup --apply",
-      },
-      {
-        title: "A run that stops on time.",
-        text: "`--timeout` interrupts a run and waits for its cleanup.",
-        command: "tack script run report --project app --timeout 30000",
+        title: "For you, or for one project.",
+        text: "Pick a skill for yourself with `--user` and every project sees it, or pick it for one project's own agent folders; the next sync links it.",
+        command: "tack pick include review --user",
       },
     ],
   },
@@ -564,6 +489,89 @@ export const lenses = [
       {
         title: "Visible everywhere.",
         text: "`tack status` and `tack doctor` show the profile a project runs, with its links.",
+      },
+    ],
+  },
+  {
+    id: "docs",
+    name: "Docs",
+    when: "Your agents should read the same docs your team does.",
+    claim: "Your team's docs, in every worktree.",
+    lines: [
+      "Attach a source's docs to a project, then sync: every worktree gets them under `.tack/docs`, as links to the one copy you maintain.",
+      "Agents read them there, or search them with `tack docs search`. You read them in a local reader that reloads when you save.",
+    ],
+    proof: "tack docs attach handbook --project app",
+    details: [
+      {
+        title: "Search with sources.",
+        text: "Each hit names its file and the lines it came from, without starting a server.",
+        command: 'tack docs search "release process" --project app',
+      },
+      {
+        title: "A local reader.",
+        text: "One view of every attached source, with search, metadata filters and an Open in editor menu for Zed, Cursor and VSCode.",
+        command: "tack docs serve --project app",
+      },
+      {
+        title: "Where to write new docs.",
+        text: "`tack docs target` gives an agent the verified folder to write new documents into.",
+        command: "tack docs target --project app",
+      },
+      {
+        title: "Copy that cites its source.",
+        text: "Copy a passage as rendered text with its source lines, as raw Markdown, or as references only, ready to hand to an agent.",
+      },
+      {
+        title: "Figures that stay true.",
+        text: "Docs can draw architecture maps, systems, schemas, file trees, walkthroughs and charts. The built-in `write-reader-figures` skill teaches agents to write them.",
+      },
+      {
+        title: "Checked like code.",
+        text: "`tack check` reads a document's figures and components without a browser and reports each issue by line.",
+        command: "tack check docs/architecture.mdx",
+      },
+    ],
+  },
+  {
+    id: "scripts",
+    name: "Scripts",
+    when: "Your skills call scripts, and each script needs a secret or two.",
+    claim: "The scripts your skills call, declared beside them.",
+    lines: [
+      "Declare a TypeScript script in your source. Run it by name in any registered project.",
+      "Each run gets a fresh worker and only the secrets the script declares, and leaves a history.",
+    ],
+    proof: "tack script run report --project app",
+    details: [
+      {
+        title: "See before you run.",
+        text: "`tack script show` prints a script's arguments and secrets. It loads the script but never runs it.",
+        command: "tack script show report",
+      },
+      {
+        title: "Secrets stay redacted.",
+        text: "Secret values come from `TACK_<NAME>` in Tack's `.env` or your environment. Logs and results show `<redacted>`.",
+      },
+      {
+        title: "Every run, on record.",
+        text: "History keeps each run's input, logs and outcome until you clear it.",
+        command: "tack script history",
+      },
+      {
+        title: "Arguments, checked.",
+        text: "Pass arguments after `--`, or as JSON. Every problem is reported at once, before the script runs.",
+        command: "tack script run report --project app -- --repo org/app",
+      },
+      {
+        title: "Typed in your editor.",
+        text: "`tack types` writes the script API's types into the source, from the Tack you run.",
+        command: "tack types ~/agent-setup --apply",
+      },
+      {
+        title: "A run that stops on time.",
+        text: "`--timeout` interrupts a run and waits for its cleanup.",
+        command: "tack script run report --project app --timeout 30000",
       },
     ],
   },

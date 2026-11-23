@@ -7,11 +7,15 @@
 > [!WARNING]
 > Tack is under active development and is not yet published to npm.
 
-<p align="center"><strong>One setup. Every coding agent.</strong></p>
+<p align="center"><strong>One setup. Every agent, project and worktree.</strong></p>
 
 <p align="center">
-  Write your agent setup once, in a folder you own or share: skills, commands, context, docs and
-  scripts. Tack links it wherever your agents look, for you and for every project and worktree.
+  Keep your skills and docs in one repository, yours or your team's. Tack links them into every
+  project and worktree, for each agent you use, and shows the plan before it writes.
+</p>
+
+<p align="center">
+  Claude Code, Codex, Cursor, GitHub Copilot CLI, Gemini CLI, Cline, OpenCode and Pi today.
 </p>
 
 <p align="center">
@@ -22,15 +26,19 @@
 
 ## Why Tack
 
-Every coding agent looks for your setup in its own place. Claude Code reads `.claude/skills`,
-Codex reads `.agents/skills`, Cursor reads `.cursor/skills` and `.cursor/commands`, GitHub Copilot
-CLI reads `.github/skills`, Gemini CLI reads `.gemini/skills`, Cline reads `.cline/skills` and
-`.clinerules/workflows`, OpenCode reads `.opencode/skills` and `.opencode/commands`, and Pi reads
-`.pi/skills` and `.pi/prompts`. Each project keeps its own copy, and each worktree keeps another.
-Docs and scripts end up pasted wherever they were last needed. You fix one copy, and the others
-drift. When you try a new agent, you start again.
+A team's skills end up copied into each repository, each worktree and each laptop, and never reach
+the CI runner. Working alone, you copy the same skills into each project and each new worktree, or
+write a link script that covers one folder. You fix one copy and the others drift.
 
-Tack keeps one copy of your setup, the one you maintain, and links it everywhere it is needed.
+Tack keeps one copy, in a repository you own, and links it where it is needed:
+
+- into the agent each teammate uses: Claude Code, Codex, Cursor, GitHub Copilot CLI, Gemini CLI,
+  Cline, OpenCode or Pi;
+- into every project you register, with its own set of skills, and into every worktree of it;
+- onto a CI runner or a remote agent, from one bundle file, with no fetch.
+
+Apart from `tack init`, which sets Tack up, every command that changes links shows its plan first
+and writes nothing until you add `--apply`.
 
 ## What Tack manages
 
@@ -45,14 +53,15 @@ Tack keeps one copy of your setup, the one you maintain, and links it everywhere
 
 ## How it works
 
-- **Your setup stays yours.** It stays in your folders, under your version control. Agents get
-  symbolic links, never copies. Tack records each link it creates and removes only those.
-- **Every agent, every project, every worktree.** One source reaches Claude Code, Codex, Cursor,
-  GitHub Copilot CLI, Gemini CLI, Cline, OpenCode and Pi, for you and in each registered project,
-  and Tack links each worktree of a project too.
+- **One setup for the whole team.** Keep the setup in one Git repository, yours or your team's,
+  under your own version control. Each teammate clones it, adds it with `tack source add` and links
+  it into the agent they use. Edits arrive with `git pull`.
 - **Preview first.** `tack sync` shows the plan. Nothing changes until you add `--apply`.
-- **One setup for the whole team.** Keep the setup in one Git repository. Each teammate clones it,
-  adds it with `tack source add` and links it into the agent they use.
+- **Every project, every worktree.** Each registered project picks its own skills, and every
+  worktree of a project gets the same links.
+- **Every agent.** One source reaches Claude Code, Codex, Cursor, GitHub Copilot CLI, Gemini CLI,
+  Cline, OpenCode and Pi, for you and in each registered project. Agents get symbolic links, never
+  copies. Tack records each link it creates and removes only those.
 - **Your agent can run it.** Tack ships a `use-tack` skill that teaches agents its commands. Every
   view ends with the next command to run, and `--json` gives scripts a stable contract.
 
