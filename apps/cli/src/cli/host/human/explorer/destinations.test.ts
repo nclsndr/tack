@@ -1,3 +1,4 @@
+import { skillText } from "../../../../../test/support/source-tree.ts";
 import { fakeGit } from "../../../../../test/support/fake-git.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
@@ -35,7 +36,11 @@ const workspace = Effect.fnUntraced(function* () {
   );
   yield* fs.writeFileString(
     path.join(source, "skills", "review", "SKILL.md"),
-    "---\nname: review\ndescription: Review\nmetadata:\n  tack: |\n    version: 1\n    dependencies:\n      - kind: skill\n        name: helper\n---\n",
+    skillText("review", {
+      description: "Review",
+      tack: ["dependencies:", "  - kind: skill", "    name: helper"],
+      body: "",
+    }),
   );
   for (const project of ["demo", "other"]) yield* fs.makeDirectory(path.join(root, project));
   yield* initializeState(options);
@@ -121,7 +126,7 @@ it.layer(LiveTestLayer)("explorer destinations", (test) => {
       yield* fs.makeDirectory(path.join(source, "skills", "helper"));
       yield* fs.writeFileString(
         path.join(source, "skills", "helper", "SKILL.md"),
-        "---\nname: helper\ndescription: Helper\n---\n",
+        skillText("helper", { description: "Helper", body: "" }),
       );
       yield* fs.makeDirectory(path.join(source, "profiles"));
       yield* fs.writeFileString(

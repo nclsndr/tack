@@ -1,3 +1,4 @@
+import { skillText } from "./support/source-tree.ts";
 import { fakeGit } from "./support/fake-git.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { BunServices } from "@effect/platform-bun";
@@ -85,7 +86,11 @@ it.layer(LiveTestLayer)("browse destinations", (test) => {
         yield* fs.writeFileString(path.join(sourcePath, "lint.md"), "Lint");
         yield* fs.writeFileString(
           path.join(sourcePath, "skills/review/SKILL.md"),
-          "---\nname: review\ndescription: Review\nmetadata:\n  tack: |\n    version: 1\n    dependencies:\n      - kind: command\n        name: lint\n---\n",
+          skillText("review", {
+            description: "Review",
+            tack: ["dependencies:", "  - kind: command", "    name: lint"],
+            body: "",
+          }),
         );
         yield* fs.symlink(sourcePath, path.join(root, "alias"));
         const style = makeStyle({ color: false, width: 120, homeDirectory: root });

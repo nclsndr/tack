@@ -1,3 +1,4 @@
+import { bareSkillText, skillText } from "./support/source-tree.ts";
 import { decodeEnvelope, type ProcessResult } from "./support/tack-process.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Schema } from "effect";
@@ -65,7 +66,7 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
         const files: ReadonlyArray<SkillFile> = [
           {
             path: "SKILL.md",
-            bytes: new TextEncoder().encode("---\nname: pdf\ndescription: pdf\n---\n"),
+            bytes: new TextEncoder().encode(bareSkillText("pdf")),
             executable: false,
           },
         ];
@@ -97,7 +98,7 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
         });
         yield* fs.writeFileString(
           path.join(fixture.sourceDirectory, "skills/pdf/SKILL.md"),
-          "---\nname: pdf\ndescription: edited\n---\n",
+          skillText("pdf", { description: "edited", body: "" }),
         );
         const edited = doctorOf(yield* hostTack(fixture, ["doctor"])).report;
         expect(outcomeOf(edited, "imports")).toMatchObject({ outcome: "ok" });
@@ -205,7 +206,11 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
           yield* fs.makeDirectory(path.join(fixture.sourceDirectory, "skills", "needs-lint"));
           yield* fs.writeFileString(
             path.join(fixture.sourceDirectory, "skills", "needs-lint", "SKILL.md"),
-            "---\nname: needs-lint\ndescription: Needs lint\nmetadata:\n  tack: |\n    version: 1\n    dependencies:\n      - kind: skill\n        name: lint\n        source: missing\n---\n",
+            skillText("needs-lint", {
+              description: "Needs lint",
+              tack: ["dependencies:", "  - kind: skill", "    name: lint", "    source: missing"],
+              body: "",
+            }),
           );
           const { report } = doctorOf(yield* hostTack(fixture, ["doctor"]));
           expect(outcomeOf(report, "unregistered-dependency-source")).toMatchObject({

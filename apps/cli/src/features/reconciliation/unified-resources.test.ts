@@ -1,3 +1,4 @@
+import { skillText } from "../../../test/support/source-tree.ts";
 import { fakeGit } from "../../../test/support/fake-git.ts";
 import { writeUnder } from "../../../test/support/source-tree.ts";
 import { setSkillChoice } from "../../../test/support/snapshot-helpers.ts";
@@ -48,7 +49,7 @@ const fixture = Effect.fnUntraced(function* () {
   );
   yield* write(
     "skills/review/SKILL.md",
-    "---\nname: review\ndescription: Review\nmetadata:\n  tack: |\n    version: 1\n    user-activation: default\n---\n",
+    skillText("review", { description: "Review", tack: ["user-activation: default"], body: "" }),
   );
   yield* write("context/notes/design.md", "Context\n");
   yield* initializeState(options);

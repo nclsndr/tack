@@ -1,3 +1,4 @@
+import { skillText } from "./support/source-tree.ts";
 import { writeUnder, seedSource, bareSkillText } from "./support/source-tree.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
@@ -73,7 +74,10 @@ it.layer(LiveTestLayer)("fixed profile authoring", (test) => {
       expect(examples).toHaveLength(2);
       yield* write("owner/tack.yaml", examples[0] ?? "");
       yield* write("owner/profiles/ci.yaml", examples[1] ?? "");
-      yield* write("owner/skills/review/SKILL.md", "---\nname: review\ndescription: Review\n---\n");
+      yield* write(
+        "owner/skills/review/SKILL.md",
+        skillText("review", { description: "Review", body: "" }),
+      );
       yield* write("team/tack.yaml", "version: 1\nname: team\ncommands: [{path: audit.md}]\n");
       yield* write("team/audit.md", "Audit");
       yield* initializeState(options);

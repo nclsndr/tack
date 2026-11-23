@@ -1,3 +1,4 @@
+import { skillText } from "./support/source-tree.ts";
 import { encodeBundle, makeBundleManifest } from "../src/domain/bundles/bundle-codec.ts";
 import { registerSource } from "../src/features/sources/source.ts";
 import { expect, it } from "@effect/vitest";
@@ -197,7 +198,7 @@ it.layer(LiveTestLayer)("content-only profile bundles", (test) => {
         yield* write("team/tack.yaml", "version: 2\nname: team\nskills: [{path: skills}]\n");
         yield* write(
           "team/skills/lint/SKILL.md",
-          "---\nname: lint\ndescription: Exported lint\n---\nFrozen lint",
+          skillText("lint", { description: "Exported lint", body: "Frozen lint" }),
         );
         yield* registerSource(options, { sourcePath: path.join(root, "team") });
         yield* write(
@@ -206,7 +207,11 @@ it.layer(LiveTestLayer)("content-only profile bundles", (test) => {
         );
         yield* write(
           "source/skills/review/SKILL.md",
-          "---\nname: review\ndescription: Review\nmetadata:\n  tack: |\n    version: 1\n    dependencies:\n      - kind: skill\n        name: lint\n        source: team\n---\nFrozen review",
+          skillText("review", {
+            description: "Review",
+            tack: ["dependencies:", "  - kind: skill", "    name: lint", "    source: team"],
+            body: "Frozen review",
+          }),
         );
         yield* write(
           "source/ci.yaml",
@@ -222,11 +227,11 @@ it.layer(LiveTestLayer)("content-only profile bundles", (test) => {
         const originals = (yield* readState(options)).data.sources;
         yield* write(
           "source/skills/review/SKILL.md",
-          "---\nname: review\ndescription: Newer review\n---\nNEWER",
+          skillText("review", { description: "Newer review", body: "NEWER" }),
         );
         yield* write(
           "team/skills/lint/SKILL.md",
-          "---\nname: lint\ndescription: Newer lint\n---\nNEWER",
+          skillText("lint", { description: "Newer lint", body: "NEWER" }),
         );
         const result = yield* run(runBundleApply(options, { ...request, file }));
         expect(result.plan.refused, JSON.stringify(result.plan.findings)).toBe(false);

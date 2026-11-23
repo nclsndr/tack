@@ -1,3 +1,4 @@
+import { skillText } from "./support/source-tree.ts";
 import { fakeGit } from "./support/fake-git.ts";
 import { mutateStateFixture } from "./support/state-fixture.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
@@ -85,7 +86,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
         );
         yield* fs.writeFileString(
           path.join(source, "skills", "review", "SKILL.md"),
-          "---\nname: review\ndescription: Review\n---\n",
+          skillText("review", { description: "Review", body: "" }),
         );
         const git = fakeGit(root, [{ path: root }]);
         const args = (command: string) => ["--state-dir", stateDirectory, command];
@@ -146,7 +147,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
       });
       yield* fileSystem.writeFileString(
         path.join(relocatedSource, "skills", "valid", "SKILL.md"),
-        "---\nname: valid\ndescription: Valid\n---\n",
+        skillText("valid", { description: "Valid", body: "" }),
       );
       const git = fakeGit(yield* fileSystem.realPath(anchor), [
         { path: yield* fileSystem.realPath(projectRoot) },

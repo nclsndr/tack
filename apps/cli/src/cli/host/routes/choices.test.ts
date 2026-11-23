@@ -1,3 +1,4 @@
+import { skillText } from "../../../../test/support/source-tree.ts";
 import { writeUnder } from "../../../../test/support/source-tree.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
@@ -21,9 +22,15 @@ const scene = Effect.gen(function* () {
     "version: 2\nname: tools\nskills: [{path: skills}]\ncommands: [{path: review.md}]\n",
   );
   yield* write("tools/review.md", "Review the change");
-  yield* write("tools/skills/review/SKILL.md", "---\nname: review\ndescription: Review\n---\n");
+  yield* write(
+    "tools/skills/review/SKILL.md",
+    skillText("review", { description: "Review", body: "" }),
+  );
   yield* write("more/tack.yaml", "version: 2\nname: more\nskills: [{path: skills}]\n");
-  yield* write("more/skills/review/SKILL.md", "---\nname: review\ndescription: Review\n---\n");
+  yield* write(
+    "more/skills/review/SKILL.md",
+    skillText("review", { description: "Review", body: "" }),
+  );
   const options = {
     environment: { TACK_STATE_DIR: path.join(root, "state") },
     homeDirectory: path.join(root, "home"),

@@ -1,3 +1,4 @@
+import { skillText } from "./support/source-tree.ts";
 import { fakeGit } from "./support/fake-git.ts";
 import { writeUnder } from "./support/source-tree.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
@@ -42,7 +43,7 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
         yield* write("source/tack.yaml", "version: 1\nname: tools\nskills:\n  - path: skills\n");
         yield* write(
           "source/skills/review/SKILL.md",
-          "---\nname: review\ndescription: Review changes\n---\n",
+          skillText("review", { description: "Review changes", body: "" }),
         );
         const directory = path.join(root, "source");
         yield* run(root, state, ["state", "init"]);

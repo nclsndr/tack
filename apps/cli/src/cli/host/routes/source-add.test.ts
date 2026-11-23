@@ -1,3 +1,4 @@
+import { skillText } from "../../../../test/support/source-tree.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "../../../../test/support/live-test-layer.ts";
@@ -20,7 +21,7 @@ it.layer(LiveTestLayer)("source add route", (test) => {
         yield* fs.makeDirectory(path.join(folder, "skills", "review"), { recursive: true });
         yield* fs.writeFileString(
           path.join(folder, "skills", "review", "SKILL.md"),
-          "---\nname: review\ndescription: Review a change.\n---\nReview.\n",
+          skillText("review", { description: "Review a change.", body: "Review.\n" }),
         );
         // No `initialAdapters`: the new state would enable no agent, and the preview says so.
         const preview = yield* routeOutcome(

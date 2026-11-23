@@ -1,3 +1,4 @@
+import { skillText } from "./support/source-tree.ts";
 import { managedLinksOf } from "../src/domain/links/link-record-schema.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Schema } from "effect";
@@ -66,7 +67,7 @@ it.layer(LiveTestLayer)("releasing links changed outside Tack", (releaseIt) => {
           yield* fileSystem.makeDirectory(moved, { recursive: true });
           yield* fileSystem.writeFileString(
             path.join(moved, "SKILL.md"),
-            "---\nname: valid\ndescription: Valid skill\n---\n",
+            skillText("valid", { description: "Valid skill", body: "" }),
           );
           for (const link of links) {
             yield* fileSystem.remove(link);

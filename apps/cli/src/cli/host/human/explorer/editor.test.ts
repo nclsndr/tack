@@ -51,7 +51,7 @@ const workspace = Effect.fnUntraced(function* (adapters: ReadonlyArray<"claude">
   yield* fs.writeFileString(path.join(source, "knowledge", "hello.md"), "# Hello\n");
   yield* fs.writeFileString(
     path.join(source, "skills", "review", "SKILL.md"),
-    "---\nname: review\ndescription: Review a change.\n---\n# Review\n",
+    skillText("review", { description: "Review a change.", body: "# Review\n" }),
   );
   yield* initializeState(options);
   yield* registerSource(options, { sourcePath: source });
@@ -393,7 +393,7 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
       );
       yield* fs.writeFileString(
         path.join(other, "skills", "review", "SKILL.md"),
-        "---\nname: review\ndescription: Another review.\n---\n# Review\n",
+        skillText("review", { description: "Another review.", body: "# Review\n" }),
       );
       yield* registerSource(options, { sourcePath: other });
       const { editor } = yield* editorFor({ _tag: "user" });

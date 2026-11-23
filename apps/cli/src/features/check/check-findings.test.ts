@@ -19,7 +19,10 @@ it.layer(LiveTestLayer)("check findings", (test) => {
     Effect.gen(function* () {
       const { path, root, write } = yield* sourceFolder;
       yield* write("tools/tack.yaml", "version: 1\nname: tack\nskills: [{path: skills}]\n");
-      yield* write("tools/skills/review/SKILL.md", "---\nname: review\ndescription: Review\n---\n");
+      yield* write(
+        "tools/skills/review/SKILL.md",
+        skillText("review", { description: "Review", body: "" }),
+      );
       const report = yield* checkPaths([path.join(root, "tools")]);
       expect(report.findings).toContainEqual(
         expect.objectContaining({

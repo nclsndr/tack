@@ -1,3 +1,4 @@
+import { skillText } from "./support/source-tree.ts";
 import { git } from "./support/tack-process.ts";
 import { afterAll, expect, it } from "vitest";
 import { lstat, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
@@ -28,7 +29,7 @@ it("starts from an empty directory and writes one format 1 file that status read
   );
   await writeFile(
     join(source, "skills", "pdf", "SKILL.md"),
-    "---\nname: pdf\ndescription: Read PDFs\n---\n",
+    skillText("pdf", { description: "Read PDFs", body: "" }),
   );
   await writeFile(join(source, "knowledge", "index.md"), "# Handbook\n");
   await git(project, ["init", "-q"]);

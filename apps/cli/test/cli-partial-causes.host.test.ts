@@ -306,7 +306,10 @@ it.layer(LiveTestLayer)("structured partial causes", (causesIt) => {
       );
       yield* fileSystem.writeFileString(
         path.join(requester, "SKILL.md"),
-        "---\nname: requester\ndescription: requester skill\nmetadata:\n  tack: |\n    version: 1\n    activation: default\n    dependencies:\n      - kind: skill\n        name: helper\n---\n",
+        skillText("requester", {
+          tack: ["activation: default", "dependencies:", "  - kind: skill", "    name: helper"],
+          body: "",
+        }),
       );
       const planning = ["sync", "--project", "workspace", "--adapter", "cursor"];
       expect((yield* tack([...planning, "--apply"])).classification).toBe("success");

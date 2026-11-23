@@ -1,3 +1,4 @@
+import { skillText } from "./support/source-tree.ts";
 import { builtinSkillLockReason } from "../src/domain/choices/builtin.ts";
 import { makeExplorerDestinations } from "../src/cli/host/human/explorer/profile-editor.ts";
 import { initialExplorerState } from "../src/cli/host/human/explorer/model.ts";
@@ -26,7 +27,7 @@ const fixture = Effect.gen(function* () {
   yield* current.write("builtins/tack.yaml", "version: 1\nskills: [{path: skills}]\n");
   yield* current.write(
     "builtins/skills/always-help/SKILL.md",
-    "---\nname: always-help\ndescription: Release-owned helper\n---\n",
+    skillText("always-help", { description: "Release-owned helper", body: "" }),
   );
   const builtin = {
     id: "11111111-1111-4111-8111-111111111111",
@@ -51,7 +52,7 @@ it.layer(LiveTestLayer)("release-owned profile members", (test) => {
         const f = yield* fixture;
         yield* f.write(
           "source/skills/always-help/SKILL.md",
-          "---\nname: always-help\ndescription: Ordinary authored helper\n---\n",
+          skillText("always-help", { description: "Ordinary authored helper", body: "" }),
         );
         yield* mutateStateFixture(f.options, (state) => ({
           ...state,
@@ -309,7 +310,7 @@ it.layer(LiveTestLayer)("release-owned profile members", (test) => {
         const f = yield* fixture;
         yield* f.write(
           "source/skills/always-help/SKILL.md",
-          "---\nname: always-help\ndescription: Ordinary authored helper\n---\n",
+          skillText("always-help", { description: "Ordinary authored helper", body: "" }),
         );
         const before = yield* readState(f.options);
         yield* f.withBuiltins(

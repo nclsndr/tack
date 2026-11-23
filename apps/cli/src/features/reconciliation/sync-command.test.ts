@@ -1,3 +1,4 @@
+import { skillText } from "../../../test/support/source-tree.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
@@ -27,7 +28,7 @@ it.layer(LiveTestLayer)("combined sync", (test) => {
       );
       yield* fs.writeFileString(
         path.join(source, "skills", "review", "SKILL.md"),
-        "---\nname: review\ndescription: Review\nmetadata:\n  tack: |\n    version: 1\n    activation: default\n---\n",
+        skillText("review", { description: "Review", tack: ["activation: default"], body: "" }),
       );
       yield* fs.writeFileString(path.join(source, "knowledge", "start.md"), "# Start\n");
       const options: StateOptions = {

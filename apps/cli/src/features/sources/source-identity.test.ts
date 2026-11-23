@@ -1,3 +1,4 @@
+import { skillText } from "../../../test/support/source-tree.ts";
 import { resolveCatalogAt } from "../../../test/support/snapshot-helpers.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
@@ -28,7 +29,7 @@ it.layer(LiveTestLayer)("source resource identity", (test) => {
           );
           yield* fs.writeFileString(
             path.join(source, "skills", "review", "SKILL.md"),
-            "---\nname: review\ndescription: Review\n---\n",
+            skillText("review", { description: "Review", body: "" }),
           );
           yield* registerSource(options, { sourcePath: source });
         }
@@ -38,7 +39,7 @@ it.layer(LiveTestLayer)("source resource identity", (test) => {
         });
         yield* fs.writeFileString(
           path.join(team, "private", "skills", "secret", "SKILL.md"),
-          "---\nname: secret\ndescription: Secret\n---\n",
+          skillText("secret", { description: "Secret", body: "" }),
         );
         const catalog = yield* resolveCatalogAt(options);
         expect(catalog.entries.map((entry) => entry.address.name)).toEqual(["review", "review"]);

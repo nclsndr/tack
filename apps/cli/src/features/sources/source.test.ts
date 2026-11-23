@@ -1,3 +1,4 @@
+import { skillText } from "../../../test/support/source-tree.ts";
 import { withStateFixture } from "../../../test/support/state-fixture.ts";
 import { inspectSourcesAt, resolveCatalogAt } from "../../../test/support/snapshot-helpers.ts";
 
@@ -98,7 +99,7 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
         yield* fs.makeDirectory(reservedSkill, { recursive: true });
         yield* fs.writeFileString(
           path.join(reservedSkill, "SKILL.md"),
-          "---\nname: reserved\ndescription: Reserved source test\n---\n",
+          skillText("reserved", { description: "Reserved source test", body: "" }),
         );
         const inspections = yield* inspectSourcesAt(options).pipe(
           Effect.provideService(Source, makeSourceService(random, fs, path, [builtin])),
@@ -574,7 +575,7 @@ it.layer(LiveTestLayer)("source registration", (sourceIt) => {
         yield* fs.makeDirectory(skillDirectory, { recursive: true });
         yield* fs.writeFileString(
           path.join(skillDirectory, "SKILL.md"),
-          "---\nname: use-tack\ndescription: Built-in test skill\n---\n",
+          skillText("use-tack", { description: "Built-in test skill", body: "" }),
         );
         yield* Effect.gen(function* () {
           expect(yield* registerSource(options, { sourcePath: canonicalPath })).toEqual({

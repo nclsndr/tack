@@ -1,3 +1,4 @@
+import { skillText } from "./support/source-tree.ts";
 import { pendingRemovalsOf } from "../src/domain/links/link-record-schema.ts";
 import { projectRecords } from "./support/state-fixture.ts";
 import { allSkillChoices } from "../src/domain/state/state-intent.ts";
@@ -35,7 +36,11 @@ it.layer(LiveTestLayer)("project refresh against real Git", (refreshIt) => {
           yield* fileSystem.makeDirectory(path.join(fixture.sourceDirectory, "skills", "personal"));
           yield* fileSystem.writeFileString(
             path.join(fixture.sourceDirectory, "skills", "personal", "SKILL.md"),
-            "---\nname: personal\ndescription: Personal skill\nmetadata:\n  tack: |\n    version: 1\n    activation: opt-in\n---\n",
+            skillText("personal", {
+              description: "Personal skill",
+              tack: ["activation: opt-in"],
+              body: "",
+            }),
           );
           successfulEnvelope(
             yield* hostTack(fixture, ["pick", "include", "valid", "--project", "other"]),
