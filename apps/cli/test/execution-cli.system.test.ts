@@ -71,7 +71,7 @@ const fixture = async (use: (f: Fixture) => Promise<void>) => {
     ]);
     await writeFile(
       join(source, "tack.yaml"),
-      "version: 1\nscripts:\n  - name: run\n    path: scripts/run.ts\n    description: Run fixture\n",
+      "version: 1\nname: source\nscripts:\n  - name: run\n    path: scripts/run.ts\n    description: Run fixture\n",
     );
     await writeFile(join(source, "package.json"), "{}");
     await writeFile(join(source, "scripts/run.ts"), definition('return "done";'));
@@ -774,7 +774,7 @@ it("round-trips normalized ownership across CLI restarts, roots, adapters, docs,
     await writeFile(join(f.source, "knowledge", "guide.md"), "# Owned docs\n");
     await writeFile(
       join(f.source, "tack.yaml"),
-      "version: 1\nskills:\n  - path: skills\nscripts:\n  - name: run\n    path: scripts/run.ts\n    description: Run fixture\ndocs:\n  - name: handbook\n    path: knowledge\n",
+      "version: 1\nname: source\nskills:\n  - path: skills\nscripts:\n  - name: run\n    path: scripts/run.ts\n    description: Run fixture\ndocs:\n  - name: handbook\n    path: knowledge\n",
     );
     const statePath = join(f.state, "state.json");
     const initial = await Effect.runPromise(

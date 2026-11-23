@@ -24,7 +24,7 @@ import { runBundleExport, inspectBundle } from "../src/features/profiles/bundle-
 
 const fixture = Effect.gen(function* () {
   const current = yield* profileFixture;
-  yield* current.write("builtins/tack.yaml", "version: 1\nskills: [{path: skills}]\n");
+  yield* current.write("builtins/tack.yaml", "version: 1\nname: tack\nskills: [{path: skills}]\n");
   yield* current.write(
     "builtins/skills/always-help/SKILL.md",
     skillText("always-help", { description: "Release-owned helper", body: "" }),

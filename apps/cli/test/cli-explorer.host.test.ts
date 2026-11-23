@@ -404,7 +404,7 @@ it.layer(LiveTestLayer)("explorer sessions", (test) => {
       yield* fs.makeDirectory(directory);
       yield* fs.writeFileString(
         path.join(source, "tack.yaml"),
-        "version: 1\ndocs:\n  - name: guide\n    path: knowledge\n",
+        "version: 1\nname: docs-source\ndocs:\n  - name: guide\n    path: knowledge\n",
       );
       yield* fs.writeFileString(path.join(directory, "chapter.md"), "# Chapter\n");
       const docs = entry("guide", "Docs", {
@@ -464,7 +464,7 @@ it.layer(LiveTestLayer)("explorer sessions", (test) => {
       yield* fs.makeDirectory(skill, { recursive: true });
       yield* fs.writeFileString(
         path.join(source, "tack.yaml"),
-        "version: 1\nskills:\n  - path: skills\n",
+        "version: 1\nname: source\nskills:\n  - path: skills\n",
       );
       yield* fs.writeFileString(
         path.join(skill, "SKILL.md"),
@@ -518,7 +518,7 @@ it.layer(LiveTestLayer)("explorer sessions", (test) => {
       yield* fs.makeDirectory(path.join(source, "vendor", "skills", "pdf"), { recursive: true });
       yield* fs.writeFileString(
         path.join(source, "tack.yaml"),
-        "version: 1\nskills:\n  - path: vendor/skills\n",
+        "version: 1\nname: source\nskills:\n  - path: vendor/skills\n",
       );
       yield* fs.writeFileString(
         path.join(source, "vendor", "skills", "pdf", "SKILL.md"),

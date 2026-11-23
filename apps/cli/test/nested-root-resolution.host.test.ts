@@ -31,7 +31,7 @@ it.layer(LiveTestLayer)("nested registered roots", (nestedIt) => {
           );
           yield* fileSystem.writeFileString(
             path.join(fixture.sourceDirectory, "tack.yaml"),
-            "version: 1\nskills:\n  - path: skills\nscripts:\n  - name: run\n    path: scripts/run.ts\n    description: Run fixture\n",
+            "version: 1\nname: source\nskills:\n  - path: skills\nscripts:\n  - name: run\n    path: scripts/run.ts\n    description: Run fixture\n",
           );
           yield* fileSystem.writeFileString(path.join(scripts, "run.ts"), scriptDefinition());
           // "workspace" owns the outer root and sorts before "zeta-inner", so a first-match scan

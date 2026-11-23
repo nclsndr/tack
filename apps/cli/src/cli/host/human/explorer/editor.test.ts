@@ -46,7 +46,7 @@ const workspace = Effect.fnUntraced(function* (adapters: ReadonlyArray<"claude">
   yield* fs.makeDirectory(project, { recursive: true });
   yield* fs.writeFileString(
     path.join(source, "tack.yaml"),
-    "version: 1\nskills:\n  - path: skills\ndocs:\n  - name: handbook\n    path: knowledge\n",
+    "version: 1\nname: source\nskills:\n  - path: skills\ndocs:\n  - name: handbook\n    path: knowledge\n",
   );
   yield* fs.writeFileString(path.join(source, "knowledge", "hello.md"), "# Hello\n");
   yield* fs.writeFileString(
@@ -132,7 +132,10 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
       );
       // A same-name skill in another source, included in demo, supersedes the default twin.
       const extra = path.join(root, "extra");
-      yield* write(path.join(extra, "tack.yaml"), "version: 1\nskills:\n  - path: skills\n");
+      yield* write(
+        path.join(extra, "tack.yaml"),
+        "version: 1\nname: extra\nskills:\n  - path: skills\n",
+      );
       yield* write(path.join(extra, "skills", "twin", "SKILL.md"), skillText("twin"));
       yield* registerSource(options, { sourcePath: extra });
       const sources = (yield* readState(options)).data.sources;
@@ -389,7 +392,7 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
       yield* fs.makeDirectory(path.join(other, "skills", "review"), { recursive: true });
       yield* fs.writeFileString(
         path.join(other, "tack.yaml"),
-        "version: 1\nskills:\n  - path: skills\n",
+        "version: 1\nname: other\nskills:\n  - path: skills\n",
       );
       yield* fs.writeFileString(
         path.join(other, "skills", "review", "SKILL.md"),

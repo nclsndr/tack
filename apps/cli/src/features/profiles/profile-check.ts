@@ -2,7 +2,7 @@ import type { Catalog } from "../../domain/sources/catalog-schema.ts";
 import type { SourceDeclaration } from "../../domain/sources/source-schema.ts";
 import type { DeclaredSourceInspection } from "../../domain/sources/source-inspection.ts";
 import { makeCommandSnapshot, readInvocationSnapshot } from "../snapshot/command-snapshot.ts";
-import { Effect, Path } from "effect";
+import { Effect } from "effect";
 import type { ProfileCheckReport, ProfileFinding } from "../../domain/profiles/profile-schema.ts";
 import { resolveProfile } from "../../domain/profiles/profile-resolution.ts";
 import { emptyState } from "../../domain/state/state-schema.ts";
@@ -17,7 +17,6 @@ export const profileContext = Effect.fnUntraced(function* (
   options: StateOptions,
   sourcePath: string,
 ) {
-  const path = yield* Path.Path;
   const source = yield* (yield* Source).validate(sourcePath);
   const snapshot = yield* readInvocationSnapshot(options).pipe(
     Effect.catchTag("StateNotInitializedError", () => makeCommandSnapshot(emptyState())),
@@ -30,15 +29,12 @@ export const profileContext = Effect.fnUntraced(function* (
     canonicalPath: source.canonicalPath,
     id: "00000000-0000-4000-8000-000000000000",
   };
-  const inspections = resolveSourceLabels(
-    [
-      ...registered.filter((entry) => entry.registration.id !== registration.id),
-      registration.bundle !== undefined && owner !== undefined
-        ? owner
-        : { status: "healthy", registration, declaration: source.declaration },
-    ],
-    (root) => path.basename(root),
-  );
+  const inspections = resolveSourceLabels([
+    ...registered.filter((entry) => entry.registration.id !== registration.id),
+    registration.bundle !== undefined && owner !== undefined
+      ? owner
+      : { status: "healthy", registration, declaration: source.declaration },
+  ]);
   return {
     source,
     registration,

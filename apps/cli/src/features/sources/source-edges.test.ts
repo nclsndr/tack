@@ -21,7 +21,7 @@ it.layer(LiveTestLayer)("source edges", (test) => {
         yield* fs.makeDirectory(path.join(source, folder), { recursive: true });
       yield* fs.writeFileString(
         path.join(source, "tack.yaml"),
-        "version: 1\ndocs:\n  - name: zeta\n    path: zeta\n  - name: alpha\n    path: alpha\n",
+        "version: 1\nname: source\ndocs:\n  - name: zeta\n    path: zeta\n  - name: alpha\n    path: alpha\n",
       );
       const registered = yield* registerSource(options, { sourcePath: source });
       expect(registered.docs).toEqual([{ name: "alpha" }, { name: "zeta" }]);

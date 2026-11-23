@@ -62,7 +62,7 @@ const docsWorld = Effect.gen(function* () {
   const declare = (reader: string) =>
     fs.writeFileString(
       path.join(source, "tack.yaml"),
-      `version: 1\ndocs:\n  - name: handbook\n    path: knowledge\n${reader}`,
+      `version: 1\nname: source\ndocs:\n  - name: handbook\n    path: knowledge\n${reader}`,
     );
   yield* declare("");
   const registered = yield* registerSource(options, { sourcePath: source });

@@ -86,8 +86,8 @@ nothing else, so it is a skills collection (`tack source add PATH --skills .` wr
 
 ```yaml
 version: 1
-kind: skills
 name: base-skills
+kind: skills
 ```
 
 In `audit-tools`, provide `skills/lint/SKILL.md` and `knowledge/index.md`:

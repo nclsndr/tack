@@ -14,7 +14,7 @@ const skillFileName = "SKILL.md";
 const skillEntries = (catalog: { readonly entries: ReadonlyArray<CatalogEntry> }) =>
   catalog.entries.filter((entry): entry is SkillCatalogEntry => entry.address.kind === "skill");
 
-const validDeclaration = () => "version: 1\nskills:\n  - path: skills\n";
+const validDeclaration = (name: string) => `version: 1\nname: ${name}\nskills:\n  - path: skills\n`;
 const sourceAreas = new Map<string, string>();
 
 const frontmatter = (name: string, body = "description: A valid skill.") =>
@@ -25,7 +25,10 @@ const createSource = Effect.fnUntraced(function* (parent: string, name: string) 
   const path = yield* Path.Path;
   const sourcePath = path.join(parent, name);
   yield* fileSystem.makeDirectory(sourcePath, { recursive: true });
-  yield* fileSystem.writeFileString(path.join(sourcePath, declarationFileName), validDeclaration());
+  yield* fileSystem.writeFileString(
+    path.join(sourcePath, declarationFileName),
+    validDeclaration(name),
+  );
   sourceAreas.set(sourcePath, path.join(sourcePath, "skills"));
   return sourcePath;
 });

@@ -27,7 +27,7 @@ const createSource = Effect.fnUntraced(function* (
   yield* fileSystem.makeDirectory(source, { recursive: true });
   yield* fileSystem.writeFileString(
     path.join(source, "tack.yaml"),
-    "version: 1\nskills:\n  - path: skills\n",
+    `version: 1\nname: ${directoryName}\nskills:\n  - path: skills\n`,
   );
   yield* Effect.forEach(skills, (name) => {
     const directory = path.join(source, "skills", name);

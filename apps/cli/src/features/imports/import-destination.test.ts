@@ -49,7 +49,7 @@ const withDestination = <A, E, R>(
 it.layer(LiveTestLayer)("import destination", (test) => {
   test.effect("a source with one declared skills folder is the default destination", () =>
     withDestination(
-      declare("skills: [{ path: skills }]"),
+      declare("personal-brain", "skills: [{ path: skills }]"),
       { "skills/a/SKILL.md": bareSkillText("a") },
       ({ inspections }) =>
         Effect.gen(function* () {
@@ -69,34 +69,40 @@ it.layer(LiveTestLayer)("import destination", (test) => {
   );
 
   test.effect("a skills collection receives skills at its top only", () =>
-    withDestination(declare("kind: skills"), { "a/SKILL.md": bareSkillText("a") }, (context) =>
-      Effect.gen(function* () {
-        const source = yield* resolveDestinationSource(context.inspections, "personal-brain");
-        expect(yield* resolveDestination(source, undefined)).toMatchObject({
-          folder: "",
-          covering: { declaredPath: "", resolved: context.root },
-          missingFolders: [],
-        });
-        expect(yield* destinationChoices(context.inspections)).toMatchObject([
-          { name: "personal-brain", folders: [""] },
-        ]);
-        const refused = yield* resolveDestination(source, "team").pipe(Effect.flip);
-        expect(refused).toMatchObject({
-          code: "import-destination-invalid",
-          message:
-            "The source personal-brain is a skills collection, which holds skills at its top only. Import with --into personal-brain.",
-        });
-      }),
+    withDestination(
+      declare("personal-brain", "kind: skills"),
+      { "a/SKILL.md": bareSkillText("a") },
+      (context) =>
+        Effect.gen(function* () {
+          const source = yield* resolveDestinationSource(context.inspections, "personal-brain");
+          expect(yield* resolveDestination(source, undefined)).toMatchObject({
+            folder: "",
+            covering: { declaredPath: "", resolved: context.root },
+            missingFolders: [],
+          });
+          expect(yield* destinationChoices(context.inspections)).toMatchObject([
+            { name: "personal-brain", folders: [""] },
+          ]);
+          const refused = yield* resolveDestination(source, "team").pipe(Effect.flip);
+          expect(refused).toMatchObject({
+            code: "import-destination-invalid",
+            message:
+              "The source personal-brain is a skills collection, which holds skills at its top only. Import with --into personal-brain.",
+          });
+        }),
     ),
   );
 
   test.effect("a commands collection declares no skills folder to import into", () =>
-    withDestination(declare("kind: commands"), { "ship.md": "# Ship" }, ({ inspections }) =>
-      Effect.gen(function* () {
-        expect(yield* destinationChoices(inspections)).toMatchObject([
-          { name: "personal-brain", folders: [] },
-        ]);
-      }),
+    withDestination(
+      declare("personal-brain", "kind: commands"),
+      { "ship.md": "# Ship" },
+      ({ inspections }) =>
+        Effect.gen(function* () {
+          expect(yield* destinationChoices(inspections)).toMatchObject([
+            { name: "personal-brain", folders: [] },
+          ]);
+        }),
     ),
   );
 
@@ -104,7 +110,7 @@ it.layer(LiveTestLayer)("import destination", (test) => {
     "a source is found by registration ID, and an unknown or built-in name is refused",
     () =>
       withDestination(
-        declare("skills: [{ path: skills }]"),
+        declare("personal-brain", "skills: [{ path: skills }]"),
         { "skills/a/SKILL.md": bareSkillText("a") },
         ({ inspections }) =>
           Effect.gen(function* () {
@@ -124,7 +130,7 @@ it.layer(LiveTestLayer)("import destination", (test) => {
 
   test.effect("several declared skills folders are refused and listed as choices", () =>
     withDestination(
-      declare("skills:", "  - path: skills", "  - path: vendor/skills"),
+      declare("personal-brain", "skills:", "  - path: skills", "  - path: vendor/skills"),
       { "skills/a/SKILL.md": bareSkillText("a"), "vendor/skills/b/SKILL.md": bareSkillText("b") },
       ({ inspections }) =>
         Effect.gen(function* () {
@@ -151,7 +157,7 @@ it.layer(LiveTestLayer)("import destination", (test) => {
 
   test.effect("a source with no declared skills folder shows the entry to add by hand", () =>
     withDestination(
-      declare("docs: [{ path: docs }]"),
+      declare("personal-brain", "docs: [{ path: docs }]"),
       { "docs/readme.md": "# Docs" },
       ({ inspections }) =>
         Effect.gen(function* () {
@@ -168,7 +174,7 @@ it.layer(LiveTestLayer)("import destination", (test) => {
 
   test.effect("a single-skill entry does not count as a declared folder", () =>
     withDestination(
-      declare("skills: [{ path: skills/only }]"),
+      declare("personal-brain", "skills: [{ path: skills/only }]"),
       { "skills/only/SKILL.md": bareSkillText("only") },
       ({ inspections }) =>
         Effect.gen(function* () {
@@ -181,7 +187,7 @@ it.layer(LiveTestLayer)("import destination", (test) => {
 
   test.effect("a folder outside the declarations is refused with the choices", () =>
     withDestination(
-      declare("skills: [{ path: skills }]"),
+      declare("personal-brain", "skills: [{ path: skills }]"),
       { "skills/a/SKILL.md": bareSkillText("a"), "other/x.txt": "x" },
       ({ inspections }) =>
         Effect.gen(function* () {
@@ -197,7 +203,7 @@ it.layer(LiveTestLayer)("import destination", (test) => {
 
   test.effect("a folder excluded by the declaration patterns, or inside a skill, is refused", () =>
     withDestination(
-      declare("skills:", "  - path: skills", '    exclude: ["**/_*/**"]'),
+      declare("personal-brain", "skills:", "  - path: skills", '    exclude: ["**/_*/**"]'),
       {
         "skills/a/SKILL.md": bareSkillText("a"),
         "skills/_archive/old/SKILL.md": bareSkillText("old"),
@@ -220,7 +226,7 @@ it.layer(LiveTestLayer)("import destination", (test) => {
 
   test.effect("a path that is a file, or leaves the source through a link, is refused", () =>
     withDestination(
-      declare("skills: [{ path: skills }]"),
+      declare("personal-brain", "skills: [{ path: skills }]"),
       { "skills/a/SKILL.md": bareSkillText("a"), "skills/file.txt": "x" },
       ({ inspections, root }) =>
         Effect.gen(function* () {
@@ -240,7 +246,7 @@ it.layer(LiveTestLayer)("import destination", (test) => {
 
   test.effect("a label two registrations share is refused, and each shows by registration ID", () =>
     withDestination(
-      declare("skills: [{ path: skills }]"),
+      declare("personal-brain", "skills: [{ path: skills }]"),
       { "skills/a/SKILL.md": bareSkillText("a") },
       ({ root, options }) =>
         Effect.gen(function* () {
@@ -250,7 +256,7 @@ it.layer(LiveTestLayer)("import destination", (test) => {
           yield* fs.makeDirectory(path.join(twin, "skills"), { recursive: true });
           yield* fs.writeFileString(
             path.join(twin, "tack.yaml"),
-            declare("skills: [{ path: skills }]"),
+            declare("personal-brain", "skills: [{ path: skills }]"),
           );
           yield* registerSource(options, { sourcePath: twin });
           const inspections = yield* inspectSources(yield* readState(options));
@@ -268,7 +274,7 @@ it.layer(LiveTestLayer)("import destination", (test) => {
 
   test.effect("an unhealthy source is refused as a destination with its issue", () =>
     withDestination(
-      declare("skills: [{ path: skills }]"),
+      declare("personal-brain", "skills: [{ path: skills }]"),
       { "skills/a/SKILL.md": bareSkillText("a") },
       ({ root, options }) =>
         Effect.gen(function* () {
@@ -285,22 +291,25 @@ it.layer(LiveTestLayer)("import destination", (test) => {
   );
 
   test.effect("without a writable source, the refusal says how to register one", () =>
-    withDestination(declare("skills: [{ path: skills }]"), {}, ({ root, options }) =>
-      Effect.gen(function* () {
-        const fs = yield* FileSystem.FileSystem;
-        yield* fs.writeFileString(`${root}/tack.yaml`, "version: 99\n");
-        const inspections = yield* inspectSources(yield* readState(options));
-        const error = yield* resolveDestinationSource(inspections, "nope").pipe(Effect.flip);
-        expect(error.message).toContain(
-          "No source is registered that can receive imports. Register one with `tack source add <path>`.",
-        );
-      }),
+    withDestination(
+      declare("personal-brain", "skills: [{ path: skills }]"),
+      {},
+      ({ root, options }) =>
+        Effect.gen(function* () {
+          const fs = yield* FileSystem.FileSystem;
+          yield* fs.writeFileString(`${root}/tack.yaml`, "version: 99\n");
+          const inspections = yield* inspectSources(yield* readState(options));
+          const error = yield* resolveDestinationSource(inspections, "nope").pipe(Effect.flip);
+          expect(error.message).toContain(
+            "No source is registered that can receive imports. Register one with `tack source add <path>`.",
+          );
+        }),
     ),
   );
 
   test.effect("a group folder's new skill is checked against the exclude patterns alone", () =>
     withDestination(
-      declare("skills:", "  - path: skills", '    exclude: ["**/pdf"]'),
+      declare("personal-brain", "skills:", "  - path: skills", '    exclude: ["**/pdf"]'),
       { "skills/a/SKILL.md": bareSkillText("a") },
       ({ inspections }) =>
         Effect.gen(function* () {

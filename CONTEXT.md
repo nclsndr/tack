@@ -69,8 +69,9 @@ _Avoid_: namespace, category, nested skill, scope
 
 **Source label**:
 The short name by which operators and other sources refer to a source. It is the `name` in the
-source's own declaration; without one it is the registered directory's base name, when that is a
-valid label. It is never stored in state, picks, docs mount paths, reader routes or history.
+source's own declaration, which every `tack.yaml` must carry. It never comes from the folder, so
+it is the same on every machine. It is never stored in state, picks, docs mount paths, reader routes
+or history.
 _Avoid_: source ID, registration ID
 
 **Maintainers**:

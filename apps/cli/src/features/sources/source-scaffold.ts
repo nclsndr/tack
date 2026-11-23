@@ -3,7 +3,11 @@ import { Effect, FileSystem, Path, Schema } from "effect";
 import { ResourceKindSchema, resourceKinds } from "../../domain/resources/kinds.ts";
 import { DocsAddressSchema } from "../../domain/sources/catalog-schema.ts";
 import { SourceFindingSchema } from "../../domain/sources/source-check.ts";
-import { SourceLabelSchema, type SourceDeclaration } from "../../domain/sources/source-schema.ts";
+import {
+  SourceLabelSchema,
+  suggestedSourceName,
+  type SourceDeclaration,
+} from "../../domain/sources/source-schema.ts";
 import { NextCommandsSchema } from "../../domain/hints/next-commands.ts";
 import {
   sourceFolderKeys,
@@ -58,6 +62,7 @@ export class SourceAddRequestError extends Schema.TaggedError<SourceAddRequestEr
       "declaration-flag-path-invalid",
       "declaration-docs-name-clash",
       "declaration-docs-name-invalid",
+      "declaration-name-invalid",
       "declaration-inside-source",
       "declaration-flags-conflict",
       "source-is-one-skill",
@@ -266,14 +271,32 @@ const collectionDeclaration = Effect.fnUntraced(function* (root: string, folders
       code: "source-is-one-skill",
       message: oneSkillMessage(root),
     });
-  if (key !== "docs") return { version: 1, kind: key } satisfies SourceDeclaration;
-  const name = path.basename(root);
-  if (Schema.is(SourceLabelSchema)(name) === false)
+  // A docs collection's name is also its docs name, which must be the folder's own.
+  if (key === "docs" && Schema.is(SourceLabelSchema)(path.basename(root)) === false)
     return yield* new SourceAddRequestError({
       code: "declaration-docs-name-invalid",
       message: `The folder name "${path.basename(root)}" is no docs name: a docs collection is named after its folder, in lowercase letters, digits and hyphens. Rename the folder, or write tack.yaml by hand with its own name.`,
     });
-  return { version: 1, kind: "docs", name } satisfies SourceDeclaration;
+  return {
+    version: 1,
+    name: yield* scaffoldSourceName(root),
+    kind: key,
+  } satisfies SourceDeclaration;
+});
+
+/**
+ * The `name` a written `tack.yaml` gives its source: the one its folder suggests, which the author
+ * can change afterwards. A folder that suggests no name is refused.
+ */
+const scaffoldSourceName = Effect.fnUntraced(function* (root: string) {
+  const path = yield* Path.Path;
+  const folderName = path.basename(root);
+  const name = suggestedSourceName(folderName);
+  if (name !== undefined) return name;
+  return yield* new SourceAddRequestError({
+    code: "declaration-name-invalid",
+    message: `The folder name "${folderName}" suggests no source name, in lowercase letters, digits and hyphens. Rename the folder, or write tack.yaml by hand with its own name.`,
+  });
 });
 
 /**
@@ -333,6 +356,7 @@ export const planSourceScaffold = Effect.fn("sources.planSourceScaffold")(
       });
     const collection = yield* collectionDeclaration(root, folders);
     if (collection !== undefined) return yield* planned(root, collection);
+    const name = yield* scaffoldSourceName(root);
     /** The entries one kind flag declares, each path checked to exist inside the source. */
     const declare = (key: SourceFolderKey) =>
       Effect.forEach(folders[key], (value) =>
@@ -388,6 +412,7 @@ export const planSourceScaffold = Effect.fn("sources.planSourceScaffold")(
       });
     const declaration = {
       version: 1,
+      name,
       ...Object.fromEntries(
         sourceFolderKeys.flatMap((key) =>
           declared[key].length === 0 ? [] : [[key, declared[key]]],

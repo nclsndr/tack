@@ -41,7 +41,7 @@ it.layer(LiveTestLayer)("reconciliation command lifecycle", (reconcileIt) => {
       yield* fileSystem.makeDirectory(skillDirectory, { recursive: true });
       yield* fileSystem.writeFileString(
         path.join(sourceDirectory, "tack.yaml"),
-        "version: 1\nskills:\n  - path: skills\n",
+        "version: 1\nname: source\nskills:\n  - path: skills\n",
       );
       yield* fileSystem.writeFileString(
         skillFilePath,
@@ -116,7 +116,7 @@ it.layer(LiveTestLayer)("reconciliation command lifecycle", (reconcileIt) => {
         yield* fileSystem.makeDirectory(skillDirectory, { recursive: true });
         yield* fileSystem.writeFileString(
           path.join(sourceDirectory, "tack.yaml"),
-          "version: 1\nskills:\n  - path: skills\n",
+          "version: 1\nname: source\nskills:\n  - path: skills\n",
         );
         yield* fileSystem.writeFileString(
           path.join(skillDirectory, "SKILL.md"),
@@ -187,7 +187,7 @@ it.layer(LiveTestLayer)("reconciliation command lifecycle", (reconcileIt) => {
       yield* fileSystem.makeDirectory(skillDirectory, { recursive: true });
       yield* fileSystem.writeFileString(
         path.join(sourceDirectory, "tack.yaml"),
-        "version: 1\nskills:\n  - path: skills\n",
+        "version: 1\nname: source\nskills:\n  - path: skills\n",
       );
       yield* fileSystem.writeFileString(
         path.join(skillDirectory, "SKILL.md"),
@@ -241,7 +241,7 @@ it.layer(LiveTestLayer)("reconciliation command lifecycle", (reconcileIt) => {
       yield* fileSystem.makeDirectory(path.join(sourceDirectory, "commands"), { recursive: true });
       yield* fileSystem.writeFileString(
         path.join(sourceDirectory, "tack.yaml"),
-        "version: 1\ncommands:\n  - path: commands\n",
+        "version: 1\nname: source\ncommands:\n  - path: commands\n",
       );
       yield* fileSystem.writeFileString(
         path.join(sourceDirectory, "commands", "review.md"),
@@ -327,7 +327,7 @@ const withSymlinkedHome = <A, E, R>(
     yield* fileSystem.makeDirectory(skillDirectory, { recursive: true });
     yield* fileSystem.writeFileString(
       path.join(sourceDirectory, "tack.yaml"),
-      "version: 1\nskills:\n  - path: skills\n",
+      "version: 1\nname: source\nskills:\n  - path: skills\n",
     );
     yield* fileSystem.writeFileString(path.join(skillDirectory, "SKILL.md"), validSkillDocument);
     const homeDirectory = yield* layout(root);
@@ -467,7 +467,7 @@ const withReconciledSkills = <A, E, R>(
     yield* fileSystem.makeDirectory(sourceDirectory, { recursive: true });
     yield* fileSystem.writeFileString(
       path.join(sourceDirectory, "tack.yaml"),
-      "version: 1\nskills:\n  - path: skills\n",
+      "version: 1\nname: source\nskills:\n  - path: skills\n",
     );
     yield* Effect.forEach(names, (name) =>
       Effect.gen(function* () {

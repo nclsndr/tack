@@ -66,17 +66,17 @@ For a complete source with several skill paths, patterns, scripts, docs, `depend
 dependencies and name clashes, follow [the worked example](references/worked-source.md).
 
 Version 1 supports ordinary resources; version 2 adds `profiles` and `bundle-support` in the same
-source declaration. Profile files and bundles have independent versions. Every key but `version` is
-optional, so a source may declare only what it holds, such as `docs` alone.
+source declaration. Profile files and bundles have independent versions. Every key but `version`
+and `name` is optional, so a source may declare only what it holds, such as `docs` alone.
 Each resource key is a list and may be empty: `skills: []`. A kind with no entries has no
 resources, whatever folders exist, so name every folder that holds resources. Group folders, the
 folders between a declared folder and a resource, organize a source and never change a name.
 
 - `name` is the label operators and other sources write, as in `quality-tools:review`: up to 64
-  lowercase letters, digits and single hyphens. Without it the label is the directory name when
-  that is a valid label, which is local to one machine, so declare it on any source others depend
-  on. `tack` and generated `bundle-` labels are reserved, a registration-ID-shaped value is rejected, and two sources with one
-  label cannot qualify a reference until one changes. Picks store IDs, never labels.
+  lowercase letters, digits and single hyphens. Every `tack.yaml` declares it: the label never
+  comes from the folder. `tack` and generated `bundle-` labels are reserved, a registration-ID-shaped
+  value is rejected, and two sources with one label cannot qualify a reference until one changes.
+  Picks store IDs, never labels.
 - `maintainers` lists descriptive contacts. Tack shows it and never interprets it.
 - `depends-on` lists labels of other sources.
 - `skills`, `commands` and `context` entries have a `path` to a folder, or to one resource, and
@@ -86,7 +86,7 @@ folders between a declared folder and a resource, organize a source and never ch
 
 A fault in the file makes the whole source unhealthy: `declaration-missing`,
 `declaration-malformed` (broken YAML), `declaration-version-unsupported`, and
-`declaration-schema-invalid` for an unknown top-level key or a bad `name`, `maintainers` or
+`declaration-schema-invalid` for an unknown top-level key or a missing or bad `name`, `maintainers` or
 `depends-on`. A bad entry inside a resource key is quarantined alone; the rest keeps working.
 
 Read [references/tack-yaml.md](references/tack-yaml.md) before writing an entry: paths, overlap,
@@ -119,11 +119,11 @@ metadata.
    collection, and each other folder of docs or commands there becomes its own source, such as
    `tack source add PATH/handbook --docs .`. Otherwise give one repeatable flag per folder, each a
    path inside the source: `--skills`, `--commands`, `--context` or `--docs`. The preview shows the
-   `tack.yaml` and each entry's resource names, count and problems. Show every preview, ask once,
-   then rerun each with `--apply` ([declaration creation](references/tack-yaml.md#declaration-creation)).
+   `tack.yaml`, its `name` made from the folder's, and each entry's resources, count and problems.
+   Show every preview, ask once, then rerun each with `--apply` ([declaration creation](references/tack-yaml.md#declaration-creation)).
 3. Edit `tack.yaml` by hand only for what flags cannot say: patterns, `scripts`, `depends-on`, a
-   docs name other than its folder's. Run `tack check /absolute/path` with any companion source
-   folders until clean: it reads no state and runs no authored code. Errors exit 1.
+   docs name other than its folder's, another source `name`. Run `tack check /absolute/path` with
+   any companion source folders until clean: it reads no state and runs no authored code. Errors exit 1.
 4. With an existing `tack.yaml`, `tack source add /absolute/path` previews the registration: the
    name the source takes, its counts and issues. `--apply` registers it, and sets up state when Tack
    has none. A kind flag on such a source fails and writes nothing.

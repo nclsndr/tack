@@ -1,4 +1,4 @@
-import { Effect, Path, Schema } from "effect";
+import { Effect, Schema } from "effect";
 import type { SourceFinding } from "../../../domain/sources/source-check.ts";
 import { emptyState } from "../../../domain/state/state-schema.ts";
 import { checkSource } from "../../../features/sources/source-check.ts";
@@ -37,7 +37,6 @@ const placeScaffold = Effect.fnUntraced(function* (
   stateOptions: StateOptions,
   scaffold: NonNullable<Effect.Success<ReturnType<typeof planSourceScaffold>>>,
 ) {
-  const path = yield* Path.Path;
   // Without state no source is registered, so a preview still needs none.
   const inspections = yield* readInvocationSnapshot(stateOptions).pipe(
     Effect.flatMap((snapshot) => snapshot.sourceInspections),
@@ -47,11 +46,10 @@ const placeScaffold = Effect.fnUntraced(function* (
     ),
   );
   yield* refuseScaffoldInsideSources(scaffold.sourcePath, inspections.found);
-  const name = prospectiveSourceLabel(
-    inspections.found,
-    { canonicalPath: scaffold.sourcePath, declaration: scaffold.declaration },
-    (sourcePath) => path.basename(sourcePath),
-  );
+  const name = prospectiveSourceLabel(inspections.found, {
+    canonicalPath: scaffold.sourcePath,
+    declaration: scaffold.declaration,
+  });
   return {
     plan: name === undefined ? scaffold : { ...scaffold, name },
     stateExists: inspections.stateExists,
@@ -112,7 +110,6 @@ const previewRegistration = Effect.fnUntraced(function* (
   stateOptions: StateOptions,
   sourcePath: string,
 ) {
-  const path = yield* Path.Path;
   // Without state no source is registered, so a preview still needs none.
   const known = yield* readInvocationSnapshot(stateOptions).pipe(
     Effect.flatMap((snapshot) =>
@@ -130,7 +127,7 @@ const previewRegistration = Effect.fnUntraced(function* (
   const inspection = yield* checkSource(source.canonicalPath);
   const name =
     existing === undefined
-      ? prospectiveSourceLabel(known.inspections, source, (folder) => path.basename(folder))
+      ? prospectiveSourceLabel(known.inspections, source)
       : sourceQualifier({ sources: known.inspections }, existing.id);
   const problems = findingProblems(inspection.findings);
   const initializes = known.stateExists === false && stateAutoInitializes(stateOptions);

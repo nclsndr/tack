@@ -1,6 +1,6 @@
 import type { Catalog } from "../sources/catalog-schema.ts";
 
-/** Ordinary external qualifiers need a unique declared name; directory labels and UUIDs are local. */
+/** Ordinary external qualifiers need a unique declared name; registration IDs are local. */
 export const portableSourceName = (catalog: Catalog, sourceId: string): string | undefined => {
   const owner = catalog.sources?.find((source) => source.registration.id === sourceId);
   if (

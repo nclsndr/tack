@@ -27,7 +27,7 @@ it.layer(LiveTestLayer)("doctor in process", (doctorIt) => {
     yield* fileSystem.writeFileString(path.join(fixture.sourceDirectory, "notes", "a.md"), "# A\n");
     yield* fileSystem.writeFileString(
       path.join(fixture.sourceDirectory, "tack.yaml"),
-      "version: 1\nskills:\n  - path: skills\ndocs:\n  - name: notes\n    path: notes\n",
+      "version: 1\nname: source\nskills:\n  - path: skills\ndocs:\n  - name: notes\n    path: notes\n",
     );
     successfulEnvelope(
       yield* hostTack(fixture, ["docs", "--project", "workspace", "attach", "notes"]),

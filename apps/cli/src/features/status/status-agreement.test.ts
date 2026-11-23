@@ -38,7 +38,7 @@ const agreementFixture = Effect.fnUntraced(function* () {
   yield* Effect.forEach([home, workspace, anchor], (directory) =>
     fileSystem.makeDirectory(directory, { recursive: true }),
   );
-  yield* write("tack.yaml", "version: 1\nskills:\n  - path: skills\n");
+  yield* write("tack.yaml", "version: 1\nname: source\nskills:\n  - path: skills\n");
   yield* write(
     "skills/lead/SKILL.md",
     bareSkillText("lead", {

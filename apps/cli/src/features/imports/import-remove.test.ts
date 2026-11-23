@@ -3,7 +3,7 @@ import { resolveCatalogAt } from "../../../test/support/snapshot-helpers.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, Exit, FileSystem, Result } from "effect";
 import { vi } from "vitest";
-import { chmod, cp, rename, symlink, unlink, writeFile } from "node:fs/promises";
+import { chmod, cp, readFile, rename, symlink, unlink, writeFile } from "node:fs/promises";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import {
   addSource,
@@ -31,7 +31,7 @@ const commit = {
     "skills/docx/SKILL.md": skillText("docx"),
   },
 } as const;
-const declaration = declare("skills: [{ path: skills }]");
+const declaration = declare("personal-brain", "skills: [{ path: skills }]");
 const files = { "skills/a/SKILL.md": skillText("a"), "notes/keep.txt": "keep\n" };
 
 const importPdf = (world: ImportWorld) =>
@@ -64,6 +64,17 @@ it.layer(LiveTestLayer)("import local change", (test) => {
         // A byte-for-byte copy of the whole source, registered as another source, reads the same.
         const copy = `${world.base}/personal-brain-copy`;
         yield* Effect.promise(() => cp(world.root, copy, { recursive: true }));
+        // The copy declares the same name, so it is renamed to keep the two labels apart.
+        const copyDeclaration = `${copy}/tack.yaml`;
+        yield* Effect.promise(async () =>
+          writeFile(
+            copyDeclaration,
+            (await readFile(copyDeclaration, "utf8")).replace(
+              "name: personal-brain\n",
+              "name: personal-brain-copy\n",
+            ),
+          ),
+        );
         yield* registerSource(world.options, { sourcePath: copy });
         const list = yield* inspectImports(yield* readState(world.options));
         expect(list.imports.map((entry) => [entry.reference, entry.local.state])).toEqual([
@@ -296,7 +307,9 @@ it.layer(LiveTestLayer)("import remove", (test) => {
     withImportWorld({ declaration, files, commits: [commit] }, (world) =>
       Effect.gen(function* () {
         yield* importPdf(world);
-        yield* addSource(world, "other", declaration, { "skills/b/SKILL.md": skillText("b") });
+        yield* addSource(world, "other", declare("other", "skills: [{ path: skills }]"), {
+          "skills/b/SKILL.md": skillText("b"),
+        });
         yield* applyImport(world.options, importRequest({ into: "other", skills: ["pdf"] }));
         const error = yield* planImportRemoval(world.options, "pdf", false).pipe(Effect.flip);
         expect(error).toMatchObject({
@@ -319,9 +332,14 @@ it.layer(LiveTestLayer)("import remove", (test) => {
           const fileSystem = yield* FileSystem.FileSystem;
           yield* importPdf(world);
           // Another source holds an interrupted import whose records cannot be rewritten.
-          const other = yield* addSource(world, "other", `${declaration}imports: nonsense\n`, {
-            "skills/b/SKILL.md": skillText("b"),
-          });
+          const other = yield* addSource(
+            world,
+            "other",
+            `${declare("other", "skills: [{ path: skills }]")}imports: nonsense\n`,
+            {
+              "skills/b/SKILL.md": skillText("b"),
+            },
+          );
           yield* fileSystem.makeDirectory(stagingPathOf(other));
           yield* fileSystem.writeFileString(
             `${stagingPathOf(other)}/intent.json`,

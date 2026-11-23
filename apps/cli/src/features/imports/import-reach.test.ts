@@ -8,7 +8,7 @@ import { readState } from "../../services/state-store.ts";
 import { previewImport } from "./import.ts";
 import type { ChoiceNamespace } from "../../domain/choices/choice-schema.ts";
 
-const declaration = declare("skills: [{ path: skills }]");
+const declaration = declare("personal-brain", "skills: [{ path: skills }]");
 
 it.layer(LiveTestLayer)("import reach", (test) => {
   test.effect(
@@ -31,7 +31,7 @@ it.layer(LiveTestLayer)("import reach", (test) => {
         (world) =>
           Effect.gen(function* () {
             const fileSystem = yield* FileSystem.FileSystem;
-            yield* addSource(world, "other", declaration, {
+            yield* addSource(world, "other", declare("other", "skills: [{ path: skills }]"), {
               "skills/pdf/SKILL.md": skillText("pdf", { tack: ["user-activation: default"] }),
             });
             const sources = (yield* readState(world.options)).data.sources;

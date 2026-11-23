@@ -37,7 +37,7 @@ const command = (...args: string[]) => {
 beforeAll(() => {
   mkdirSync(home);
   mkdirSync(skill, { recursive: true });
-  writeFileSync(join(source, "tack.yaml"), "version: 1\nskills:\n  - path: skills\n");
+  writeFileSync(join(source, "tack.yaml"), "version: 1\nname: source\nskills:\n  - path: skills\n");
   writeFileSync(
     join(skill, "SKILL.md"),
     skillText("pty-fixture-skill", { description: "A fixed PTY fixture.", body: "# Fixture\n" }),

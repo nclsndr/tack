@@ -259,7 +259,7 @@ export const collectBundleSource = Effect.fnUntraced(function* (request: {
     docsCollection === undefined
       ? {
           version: 2,
-          ...(authored.name === undefined ? {} : { name: authored.name }),
+          name: authored.name,
           "depends-on": dependsOn.filter(
             (name) => bindings[name] !== undefined || ambientSources.has(name) === true,
           ),

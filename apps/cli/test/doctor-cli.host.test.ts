@@ -126,7 +126,10 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
         const fs = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
         yield* fs.remove(path.join(fixture.sourceDirectory, "skills"), { recursive: true });
-        yield* fs.writeFileString(path.join(fixture.sourceDirectory, "tack.yaml"), "version: 1\n");
+        yield* fs.writeFileString(
+          path.join(fixture.sourceDirectory, "tack.yaml"),
+          "version: 1\nname: source\n",
+        );
         const { report, exitCode } = doctorOf(yield* hostTack(fixture, ["doctor"]));
         expect(exitCode).toBe(0);
         expect(outcomeOf(report, "sources")).toMatchObject({
@@ -147,7 +150,7 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
           const path = yield* Path.Path;
           yield* fs.writeFileString(
             path.join(fixture.sourceDirectory, "tack.yaml"),
-            "version: 1\n",
+            "version: 1\nname: source\n",
           );
           const { report, exitCode } = doctorOf(yield* hostTack(fixture, ["doctor"]));
           expect(exitCode).toBe(1);
@@ -167,7 +170,7 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
         const path = yield* Path.Path;
         yield* fs.writeFileString(
           path.join(fixture.sourceDirectory, "tack.yaml"),
-          "version: 1\nskills:\n  - path: skills\n  - path: nowhere\n  - pth: typo\n",
+          "version: 1\nname: source\nskills:\n  - path: skills\n  - path: nowhere\n  - pth: typo\n",
         );
         yield* fs.makeDirectory(path.join(fixture.sourceDirectory, "skills", "broken"));
         yield* fs.writeFileString(
@@ -201,7 +204,7 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
           );
           yield* fs.writeFileString(
             path.join(fixture.sourceDirectory, "tack.yaml"),
-            "version: 1\nskills:\n  - path: skills\ndepends-on:\n  - missing\n",
+            "version: 1\nname: source\nskills:\n  - path: skills\ndepends-on:\n  - missing\n",
           );
           yield* fs.makeDirectory(path.join(fixture.sourceDirectory, "skills", "needs-lint"));
           yield* fs.writeFileString(
@@ -265,7 +268,7 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
         );
         yield* fileSystem.writeFileString(
           path.join(fixture.sourceDirectory, "tack.yaml"),
-          "version: 1\nskills:\n  - path: skills\ndocs:\n  - name: notes\n    path: notes\n",
+          "version: 1\nname: source\nskills:\n  - path: skills\ndocs:\n  - name: notes\n    path: notes\n",
         );
         successfulEnvelope(
           yield* hostTack(fixture, ["docs", "--project", "workspace", "attach", "notes"]),
@@ -299,7 +302,7 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
         );
         yield* fileSystem.writeFileString(
           path.join(fixture.sourceDirectory, "tack.yaml"),
-          "version: 1\nskills:\n  - path: skills\ndocs:\n  - name: broken\n    path: broken\n    reader: broken.reader.yaml\n",
+          "version: 1\nname: source\nskills:\n  - path: skills\ndocs:\n  - name: broken\n    path: broken\n    reader: broken.reader.yaml\n",
         );
         successfulEnvelope(
           yield* hostTack(fixture, ["docs", "--project", "workspace", "attach", "broken"]),

@@ -215,6 +215,7 @@ small as:
 
 ```yaml
 version: 1
+name: team-knowledge
 docs:
   - name: handbook
     path: knowledge
@@ -406,18 +407,18 @@ docs:
     path: knowledge
 ```
 
-| Key              | Meaning                                                                                                                                                                                                                                                                                                   |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`           | The source label: up to 64 characters of lowercase letters, digits and single hyphens, never shaped like a registration ID. Operators and other sources write it as `quality-tools:review`. `tack` is reserved for the built-in source; generated `bundle-` labels are reserved for artifact projections. |
-| `maintainers`    | A list of descriptive contacts. Tack shows it in `source` and `catalog` and never interprets it: it does not affect identity, selection, delivery, dependencies or editing.                                                                                                                               |
-| `depends-on`     | Labels of the sources whose resources this source's resources may depend on.                                                                                                                                                                                                                              |
-| `skills`         | Entries with a `path` to a folder, or to one skill, and optional `include` and `exclude` patterns. Every folder below a declared folder that holds `SKILL.md` is a skill.                                                                                                                                 |
-| `commands`       | Entries with a `path` to a folder or one `.md` file, and optional patterns. Every `.md` file below a declared folder is a command.                                                                                                                                                                        |
-| `context`        | Entries with a `path` to a folder or one file, and optional patterns. Every regular file below a declared folder is a context item.                                                                                                                                                                       |
-| `scripts`        | Entries with a `name`, a `path` to one `.ts` file and a `description`.                                                                                                                                                                                                                                    |
-| `profiles`       | Version-2 `{ name, path }` publications of independently versioned fixed profiles.                                                                                                                                                                                                                        |
-| `bundle-support` | Version-2 explicit support files/directories, complete closure and non-secret runtime prerequisites per resource.                                                                                                                                                                                         |
-| `docs`           | [Declared documentation](#attach-source-owned-documents). Names are unique within the source. Reader settings are in the [reader author guide](../../packages/reader/README.md#authoring-a-docs-resource).                                                                                                |
+| Key              | Meaning                                                                                                                                                                                                                                                                                                             |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`           | Required. The source label: up to 64 characters of lowercase letters, digits and single hyphens, never shaped like a registration ID. Operators and other sources write it as `quality-tools:review`. `tack` is reserved for the built-in source; generated `bundle-` labels are reserved for artifact projections. |
+| `maintainers`    | A list of descriptive contacts. Tack shows it in `source` and `catalog` and never interprets it: it does not affect identity, selection, delivery, dependencies or editing.                                                                                                                                         |
+| `depends-on`     | Labels of the sources whose resources this source's resources may depend on.                                                                                                                                                                                                                                        |
+| `skills`         | Entries with a `path` to a folder, or to one skill, and optional `include` and `exclude` patterns. Every folder below a declared folder that holds `SKILL.md` is a skill.                                                                                                                                           |
+| `commands`       | Entries with a `path` to a folder or one `.md` file, and optional patterns. Every `.md` file below a declared folder is a command.                                                                                                                                                                                  |
+| `context`        | Entries with a `path` to a folder or one file, and optional patterns. Every regular file below a declared folder is a context item.                                                                                                                                                                                 |
+| `scripts`        | Entries with a `name`, a `path` to one `.ts` file and a `description`.                                                                                                                                                                                                                                              |
+| `profiles`       | Version-2 `{ name, path }` publications of independently versioned fixed profiles.                                                                                                                                                                                                                                  |
+| `bundle-support` | Version-2 explicit support files/directories, complete closure and non-secret runtime prerequisites per resource.                                                                                                                                                                                                   |
+| `docs`           | [Declared documentation](#attach-source-owned-documents). Names are unique within the source. Reader settings are in the [reader author guide](../../packages/reader/README.md#authoring-a-docs-resource).                                                                                                          |
 
 Each resource key is an optional list, and an empty list such as `skills: []` is valid. An unknown
 top-level key makes the source unhealthy; a bad entry is quarantined alone and the rest of the
@@ -427,19 +428,20 @@ entry never hides the others.
 ### Collections
 
 A folder that holds only skill folders, only `.md` commands, or only docs can declare itself as a
-**collection**: a `tack.yaml` with `version: 1`, a `kind` and no resource keys. The folder that holds
+**collection**: a `tack.yaml` with `version: 1`, a `name`, a `kind` and no resource keys. The folder that holds
 it is the collection.
 
 ```yaml
 version: 1
+name: review-skills
 kind: skills
 ```
 
-| `kind`     | What the source holds                                                                                            |
-| ---------- | ---------------------------------------------------------------------------------------------------------------- |
-| `skills`   | Each folder at its top that holds `SKILL.md`. Nothing deeper is read.                                            |
-| `commands` | Each `.md` file at its top whose name is a command name; `README.md` and other names are ignored.                |
-| `docs`     | The whole folder, as one docs resource named by the required `name`, which is also the label. `reader` tunes it. |
+| `kind`     | What the source holds                                                                                   |
+| ---------- | ------------------------------------------------------------------------------------------------------- |
+| `skills`   | Each folder at its top that holds `SKILL.md`. Nothing deeper is read.                                   |
+| `commands` | Each `.md` file at its top whose name is a command name; `README.md` and other names are ignored.       |
+| `docs`     | The whole folder, as one docs resource named by its `name`, which is also the label. `reader` tunes it. |
 
 Names that start with `.` or `_` are never resources. A collection takes `name`, `maintainers`,
 `depends-on` (skills and commands) and `reader` (docs); no resource keys, patterns or profiles.
@@ -454,9 +456,10 @@ refused. `tack import add --into SOURCE` writes into a skills collection's top; 
 refused. `tack source` shows its one declaration as `(collection)`, and `catalog --details` says
 `skills collection` where a list-form resource says `declared by skills: PATH`.
 
-Without a `name`, the label is the registered directory's base name when that is a valid label.
-That fallback is local to one machine, so a source that other sources depend on should declare its
-`name`. Two registered sources with one label cannot qualify a reference until one changes; each
+Every `tack.yaml`, list form or collection, declares its `name`. The label never comes from the
+folder, which can be called differently on each machine, so `depends-on` and `source:` references
+resolve the same everywhere. A `tack.yaml` without `name` makes the source unhealthy with
+`declaration-schema-invalid`, and the message suggests a name made from the folder's. Two registered sources with one label cannot qualify a reference until one changes; each
 stays reachable by registration ID. Labels are typed, never stored: state, picks, docs mount paths,
 reader routes and run history use the registration ID.
 
@@ -568,7 +571,10 @@ counts and issues, and any state its `--apply` would set up. `--apply` registers
 `tack check` hint when the check found issues. For a folder without `tack.yaml`, name what it holds with `--skills`,
 `--commands`, `--context` and `--docs`, each a repeatable path inside the source. It previews the
 `tack.yaml` it would write, one folder entry per flag with docs named after their folder, the name
-the source would take, and what each entry finds: resource names, counts and problems.
+the source would take, and what each entry finds: resource names, counts and problems. The written
+`name` comes from the folder's name in lowercase, with hyphens for other characters, such as
+`my-skills` for `My Skills`; a folder whose name leaves nothing usable fails with
+`declaration-name-invalid`. Edit the `name` afterwards to choose another.
 `--skills .`, `--commands .` or `--docs .` alone writes a [collection](#collections) instead; `.`
 with another flag fails with `declaration-flags-conflict` and names the commands that register the
 collection and each other folder as its own source, except a context folder, which needs a folder

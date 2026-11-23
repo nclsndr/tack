@@ -34,7 +34,7 @@ const prepare = Effect.fnUntraced(function* (prefix: string) {
   );
   yield* fileSystem.writeFileString(
     path.join(source, "tack.yaml"),
-    "version: 1\nskills:\n  - path: skills\n",
+    "version: 1\nname: source\nskills:\n  - path: skills\n",
   );
   yield* fileSystem.writeFileString(
     path.join(source, "skills", "review", "SKILL.md"),

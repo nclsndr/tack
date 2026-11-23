@@ -49,7 +49,7 @@ export const withDocsWorld = <A, E, R>(use: (world: DocsWorld) => Effect.Effect<
     yield* fs.makeDirectory(path.join(source, "knowledge"), { recursive: true });
     yield* fs.writeFileString(
       path.join(source, "tack.yaml"),
-      "version: 1\ndocs:\n  - name: handbook\n    path: knowledge\n",
+      "version: 1\nname: source\ndocs:\n  - name: handbook\n    path: knowledge\n",
     );
     yield* fs.writeFileString(path.join(source, "knowledge", "hello.md"), "# Hello\n");
     const registered = yield* registerSource(options, { sourcePath: source });

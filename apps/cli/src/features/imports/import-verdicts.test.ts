@@ -71,7 +71,7 @@ it.layer(LiveTestLayer)("import verdicts equal the destination's catalog", (test
   test.effect("a skill of that name in a group folder blocks, naming the folder", () =>
     withImportWorld(
       {
-        declaration: declare("skills: [{ path: skills }]"),
+        declaration: declare("personal-brain", "skills: [{ path: skills }]"),
         files: { "skills/00_effect/pdf/SKILL.md": skillText("pdf") },
         commits: [pdfCommit],
       },
@@ -95,7 +95,12 @@ it.layer(LiveTestLayer)("import verdicts equal the destination's catalog", (test
   test.effect("a skill of that name in another declared folder blocks too", () =>
     withImportWorld(
       {
-        declaration: declare("skills:", "  - path: skills", "  - path: vendor/skills"),
+        declaration: declare(
+          "personal-brain",
+          "skills:",
+          "  - path: skills",
+          "  - path: vendor/skills",
+        ),
         files: {
           "vendor/skills/pdf/SKILL.md": skillText("pdf"),
           "skills/a/SKILL.md": skillText("a"),
@@ -114,7 +119,7 @@ it.layer(LiveTestLayer)("import verdicts equal the destination's catalog", (test
   test.effect("a quarantined skill of that name still blocks", () =>
     withImportWorld(
       {
-        declaration: declare("skills: [{ path: skills }]"),
+        declaration: declare("personal-brain", "skills: [{ path: skills }]"),
         // The folder name and the frontmatter name disagree, so the catalog quarantines it.
         files: { "skills/pdf/SKILL.md": skillText("other") },
         commits: [pdfCommit],
@@ -130,7 +135,12 @@ it.layer(LiveTestLayer)("import verdicts equal the destination's catalog", (test
   test.effect("a same-name folder excluded by a pattern does not block", () =>
     withImportWorld(
       {
-        declaration: declare("skills:", "  - path: skills", '    exclude: ["**/_*/**"]'),
+        declaration: declare(
+          "personal-brain",
+          "skills:",
+          "  - path: skills",
+          '    exclude: ["**/_*/**"]',
+        ),
         files: {
           "skills/_archive/pdf/SKILL.md": skillText("pdf"),
           "skills/a/SKILL.md": skillText("a"),
@@ -150,7 +160,7 @@ it.layer(LiveTestLayer)("import verdicts equal the destination's catalog", (test
   test.effect("an existing path that is not a skill is refused", () =>
     withImportWorld(
       {
-        declaration: declare("skills: [{ path: skills }]"),
+        declaration: declare("personal-brain", "skills: [{ path: skills }]"),
         files: { "skills/pdf/notes.txt": "not a skill\n" },
         commits: [pdfCommit],
       },
@@ -165,7 +175,12 @@ it.layer(LiveTestLayer)("import verdicts equal the destination's catalog", (test
   test.effect("a new path the declaration's include patterns do not select is refused", () =>
     withImportWorld(
       {
-        declaration: declare("skills:", "  - path: skills", '    include: ["allowed-*"]'),
+        declaration: declare(
+          "personal-brain",
+          "skills:",
+          "  - path: skills",
+          '    include: ["allowed-*"]',
+        ),
         files: { "skills/allowed-one/SKILL.md": skillText("allowed-one") },
         commits: [pdfCommit],
       },
@@ -182,13 +197,13 @@ it.layer(LiveTestLayer)("import verdicts equal the destination's catalog", (test
   test.effect("a name present in another registered source is importable", () =>
     withImportWorld(
       {
-        declaration: declare("skills: [{ path: skills }]"),
+        declaration: declare("personal-brain", "skills: [{ path: skills }]"),
         files: { "skills/a/SKILL.md": skillText("a") },
         commits: [pdfCommit],
       },
       (world) =>
         Effect.gen(function* () {
-          yield* addSource(world, "acme-src", declare("skills: [{ path: skills }]"), {
+          yield* addSource(world, "acme-src", declare("acme-src", "skills: [{ path: skills }]"), {
             "skills/pdf/SKILL.md": skillText("pdf"),
           });
           const candidate = yield* verdictOf(world, "pdf");
@@ -201,7 +216,7 @@ it.layer(LiveTestLayer)("import verdicts equal the destination's catalog", (test
   test.effect("a nested SKILL.md is content: importable and one skill in the catalog", () =>
     withImportWorld(
       {
-        declaration: declare("skills: [{ path: skills }]"),
+        declaration: declare("personal-brain", "skills: [{ path: skills }]"),
         files: { "skills/a/SKILL.md": skillText("a") },
         commits: [
           {
@@ -244,7 +259,7 @@ it.layer(LiveTestLayer)("import verdicts equal the destination's catalog", (test
   test.effect("catalog reasons: an invalid name and a non-string metadata value", () =>
     withImportWorld(
       {
-        declaration: declare("skills: [{ path: skills }]"),
+        declaration: declare("personal-brain", "skills: [{ path: skills }]"),
         files: { "skills/a/SKILL.md": skillText("a") },
         commits: [
           {
@@ -290,7 +305,7 @@ it.layer(LiveTestLayer)("import verdicts equal the destination's catalog", (test
   test.effect("an upstream folder named differently lands under the skill's own name", () =>
     withImportWorld(
       {
-        declaration: declare("skills: [{ path: skills }]"),
+        declaration: declare("personal-brain", "skills: [{ path: skills }]"),
         files: { "skills/a/SKILL.md": skillText("a") },
         commits: [{ files: { "skills/pdf-tools/SKILL.md": skillText("pdf") } }],
       },
@@ -320,7 +335,7 @@ it.layer(LiveTestLayer)("import verdicts equal the destination's catalog", (test
   test.effect("duplicate names inside the location are all reported and none is importable", () =>
     withImportWorld(
       {
-        declaration: declare("skills: [{ path: skills }]"),
+        declaration: declare("personal-brain", "skills: [{ path: skills }]"),
         files: { "skills/a/SKILL.md": skillText("a") },
         commits: [
           {
@@ -353,7 +368,7 @@ it.layer(LiveTestLayer)("import verdicts equal the destination's catalog", (test
   test.effect("internal skills are hidden unless named, and _ folders are not candidates", () =>
     withImportWorld(
       {
-        declaration: declare("skills: [{ path: skills }]"),
+        declaration: declare("personal-brain", "skills: [{ path: skills }]"),
         files: { "skills/a/SKILL.md": skillText("a") },
         commits: [
           {
@@ -387,7 +402,7 @@ it.layer(LiveTestLayer)("import verdicts equal the destination's catalog", (test
   test.effect("upstream Tack metadata is surfaced and the reach follows it", () =>
     withImportWorld(
       {
-        declaration: declare("skills: [{ path: skills }]"),
+        declaration: declare("personal-brain", "skills: [{ path: skills }]"),
         files: { "skills/a/SKILL.md": skillText("a") },
         commits: [
           {
@@ -442,7 +457,7 @@ it.layer(LiveTestLayer)("import verdicts from earlier imports", (test) => {
     () =>
       withImportWorld(
         {
-          declaration: declare("skills: [{ path: skills }]"),
+          declaration: declare("personal-brain", "skills: [{ path: skills }]"),
           files: { "skills/a/SKILL.md": skillText("a") },
           commits: twoRevisions,
         },
@@ -503,7 +518,7 @@ it.layer(LiveTestLayer)("import verdicts from earlier imports", (test) => {
   ) =>
     withImportWorld(
       {
-        declaration: declare("skills: [{ path: skills }]"),
+        declaration: declare("personal-brain", "skills: [{ path: skills }]"),
         files: { "skills/a/SKILL.md": skillText("a") },
         commits: twoRevisions,
       },
@@ -572,7 +587,7 @@ it.layer(LiveTestLayer)("import verdicts from earlier imports", (test) => {
   test.effect("another location's record names that location", () =>
     withImportWorld(
       {
-        declaration: declare("skills: [{ path: skills }]"),
+        declaration: declare("personal-brain", "skills: [{ path: skills }]"),
         files: { "skills/a/SKILL.md": skillText("a") },
         commits: twoRevisions,
       },

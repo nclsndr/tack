@@ -53,7 +53,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
           yield* fs.makeDirectory(independentSkill, { recursive: true });
           yield* fs.writeFileString(
             path.join(independent, "tack.yaml"),
-            "version: 1\nskills:\n  - path: skills\n",
+            "version: 1\nname: independent-source\nskills:\n  - path: skills\n",
           );
           yield* fs.writeFileString(
             path.join(independentSkill, "SKILL.md"),
@@ -167,7 +167,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
           else
             yield* fs.writeFileString(
               path.join(fixture.sourceDirectory, "tack.yaml"),
-              "version: 1\nskills:\n  - path: skills\n",
+              "version: 1\nname: source\nskills:\n  - path: skills\n",
             );
           for (const args of [["catalog"], ["source"]])
             expectSuccess(yield* hostTack(fixture, args));
@@ -806,7 +806,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
         yield* fileSystem.makeDirectory(privateSkill, { recursive: true });
         yield* fileSystem.writeFileString(
           path.join(privateSource, "tack.yaml"),
-          "version: 1\nskills:\n  - path: skills\n",
+          "version: 1\nname: private-source\nskills:\n  - path: skills\n",
         );
         yield* fileSystem.writeFileString(
           path.join(privateSkill, "SKILL.md"),
@@ -970,7 +970,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
           yield* write("context/notes.md", "Context");
           yield* write(
             "tack.yaml",
-            "version: 1\nskills:\n  - path: skills\ncommands:\n  - path: commands\ncontext:\n  - path: context\nscripts:\n  - name: broken\n    path: scripts/broken.ts\n    description: Listed without executable validation\n",
+            "version: 1\nname: source\nskills:\n  - path: skills\ncommands:\n  - path: commands\ncontext:\n  - path: context\nscripts:\n  - name: broken\n    path: scripts/broken.ts\n    description: Listed without executable validation\n",
           );
           yield* write("scripts/broken.ts", "this is deliberately invalid TypeScript !!!");
           yield* write(

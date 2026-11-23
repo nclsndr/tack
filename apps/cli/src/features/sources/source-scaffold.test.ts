@@ -21,7 +21,7 @@ const sourceOf = (files: Readonly<Record<string, string>>) =>
     const root = yield* fs.realPath(
       yield* fs.makeTempDirectoryScoped({ prefix: "tack-scaffold-" }),
     );
-    return yield* seedSource(root, files);
+    return yield* seedSource((yield* Path.Path).join(root, "source"), files);
   });
 
 it.layer(LiveTestLayer)("source declaration creation", (test) => {
@@ -49,6 +49,7 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
         expect(plan?.content).toBe(
           [
             "version: 1",
+            "name: source",
             "skills:",
             "  - path: personal/skills",
             "  - path: alpha/skills",
@@ -85,19 +86,19 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
         "git/SKILL.md": skillText("git"),
         "README.md": "# Skills",
       },
-      content: "version: 1\nkind: skills\n",
+      content: "version: 1\nname: notes\nkind: skills\n",
       entry: { kind: "skill", resources: ["git", "review"] },
     },
     {
       flag: "commands",
       files: { "ship.md": "Ship it", "README.md": "# Commands" },
-      content: "version: 1\nkind: commands\n",
+      content: "version: 1\nname: notes\nkind: commands\n",
       entry: { kind: "command", resources: ["ship"] },
     },
     {
       flag: "docs",
       files: { "index.md": "# Notes", ".obsidian/app.md": "state" },
-      content: "version: 1\nkind: docs\nname: notes\n",
+      content: "version: 1\nname: notes\nkind: docs\n",
       entry: { kind: "docs", name: "notes", resources: ["notes"] },
     },
   ])("writes a $flag collection for --$flag .", (row) =>
@@ -229,6 +230,42 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
       });
     }),
   );
+  test.effect.each([
+    { folder: "My Skills", flag: "skills", value: "skills", name: "my-skills" },
+    { folder: "Team_Prompts", flag: "commands", value: ".", name: "team-prompts" },
+  ])("names the source $name after the folder $folder", (row) =>
+    Effect.gen(function* () {
+      const path = yield* Path.Path;
+      const parent = yield* sourceOf({});
+      const root = yield* seedSource(path.join(parent, row.folder), {
+        "skills/review/SKILL.md": skillText("review"),
+        "ship.md": "Ship it",
+      });
+      const plan = yield* planSourceScaffold(root, { ...noFolders, [row.flag]: [row.value] });
+      expect(plan?.content).toContain(`version: 1\nname: ${row.name}\n`);
+    }),
+  );
+  test.effect.each([
+    { flag: "skills", value: "skills" },
+    { flag: "commands", value: "." },
+  ])("refuses --$flag $value on a folder that suggests no source name", (row) =>
+    Effect.gen(function* () {
+      const path = yield* Path.Path;
+      const parent = yield* sourceOf({});
+      const root = yield* seedSource(path.join(parent, "___"), {
+        "skills/review/SKILL.md": skillText("review"),
+        "ship.md": "Ship it",
+      });
+      const error = yield* Effect.flip(
+        planSourceScaffold(root, { ...noFolders, [row.flag]: [row.value] }),
+      );
+      expect(error).toMatchObject({
+        _tag: "SourceAddRequestError",
+        code: "declaration-name-invalid",
+        message: expect.stringContaining('The folder name "___" suggests no source name'),
+      });
+    }),
+  );
   test.effect("reports the problems of each entry as tack check reports them", () =>
     Effect.gen(function* () {
       const path = yield* Path.Path;
@@ -281,7 +318,7 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
       const fs = yield* FileSystem.FileSystem;
       const path = yield* Path.Path;
       const root = yield* sourceOf({
-        "vendor/tack.yaml": "version: 1\n",
+        "vendor/tack.yaml": "version: 1\nname: vendor\n",
         "vendor/skills/lint/SKILL.md": skillText("lint"),
       });
       const outside = yield* fs.makeTempDirectoryScoped({ prefix: "tack-outside-" });
@@ -352,7 +389,10 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
     }),
   );
   test.effect.each([
-    { case: "a valid tack.yaml", declaration: "version: 1\nskills:\n  - path: skills\n" },
+    {
+      case: "a valid tack.yaml",
+      declaration: "version: 1\nname: source\nskills:\n  - path: skills\n",
+    },
     { case: "a broken tack.yaml", declaration: "version: [" },
   ])("never writes over $case, whatever kind flag names", (row) =>
     Effect.gen(function* () {
@@ -375,7 +415,7 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
   );
   test.effect("registers a source with tack.yaml as it is when no kind flag is given", () =>
     Effect.gen(function* () {
-      const root = yield* sourceOf({ "tack.yaml": "version: 1\n" });
+      const root = yield* sourceOf({ "tack.yaml": "version: 1\nname: source\n" });
       expect(yield* planSourceScaffold(root, noFolders)).toBeUndefined();
     }),
   );
@@ -481,19 +521,19 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
   test.effect.each([
     {
       case: "a folder a skills walk reaches",
-      declaration: { version: 1, skills: [{ path: "skills" }] },
+      declaration: { version: 1, name: "parent", skills: [{ path: "skills" }] },
       target: "skills/team/vendor",
       says: 'is inside the skills entry "skills" of source parent. A tack.yaml here would take this folder out of parent. Add exclude: ["team/vendor/**"] to that entry first, then repeat.',
     },
     {
       case: "a folder that holds a declared path",
-      declaration: { version: 1, docs: [{ name: "kb", path: "vendor/kb" }] },
+      declaration: { version: 1, name: "parent", docs: [{ name: "kb", path: "vendor/kb" }] },
       target: "vendor",
       says: 'holds the docs entry "vendor/kb" of source parent. A tack.yaml here would take that entry out of parent. Remove the entry from parent first, then repeat.',
     },
     {
       case: "a declared folder itself",
-      declaration: { version: 1, commands: [{ path: "skills/team" }] },
+      declaration: { version: 1, name: "parent", commands: [{ path: "skills/team" }] },
       target: "skills/team",
       says: 'holds the commands entry "skills/team" of source parent.',
     },
@@ -540,7 +580,7 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
       const root = yield* sourceOf({
         "skills/team/vendor/lint/SKILL.md": skillText("lint"),
         "skills/team/lint/SKILL.md": skillText("lint"),
-        ...(row.between === true ? { "skills/team/tack.yaml": "version: 1\n" } : {}),
+        ...(row.between === true ? { "skills/team/tack.yaml": "version: 1\nname: team\n" } : {}),
         ...(row.inSkill === true ? { "skills/team/SKILL.md": skillText("team") } : {}),
         "lone/SKILL.md": skillText("lone"),
         "other/fmt/SKILL.md": skillText("fmt"),
@@ -562,11 +602,12 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
               registration,
               declaration:
                 row.collection === true
-                  ? { version: 1, kind: "skills" }
+                  ? { version: 1, name: "parent", kind: "skills" }
                   : row.docs === true
-                    ? { version: 1, docs: [{ name: "kb", path: "skills" }] }
+                    ? { version: 1, name: "parent", docs: [{ name: "kb", path: "skills" }] }
                     : {
                         version: 1,
+                        name: "parent",
                         // A broken entry, one skill and an unrelated folder never reach it.
                         skills: [
                           row.entry,

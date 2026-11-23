@@ -114,6 +114,7 @@ const writeFixture = async () => {
     join(source, "tack.yaml"),
     [
       "version: 1",
+      "name: source",
       "scripts:",
       "  - name: gate",
       "    path: scripts/gate.ts",
@@ -160,7 +161,7 @@ export default defineScript({ run: async ({ exec }) => (await exec("echo", ["she
   );
   await writeFile(
     join(plain, "tack.yaml"),
-    "version: 1\nscripts:\n  - name: hello\n    path: scripts/hello.ts\n    description: Prove the script API.\n  - name: dialect\n    path: scripts/dialect.ts\n    description: Prove the TypeScript dialect.\n",
+    "version: 1\nname: plain\nscripts:\n  - name: hello\n    path: scripts/hello.ts\n    description: Prove the script API.\n  - name: dialect\n    path: scripts/dialect.ts\n    description: Prove the TypeScript dialect.\n",
   );
   await writeFile(
     join(plain, "scripts/hello.ts"),

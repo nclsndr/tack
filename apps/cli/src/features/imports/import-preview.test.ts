@@ -21,7 +21,7 @@ const commit = {
   tag: "v1.0.0",
 } as const;
 
-const brain = declare("skills: [{ path: skills }]");
+const brain = declare("personal-brain", "skills: [{ path: skills }]");
 const brainFiles = { "skills/mine/SKILL.md": skillText("mine"), "notes/todo.txt": "todo\n" };
 
 it.layer(LiveTestLayer)("import preview", (test) => {
@@ -63,11 +63,16 @@ it.layer(LiveTestLayer)("import preview", (test) => {
   test.effect("without --into lists the sources that can receive and what they declare", () =>
     withImportWorld({ declaration: brain, files: brainFiles, commits: [commit] }, (world) =>
       Effect.gen(function* () {
-        yield* addSource(world, "vendorsrc", declare("skills:", "  - path: a", "  - path: b"), {
-          "a/x/SKILL.md": skillText("x"),
-          "b/y/SKILL.md": skillText("y"),
-        });
-        yield* addSource(world, "docsonly", declare("docs: [{ path: docs }]"), {
+        yield* addSource(
+          world,
+          "vendorsrc",
+          declare("vendorsrc", "skills:", "  - path: a", "  - path: b"),
+          {
+            "a/x/SKILL.md": skillText("x"),
+            "b/y/SKILL.md": skillText("y"),
+          },
+        );
+        yield* addSource(world, "docsonly", declare("docsonly", "docs: [{ path: docs }]"), {
           "docs/readme.md": "# d\n",
         });
         const plan = yield* previewImport(world.options, importRequest({ skills: ["pdf"] }));
@@ -89,7 +94,7 @@ it.layer(LiveTestLayer)("import preview", (test) => {
   test.effect("refuses in the plan when the source declares no folder or several", () =>
     withImportWorld(
       {
-        declaration: declare("docs: [{ path: docs }]"),
+        declaration: declare("personal-brain", "docs: [{ path: docs }]"),
         files: { "docs/r.md": "# r\n" },
         commits: [commit],
       },
@@ -102,10 +107,15 @@ it.layer(LiveTestLayer)("import preview", (test) => {
           expect(none.outcome).toBe("refused");
           expect(none.refusal?.message).toContain("skills: [{ path: skills }]");
           expect(none.writes).toEqual([]);
-          yield* addSource(world, "multi", declare("skills:", "  - path: s1", "  - path: s2"), {
-            "s1/a/SKILL.md": skillText("a"),
-            "s2/b/SKILL.md": skillText("b"),
-          });
+          yield* addSource(
+            world,
+            "multi",
+            declare("multi", "skills:", "  - path: s1", "  - path: s2"),
+            {
+              "s1/a/SKILL.md": skillText("a"),
+              "s2/b/SKILL.md": skillText("b"),
+            },
+          );
           const several = yield* previewImport(
             world.options,
             importRequest({ into: "multi", skills: ["pdf"] }),
@@ -151,7 +161,14 @@ it.layer(LiveTestLayer)("import apply writes two places only", (test) => {
   test.effect("changes only the skill folder and tack.yaml, keeping every other byte", () =>
     withImportWorld(
       {
-        declaration: declare("# keep me", "", "skills: [{ path: skills }]", "", "# trailing"),
+        declaration: declare(
+          "personal-brain",
+          "# keep me",
+          "",
+          "skills: [{ path: skills }]",
+          "",
+          "# trailing",
+        ),
         files: brainFiles,
         commits: [commit],
       },
@@ -185,7 +202,13 @@ it.layer(LiveTestLayer)("import apply writes two places only", (test) => {
   test.effect("keeps CRLF line endings and rewrites only the block on a second import", () =>
     withImportWorld(
       {
-        declaration: ["version: 1", "# crlf", "skills: [{ path: skills }]", ""].join("\r\n"),
+        declaration: [
+          "version: 1",
+          "name: personal-brain",
+          "# crlf",
+          "skills: [{ path: skills }]",
+          "",
+        ].join("\r\n"),
         files: brainFiles,
         commits: [commit],
       },
@@ -219,7 +242,11 @@ it.layer(LiveTestLayer)("import apply writes two places only", (test) => {
 
   test.effect("a created group folder is part of the change, and nothing else is", () =>
     withImportWorld(
-      { declaration: declare("skills: [{ path: skills }]"), files: brainFiles, commits: [commit] },
+      {
+        declaration: declare("personal-brain", "skills: [{ path: skills }]"),
+        files: brainFiles,
+        commits: [commit],
+      },
       (world) =>
         Effect.gen(function* () {
           const before = yield* snapshotTree(world.root);

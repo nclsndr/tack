@@ -57,7 +57,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
     "a source whose tack.yaml declares none of its kind folders is unhealthy and names each folder",
     () =>
       withSource(
-        declare("name: old"),
+        declare("old"),
         {
           "skills/adhd/SKILL.md": bareSkillText("adhd"),
           "commands/ship.md": "# Ship",
@@ -84,17 +84,17 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
   test.effect(
     "a registered source that stops declaring its folders turns unhealthy in the catalog",
     () =>
-      withSource(declare(), { "skills/adhd/SKILL.md": bareSkillText("adhd") }, (fixture) =>
+      withSource(declare("source"), { "skills/adhd/SKILL.md": bareSkillText("adhd") }, (fixture) =>
         Effect.gen(function* () {
           const fs = yield* FileSystem.FileSystem;
           const path = yield* Path.Path;
           // Registered while declared, then the declaration loses its keys.
           yield* fs.writeFileString(
             path.join(fixture.root, "tack.yaml"),
-            declare("skills: [{ path: skills }]"),
+            declare("source", "skills: [{ path: skills }]"),
           );
           yield* registerSource(fixture.options, { sourcePath: fixture.root });
-          yield* fs.writeFileString(path.join(fixture.root, "tack.yaml"), declare());
+          yield* fs.writeFileString(path.join(fixture.root, "tack.yaml"), declare("source"));
           const catalog = yield* resolveCatalogAt(fixture.options);
           expect(resources(catalog)).toEqual([]);
           expect(catalog.unhealthySources).toMatchObject([
@@ -108,7 +108,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
     "any resource key, even an empty list, makes a source with kind folders healthy",
     () =>
       withSource(
-        declare("skills: []"),
+        declare("source", "skills: []"),
         { "skills/adhd/SKILL.md": bareSkillText("adhd") },
         (fixture) =>
           Effect.gen(function* () {
@@ -122,7 +122,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
 
   test.effect("a docs-only source with a skills folder is unhealthy until it opts out", () =>
     withSource(
-      declare("docs:", "  - name: kb", "    path: notes"),
+      declare("source", "docs:", "  - name: kb", "    path: notes"),
       { "skills/unrelated.txt": "x", "notes/a.md": "# A" },
       (fixture) =>
         Effect.gen(function* () {
@@ -137,6 +137,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
   test.effect("folder declarations find each kind through group folders and name them", () =>
     withSource(
       declare(
+        "source",
         "skills:",
         "  - path: skills",
         "commands:",
@@ -173,7 +174,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
     "several skills folders load by their own names and a shared name quarantines both",
     () =>
       withSource(
-        declare("skills:", "  - path: skills", "  - path: vendor/skills"),
+        declare("source", "skills:", "  - path: skills", "  - path: vendor/skills"),
         {
           "skills/00_effect/pdf/SKILL.md": bareSkillText("pdf"),
           "skills/only-here/SKILL.md": bareSkillText("only-here"),
@@ -195,7 +196,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
 
   test.effect("a folder declaration and a single-skill declaration with one name clash", () =>
     withSource(
-      declare("skills:", "  - path: skills", "  - path: labs/pdf"),
+      declare("source", "skills:", "  - path: skills", "  - path: labs/pdf"),
       {
         "skills/pdf/SKILL.md": bareSkillText("pdf"),
         "skills/other/SKILL.md": bareSkillText("other"),
@@ -215,7 +216,13 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
 
   test.effect("one skill declared alone loads, and patterns on it quarantine the entry", () =>
     withSource(
-      declare("skills:", "  - path: labs/one-off", "  - path: labs/other", "    exclude: ['x']"),
+      declare(
+        "source",
+        "skills:",
+        "  - path: labs/one-off",
+        "  - path: labs/other",
+        "    exclude: ['x']",
+      ),
       {
         "labs/one-off/SKILL.md": bareSkillText("one-off"),
         "labs/other/SKILL.md": bareSkillText("other"),
@@ -233,6 +240,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
   test.effect("single command and context declarations are named by file", () =>
     withSource(
       declare(
+        "source",
         "commands:",
         "  - path: prompts/review.md",
         "context:",
@@ -262,7 +270,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
 
   test.effect("a skill folder is a leaf: a nested SKILL.md is content", () =>
     withSource(
-      declare("skills:", "  - path: skills"),
+      declare("source", "skills:", "  - path: skills"),
       {
         "skills/creator/SKILL.md": bareSkillText("creator"),
         "skills/creator/templates/example/SKILL.md": bareSkillText("example"),
@@ -280,7 +288,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
     "underscore folders mean nothing without a pattern, and a pattern excludes them",
     () =>
       withSource(
-        declare("skills:", "  - path: skills"),
+        declare("source", "skills:", "  - path: skills"),
         {
           "skills/kept/SKILL.md": bareSkillText("kept"),
           "skills/_archive/adhd/SKILL.md": bareSkillText("adhd"),
@@ -296,7 +304,13 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
             ]);
             yield* fs.writeFileString(
               path.join(fixture.root, "tack.yaml"),
-              declare("skills:", "  - path: skills", "    exclude:", '      - "**/_*/**"'),
+              declare(
+                "source",
+                "skills:",
+                "  - path: skills",
+                "    exclude:",
+                '      - "**/_*/**"',
+              ),
             );
             yield* fs.makeDirectory(path.join(fixture.root, "skills/_archive/broken"), {
               recursive: true,
@@ -315,6 +329,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
   test.effect("include and exclude select by path relative to the declared folder", () =>
     withSource(
       declare(
+        "source",
         "skills:",
         "  - path: skills",
         "    include: ['00_effect/**', 'solo']",
@@ -345,6 +360,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
   test.effect("an excluded folder is not entered, so its broken content is not reported", () =>
     withSource(
       declare(
+        "source",
         "commands:",
         "  - path: commands",
         "    exclude: ['**/_*/**']",
@@ -369,7 +385,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
 
   test.effect("an undeclared kind contributes nothing and reports no issue", () =>
     withSource(
-      declare("skills:", "  - path: skills"),
+      declare("source", "skills:", "  - path: skills"),
       {
         "skills/one/SKILL.md": bareSkillText("one"),
         "commands/ship.md": "# Ship",
@@ -388,6 +404,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
   test.effect("each declared path violation quarantines only its entry with its own code", () =>
     withSource(
       declare(
+        "source",
         "skills:",
         "  - path: ../shared/skills",
         "  - path: /abs/skills",
@@ -444,6 +461,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
     () =>
       withSource(
         declare(
+          "source",
           "skills:",
           "  - path: skills",
           "  - path: .tack-import-staging",
@@ -477,7 +495,11 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
     "the imports key is accepted as unknown and never changes health or the catalog",
     () =>
       withSource(
-        declare("skills: [{ path: skills }]", "imports: not-a-list-the-catalog-never-reads"),
+        declare(
+          "source",
+          "skills: [{ path: skills }]",
+          "imports: not-a-list-the-catalog-never-reads",
+        ),
         { "skills/ok/SKILL.md": bareSkillText("ok") },
         (fixture) =>
           Effect.gen(function* () {
@@ -491,6 +513,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
   test.effect("entries that do not decode are quarantined alone", () =>
     withSource(
       declare(
+        "source",
         "skills:",
         "  - path: skills",
         "  - pth: typo",
@@ -522,6 +545,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
   test.effect("overlapping declarations are all quarantined, across kinds, docs exempt", () =>
     withSource(
       declare(
+        "source",
         "skills:",
         "  - path: skills",
         "  - path: skills/vendor",
@@ -555,7 +579,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
 
   test.effect("overlap is found through a declared symlink inside the source", () =>
     withSource(
-      declare("skills:", "  - path: lib/skills", "  - path: shared"),
+      declare("source", "skills:", "  - path: lib/skills", "  - path: shared"),
       { "lib/skills/a/SKILL.md": bareSkillText("a") },
       (fixture) =>
         Effect.gen(function* () {
@@ -611,7 +635,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
     },
   ])("an outer exclude that prunes $case ends the overlap", (row) =>
     withSource(
-      declare(...row.lines),
+      declare("source", ...row.lines),
       {
         "skills/a/SKILL.md": bareSkillText("a"),
         "skills/vendor/b/SKILL.md": bareSkillText("b"),
@@ -706,7 +730,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
     },
   ])("$case still overlaps, and the message names the fix", (row) =>
     withSource(
-      declare(...row.lines),
+      declare("source", ...row.lines),
       {
         "skills/a/SKILL.md": bareSkillText("a"),
         "skills/a/references/guide.md": "guide",
@@ -729,7 +753,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
 
   test.effect("a declared symlink inside the source is accepted", () =>
     withSource(
-      declare("skills:", "  - path: shared"),
+      declare("source", "skills:", "  - path: shared"),
       { "lib/skills/a/SKILL.md": bareSkillText("a") },
       (fixture) =>
         Effect.gen(function* () {
@@ -748,7 +772,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
 
   test.effect("a symlink inside a declared folder that leaves it is a boundary violation", () =>
     withSource(
-      declare("skills:", "  - path: skills", "  - path: lib"),
+      declare("source", "skills:", "  - path: skills", "  - path: lib"),
       {
         "skills/real/SKILL.md": bareSkillText("real"),
         "lib/inside/SKILL.md": bareSkillText("inside"),
@@ -772,7 +796,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
     "a boundary violation inside a skill folder is reported and the skill still loads",
     () =>
       withSource(
-        declare("skills:", "  - path: skills"),
+        declare("source", "skills:", "  - path: skills"),
         { "skills/pdf/SKILL.md": bareSkillText("pdf"), "outside/x.txt": "x" },
         (fixture) =>
           Effect.gen(function* () {
@@ -791,7 +815,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
 
   test.effect("context declared twice with one file name quarantines both items", () =>
     withSource(
-      declare("context:", "  - path: context", "  - path: notes"),
+      declare("source", "context:", "  - path: context", "  - path: notes"),
       { "context/team.md": "a", "notes/team.md": "b", "notes/solo.md": "c" },
       (fixture) =>
         Effect.gen(function* () {
@@ -808,6 +832,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
   test.effect("scripts are cataloged by declared name and scripts/tack.yaml is not read", () =>
     withSource(
       declare(
+        "source",
         "scripts:",
         "  - name: report",
         "    path: tools/report.ts",
@@ -844,7 +869,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
   );
 
   test.effect("a source that declares nothing is healthy and warned about", () =>
-    withSource(declare("name: bare"), { "notes/readme.md": "# hi" }, (fixture) =>
+    withSource(declare("bare"), { "notes/readme.md": "# hi" }, (fixture) =>
       Effect.gen(function* () {
         yield* registerSource(fixture.options, { sourcePath: fixture.root });
         const inspections = yield* inspectSources(yield* readState(fixture.options));
@@ -863,7 +888,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
 
   test.effect("a source with docs or an entry is not warned about", () =>
     withSource(
-      declare("docs:", "  - name: kb", "    path: notes"),
+      declare("source", "docs:", "  - name: kb", "    path: notes"),
       { "notes/a.md": "# A" },
       (fixture) =>
         Effect.gen(function* () {
@@ -879,6 +904,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
     () =>
       withSource(
         declare(
+          "source",
           "skills:",
           "  - path: skills",
           '    exclude: ["**/_*/**"]',
@@ -925,7 +951,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
   );
 
   test.effect("an entry that names the source declaration is not a resource", () =>
-    withSource(declare("skills: []", "context:", "  - path: tack.yaml"), {}, (fixture) =>
+    withSource(declare("source", "skills: []", "context:", "  - path: tack.yaml"), {}, (fixture) =>
       Effect.gen(function* () {
         const catalog = yield* catalogOf(fixture);
         expect(quarantines(catalog)).toEqual(["context:declaration-path-invalid"]);
@@ -938,7 +964,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
 
   test.effect("a command entry that names one file takes no include or exclude", () =>
     withSource(
-      declare("commands:", "  - path: commands/ship.md", "    include: ['x']"),
+      declare("source", "commands:", "  - path: commands/ship.md", "    include: ['x']"),
       { "commands/ship.md": "# Ship" },
       (fixture) =>
         Effect.gen(function* () {
@@ -952,6 +978,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
   test.effect("names that no address can spell are still candidates that get quarantined", () =>
     withSource(
       declare(
+        "source",
         "skills:",
         "  - path: skills",
         "  - path: labs/Bad_Single",
@@ -983,7 +1010,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
 
   test.effect("an excluded walk passes over an entry it cannot stat", () =>
     withSource(
-      declare("skills:", "  - path: skills", "    exclude: ['**/_*/**']"),
+      declare("source", "skills:", "  - path: skills", "    exclude: ['**/_*/**']"),
       { "skills/good/SKILL.md": bareSkillText("good") },
       (fixture) =>
         Effect.gen(function* () {
@@ -998,7 +1025,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
 
   test.effect("a commands folder that cannot be read is quarantined as unreadable", () =>
     withSource(
-      declare("commands:", "  - path: commands"),
+      declare("source", "commands:", "  - path: commands"),
       { "commands/ship.md": "# Ship", "commands/locked/review.md": "# Review" },
       (fixture) =>
         Effect.gen(function* () {
@@ -1018,6 +1045,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
   test.effect("lists only declared skills folders, never one skill or an invalid entry", () =>
     withSource(
       declare(
+        "source",
         "skills:",
         "  - path: skills",
         "  - path: labs/one",
@@ -1052,6 +1080,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
   test.effect("a declared path below a file and an unreadable command are quarantined", () =>
     withSource(
       declare(
+        "source",
         "commands:",
         "  - path: commands",
         "  - path: notes.md/inner",
@@ -1085,9 +1114,9 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
     { label: "lies inside", key: "context", entry: "vendor/notes", kind: "context" },
   ])("a $key entry that $label another source is refused", ({ key, entry, kind }) =>
     withSource(
-      declare(`${key}:`, `  - path: ${entry}`),
+      declare("source", `${key}:`, `  - path: ${entry}`),
       {
-        "vendor/tack.yaml": declare("name: vendor"),
+        "vendor/tack.yaml": declare("vendor"),
         "vendor/skills/lint/SKILL.md": bareSkillText("lint"),
         "vendor/commands/ship.md": "# Ship",
         "vendor/notes/a.md": "a",
@@ -1108,13 +1137,14 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
   test.effect("a scripts or docs entry inside another source is refused too", () =>
     withSource(
       declare(
+        "source",
         "scripts:",
         "  - { name: run, path: vendor/run.ts, description: Run }",
         "docs:",
         "  - { name: kb, path: vendor/kb }",
       ),
       {
-        "vendor/tack.yaml": declare(),
+        "vendor/tack.yaml": declare("vendor"),
         "vendor/run.ts": "export {}",
         "vendor/kb/index.md": "# Kb",
       },
@@ -1132,13 +1162,13 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
 
   test.effect("a folder that holds SKILL.md and tack.yaml is a skill, never another source", () =>
     withSource(
-      declare("skills:", "  - path: skills", "  - path: lone"),
+      declare("source", "skills:", "  - path: skills", "  - path: lone"),
       {
         "skills/fmt/SKILL.md": bareSkillText("fmt"),
-        "skills/fmt/tack.yaml": declare(),
-        "skills/fmt/examples/tack.yaml": declare(),
+        "skills/fmt/tack.yaml": declare("fmt"),
+        "skills/fmt/examples/tack.yaml": declare("examples"),
         "lone/SKILL.md": bareSkillText("lone"),
-        "lone/tack.yaml": declare(),
+        "lone/tack.yaml": declare("lone"),
       },
       (fixture) =>
         Effect.gen(function* () {
@@ -1157,10 +1187,10 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
     "a $key walk that meets another source skips that folder and reports it",
     ({ key, kind, own, nested }) =>
       withSource(
-        declare(`${key}:`, `  - path: ${key}`),
+        declare("source", `${key}:`, `  - path: ${key}`),
         {
           [own]: own.endsWith("SKILL.md") ? bareSkillText("review") : "# Review",
-          [`${key}/team/vendor/tack.yaml`]: declare("name: vendor"),
+          [`${key}/team/vendor/tack.yaml`]: declare("vendor"),
           [`${key}/team/vendor/${nested}`]: nested.endsWith("SKILL.md")
             ? bareSkillText("lint")
             : "# Lint",
@@ -1181,10 +1211,10 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
 
   test.effect("an exclude that prunes another source's folder silences the walk", () =>
     withSource(
-      declare("skills:", "  - path: skills", '    exclude: ["vendor/**"]'),
+      declare("source", "skills:", "  - path: skills", '    exclude: ["vendor/**"]'),
       {
         "skills/review/SKILL.md": bareSkillText("review"),
-        "skills/vendor/tack.yaml": declare("name: vendor"),
+        "skills/vendor/tack.yaml": declare("vendor"),
         "skills/vendor/lint/SKILL.md": bareSkillText("lint"),
       },
       (fixture) =>
@@ -1198,10 +1228,10 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
 
   test.effect("a source nested in a declared folder is cataloged once, by its own source", () =>
     withSource(
-      declare("skills:", "  - path: skills"),
+      declare("source", "skills:", "  - path: skills"),
       {
         "skills/review/SKILL.md": bareSkillText("review"),
-        "skills/vendor/tack.yaml": declare("name: vendor", "skills:", "  - path: lint"),
+        "skills/vendor/tack.yaml": declare("vendor", "skills:", "  - path: lint"),
         "skills/vendor/lint/SKILL.md": bareSkillText("lint"),
       },
       (fixture) =>
@@ -1227,7 +1257,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
 
   test.effect("a skills collection reads the skill folders at its top only", () =>
     withSource(
-      declare("kind: skills"),
+      declare("source", "kind: skills"),
       {
         "review/SKILL.md": bareSkillText("review"),
         "git/SKILL.md": bareSkillText("git"),
@@ -1236,10 +1266,10 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
         ".claude/hidden/SKILL.md": bareSkillText("hidden"),
         "_drafts/SKILL.md": bareSkillText("drafts"),
         "team/lint/SKILL.md": bareSkillText("lint"),
-        "handbook/tack.yaml": declare("kind: docs", "name: handbook"),
+        "handbook/tack.yaml": declare("handbook", "kind: docs"),
         "handbook/sample/SKILL.md": bareSkillText("sample"),
         "README.md": "# Skills",
-        "review/examples/tack.yaml": declare(),
+        "review/examples/tack.yaml": declare("examples"),
       },
       (fixture) =>
         Effect.gen(function* () {
@@ -1254,35 +1284,38 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
   );
 
   test.effect("a skills collection checks that a skill's content stays inside it", () =>
-    withSource(declare("kind: skills"), { "review/SKILL.md": bareSkillText("review") }, (fixture) =>
-      Effect.gen(function* () {
-        const fs = yield* FileSystem.FileSystem;
-        const path = yield* Path.Path;
-        const outside = path.join(path.dirname(fixture.root), "outside");
-        yield* fs.makeDirectory(path.join(outside, "linked"), { recursive: true });
-        yield* fs.writeFileString(
-          path.join(outside, "linked", "SKILL.md"),
-          bareSkillText("linked"),
-        );
-        yield* fs.writeFileString(path.join(outside, "secret.md"), "secret");
-        yield* fs.symlink(path.join(outside, "linked"), path.join(fixture.root, "linked"));
-        yield* fs.symlink(
-          path.join(outside, "secret.md"),
-          path.join(fixture.root, "review", "secret.md"),
-        );
-        const catalog = yield* catalogOf(fixture);
-        expect(resources(catalog)).toEqual(["skill/review"]);
-        expect(quarantines(catalog)).toEqual([
-          "skill:resource-boundary-violation",
-          "skill:resource-boundary-violation",
-        ]);
-      }),
+    withSource(
+      declare("source", "kind: skills"),
+      { "review/SKILL.md": bareSkillText("review") },
+      (fixture) =>
+        Effect.gen(function* () {
+          const fs = yield* FileSystem.FileSystem;
+          const path = yield* Path.Path;
+          const outside = path.join(path.dirname(fixture.root), "outside");
+          yield* fs.makeDirectory(path.join(outside, "linked"), { recursive: true });
+          yield* fs.writeFileString(
+            path.join(outside, "linked", "SKILL.md"),
+            bareSkillText("linked"),
+          );
+          yield* fs.writeFileString(path.join(outside, "secret.md"), "secret");
+          yield* fs.symlink(path.join(outside, "linked"), path.join(fixture.root, "linked"));
+          yield* fs.symlink(
+            path.join(outside, "secret.md"),
+            path.join(fixture.root, "review", "secret.md"),
+          );
+          const catalog = yield* catalogOf(fixture);
+          expect(resources(catalog)).toEqual(["skill/review"]);
+          expect(quarantines(catalog)).toEqual([
+            "skill:resource-boundary-violation",
+            "skill:resource-boundary-violation",
+          ]);
+        }),
     ),
   );
 
   test.effect("a commands collection reads the command files at its top only", () =>
     withSource(
-      declare("kind: commands"),
+      declare("source", "kind: commands"),
       {
         "deploy.md": "# Deploy",
         "review.md": "# Review",
@@ -1304,7 +1337,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
 
   test.effect("a collection reports a top entry that leaves its folder or is no file", () =>
     withSource(
-      declare("kind: commands"),
+      declare("source", "kind: commands"),
       { "ship.md": "# Ship", "folder.md/inner.txt": "x" },
       (fixture) =>
         Effect.gen(function* () {
@@ -1321,48 +1354,55 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
   );
 
   test.effect("a skills collection refuses a SKILL.md that leaves its skill folder", () =>
-    withSource(declare("kind: skills"), { "review/SKILL.md": bareSkillText("review") }, (fixture) =>
-      Effect.gen(function* () {
-        const fs = yield* FileSystem.FileSystem;
-        const path = yield* Path.Path;
-        yield* fs.makeDirectory(path.join(fixture.root, "linked"));
-        yield* fs.symlink(
-          path.join(fixture.root, "review", "SKILL.md"),
-          path.join(fixture.root, "linked", "SKILL.md"),
-        );
-        const catalog = yield* catalogOf(fixture);
-        expect(resources(catalog)).toEqual(["skill/review"]);
-        expect(quarantines(catalog)).toEqual(["skill:resource-boundary-violation"]);
-      }),
+    withSource(
+      declare("source", "kind: skills"),
+      { "review/SKILL.md": bareSkillText("review") },
+      (fixture) =>
+        Effect.gen(function* () {
+          const fs = yield* FileSystem.FileSystem;
+          const path = yield* Path.Path;
+          yield* fs.makeDirectory(path.join(fixture.root, "linked"));
+          yield* fs.symlink(
+            path.join(fixture.root, "review", "SKILL.md"),
+            path.join(fixture.root, "linked", "SKILL.md"),
+          );
+          const catalog = yield* catalogOf(fixture);
+          expect(resources(catalog)).toEqual(["skill/review"]);
+          expect(quarantines(catalog)).toEqual(["skill:resource-boundary-violation"]);
+        }),
     ),
   );
 
   test.effect("a collection whose folder cannot be listed reports it as unreadable", () =>
-    withSource(declare("kind: skills"), { "review/SKILL.md": bareSkillText("review") }, (fixture) =>
-      Effect.gen(function* () {
-        const fs = yield* FileSystem.FileSystem;
-        // Registration would refuse a folder it cannot resolve, so the declaration is inspected
-        // directly, as source add's preview does.
-        yield* fs.chmod(fixture.root, 0o311);
-        const entries = yield* inspectDeclaration(fixture.root, {
-          version: 1,
-          kind: "skills",
-        }).pipe(Effect.ensuring(fs.chmod(fixture.root, 0o755).pipe(Effect.orDie)));
-        expect(entries).toMatchObject([
-          {
-            kind: "skill",
-            collection: true,
-            resources: [],
-            findings: [{ code: "skill-directory-unreadable", field: "kind" }],
-          },
-        ]);
-      }),
+    withSource(
+      declare("source", "kind: skills"),
+      { "review/SKILL.md": bareSkillText("review") },
+      (fixture) =>
+        Effect.gen(function* () {
+          const fs = yield* FileSystem.FileSystem;
+          // Registration would refuse a folder it cannot resolve, so the declaration is inspected
+          // directly, as source add's preview does.
+          yield* fs.chmod(fixture.root, 0o311);
+          const entries = yield* inspectDeclaration(fixture.root, {
+            version: 1,
+            name: "source",
+            kind: "skills",
+          }).pipe(Effect.ensuring(fs.chmod(fixture.root, 0o755).pipe(Effect.orDie)));
+          expect(entries).toMatchObject([
+            {
+              kind: "skill",
+              collection: true,
+              resources: [],
+              findings: [{ code: "skill-directory-unreadable", field: "kind" }],
+            },
+          ]);
+        }),
     ),
   );
 
   test.effect("a docs collection is its whole folder as one docs resource", () =>
     withSource(
-      declare("kind: docs", "name: notes"),
+      declare("notes", "kind: docs"),
       { "index.md": "# Notes", "skills/review/SKILL.md": bareSkillText("review") },
       (fixture) =>
         Effect.gen(function* () {
@@ -1377,16 +1417,19 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
   );
 
   test.effect("a skills collection whose folder holds SKILL.md is one skill, not a source", () =>
-    withSource(declare("kind: skills"), { "SKILL.md": bareSkillText("source") }, (fixture) =>
-      Effect.gen(function* () {
-        const registered = yield* registerSource(fixture.options, {
-          sourcePath: fixture.root,
-        }).pipe(Effect.flip);
-        expect(registered).toMatchObject({
-          code: "source-is-one-skill",
-          message: `${fixture.root} holds SKILL.md, so it is one skill, not a folder of skills. Register the folder that holds it, or import it into a source with tack import add.`,
-        });
-      }),
+    withSource(
+      declare("source", "kind: skills"),
+      { "SKILL.md": bareSkillText("source") },
+      (fixture) =>
+        Effect.gen(function* () {
+          const registered = yield* registerSource(fixture.options, {
+            sourcePath: fixture.root,
+          }).pipe(Effect.flip);
+          expect(registered).toMatchObject({
+            code: "source-is-one-skill",
+            message: `${fixture.root} holds SKILL.md, so it is one skill, not a folder of skills. Register the folder that holds it, or import it into a source with tack import add.`,
+          });
+        }),
     ),
   );
 
@@ -1394,7 +1437,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
     { kind: "skills", files: { "skills/review/SKILL.md": bareSkillText("review") } },
     { kind: "commands", files: {} },
   ])("a $kind collection is never warned about undeclared or missing resources", (row) =>
-    withSource(declare(`kind: ${row.kind}`), row.files, (fixture) =>
+    withSource(declare("source", `kind: ${row.kind}`), row.files, (fixture) =>
       Effect.gen(function* () {
         yield* registerSource(fixture.options, { sourcePath: fixture.root });
         const inspections = yield* inspectSources(yield* readState(fixture.options));

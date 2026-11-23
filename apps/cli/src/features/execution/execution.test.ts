@@ -86,7 +86,10 @@ const registerScripts = (options: StateOptions, root: string, scripts: string) =
     const path = yield* Path.Path;
     const source = path.join(root, "source");
     yield* fs.makeDirectory(path.join(source, "scripts"), { recursive: true });
-    yield* fs.writeFileString(path.join(source, "tack.yaml"), `version: 1\nscripts:\n${scripts}`);
+    yield* fs.writeFileString(
+      path.join(source, "tack.yaml"),
+      `version: 1\nname: source\nscripts:\n${scripts}`,
+    );
     yield* fs.writeFileString(path.join(source, "scripts/run.ts"), "export default 1;\n");
     yield* fs.writeFileString(path.join(source, "scripts/other.ts"), "export default 2;\n");
     const registered = yield* registerSource(options, { sourcePath: source });
@@ -532,7 +535,7 @@ it.layer(LiveTestLayer)("operator attempt lifetime", (test) => {
           yield* fs.makeDirectory(path.join(source, "scripts"), { recursive: true });
           yield* fs.writeFileString(
             path.join(source, "tack.yaml"),
-            "version: 1\nscripts:\n  - name: run\n    path: scripts/run.ts\n    description: Probe\n",
+            "version: 1\nname: source\nscripts:\n  - name: run\n    path: scripts/run.ts\n    description: Probe\n",
           );
           const probe = path.join(root, "imported");
           yield* fs.writeFileString(path.join(source, "package.json"), "{ not json");

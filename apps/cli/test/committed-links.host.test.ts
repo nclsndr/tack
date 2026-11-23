@@ -28,7 +28,7 @@ const clones = Effect.fnUntraced(function* () {
   const clone = Effect.fnUntraced(function* (name: string) {
     yield* fileSystem.makeDirectory(at(name, ".git"), { recursive: true });
     yield* fileSystem.makeDirectory(at(`${name}-home`), { recursive: true });
-    yield* write(at(name, "tack.yaml"), declare("name: app", "skills:", "  - path: .ai/skills"));
+    yield* write(at(name, "tack.yaml"), declare("app", "skills:", "  - path: .ai/skills"));
     yield* write(at(name, ".ai", "skills", "review", "SKILL.md"), skillText("review"));
     const git = fakeGit(at(name, ".git"), [{ path: at(name) }]);
     const run = (arguments_: ReadonlyArray<string>, terminal?: TerminalContextShape) =>

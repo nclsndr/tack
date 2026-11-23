@@ -32,8 +32,9 @@ export const skillText = (name: string, options: SkillTextOptions = {}) =>
 export const bareSkillText = (name: string, options: SkillTextOptions = {}) =>
   skillText(name, { description: name, body: "", ...options });
 
-/** A version-1 declaration of the given lines. */
-export const declare = (...lines: ReadonlyArray<string>) => ["version: 1", ...lines, ""].join("\n");
+/** A version-1 declaration of the source `name`, followed by the given lines. */
+export const declare = (name: string, ...lines: ReadonlyArray<string>) =>
+  ["version: 1", `name: ${name}`, ...lines, ""].join("\n");
 
 /** Writes `content` to `file`, creating its parent directories, and returns the file path. */
 export const write = Effect.fnUntraced(function* (file: string, content: string) {

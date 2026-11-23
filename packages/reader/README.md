@@ -33,6 +33,7 @@ with defaults, so a component module alone is sufficient:
 
 ```yaml
 version: 1
+name: team-knowledge
 docs:
   - name: handbook
     path: docs
@@ -45,6 +46,7 @@ For a larger configuration, set `reader` to a source-relative `.yaml` or `.yml` 
 
 ```yaml
 version: 1
+name: team-knowledge
 docs:
   - name: handbook
     path: docs

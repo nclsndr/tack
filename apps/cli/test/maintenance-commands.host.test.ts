@@ -123,7 +123,7 @@ it.layer(LiveTestLayer)("maintenance commands", (maintenanceIt) => {
           );
           yield* fileSystem.writeFileString(
             path.join(fixture.sourceDirectory, "tack.yaml"),
-            "version: 1\nskills:\n  - path: skills\ncommands:\n  - path: commands\n",
+            "version: 1\nname: source\nskills:\n  - path: skills\ncommands:\n  - path: commands\n",
           );
           successfulEnvelope(yield* hostTack(fixture, ["adapter", "enable", "cursor"]));
           successfulEnvelope(yield* hostTack(fixture, reconcileProject(["--apply"])));
@@ -251,7 +251,7 @@ it.layer(LiveTestLayer)("maintenance commands", (maintenanceIt) => {
           yield* fileSystem.makeDirectory(alternateSource, { recursive: true });
           yield* fileSystem.writeFileString(
             path.join(alternateSource, "tack.yaml"),
-            "version: 1\nskills:\n  - path: skills\n",
+            "version: 1\nname: alternate-source\nskills:\n  - path: skills\n",
           );
           yield* writeSkill(alternateSource, "collision");
           successfulEnvelope(
@@ -264,7 +264,7 @@ it.layer(LiveTestLayer)("maintenance commands", (maintenanceIt) => {
           yield* fileSystem.makeDirectory(unhealthySource, { recursive: true });
           yield* fileSystem.writeFileString(
             path.join(unhealthySource, "tack.yaml"),
-            "version: 1\nskills:\n  - path: skills\n",
+            "version: 1\nname: unhealthy-source\nskills:\n  - path: skills\n",
           );
           yield* writeSkill(unhealthySource, "gone");
           successfulEnvelope(

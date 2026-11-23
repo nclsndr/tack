@@ -45,7 +45,7 @@ export const withFixture = <A, E, R>(use: (fixture: CliFixture) => Effect.Effect
     yield* fileSystem.makeDirectory(sourceDirectory, { recursive: true });
     yield* fileSystem.writeFileString(
       path.join(sourceDirectory, "tack.yaml"),
-      "version: 1\nskills:\n  - path: skills\n",
+      "version: 1\nname: source\nskills:\n  - path: skills\n",
     );
     yield* fileSystem.makeDirectory(path.join(sourceDirectory, "skills", "valid"), {
       recursive: true,

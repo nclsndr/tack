@@ -20,7 +20,7 @@ it.layer(LiveTestLayer)("import add", (test) => {
   test.effect("preview lists candidates, resolves the destination and writes nothing", () =>
     withImportWorld(
       {
-        declaration: declare("skills: [{ path: skills }]"),
+        declaration: declare("personal-brain", "skills: [{ path: skills }]"),
         files: { "skills/mine/SKILL.md": skillText("mine") },
         commits: [commit],
       },
@@ -52,7 +52,7 @@ it.layer(LiveTestLayer)("import add", (test) => {
   test.effect("apply writes the folder and one record, and nothing else changes", () =>
     withImportWorld(
       {
-        declaration: declare("# mine", "skills: [{ path: skills }]"),
+        declaration: declare("personal-brain", "# mine", "skills: [{ path: skills }]"),
         files: { "skills/mine/SKILL.md": skillText("mine") },
         commits: [commit],
       },
@@ -92,7 +92,7 @@ it.layer(LiveTestLayer)("import add", (test) => {
   test.effect("apply into a skills collection writes at its top and records the skill there", () =>
     withImportWorld(
       {
-        declaration: declare("kind: skills"),
+        declaration: declare("personal-brain", "kind: skills"),
         files: { "mine/SKILL.md": skillText("mine") },
         commits: [commit],
       },
@@ -130,7 +130,7 @@ it.layer(LiveTestLayer)("import add", (test) => {
     () =>
       withImportWorld(
         {
-          declaration: declare("skills: [{ path: skills }]"),
+          declaration: declare("personal-brain", "skills: [{ path: skills }]"),
           files: { "skills/mine/SKILL.md": skillText("mine") },
           commits: [commit],
         },
@@ -200,7 +200,7 @@ it.layer(LiveTestLayer)("import add", (test) => {
   test.effect("the retyped command keeps every flag the operator typed", () =>
     withImportWorld(
       {
-        declaration: declare("skills: [{ path: skills }]"),
+        declaration: declare("personal-brain", "skills: [{ path: skills }]"),
         files: { "skills/mine/SKILL.md": skillText("mine") },
         commits: [commit],
       },
@@ -245,7 +245,7 @@ it.layer(LiveTestLayer)("import add", (test) => {
   test.effect("the plan names the provider, and says when the operator typed a URL", () =>
     withImportWorld(
       {
-        declaration: declare("skills: [{ path: skills }]"),
+        declaration: declare("personal-brain", "skills: [{ path: skills }]"),
         files: { "skills/mine/SKILL.md": skillText("mine") },
         commits: [commit],
       },

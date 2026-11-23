@@ -41,7 +41,7 @@ const fixture = Effect.fnUntraced(function* () {
   yield* fs.makeDirectory(home);
   yield* write(
     "tack.yaml",
-    "version: 1\nskills:\n  - path: skills\ncommands:\n  - path: commands\ncontext:\n  - path: context\n",
+    "version: 1\nname: source\nskills:\n  - path: skills\ncommands:\n  - path: commands\ncontext:\n  - path: context\n",
   );
   yield* write(
     "commands/review.md",
@@ -179,7 +179,10 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
       Effect.gen(function* () {
         const f = yield* fixture();
         yield* f.reconcile();
-        yield* f.write("private/tack.yaml", "version: 1\ncommands:\n  - path: commands\n");
+        yield* f.write(
+          "private/tack.yaml",
+          "version: 1\nname: private\ncommands:\n  - path: commands\n",
+        );
         yield* f.write(
           "private/commands/review.md",
           "---\nmetadata:\n  tack: |\n    version: 1\n    user-activation: default\n---\nPrivate review\n",

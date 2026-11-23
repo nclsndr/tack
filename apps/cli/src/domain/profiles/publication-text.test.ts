@@ -13,15 +13,20 @@ it("preserves unrelated declaration bytes and comments while publishing a new pr
 it("replaces only the profiles section and refuses ambiguous text layouts", () => {
   const publication = [{ name: "ci", path: "ci.yaml" }];
   expect(
-    publishProfileText("version: 2\nprofiles: []\n# untouched\ncommands: []\n", publication),
+    publishProfileText(
+      "version: 2\nname: tools\nprofiles: []\n# untouched\ncommands: []\n",
+      publication,
+    ),
   ).toMatchObject({ text: expect.stringContaining("path: ci.yaml\n# untouched\ncommands: []\n") });
-  expect(publishProfileText("{version: 1, commands: []}\n", publication)).toHaveProperty("error");
+  expect(
+    publishProfileText("{version: 1, name: tools, commands: []}\n", publication),
+  ).toHaveProperty("error");
 });
 
 it.each([
   "version: 2\nname: tools\nprofiles:\n- name: existing\n  path: existing.yaml\nskills: []\n",
   '"version": 2\nname: tools\n"profiles": [{name: existing, path: existing.yaml}]\ncommands: []\n',
-  "version: 2\nprofiles:\n- name: existing\n# preserve this author note\n  path: existing.yaml\n# unrelated resource note\nskills: []\n",
+  "version: 2\nname: tools\nprofiles:\n- name: existing\n# preserve this author note\n  path: existing.yaml\n# unrelated resource note\nskills: []\n",
 ])(
   "round-trips non-canonical YAML without dropping publications or changing unrelated values: %s",
   (input) => {
@@ -61,13 +66,13 @@ it("rewrites a quoted flow profiles key in place as a block list", () => {
 });
 
 it("refuses a version that is an alias of another value", () => {
-  expect(publishProfileText("skills: &one 1\nversion: *one\n", ci)).toEqual({
+  expect(publishProfileText("skills: &one 1\nversion: *one\nname: tools\n", ci)).toEqual({
     error: "Use an explicit version: 1 or version: 2 value before publishing a profile.",
   });
 });
 
 it("refuses an edit that would also change a value aliasing the version", () => {
-  expect(publishProfileText("version: &one 1\nskills: *one\n", ci)).toEqual({
+  expect(publishProfileText("version: &one 1\nname: tools\nskills: *one\n", ci)).toEqual({
     error: "Publishing would change unrelated declaration values. Review tack.yaml before saving.",
   });
 });

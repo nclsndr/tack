@@ -51,7 +51,10 @@ export const builtinWorld = async (runner: TackRunner, base = tmpdir()) => {
     const source = join(root, "source");
     const directory = join(source, "skills", name);
     mkdirSync(directory, { recursive: true });
-    writeFileSync(join(source, "tack.yaml"), "version: 1\nskills:\n  - path: skills\n");
+    writeFileSync(
+      join(source, "tack.yaml"),
+      "version: 1\nname: source\nskills:\n  - path: skills\n",
+    );
     writeFileSync(
       join(directory, "SKILL.md"),
       `---\nname: ${name}\ndescription: Example skill\n${metadata}---\n`,
