@@ -226,17 +226,22 @@ it.layer(LiveTestLayer)("setup hints", (hintIt) => {
   hintIt.effect("points a registered source at the project it can be linked into", () =>
     Effect.gen(function* () {
       const { at, json } = yield* machine();
-      // No project yet: name one by path, even inside a repository. The shell's folder is where
-      // the command ran, not necessarily the person's project.
-      for (const cwd of ["other", "loose"])
-        expect((yield* json(["source", "add", at("source")], cwd)).next).toEqual([
-          "tack project add NAME --repository-cwd PATH",
-        ]);
+      // Inside a repository no project registers, register it by its folder's name, as project
+      // add does from there; outside any repository, name the project and its path.
+      expect((yield* json(["source", "add", at("source")], "other")).next).toEqual([
+        "tack project add other",
+      ]);
+      expect((yield* json(["source", "add", at("source")], "loose")).next).toEqual([
+        "tack project add NAME --repository-cwd PATH",
+      ]);
       expect(yield* json(["project", "add", "app", "--repository-cwd", at("app")])).toMatchObject({
         status: "success",
       });
       expect((yield* json(["source", "add", at("source")], "loose")).next).toEqual([
         "tack sync --project app",
+      ]);
+      expect((yield* json(["source", "add", at("source")], "other")).next).toEqual([
+        "tack project add other",
       ]);
       expect(
         yield* json(["project", "add", "second", "--repository-cwd", at("other")]),
