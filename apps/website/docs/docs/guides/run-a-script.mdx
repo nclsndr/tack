@@ -201,10 +201,17 @@ in Tack's state folder, `~/.tack/.env`. Without it the run stops before the scri
 
 <Terminal commands={["tack script run todo-report --project app"]} output={missingOutput} />
 
-Add the value to `~/.tack/.env`:
+Open `~/.tack/.env` in your editor and add a line for the secret. `tack init` created the file, and
+only you can read it:
+
+```text
+TACK_ISSUE_TOKEN=example-token-123
+```
+
+For one run, or on a CI runner, set it in the environment instead. A value there wins over the file:
 
 ```sh
-TACK_ISSUE_TOKEN=example-token-123
+TACK_ISSUE_TOKEN=example-token-123 tack script run todo-report --project app
 ```
 
 ## 6. Run it
