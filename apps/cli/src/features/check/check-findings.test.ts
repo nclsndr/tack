@@ -449,6 +449,12 @@ it.each([
     3,
   ],
   ["a file with no frontmatter, at line 1", "dependencies:\n  - kind: skill\n", 0, 1],
+  [
+    "metadata.tack, past a tack line inside another metadata value",
+    "---\nmetadata:\n  notes: |\n    tack: see below\n    dependencies: none\n  tack: |\n    version: 1\n    dependencies:\n      - kind: skill\n---\n",
+    0,
+    9,
+  ],
 ] as const)("anchors a dependency in %s", (_case, text, position, line) => {
   expect(dependencyLine(text, position)).toBe(line);
 });

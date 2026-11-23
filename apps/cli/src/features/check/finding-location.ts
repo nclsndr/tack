@@ -32,8 +32,9 @@ const listItemLines = (lines: ReadonlyArray<string>, start: number, keyIndent: n
 };
 
 /**
- * The index of the first line inside the block of the key at `parent` that `pattern` matches once
- * unindented, or -1. The block ends at the next non-blank line indented no deeper than the key.
+ * The index of the first direct child of the key at `parent` that `pattern` matches once
+ * unindented, or -1. The block ends at the next non-blank line indented no deeper than the key, and
+ * its direct children are its least indented lines, so a line inside a child's value never matches.
  */
 const keyWithin = (lines: ReadonlyArray<string>, parent: number, pattern: RegExp) => {
   const parentLine = lines[parent];
@@ -42,10 +43,14 @@ const keyWithin = (lines: ReadonlyArray<string>, parent: number, pattern: RegExp
   const end = lines.findIndex(
     (line, index) => index > parent && line.trim() !== "" && indentOf(line) <= indent,
   );
-  return lines.findIndex(
-    (line, index) =>
-      index > parent && (end < 0 || index < end) && pattern.test(line.trimStart()) === true,
+  const block = lines.slice(parent + 1, end < 0 ? undefined : end);
+  const childIndent = Math.min(
+    ...block.filter((line) => line.trim() !== "").map((line) => indentOf(line)),
   );
+  const child = block.findIndex(
+    (line) => indentOf(line) === childIndent && pattern.test(line.trimStart()) === true,
+  );
+  return child < 0 ? -1 : parent + 1 + child;
 };
 
 /**
