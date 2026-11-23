@@ -1,7 +1,7 @@
+import { fakeGit } from "./support/fake-git.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
-import { type GitService } from "../src/services/git.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
 import { type TerminalContextShape } from "../src/cli/host/human/terminal-context.ts";
 import { displayWidth } from "../src/cli/host/human/text.ts";
@@ -40,10 +40,7 @@ const prepare = Effect.fnUntraced(function* (prefix: string) {
     path.join(source, "skills", "review", "SKILL.md"),
     "---\nname: review\ndescription: 変更を確認する\n---\n",
   );
-  const git = {
-    listWorktrees: () => Effect.succeed([{ bare: false, detached: false, path: project }]),
-    resolveCommonDirectory: () => Effect.succeed(project),
-  } satisfies GitService;
+  const git = fakeGit(project, [{ path: project }]);
   const run = (arguments_: ReadonlyArray<string>, terminal: TerminalContextShape = pipe) =>
     runHost({ args: ["--state-dir", state, ...arguments_], git, terminal });
   for (const setup of [

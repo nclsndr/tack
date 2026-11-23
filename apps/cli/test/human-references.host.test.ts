@@ -1,8 +1,8 @@
+import { fakeGit } from "./support/fake-git.ts";
 import { skillText, write } from "./support/source-tree.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
-import { type GitService } from "../src/services/git.ts";
 import { runHost } from "./support/host-runner.ts";
 
 /*
@@ -58,10 +58,7 @@ const fixture = Effect.gen(function* () {
     path.join(me, "skills", "notes", "SKILL.md"),
     skillText("notes", { tack: ["activation: default"], body: "" }),
   );
-  const git = {
-    listWorktrees: () => Effect.succeed([{ bare: false, detached: false, path: projectRoot }]),
-    resolveCommonDirectory: () => Effect.succeed(anchor),
-  } satisfies GitService;
+  const git = fakeGit(anchor, [{ path: projectRoot }]);
   /** Runs one command and returns what the operator would read, without the exit result. */
   const tack = (arguments_: ReadonlyArray<string>) =>
     runHost({ args: ["--state-dir", stateDirectory, ...arguments_], git }).pipe(

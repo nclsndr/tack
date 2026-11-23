@@ -1,3 +1,4 @@
+import { fakeGit } from "../../../test/support/fake-git.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Ref, Sink, Stdio, Stream } from "effect";
 import { vi } from "vitest";
@@ -28,10 +29,7 @@ const world = Effect.gen(function* () {
     "version: 2\nname: tools\ndocs: [{name: handbook, path: docs}]\n",
   );
   yield* fs.writeFileString(path.join(source, "docs", "index.md"), "# Handbook\n");
-  const git = Git.of({
-    listWorktrees: () => Effect.succeed([{ path: project, bare: false, detached: false }]),
-    resolveCommonDirectory: () => Effect.succeed(anchor),
-  });
+  const git = fakeGit(anchor, [{ path: project }]);
   const state = path.join(root, "state");
   /** Runs one invocation; `stateDirectory: false` leaves the state location to the environment. */
   const tack = (words: ReadonlyArray<string>, stateDirectory = true) =>

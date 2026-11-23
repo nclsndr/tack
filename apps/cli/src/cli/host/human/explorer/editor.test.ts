@@ -1,3 +1,4 @@
+import { fakeGit } from "../../../../../test/support/fake-git.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "../../../../../test/support/live-test-layer.ts";
@@ -6,7 +7,7 @@ import type { ChoiceNamespace } from "../../../../domain/choices/choice-schema.t
 import { enableAdapters } from "../../../../features/reconciliation/agent.ts";
 import { registerSource } from "../../../../features/sources/source.ts";
 import { SourceLive } from "../../../../features/sources/source-live.ts";
-import { Git, type GitService } from "../../../../services/git.ts";
+import { Git } from "../../../../services/git.ts";
 import { initializeState, readState } from "../../../../services/state-store.ts";
 import type { RouteServices } from "../../routes/route.ts";
 import { skillText, write } from "../../../../../test/support/source-tree.ts";
@@ -28,11 +29,6 @@ const stateLines = (facts: ReadonlyArray<readonly [string, string]>) => {
  */
 const stateLine = (edited: boolean, name: string, state: string, note = "", width = 14) =>
   `${edited ? "›" : " "} ${name.padEnd(11)}  ${note === "" ? state : `${state.padEnd(width)}  ${note}`}`;
-
-const testGit = {
-  listWorktrees: () => Effect.succeed([]),
-  resolveCommonDirectory: () => Effect.succeed("/tmp"),
-} satisfies GitService;
 
 /** A registered source with one skill and one docs folder, a project and the claude adapter. */
 const workspace = Effect.fnUntraced(function* (adapters: ReadonlyArray<"claude"> = ["claude"]) {
@@ -110,7 +106,7 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
       const restored = yield* editor.apply([unset]);
       expect(restored.lines).toContain("saved   reset skill source:review");
       expect(restored.entries).toBeDefined();
-    }).pipe(Effect.provideService(Git, testGit)),
+    }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
   );
 
   test.effect("groups each resource's state by user, projects and profiles", () =>
@@ -295,7 +291,7 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
         kind: "builtin",
       });
       expect((yield* loadExplorer(options, style, { _tag: "user" })).fixedBy).toBeUndefined();
-    }).pipe(Effect.provideService(Git, testGit), Effect.provide(SourceLive)),
+    }).pipe(Effect.provideService(Git, fakeGit("/tmp", [])), Effect.provide(SourceLive)),
   );
 
   test.effect("names resources by their source label in the review and the result", () =>
@@ -311,7 +307,7 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
       expect(applied.lines).toContain("saved   include skill source:review");
       const reset = yield* editor.apply([{ kind: "choice", address: review, decision: "unset" }]);
       expect(reset.lines).toContain("saved   reset skill source:review");
-    }).pipe(Effect.provideService(Git, testGit)),
+    }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
   );
 
   test.effect("previews a project skill left to the user's link", () =>
@@ -323,7 +319,7 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
       const preview = yield* editor.preview([]);
       expect(preview).toContain("claude → demo: 1 linked for the user");
       expect(preview).toContain("  skip        skill source:review (linked for the user)");
-    }).pipe(Effect.provideService(Git, testGit)),
+    }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
   );
 
   test.effect("previews relinking a link removed by hand as a replacement", () =>
@@ -335,7 +331,7 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
       const preview = yield* editor.preview([]);
       expect(preview).toContain("claude → user: 1 to link");
       expect(preview).toContain("  replace     .claude/skills/review  skill source:review");
-    }).pipe(Effect.provideService(Git, testGit)),
+    }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
   );
 
   test.effect("previews adopting an unrecorded link that is exactly Tack's", () =>
@@ -355,7 +351,7 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
       expect(preview).toContain(
         "  adopt       .claude/skills/review  skill source:review (already linked)",
       );
-    }).pipe(Effect.provideService(Git, testGit)),
+    }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
   );
 
   test.effect("previews forgetting the record of a removed link that is no longer selected", () =>
@@ -369,7 +365,7 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
       ]);
       expect(preview).toContain("claude → user: 1 to forget");
       expect(preview).toContain("  forget      .claude/skills/review  record only");
-    }).pipe(Effect.provideService(Git, testGit)),
+    }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
   );
 
   test.effect("previews an agent directory blocked by a file as a conflict without a path", () =>
@@ -383,7 +379,7 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
       ]);
       expect(preview).toContain("claude → user: 1 conflict");
       expect(preview).toContain("  conflict    destination-directory-conflict (left untouched)");
-    }).pipe(Effect.provideService(Git, testGit)),
+    }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
   );
 
   test.effect("previews two selected skills that need one destination as a collision", () =>
@@ -415,7 +411,7 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
         reviews.map((address): PendingChange => ({ kind: "choice", address, decision: "include" })),
       );
       expect(preview.join("\n")).toMatch(/claude → user: .*1 collision/);
-    }).pipe(Effect.provideService(Git, testGit)),
+    }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
   );
 
   test.effect("says there is nothing to plan for without an enabled adapter", () =>
@@ -430,7 +426,7 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
         { kind: "choice", address: review, decision: "include" },
       ]);
       expect(applied.lines).toContain("skills  nothing to link or remove");
-    }).pipe(Effect.provideService(Git, testGit)),
+    }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
   );
 
   test.effect("a user editor saves no docs change, which only a project can hold", () =>
@@ -447,7 +443,7 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
       ]);
       expect(applied.lines.some((line) => line.startsWith("saved"))).toBe(false);
       expect((yield* readState(options)).data.projects).toEqual(before.data.projects);
-    }).pipe(Effect.provideService(Git, testGit)),
+    }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
   );
 
   test.effect("detaches docs and reports a mount it could not place", () =>
@@ -474,6 +470,6 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
       expect(blocked.lines).toContain("docs    0 applied, 1 not applied");
       expect(blocked.lines.some((line) => line.startsWith("  blocked "))).toBe(true);
       expect(yield* fs.readFileString(path.join(mount, "mine.md"))).toBe("mine\n");
-    }).pipe(Effect.provideService(Git, testGit)),
+    }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
   );
 });

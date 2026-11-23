@@ -1,3 +1,4 @@
+import { fakeGit } from "./support/fake-git.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { BunServices } from "@effect/platform-bun";
 import { expect, it } from "@effect/vitest";
@@ -16,7 +17,7 @@ import {
 } from "../src/cli/host/human/explorer/model.ts";
 import { exploreSelection } from "../src/cli/host/routes/explore.ts";
 import { TerminalContext } from "../src/cli/host/human/terminal-context.ts";
-import { Git, type GitService } from "../src/services/git.ts";
+import { Git } from "../src/services/git.ts";
 import { enableAdapters } from "../src/features/reconciliation/agent.ts";
 import type { RouteServices } from "../src/cli/host/routes/route.ts";
 import { loadExplorer, makeExplorerEditor } from "../src/cli/host/human/explorer/editor.ts";
@@ -159,7 +160,7 @@ it.layer(LiveTestLayer)("browse destinations", (test) => {
             create: false,
           })).editor,
         ).toBeUndefined();
-      }).pipe(Effect.provideService(Git, testGit)),
+      }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
   );
   test.effect(
     "refuses portable-name collisions and stale profile saves without clearing staging",
@@ -223,7 +224,7 @@ it.layer(LiveTestLayer)("browse destinations", (test) => {
         expect(yield* fs.readFileString(path.join(sourcePath, "profiles/ci.yaml"))).toMatch(
           /source: (one|two)/,
         );
-      }).pipe(Effect.provideService(Git, testGit)),
+      }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
   );
   test.effect("discards profile staging explicitly before saving to user selection", () =>
     Effect.gen(function* () {
@@ -335,11 +336,6 @@ const scriptedTerminal = Effect.fnUntraced(function* (keys: ReadonlyArray<Termin
   });
   return { terminal, displayed };
 });
-const testGit = {
-  listWorktrees: () => Effect.succeed([]),
-  resolveCommonDirectory: () => Effect.succeed("/tmp"),
-} satisfies GitService;
-
 const projectNamespace: ChoiceNamespace = { _tag: "project", projectName: "demo" };
 
 const withWorkspace = Effect.fnUntraced(function* () {
@@ -404,7 +400,7 @@ const runExplore = (
         stdinIsTerminal: true,
         stdoutIsTerminal: true,
       }),
-      Effect.provideService(Git, testGit),
+      Effect.provideService(Git, fakeGit("/tmp", [])),
       Effect.provide(BunServices.layer),
     ),
   );
@@ -765,7 +761,10 @@ it.layer(LiveTestLayer)("built-in browse write boundary", (test) => {
         expect((yield* editor.apply(pending)).lines.join("\n")).toContain("managed by the release");
         expect(yield* readState(options)).toEqual(before);
         expect(yield* fs.exists(userLink)).toBe(false);
-      }).pipe(Effect.provideService(Source, source), Effect.provideService(Git, testGit));
+      }).pipe(
+        Effect.provideService(Source, source),
+        Effect.provideService(Git, fakeGit("/tmp", [])),
+      );
     }),
   );
 });

@@ -1,3 +1,4 @@
+import { fakeGit } from "../../../../test/support/fake-git.ts";
 import { write } from "../../../../test/support/source-tree.ts";
 import { beforeAll, describe, expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
@@ -11,17 +12,10 @@ import {
 import { inspectionViews } from "./inspection-views.ts";
 import { createPublicEnvelope, type PublicEnvelope } from "../public-outcome.ts";
 import { docsListOutcome, projectsOutcome, resultOutcome, sourcesOutcome } from "../outcomes.ts";
-import { type GitService } from "../../../services/git.ts";
 import { runHost } from "../../../../test/support/host-runner.ts";
 import { LiveTestLayer } from "../../../../test/support/live-test-layer.ts";
 import { hintsIn, parseHintsIn } from "../../../../test/support/hints.ts";
 import { decodeEnvelope } from "../../../../test/support/tack-process.ts";
-
-const testGit = (anchor: string, root: string) =>
-  ({
-    listWorktrees: () => Effect.succeed([{ bare: false, detached: false, path: root }]),
-    resolveCommonDirectory: () => Effect.succeed(anchor),
-  }) satisfies GitService;
 
 type Captured = {
   readonly envelopes: Readonly<Record<string, PublicEnvelope>>;
@@ -54,7 +48,7 @@ const capture = Effect.gen(function* () {
   const broken = yield* docsSource("broken");
   yield* write(directory("anchor", "keep"), "");
   yield* write(directory("project", "keep"), "");
-  const git = testGit(directory("anchor"), directory("project"));
+  const git = fakeGit(directory("anchor"), [{ path: directory("project") }]);
   const state = directory("state");
   const invoke = (...arguments_: ReadonlyArray<string>) =>
     runHost({ args: ["--state-dir", state, ...arguments_, "--json"], git }).pipe(

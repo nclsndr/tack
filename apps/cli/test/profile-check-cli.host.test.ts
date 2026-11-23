@@ -1,10 +1,10 @@
+import { fakeGit } from "./support/fake-git.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { exitCodeForEnvelope } from "../src/cli/host/public-outcome.ts";
 import { runHost } from "./support/host-runner.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
-import { Git } from "../src/services/git.ts";
 
 it.layer(LiveTestLayer)("profile files through check CLI", (test) => {
   test.effect(
@@ -29,10 +29,7 @@ it.layer(LiveTestLayer)("profile files through check CLI", (test) => {
         const run = (args: ReadonlyArray<string>) =>
           runHost({
             args: ["--state-dir", state, ...args],
-            git: Git.of({
-              listWorktrees: () => Effect.succeed([]),
-              resolveCommonDirectory: () => Effect.succeed(root),
-            }),
+            git: fakeGit(root, []),
           }).pipe(Effect.map((result) => result.stdout));
         const command = ["check", path.join(root, "ci.yaml")];
         const text = yield* run(command);

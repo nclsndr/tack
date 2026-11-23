@@ -1,3 +1,4 @@
+import { fakeGit } from "../../../../../test/support/fake-git.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "../../../../../test/support/live-test-layer.ts";
@@ -5,7 +6,7 @@ import { mutateStateFixture } from "../../../../../test/support/state-fixture.ts
 import type { ResourceAddress } from "../../../../domain/sources/catalog-schema.ts";
 import { enableAdapters } from "../../../../features/reconciliation/agent.ts";
 import { registerSource } from "../../../../features/sources/source.ts";
-import { Git, type GitService } from "../../../../services/git.ts";
+import { Git } from "../../../../services/git.ts";
 import { initializeState, readState } from "../../../../services/state-store.ts";
 import type { RouteServices } from "../../routes/route.ts";
 import { makeStyle } from "../style.ts";
@@ -13,11 +14,6 @@ import { loadExplorer } from "./editor.ts";
 import { initialEditState } from "./edit.ts";
 import { initialExplorerState } from "./model.ts";
 import { makeExplorerDestinations } from "./profile-editor.ts";
-
-const testGit = {
-  listWorktrees: () => Effect.succeed([]),
-  resolveCommonDirectory: () => Effect.succeed("/tmp"),
-} satisfies GitService;
 
 /**
  * One source whose `review` skill requires a `helper` skill that no source has, two projects, and
@@ -94,7 +90,7 @@ it.layer(LiveTestLayer)("explorer destinations", (test) => {
         "User + project demo (default)",
         "User + project other (default)",
       ]);
-    }).pipe(Effect.provideService(Git, testGit)),
+    }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
   );
 
   test.effect("offers browse only first, which leaves the edited destination read-only", () =>
@@ -116,7 +112,7 @@ it.layer(LiveTestLayer)("explorer destinations", (test) => {
       expect(review).toBeDefined();
       expect(review?.activity).toBeUndefined();
       expect(review?.editable).toBeUndefined();
-    }).pipe(Effect.provideService(Git, testGit)),
+    }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
   );
 
   test.effect("names a profile's members with glyphs and marks its own state line", () =>
@@ -190,7 +186,7 @@ it.layer(LiveTestLayer)("explorer destinations", (test) => {
         "fixed by tools/ci (read-only)",
       );
       expect(fixed.find((option) => option.label === "tools/ci")?.note).toBe("applied to other");
-    }).pipe(Effect.provideService(Git, testGit)),
+    }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
   );
 
   test.effect("refuses to continue a selection copy whose required closure is blocked", () =>
@@ -214,7 +210,7 @@ it.layer(LiveTestLayer)("explorer destinations", (test) => {
       const applied = yield* opened.editor.apply(pending);
       expect(applied.nextState).toBeUndefined();
       expect(applied.lines).toEqual(preview);
-    }).pipe(Effect.provideService(Git, testGit)),
+    }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
   );
 
   test.effect(
@@ -241,7 +237,7 @@ it.layer(LiveTestLayer)("explorer destinations", (test) => {
         expect(applied.entries).toBeUndefined();
         expect(applied.lines[0]).toBe("Structure: valid · Source linkage: incomplete");
         expect(yield* fs.exists(path.join(source, "profiles", "copied.yaml"))).toBe(false);
-      }).pipe(Effect.provideService(Git, testGit)),
+      }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
   );
 
   test.effect("refuses a seed whose sources cannot get distinct portable names", () =>
@@ -275,6 +271,6 @@ it.layer(LiveTestLayer)("explorer destinations", (test) => {
       expect(refused.editor).toBeUndefined();
       expect(refused.state.preview?.title).toBe("Cannot change destination");
       expect(refused.state.preview?.lines.join(" ")).toContain("distinct portable names");
-    }).pipe(Effect.provideService(Git, testGit)),
+    }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
   );
 });

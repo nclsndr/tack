@@ -1,3 +1,4 @@
+import { fakeGit } from "./support/fake-git.ts";
 import { skillText } from "./support/source-tree.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Schema } from "effect";
@@ -7,7 +8,6 @@ import { CatalogReportSchema } from "../src/domain/sources/catalog-report.ts";
 import { recordFilesOf, type SkillFile } from "../src/features/imports/import-files.ts";
 import type { ImportRecord } from "../src/domain/imports/import-record.ts";
 import { stagingPathOf, writeImports } from "../src/features/imports/import-write.ts";
-import { type GitService } from "../src/services/git.ts";
 import { runHost } from "./support/host-runner.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
@@ -67,10 +67,7 @@ const fixture = Effect.gen(function* () {
       newFolders: [],
     })),
   );
-  const git = {
-    listWorktrees: () => Effect.succeed([{ bare: false, detached: false, path: projectRoot }]),
-    resolveCommonDirectory: () => Effect.succeed(anchor),
-  } satisfies GitService;
+  const git = fakeGit(anchor, [{ path: projectRoot }]);
   const tack = (arguments_: ReadonlyArray<string>) =>
     runHost({ args: ["--json", "--state-dir", stateDirectory, ...arguments_], git }).pipe(
       Effect.map(({ stdout }) => decodeEnvelope(stdout)),

@@ -1,9 +1,9 @@
+import { fakeGit } from "./support/fake-git.ts";
 import { skillText } from "./support/source-tree.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Schema } from "effect";
 import { SyncPlanSchema } from "../src/domain/reconciliation/sync-schema.ts";
-import { type GitService } from "../src/services/git.ts";
 import { partialCauseRegistry } from "../src/cli/host/partial-causes.ts";
 import { type PublicEnvelope } from "../src/cli/host/public-outcome.ts";
 import { runHost } from "./support/host-runner.ts";
@@ -31,10 +31,7 @@ const fixture = Effect.gen(function* () {
     path.join(source, "skills", "valid", "SKILL.md"),
     skillText("valid", { tack: ["activation: default"], body: "" }),
   );
-  const git = {
-    listWorktrees: () => Effect.succeed([{ bare: false, detached: false, path: projectRoot }]),
-    resolveCommonDirectory: () => Effect.succeed(anchor),
-  } satisfies GitService;
+  const git = fakeGit(anchor, [{ path: projectRoot }]);
   const run = (flags: ReadonlyArray<string>, arguments_: ReadonlyArray<string>) =>
     runHost({ args: [...flags, "--state-dir", stateDirectory, ...arguments_], git }).pipe(
       Effect.map(({ stdout }) => stdout),

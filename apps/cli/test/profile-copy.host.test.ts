@@ -1,3 +1,4 @@
+import { fakeGit } from "./support/fake-git.ts";
 import { stageChange } from "../src/cli/host/human/explorer/edit.ts";
 import { checkPaths } from "../src/features/check/check-paths.ts";
 import { Git } from "../src/services/git.ts";
@@ -197,13 +198,7 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
         cwd: project,
         style: makeStyle({ color: false, width: 120, homeDirectory: options.homeDirectory }),
         context: yield* Effect.context<RouteServices>().pipe(
-          Effect.provideService(
-            Git,
-            Git.of({
-              listWorktrees: () => Effect.succeed([]),
-              resolveCommonDirectory: () => Effect.succeed("/unused"),
-            }),
-          ),
+          Effect.provideService(Git, fakeGit("/unused", [])),
         ),
       });
       const copyOptions = destinations.options.filter(

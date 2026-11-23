@@ -1,3 +1,4 @@
+import { fakeGit } from "./support/fake-git.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Schema } from "effect";
 import { SecureRandom } from "effect/crypto";
@@ -18,12 +19,6 @@ import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { mutateStateFixture } from "./support/state-fixture.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
 import { write } from "./support/source-tree.ts";
-
-const testGit = (anchor: string, root: string) =>
-  ({
-    listWorktrees: () => Effect.succeed([{ bare: false, detached: false, path: root }]),
-    resolveCommonDirectory: () => Effect.succeed(anchor),
-  }) satisfies GitService;
 
 const registrationOf = Schema.decodeUnknownSync(SourceRegistrationPayloadSchema);
 const sourcePlanOf = Schema.decodeUnknownSync(SourceRemovalPlanSchema);
@@ -84,7 +79,7 @@ const withRemovalWorld = <A, E, R>(
       path.join(tools, "skills", "lint", "SKILL.md"),
       "---\nname: lint\ndescription: Lint\n---\n",
     );
-    const git = testGit(path.join(repository, ".git"), repository);
+    const git = fakeGit(path.join(repository, ".git"), [{ path: repository }]);
     const tack = makeTack(stateDirectory, git, home);
     const idOf = (stdout: string) => {
       return registrationOf(decodeEnvelope(stdout).applied).registration.id;
