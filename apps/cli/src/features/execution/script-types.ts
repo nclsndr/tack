@@ -2,6 +2,7 @@ import picomatch from "picomatch";
 import { Effect, FileSystem, Path, Schema } from "effect";
 import { publishedPackageName } from "../../domain/execution/published-name.ts";
 import { scriptApiDeclarations } from "../../domain/execution/script-api-declarations.ts";
+import { sourceFileFailure } from "../sources/source.ts";
 
 /** The editor stub's file name, at the root of a source. */
 export const typesStubName = "tack-env.d.ts";
@@ -98,35 +99,39 @@ export const tsconfigCovers = (text: string): boolean | undefined => {
  * Plans, and with `apply` writes, the editor stub and a `tsconfig.json` in one source folder. An
  * existing `tsconfig.json` is never changed; the plan says whether it includes the stub.
  */
-export const writeTypes = Effect.fn("execution.writeTypes")(function* (
-  directory: string,
-  version: string,
-  apply: boolean,
-) {
-  const fs = yield* FileSystem.FileSystem;
-  const path = yield* Path.Path;
-  const root = path.resolve(directory);
-  if ((yield* fs.exists(path.join(root, "tack.yaml"))) === false)
-    return yield* new TypesTargetError({ directory: root });
-  const stubPath = path.join(root, typesStubName);
-  const stub = typesStub(version);
-  const current = (yield* fs.exists(stubPath)) ? yield* fs.readFileString(stubPath) : undefined;
-  const stubAction: TypesFileAction =
-    current === undefined ? "create" : current === stub ? "unchanged" : "update";
-  const tsconfigPath = path.join(root, "tsconfig.json");
-  const tsconfig = (yield* fs.exists(tsconfigPath))
-    ? yield* fs.readFileString(tsconfigPath)
-    : undefined;
-  if (apply === true) {
-    if (stubAction !== "unchanged") yield* fs.writeFileString(stubPath, stub);
-    if (tsconfig === undefined) yield* fs.writeFileString(tsconfigPath, generatedTsconfig);
-  }
-  return {
-    directory: root,
-    files: [
-      { path: stubPath, action: stubAction },
-      { path: tsconfigPath, action: tsconfig === undefined ? "create" : "keep" },
-    ],
-    inScope: tsconfig === undefined ? true : (tsconfigCovers(tsconfig) ?? null),
-  } satisfies TypesPlan;
-});
+export const writeTypes = Effect.fn("execution.writeTypes")(
+  function* (directory: string, version: string, apply: boolean) {
+    const fs = yield* FileSystem.FileSystem;
+    const path = yield* Path.Path;
+    const root = path.resolve(directory);
+    if ((yield* fs.exists(path.join(root, "tack.yaml"))) === false)
+      return yield* new TypesTargetError({ directory: root });
+    const stubPath = path.join(root, typesStubName);
+    const stub = typesStub(version);
+    const current = (yield* fs.exists(stubPath)) ? yield* fs.readFileString(stubPath) : undefined;
+    const stubAction: TypesFileAction =
+      current === undefined ? "create" : current === stub ? "unchanged" : "update";
+    const tsconfigPath = path.join(root, "tsconfig.json");
+    const tsconfig = (yield* fs.exists(tsconfigPath))
+      ? yield* fs.readFileString(tsconfigPath)
+      : undefined;
+    if (apply === true) {
+      if (stubAction !== "unchanged") yield* fs.writeFileString(stubPath, stub);
+      if (tsconfig === undefined) yield* fs.writeFileString(tsconfigPath, generatedTsconfig);
+    }
+    return {
+      directory: root,
+      files: [
+        { path: stubPath, action: stubAction },
+        { path: tsconfigPath, action: tsconfig === undefined ? "create" : "keep" },
+      ],
+      inScope: tsconfig === undefined ? true : (tsconfigCovers(tsconfig) ?? null),
+    } satisfies TypesPlan;
+  },
+  (effect, directory) =>
+    effect.pipe(
+      Effect.catchTag("PlatformError", (error) =>
+        Effect.fail(sourceFileFailure("write editor types", directory)(error)),
+      ),
+    ),
+);

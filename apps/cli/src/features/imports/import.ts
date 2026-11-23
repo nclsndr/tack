@@ -16,7 +16,7 @@ import {
   type ImportDestination,
 } from "./import-destination.ts";
 import { discoverSkillFolders, discoveryPathspecs } from "./import-discovery.ts";
-import { ImportError, importFailure } from "./import-error.ts";
+import { ImportError, importFailure, importFileFailure } from "./import-error.ts";
 import type { NextCommands } from "../../domain/hints/next-commands.ts";
 import { recordFilesOf } from "./import-files.ts";
 import { canonicalLocationText, parseImportLocation } from "./import-location.ts";
@@ -447,14 +447,19 @@ const run = Effect.fnUntraced(function* (
 });
 
 /** Previews an import: nothing is written to the destination or to state. */
-export const previewImport = Effect.fn("imports.previewImport")(function* (
-  stateOptions: StateOptions,
-  request: ImportRequest,
-) {
-  const { state } = yield* readInvocationSnapshot(stateOptions);
-  const result = yield* Effect.scoped(run(request, state, "preview"));
-  return result.plan;
-});
+export const previewImport = Effect.fn("imports.previewImport")(
+  function* (stateOptions: StateOptions, request: ImportRequest) {
+    const { state } = yield* readInvocationSnapshot(stateOptions);
+    const result = yield* Effect.scoped(run(request, state, "preview"));
+    return result.plan;
+  },
+  (effect, _stateOptions, request) =>
+    effect.pipe(
+      Effect.catchTag("PlatformError", (error) =>
+        Effect.fail(importFileFailure(request.location)(error)),
+      ),
+    ),
+);
 
 /** Applies an import under the writer lock, re-resolving the ref and validating against the live destination. */
 export const applyImport = Effect.fn("imports.applyImport")(function* (
@@ -468,6 +473,10 @@ export const applyImport = Effect.fn("imports.applyImport")(function* (
           ? Effect.die("An apply must produce an application.")
           : Effect.succeed({ plan: result.plan, applied: result.applied }),
       ),
+    ),
+  ).pipe(
+    Effect.catchTag("PlatformError", (error) =>
+      Effect.fail(importFileFailure(request.location)(error)),
     ),
   );
 });

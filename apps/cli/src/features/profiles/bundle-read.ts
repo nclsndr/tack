@@ -5,16 +5,26 @@ import { BundleError } from "../../domain/bundles/bundle-error.ts";
 import { BundleManifestSchema } from "../../domain/bundles/bundle-schema.ts";
 import { bundleLimits } from "../../domain/bundles/tar.ts";
 import { Compression } from "../../services/compression.ts";
+import { bundleInputFailure } from "./bundle-file-failure.ts";
 
-/** Reads and validates a bounded artifact in memory before any extraction or recipient mutation. */
+/**
+ * Reads and validates a bounded artifact in memory before any extraction or recipient mutation. A
+ * bundle file that cannot be read fails with its path and the reason.
+ */
 export const readBundleArchive = Effect.fn("profiles.readBundleArchive")(function* (file: string) {
   const fs = yield* FileSystem.FileSystem;
-  if (Number((yield* fs.stat(file)).size) > bundleLimits.compressedBytes)
+  const unreadable = bundleInputFailure(file);
+  if (
+    Number((yield* fs.stat(file).pipe(Effect.mapError(unreadable))).size) >
+    bundleLimits.compressedBytes
+  )
     return yield* new BundleError({
       code: "profile-bundle-limit",
       message: "Bundle exceeds the compressed input limit.",
     });
-  const bytes = yield* readBoundedBundleFile(file, bundleLimits.compressedBytes);
+  const bytes = yield* readBoundedBundleFile(file, bundleLimits.compressedBytes).pipe(
+    Effect.catchTag("PlatformError", (error) => Effect.fail(unreadable(error))),
+  );
   const codec = yield* Compression;
   return yield* Effect.try({
     try: () => decodeBundle(codec, bytes),

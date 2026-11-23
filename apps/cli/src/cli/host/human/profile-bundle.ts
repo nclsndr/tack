@@ -3,7 +3,7 @@ import type { BundleManifest } from "../../../domain/bundles/bundle-schema.ts";
 import { BundleExportPlanSchema } from "../../../features/profiles/bundle-export.ts";
 import { BundleInspectionPayloadSchema } from "../../../features/profiles/bundle-read.ts";
 import type { HumanView } from "./render.ts";
-import { headerLines, sections } from "./view.ts";
+import { headerLines, sections, withoutPayload } from "./view.ts";
 
 const decodeExportPlan = Schema.decodeUnknownOption(BundleExportPlanSchema);
 const decodeInspection = Schema.decodeUnknownOption(BundleInspectionPayloadSchema);
@@ -53,7 +53,8 @@ export const renderBundleExport: HumanView = (envelope, style) => {
 /** Inspects the independently versioned manifest without state, original sources, fetches or execution. */
 export const renderBundleInspection: HumanView = (envelope, style) => {
   const decoded = decodeInspection(envelope.result);
-  if (Option.isNone(decoded)) return undefined;
+  // A bundle that cannot be read ends with the command its failure names as the fix.
+  if (Option.isNone(decoded)) return withoutPayload(envelope, undefined, style);
   return sections(
     headerLines(envelope, undefined, style),
     [`Content bundle inventory · ${style.path(decoded.value.file)}`],

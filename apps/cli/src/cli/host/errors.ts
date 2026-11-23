@@ -1,6 +1,6 @@
 import { BundleError } from "../../domain/bundles/bundle-error.ts";
 import type { FixedProfileError } from "../../domain/profiles/profile-application.ts";
-import { Predicate, Schema, type PlatformError } from "effect";
+import { Predicate, Schema } from "effect";
 import { posixPath } from "../../domain/identity/portable.ts";
 import { stateFormat } from "../../domain/state/state-format.ts";
 import type { InvocationError } from "../commands/index.ts";
@@ -90,7 +90,6 @@ export type HostFailure =
   | ImportError
   | ImportFetchError
   | InvocationError
-  | PlatformError.PlatformError
   | ProjectNotFoundError
   | ProjectRefreshEvidenceError
   | ProjectRegistrationConflictError
@@ -242,7 +241,11 @@ export const errorRegistry: ErrorRegistry = {
   AgentSelectionValidationError: { classification: "invalid-invocation" },
   ChoiceProjectNotFoundError: projectNotFound,
   FixedProfileError: { classification: "domain" },
-  BundleError: { classification: "domain" },
+  BundleError: {
+    classification: "domain",
+    details: (error) => safeFields(error, ["next"]),
+    next: (error) => error.next ?? [],
+  },
   ChoiceProjectRemovingError: {
     classification: "domain",
     message: (error) =>
@@ -295,12 +298,6 @@ export const errorRegistry: ErrorRegistry = {
     // The envelope already names the command.
     details: (error) => safeFields(error, ["command", "next"]),
     next: (error) => error.next ?? [],
-  },
-  PlatformError: {
-    classification: "internal",
-    code: "internal-error",
-    message: "An unexpected internal error occurred.",
-    details: false,
   },
   ProjectNotFoundError: projectNotFound,
   ProjectRefreshEvidenceError: {
