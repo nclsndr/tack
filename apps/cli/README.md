@@ -1321,8 +1321,11 @@ refuse a complete export. The built-in profile skill contains worked support exa
 `profile inspect-bundle FILE` reads its inventory. `tack check FILE` validates archive safety,
 manifest integrity and actual projected profile linkage offline without state or original sources.
 Profile docs use the same effective inventory for mounts, list/search/serve and writing-target
-lookup. Unsupported adapter delivery remains partial on retry/sync/status and fails doctor until
-all enabled adapters support the fixed inventory. Context and scripts keep their informational roles.
+lookup. A member an enabled adapter cannot take, such as a command for Claude Code, is skipped for
+that adapter (`delivery.skipped` in the apply plan) and still reaches every adapter that takes it;
+apply, retry and sync stay successful, and doctor notes the skip. Delivery with no enabled adapter
+remains partial on retry/sync/status and fails doctor. Context and scripts keep their informational
+roles.
 
 `profile apply-bundle FILE --project NAME --target-root ROOT` previews the same complete-target
 contract as source apply. `--apply` retains content under the explicit state directory, registers

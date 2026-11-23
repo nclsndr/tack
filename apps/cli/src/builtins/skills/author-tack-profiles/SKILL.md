@@ -101,10 +101,12 @@ recovery use that inventory without adding new defaults or following later manif
 required closure reports `profile-inventory-unresolved` and needs explicit reapply. Reapply still
 requires force when intent exists. Ordinary pick, explore and docs edits in a fixed context refuse
 with `profile-fixed-context`; choose a separate daily-selection context. Inspect status and doctor
-for intended inventory and incomplete delivery. Unsupported adapter delivery stays partial on sync
-and status (`profile-delivery-incomplete`) and fails doctor’s profiles check; supported members still
-converge. Enable suitable adapters and disable unsupported ones, or explicitly reapply compatible
-inventory. Profile docs are the same attachments read by docs list/search/serve and writing-target
+for intended inventory and incomplete delivery. A member an enabled agent cannot take, such as a
+command for Claude Code, is skipped for that agent and still reaches every agent that takes it:
+apply lists it under `Skipped for AGENT` with the reason and its plan's `delivery.skipped`, apply and
+sync stay successful, and doctor's profiles check passes with a note. With no enabled adapter, or
+docs in a user profile, delivery is incomplete: sync and status report `profile-delivery-incomplete`
+and doctor's profiles check fails. Profile docs are the same attachments read by docs list/search/serve and writing-target
 lookup; ordinary attachment/default mutations remain locked in fixed contexts.
 
 Saves serialize updates to a source. A concurrent save or an intervening file edit produces `profile-save-conflict`; reload before retrying. Temporary staging files are removed on refusal.

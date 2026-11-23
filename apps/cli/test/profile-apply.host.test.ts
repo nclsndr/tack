@@ -350,7 +350,7 @@ it.layer(LiveTestLayer)("exact profile application", (test) => {
         const result = yield* run(runProfileApply(options, request));
         expect(result.plan.refused).toBe(false);
         const notes = result.plan.delivery.notes.join("\n");
-        expect(notes).toContain("cannot deliver command links");
+        expect(notes).toContain("Tack does not link commands for codex");
         expect(notes).toContain("inspectable, no adapter link");
         expect(notes).toContain("explicit script run");
         expect(

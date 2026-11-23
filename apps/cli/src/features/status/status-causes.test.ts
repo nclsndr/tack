@@ -53,7 +53,7 @@ it("names unresolved profile inventories and incomplete profile delivery", () =>
         targets: [],
       },
       issues,
-      delivery: { notes: [], issues: ["script run: not delivered"], incomplete },
+      delivery: { notes: [], issues: ["script run: not delivered"], skipped: [], incomplete },
     },
   });
   expect(causesOf({ namespaces: [withProfile([], false)] })).toEqual([]);

@@ -77,12 +77,12 @@ new skill, `write-changelog`, was written into a source but not synced yet:
 A failed check exits with code `1`; warnings and skipped checks exit `0`. Doctor works before
 `tack init` too, and then names it as the first step.
 
-Two failures have no single command to run:
+When a project's fixed profile holds a member an enabled agent cannot take, such as a command with
+Claude Code enabled, the `profiles` check passes and names the skipped member in a note. See
+[Share a fixed set with a profile](./profiles#when-an-agent-cannot-take-a-member).
 
-- **`profiles`, an agent cannot take a member.** A project runs a fixed profile that holds, say, a
-  command, and an enabled agent such as Claude Code takes no commands. The check fails for as long
-  as both stay that way: leave commands out of the profile, or disable that agent. See
-  [Share a fixed set with a profile](./profiles#when-an-agent-cannot-take-a-member).
+One failure has no single command to run:
+
 - **`profiles`, a member is unavailable.** A source the profile uses was removed. Registering it
   again is not enough, because the profile was applied with the old registration: register it, then
   apply the profile again with `--force`. Or apply a profile without those members.

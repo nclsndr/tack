@@ -96,7 +96,7 @@ it.layer(LiveTestLayer)("profile workflow agreements", (test) => {
     );
   }
   test.effect(
-    "apply, retry, status and doctor agree on unsupported delivery until every enabled adapter supports the inventory",
+    "apply, retry, status and doctor agree that a member an enabled agent cannot take is skipped, not incomplete",
     () =>
       Effect.gen(function* () {
         const f = yield* profileFixture;
@@ -111,11 +111,14 @@ it.layer(LiveTestLayer)("profile workflow agreements", (test) => {
           "version: 1\nname: ci\nmembers: [review, {kind: command, name: audit}]\n",
         );
         const applied = yield* f.run(runProfileApply(f.options, f.request));
-        expect(applied.plan.delivery.incomplete).toBe(true);
+        const skip = `command ${f.sourceId}:audit: Tack does not link commands for codex`;
+        expect(applied.plan.delivery).toMatchObject({
+          incomplete: false,
+          skipped: [{ member: `command ${f.sourceId}:audit`, adapter: "codex" }],
+        });
         for (const adapters of [["codex"], ["codex", "cursor"], ["cursor"]] as const) {
-          const incomplete = adapters.some((adapter) => adapter === "codex");
-          if (incomplete === false)
-            yield* f.run(disableAdapter(f.options, "codex", { apply: true }));
+          const skipped = adapters.some((adapter) => adapter === "codex");
+          if (skipped === false) yield* f.run(disableAdapter(f.options, "codex", { apply: true }));
           else yield* enableAdapters(f.options, adapters);
           const synced = yield* f.run(
             runSyncCommand(f.options, {
@@ -130,7 +133,7 @@ it.layer(LiveTestLayer)("profile workflow agreements", (test) => {
             synced.plan.resources?.causes.some(
               (cause) => cause.code === "profile-delivery-incomplete",
             ),
-          ).toBe(incomplete);
+          ).toBe(false);
           const status = yield* f.run(
             runStatus(f.options, { cwd: f.project, selector: f.request.namespace }),
           );
@@ -138,7 +141,7 @@ it.layer(LiveTestLayer)("profile workflow agreements", (test) => {
             statusPartialCauses(status).some(
               (cause) => cause.code === "profile-delivery-incomplete",
             ),
-          ).toBe(incomplete);
+          ).toBe(false);
           yield* f.run(
             runSyncCommand(f.options, {
               apply: true,
@@ -151,22 +154,56 @@ it.layer(LiveTestLayer)("profile workflow agreements", (test) => {
           const doctor = yield* f.run(
             runDoctor(f.options, f.home).pipe(Effect.provide(ExecutionPlatformLive)),
           );
-          expect(doctor.checks.find((check) => check.id === "profiles")?.outcome).toBe(
-            incomplete === true ? "failed" : "ok",
-          );
+          // The check passes, and names each skipped member as a note.
+          expect(doctor.checks.find((check) => check.id === "profiles")).toMatchObject({
+            outcome: "ok",
+            message:
+              skipped === true
+                ? `Retained profile inventories are resolved. Skipped where an agent cannot take them: ${skip}.`
+                : "Retained profile inventories are resolved.",
+          });
           expect(
             doctorOutcome(doctor).classification,
             JSON.stringify(doctor.checks.filter((check) => check.outcome === "failed")),
-          ).toBe(incomplete === true ? "domain" : "success");
+          ).toBe("success");
           expect(
             yield* f.fs.exists(
               f.path.join(
                 f.project,
-                incomplete === true ? ".agents/skills/review" : ".cursor/skills/review",
+                skipped === true ? ".agents/skills/review" : ".cursor/skills/review",
               ),
             ),
           ).toBe(true);
         }
+        // With no agent left, no member can land anywhere: delivery is incomplete everywhere.
+        yield* f.run(disableAdapter(f.options, "cursor", { apply: true }));
+        const synced = yield* f.run(
+          runSyncCommand(f.options, {
+            apply: false,
+            cwd: f.project,
+            selector: f.request.namespace,
+            includeOptional: false,
+            noDocs: false,
+          }),
+        );
+        expect(
+          synced.plan.resources?.causes.some(
+            (cause) => cause.code === "profile-delivery-incomplete",
+          ),
+        ).toBe(true);
+        const status = yield* f.run(
+          runStatus(f.options, { cwd: f.project, selector: f.request.namespace }),
+        );
+        expect(
+          statusPartialCauses(status).some((cause) => cause.code === "profile-delivery-incomplete"),
+        ).toBe(true);
+        const doctor = yield* f.run(
+          runDoctor(f.options, f.home).pipe(Effect.provide(ExecutionPlatformLive)),
+        );
+        expect(doctor.checks.find((check) => check.id === "profiles")).toMatchObject({
+          outcome: "failed",
+          message: expect.stringContaining("no enabled adapter"),
+        });
       }),
   );
 });

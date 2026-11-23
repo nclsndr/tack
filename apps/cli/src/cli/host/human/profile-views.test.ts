@@ -147,7 +147,11 @@ const applyPlan = (overrides: Record<string, unknown> = {}) => ({
     `link-create: ${projectRoot}/.claude/skills/review`,
   ],
   sync: syncOf([directoryCreate, linkCreate("review")]),
-  delivery: { notes: ["Claude reads commands from .claude/commands."], incomplete: false },
+  delivery: {
+    notes: ["Claude reads commands from .claude/commands."],
+    skipped: [],
+    incomplete: false,
+  },
   ...overrides,
 });
 
@@ -162,6 +166,7 @@ describe("profile apply view", () => {
               "Claude reads commands from .claude/commands.",
               `skill ${sourceId}:review: claude → .claude/skills/review`,
             ],
+            skipped: [],
             incomplete: false,
           },
         }),
@@ -189,6 +194,43 @@ describe("profile apply view", () => {
         "  create  .claude/skills/review  skill review",
         "",
         "Ambient user instructions and release-owned skills remain outside this target's profile control.",
+        "",
+      ].join("\n"),
+    );
+  });
+
+  it("lists each member an enabled agent cannot take under that agent, with the reason", () => {
+    const skip = (adapter: string) => ({
+      member: `command ${sourceId}:ship`,
+      adapter,
+      reason: `Tack does not link commands for ${adapter}`,
+    });
+    const text = renderProfileApply(
+      envelopeOf({
+        command: "profile apply",
+        plan: applyPlan({
+          delivery: {
+            notes: [
+              `skill ${sourceId}:review: claude → .claude/skills/review`,
+              `command ${sourceId}:ship: Tack does not link commands for claude`,
+              `command ${sourceId}:ship: Tack does not link commands for codex`,
+            ],
+            skipped: [skip("claude"), skip("codex")],
+            incomplete: false,
+          },
+        }),
+      }),
+      labelled,
+    );
+    expect(text).toContain(
+      [
+        "skill review: claude → .claude/skills/review",
+        "",
+        "Skipped for claude",
+        "  command ship: Tack does not link commands for claude",
+        "",
+        "Skipped for codex",
+        "  command ship: Tack does not link commands for codex",
         "",
       ].join("\n"),
     );
@@ -300,6 +342,7 @@ describe("profile apply view", () => {
                 `skill ${sourceId}:review: claude → ${projectRoot}/.claude/skills/review`,
                 "Claude reads commands from .claude/commands.",
               ],
+              skipped: [],
               incomplete: false,
             },
           }),
@@ -416,6 +459,7 @@ describe("profile apply view", () => {
             required: [],
             delivery: {
               notes: [`skill ${bundleId}:review: claude → .claude/skills/review`],
+              skipped: [],
               incomplete: false,
             },
             sync: syncOf([linkCreate("review", bundleId)]),

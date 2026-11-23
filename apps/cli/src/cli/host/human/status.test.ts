@@ -160,7 +160,12 @@ describe("status view", () => {
               targets: [root],
             },
             issues: ["review is not delivered by codex"],
-            delivery: { notes: [], issues: ["claude cannot read commands"], incomplete: true },
+            delivery: {
+              notes: [],
+              issues: ["claude cannot read commands"],
+              skipped: [],
+              incomplete: true,
+            },
           },
           lifecycle: "suspended-removing",
           desired: [],
