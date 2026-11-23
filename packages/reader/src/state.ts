@@ -1,5 +1,4 @@
 import { useCallback, useSyncExternalStore } from "react";
-import { markdownPass } from "./markdown-pass.ts";
 
 export type VisualState = Readonly<Record<string, string>>;
 export type VisualStatePatch = Readonly<Record<string, string | null>>;
@@ -48,7 +47,9 @@ export function numericState(
   return Math.min(options.max, Math.max(options.min, number));
 }
 
+/** Follows URL changes; a render without a `window`, such as a Markdown twin, has none to follow. */
 function subscribe(callback: () => void): () => void {
+  if (typeof window === "undefined") return () => undefined;
   window.addEventListener("popstate", callback);
   window.addEventListener(stateEvent, callback);
   return () => {
@@ -57,33 +58,23 @@ function subscribe(callback: () => void): () => void {
   };
 }
 
+/**
+ * Reads the page URL. A client renderer without a `window`, such as the one that writes Markdown
+ * twins in Node, still calls this, and gets every visual in its initial state.
+ */
 function browserSearch(): string {
-  return window.location.search;
+  return typeof window === "undefined" ? "" : window.location.search;
 }
 
 function serverSearch(): string {
   return "";
 }
 
-/** The Markdown pass has no `window` and no URL that could change. */
-function subscribeNothing(): () => void {
-  return () => undefined;
-}
-
-/**
- * Shares reproducible interaction state through URL history, including browser back and forward.
- * The Markdown pass renders with a client reconciler but has no `window`, so it reads the server
- * snapshot: every visual in its initial state.
- */
+/** Shares reproducible interaction state through URL history, including browser back and forward. */
 export function useVisualState(
   id: string,
 ): readonly [VisualState, (patch: VisualStatePatch) => void] {
-  const markdown = markdownPass();
-  const search = useSyncExternalStore(
-    markdown === true ? subscribeNothing : subscribe,
-    markdown === true ? serverSearch : browserSearch,
-    serverSearch,
-  );
+  const search = useSyncExternalStore(subscribe, browserSearch, serverSearch);
   const update = useCallback(
     (patch: VisualStatePatch) => {
       const url = updateVisualState(window.location.href, id, patch);
