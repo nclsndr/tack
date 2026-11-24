@@ -33,7 +33,7 @@ export const hero = {
 export const pageTitle = "Tack: one setup for every agent, project and worktree";
 
 /**
- * The story plate, after the features: the metaphor of what they said. The agent is the horse and
+ * The story plate, right after the demo: the metaphor of what it showed. The agent is the horse and
  * Tack the gear fitted to it, and each beat lights the part of the plate it stands for: the
  * studies (your sources), the saddle (the links), the track (the syncs that keep it running).
  * `region` and `caption` are percentages of the plate, which is 1916 by 821. A `proof` is one

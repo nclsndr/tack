@@ -3,6 +3,7 @@
 @import "./tokens.css";
 @import "./landing.css";
 @import "./landing-features.css";
+@import "./landing-transition.css";
 @import "./features-page.css";
 
 /* The Rspress default theme, drawn with the brand tokens. */

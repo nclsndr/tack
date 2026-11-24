@@ -11,17 +11,22 @@ import { nextLinkField, type LinkField } from "../../demo/link-field.ts";
 import type { LinkEdge } from "../../demo/machine-view.ts";
 
 /**
- * The demo machine's links as the hero draws them, and how many commands have made links so far.
- * Each one replays the travel of the links it made.
+ * The demo machine's links as the hero draws them, how many commands have made links so far, and
+ * how many commands have run at all. Each change replays the travel of the links it made; each
+ * command is a beat the story's decoration can follow.
  */
-type LinkState = { readonly field: LinkField; readonly changes: number };
+type LinkState = {
+  readonly field: LinkField;
+  readonly changes: number;
+  readonly commands: number;
+};
 
 const LinksContext = createContext<{
   readonly state: LinkState | undefined;
   readonly publish: (state: LinkState) => void;
 }>({ state: undefined, publish: () => undefined });
 
-/** Shares the demo window's links with the drawings on the hero's sheet. */
+/** Shares the demo window's links with the drawings on the hero's sheet and the story below it. */
 export function DemoLinksProvider({ children }: { readonly children: ReactNode }) {
   const [state, setState] = useState<LinkState>();
   const value = useMemo(() => ({ state, publish: setState }), [state]);
@@ -56,6 +61,8 @@ export function usePublishLinks(
     const state = {
       field: nextLinkField(before?.state.field, edges, fresh, home),
       changes: (before?.state.changes ?? 0) + (made ? 1 : 0),
+      // The first reading is the machine loading; every later one follows a command.
+      commands: before === undefined ? 0 : before.state.commands + 1,
     };
     previous.current = { state, fresh };
     publish(state);
