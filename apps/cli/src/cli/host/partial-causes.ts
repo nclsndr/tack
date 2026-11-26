@@ -57,6 +57,8 @@ export const partialCauseRegistry: { readonly [K in PartialCauseCode]: string } 
   "removal-skipped": "A cleanup removal was skipped and keeps its obligation.",
   "root-missing": "A registered project root is missing, so Tack cannot deliver to it.",
   "root-removing": "A project root is being removed and keeps cleanup obligations.",
+  "project-exclude-linked-for-user":
+    "A project exclude cannot hide a resource that the user namespace links, so every agent in the project still sees it. Exclude it for the user to turn it off everywhere.",
   "root-unhealthy": "A registered project root cannot be used.",
   "selection-collision": "Two or more selected resources need the same destination name.",
   "source-unhealthy": "A registered source is unhealthy, so its resources are unavailable.",

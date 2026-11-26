@@ -1,3 +1,5 @@
+import { Option, Schema } from "effect";
+import { UserLinkedExcludeSchema } from "../../domain/choices/choice-schema.ts";
 import type { ManagedLinkTarget } from "../../domain/links/managed-link-schema.ts";
 import { commandLine, selectorFlags } from "./command-line.ts";
 
@@ -31,3 +33,27 @@ export const collisionExcludeCommands = (
       ...selectorFlags(subject.target),
     ),
   );
+
+const decodeUserLinkedExclude = Schema.decodeUnknownOption(
+  Schema.Struct({ subject: UserLinkedExcludeSchema }),
+);
+
+/**
+ * One `tack pick exclude … --user` command per `project-exclude-linked-for-user` diagnostic: a
+ * project cannot hide what the user namespace links, so the user exclude is the one that turns
+ * the resource off, everywhere.
+ */
+export const userExcludeCommands = (
+  diagnostics: ReadonlyArray<{ readonly code: string; readonly details?: unknown }>,
+  reference: (address: {
+    readonly kind: string;
+    readonly name: string;
+    readonly sourceRegistrationId: string;
+  }) => string,
+): ReadonlyArray<string> =>
+  diagnostics
+    .filter((diagnostic) => diagnostic.code === "project-exclude-linked-for-user")
+    .flatMap((diagnostic) => Option.toArray(decodeUserLinkedExclude(diagnostic.details)))
+    .map(({ subject: { address } }) =>
+      commandLine("choice-exclude", reference(address), "--kind", address.kind, "--user"),
+    );

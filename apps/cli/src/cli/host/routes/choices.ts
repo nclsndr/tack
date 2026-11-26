@@ -3,11 +3,16 @@ import { Effect } from "effect";
 import {
   catalogAddressCandidates,
   ChoiceListPayloadSchema,
+  ChoiceUserLinkedError,
   ChoiceRemovalPayloadSchema,
   listSkillChoices,
   removeSkillChoice,
   setSkillChoice,
 } from "../../../features/choices/choice.ts";
+import {
+  userLinkedExcludes,
+  userLinksOf,
+} from "../../../features/reconciliation/linked-for-user.ts";
 import { withCommandWriter } from "../../../features/writer/recovered-writer.ts";
 import { readInvocationSnapshot } from "../../../features/snapshot/command-snapshot.ts";
 import type { StateOptions } from "../../../services/state-store.ts";
@@ -19,7 +24,14 @@ import {
 import { isSelectableAddress, type Catalog } from "../../../domain/sources/catalog-schema.ts";
 import { selectableKinds, type SelectableKind } from "../../../domain/resources/kinds.ts";
 import type { ChoiceNamespace, SkillChoice } from "../../../domain/choices/choice-schema.ts";
-import { argvLine, commandLine, selectorFlags, shellWord } from "../command-line.ts";
+import {
+  argvLine,
+  commandLine,
+  invocation as commandInvocation,
+  selectorFlags,
+  shellWord,
+} from "../command-line.ts";
+import type { State } from "../../../domain/state/state-schema.ts";
 import { appliedAs, choiceSetOutcome, resultAs } from "../outcomes.ts";
 import type { RoutesFor } from "./route.ts";
 
@@ -109,6 +121,34 @@ const resolveStoredPick = Effect.fnUntraced(function* (
   });
 });
 
+/**
+ * Refuses a project exclude that would hide nothing because the user namespace links the resource,
+ * before anything is recorded. Its fix is the user exclude, named by source and kind.
+ */
+const requireVisibleExclude = Effect.fnUntraced(function* (
+  catalog: Catalog,
+  state: State,
+  choice: SkillChoice,
+) {
+  const [refused] = userLinkedExcludes(userLinksOf(state, catalog, false), [choice]);
+  if (refused === undefined) return undefined;
+  const { address, projectName } = refused;
+  const command = commandInvocation(
+    "choice-exclude",
+    `${sourceQualifier(catalog, address.sourceRegistrationId)}:${address.name}`,
+    "--kind",
+    address.kind,
+    "--user",
+  );
+  return yield* new ChoiceUserLinkedError({
+    code: "project-exclude-refused",
+    address,
+    projectName,
+    message: `Project ${projectName} cannot hide ${address.kind} ${address.name}: the user namespace links it, so every agent in the project would still see it. Nothing was recorded. Run \`${argvLine(command)}\` to turn it off everywhere.`,
+    next: [command],
+  });
+});
+
 /** Sets one pick after resolving its reference, from the document the writer holds. */
 const setPick = (
   stateOptions: StateOptions,
@@ -131,11 +171,9 @@ const setPick = (
         request.namespace,
         request.kind,
       );
-      const applied = yield* setSkillChoice(writer, {
-        address,
-        decision: request.decision,
-        namespace: request.namespace,
-      });
+      const choice = { address, decision: request.decision, namespace: request.namespace };
+      yield* requireVisibleExclude(catalog, snapshot.state, choice);
+      const applied = yield* setSkillChoice(writer, choice);
       return choiceSetOutcome(applied, catalogAddressCandidates(catalog, applied.choice.address));
     }),
   );

@@ -11,11 +11,13 @@ import {
   type ChoiceNamespace,
   type SkillChoice,
 } from "../../domain/choices/choice-schema.ts";
+import { NextCommandsSchema } from "../../domain/hints/next-commands.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
 import { allSkillChoices } from "../../domain/state/state-intent.ts";
 import { projectLifecycle } from "../../domain/projects/project-schema.ts";
 import {
   isSelectableAddress,
+  LinkableAddressSchema,
   resourceAddressIdentity,
   SelectableAddressSchema,
   type ResourceAddress,
@@ -39,6 +41,22 @@ export class ChoiceProjectRemovingError extends Schema.TaggedError<ChoiceProject
   {
     code: Schema.Literal("choice-project-removing"),
     projectName: Schema.String,
+  },
+) {}
+
+/**
+ * Refuses a project exclude of a resource that the user namespace links: the user's link stays in
+ * front of every agent in the project, so the exclude would hide nothing. `next` is the user
+ * exclude that turns the resource off everywhere.
+ */
+export class ChoiceUserLinkedError extends Schema.TaggedError<ChoiceUserLinkedError>()(
+  "ChoiceUserLinkedError",
+  {
+    code: Schema.Literal("project-exclude-refused"),
+    address: LinkableAddressSchema,
+    projectName: Schema.String,
+    message: Schema.String,
+    next: NextCommandsSchema,
   },
 ) {}
 

@@ -61,7 +61,12 @@ import {
   resourceAddressIdentity,
   type Catalog,
 } from "../../domain/sources/catalog-schema.ts";
-import { linkedForUser, userLinksOf, type UserLink } from "../reconciliation/linked-for-user.ts";
+import {
+  linkedForUser,
+  userLinkedExcludes,
+  userLinksOf,
+  type UserLink,
+} from "../reconciliation/linked-for-user.ts";
 import { Source } from "../sources/source.ts";
 import { type SourceInspection } from "../../domain/sources/source-inspection.ts";
 import {
@@ -582,6 +587,10 @@ export const statusPartialCauses = (report: StatusReport): ReadonlyArray<Partial
       : [],
   ),
   ...resolutionCauses(report.namespaces),
+  ...(report.userLinkedExcludes ?? []).map((subject): PartialCause => ({
+    code: "project-exclude-linked-for-user",
+    subject,
+  })),
   ...(report.namespaces.some((namespace) =>
     namespace.undelivered.some((item) => item.reason === "no-enabled-adapter"),
   )
@@ -704,6 +713,10 @@ export const statusFromSnapshot = Effect.fn("status.statusFromSnapshot")(functio
     userLinks,
   );
   const stateDirectory = yield* resolveStateDirectory(stateOptions);
+  const excludes = userLinkedExcludes(
+    userLinks,
+    namespaces.flatMap((namespace) => namespace.choices),
+  );
   const docsPendingRemovals = docsPendingRemovalsOf(state.data.links).filter((pending) =>
     scopeIncludesTarget(scope, {
       _tag: "project-root",
@@ -726,6 +739,7 @@ export const statusFromSnapshot = Effect.fn("status.statusFromSnapshot")(functio
     namespaces,
     pendingRemovals: pendingRemovals.map((pending) => reportPendingRemoval(pending)),
     ...(docsPendingRemovals.length === 0 ? {} : { docsPendingRemovals }),
+    ...(excludes.length === 0 ? {} : { userLinkedExcludes: excludes }),
     projects,
     selection: selectionEcho(selected),
     scope,

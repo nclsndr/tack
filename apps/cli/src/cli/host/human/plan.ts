@@ -14,7 +14,7 @@ import type { DestinationObservation } from "../../../domain/reconciliation/dest
 import { agentAdapterDescriptor } from "../../../domain/agents/agent-adapter.ts";
 import type { ManagedLinkTarget } from "../../../domain/links/managed-link-schema.ts";
 import { selectedDependencyAddresses } from "../../../domain/choices/dependency-resolution.ts";
-import { collisionExcludeCommands } from "../collision-hints.ts";
+import { collisionExcludeCommands, userExcludeCommands } from "../collision-hints.ts";
 import { commandLine, selectorFlags } from "../command-line.ts";
 import type { PublicEnvelope } from "../public-outcome.ts";
 import type { Style } from "./style.ts";
@@ -470,6 +470,7 @@ export const renderPlan = (
                   ),
                 ),
               ),
+              ...userExcludeCommands(envelope.diagnostics, style.reference),
               ...(applied === undefined && pending > 0
                 ? [
                     commandLine(
