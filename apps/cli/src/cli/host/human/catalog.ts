@@ -6,6 +6,7 @@ import {
   type CatalogResource,
   CatalogReportSchema,
 } from "../../../domain/sources/catalog-report.ts";
+import { activationIn } from "../../../domain/choices/selection.ts";
 import {
   hasActivation,
   ResourceKindSchema,
@@ -57,7 +58,8 @@ const detailOf = <Kind extends ResourceKind>(
 ): ((resource: ResourceOf<Kind>, style: Style) => Cell) => details[kind];
 
 /**
- * Origin and activation appear only when they differ from the defaults.
+ * Origin and activation appear only when they differ from the defaults. The user activation is
+ * the one sync resolves, so an omitted `user-activation` reads as `user opt-in`.
  */
 const tagsOf = (resource: CatalogResource): string =>
   [
@@ -67,10 +69,9 @@ const tagsOf = (resource: CatalogResource): string =>
       ? [
           ...(resource.activation === "opt-in" ? ["opt-in"] : []),
           ...(resource.projects.length > 0 ? [`projects ${resource.projects.join(",")}`] : []),
-          ...(resource.userActivation === undefined ||
-          resource.userActivation === resource.activation
+          ...(activationIn(resource, "user") === resource.activation
             ? []
-            : [`user ${resource.userActivation}`]),
+            : [`user ${activationIn(resource, "user")}`]),
         ]
       : []),
   ].join(" · ");

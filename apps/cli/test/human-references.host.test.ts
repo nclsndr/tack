@@ -82,9 +82,9 @@ it.layer(LiveTestLayer)("shortest references in human output", (referencesIt) =>
       expect(output).toMatch(/^ {2}lint +team\b/m);
       expect(output).toMatch(/^ {2}notes +me\b/m);
       expect(output).not.toMatch(uuid);
-      // A resource without tags ends its source cell, not a separator before the description.
+      // Each separator joins two parts of the cell: none dangles before the description.
       for (const line of output.slice(output.indexOf("Skills (")).split("\n"))
-        expect(line).not.toMatch(/ ·( |$)/);
+        expect(line).not.toMatch(/ ·( {2,}|$)/);
     }),
   );
 
