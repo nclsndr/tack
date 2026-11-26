@@ -75,3 +75,17 @@ describe("the generic view", () => {
     expect(renderHuman(envelope, styleOf({ color: true }))).toContain("\u001b[");
   });
 });
+
+describe("an internal failure", () => {
+  it("never reaches the dedicated view, and shows a payload it still carries as generic slots", () => {
+    const envelope = createPublicEnvelope("status", {
+      classification: "internal",
+      diagnostics: [{ code: "internal-error", message: "Tack failed.", severity: "error" }],
+      result: { kind: "status" },
+    });
+    const plain = renderHuman(envelope, styleOf(), { status: () => "dedicated status view" });
+    expect(plain).not.toContain("dedicated status view");
+    expect(plain).toContain("internal-error");
+    expect(plain).toContain('"kind": "status"');
+  });
+});

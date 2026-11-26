@@ -701,38 +701,48 @@ const refreshChangeRows = (changes: ReadonlyArray<ProjectRefreshChange>, style: 
     style,
   );
 
+/** One project's block: its heading with the number of root changes, then their rows. */
+const projectBlock = (
+  name: string,
+  count: number,
+  rows: ReadonlyArray<string>,
+  style: Style,
+): ReadonlyArray<string> => [
+  ...headingLines(
+    `Project ${name}`,
+    count === 0 ? "no root changes" : plural(count, "root change"),
+    style,
+  ),
+  ...rows,
+];
+
+/**
+ * One block per project: the root changes a preview plans, or those an application made, which
+ * can name a project the plan did not.
+ */
 const projectBlocks = (
   plan: typeof ProjectRefreshCommandPlanSchema.Type,
   applied: typeof ProjectRefreshCommandResultSchema.Type | undefined,
   style: Style,
 ): ReadonlyArray<ReadonlyArray<string>> => {
+  if (applied === undefined)
+    return plan.refresh.projects.map((project) =>
+      projectBlock(
+        project.expectedProject.name,
+        changeCount(project),
+        refreshPreviewRows(project, style),
+        style,
+      ),
+    );
   const names = [
     ...new Set([
       ...plan.refresh.projects.map((project) => project.expectedProject.name),
-      ...(applied?.refresh.changes ?? []).map((change) => change.projectName),
+      ...applied.refresh.changes.map((change) => change.projectName),
     ]),
   ];
   return names.map((name) => {
-    const planned = plan.refresh.projects.find((project) => project.expectedProject.name === name);
-    const changes = (applied?.refresh.changes ?? []).filter(
-      (change) => change.projectName === name,
-    );
-    const rows =
-      applied === undefined
-        ? planned === undefined
-          ? []
-          : refreshPreviewRows(planned, style)
-        : refreshChangeRows(changes, style);
-    const count =
-      applied === undefined ? (planned === undefined ? 0 : changeCount(planned)) : changes.length;
-    return [
-      ...headingLines(
-        `Project ${name}`,
-        count === 0 ? "no root changes" : plural(count, "root change"),
-        style,
-      ),
-      ...rows,
-    ];
+    const changes = applied.refresh.changes.filter((change) => change.projectName === name);
+    return projectBlock(name, changes.length, refreshChangeRows(changes, style), style);
   });
 };
 
