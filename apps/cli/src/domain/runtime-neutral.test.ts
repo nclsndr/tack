@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import { Glob, Yaml } from "./runtime-neutral.ts";
 
 describe("runtime-neutral YAML", () => {
-  it("parses a mapping and keeps the last of duplicate keys", () => {
-    expect(Yaml.parse("name: first\nname: last\nlist: [1, 2]\n")).toEqual({
-      name: "last",
-      list: [1, 2],
-    });
+  it("parses a mapping and refuses a repeated key, naming it and both of its lines", () => {
+    expect(Yaml.parse("name: first\nlist: [1, 2]\n")).toEqual({ name: "first", list: [1, 2] });
+    expect(() => Yaml.parse("name: first\nname: last\n")).toThrow(
+      'The key "name" appears twice, at lines 1 and 2. Keep one of them.',
+    );
   });
 
   it("rejects malformed YAML", () => {

@@ -66,6 +66,23 @@ it.layer(LiveTestLayer)("source check", (test) => {
     }),
   );
 
+  test.effect("refuses a key repeated in tack.yaml at its second line, naming both", () =>
+    Effect.gen(function* () {
+      const { path, root, write } = yield* folders;
+      yield* write("twice/tack.yaml", "version: 1\nname: one\nskills: []\nname: two\n");
+      const report = yield* checkSource(path.join(root, "twice"));
+      expect(report.findings).toEqual([
+        {
+          code: "declaration-malformed",
+          severity: "error",
+          file: path.join(root, "twice", "tack.yaml"),
+          line: 4,
+          message: 'The key "name" appears twice, at lines 2 and 4. Keep one of them.',
+        },
+      ]);
+    }),
+  );
+
   test.effect("points each declaration problem at its entry in the declaration", () =>
     Effect.gen(function* () {
       const { path, root, write } = yield* folders;

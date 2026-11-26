@@ -1,4 +1,5 @@
 import { Yaml } from "../../domain/runtime-neutral.ts";
+import { RepeatedYamlKeyError } from "@tackup/reader/yaml";
 import { bundleSourceLabel } from "../../domain/bundles/bundle-registration.ts";
 import { bundleIntegrityIssue } from "./bundle-integrity.ts";
 import { fileAccessFailure } from "../file-access.ts";
@@ -290,8 +291,12 @@ const validateSource = Effect.fnUntraced(function* (
     catch: (cause) =>
       new SourceValidationError({
         code: "declaration-malformed",
-        message: String(cause),
+        message: Yaml.failure(cause),
         sourcePath: canonicalPath,
+        // A repeated key is located at its second occurrence, which is the one to remove.
+        ...(cause instanceof RepeatedYamlKeyError
+          ? { issues: [{ message: cause.message, line: cause.lines[1] }] }
+          : {}),
       }),
     try: (): unknown => Yaml.parse(encodedDeclaration),
   });

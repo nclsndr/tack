@@ -75,3 +75,18 @@ it.effect("refuses a dependency with an unknown key", () =>
     expect(error).toMatchObject({ code: "command-metadata-invalid" });
   }),
 );
+
+it.effect("refuses a key repeated in SKILL.md frontmatter, at both of its lines in the file", () =>
+  Effect.gen(function* () {
+    const error = yield* Effect.flip(
+      parseSkillDocument({
+        directoryName: "example",
+        encoded: "---\nname: example\ndescription: One\ndescription: Two\n---\nBody\n",
+      }),
+    );
+    expect(error).toMatchObject({
+      code: "skill-frontmatter-yaml-malformed",
+      message: 'The key "description" appears twice, at lines 3 and 4. Keep one of them.',
+    });
+  }),
+);

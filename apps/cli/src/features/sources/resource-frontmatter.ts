@@ -58,13 +58,22 @@ const candidateError = (code: CatalogCandidateError["code"], message: string, fi
     message,
   });
 
+/** The line of SKILL.md frontmatter's first key: the one after the opening `---`. */
+const frontmatterFirstLine = 2;
+
+/**
+ * Parses YAML that must hold a mapping. `firstLine` is the file line the text starts at, so a
+ * repeated key names its lines in the file; Tack metadata, a block inside the frontmatter, counts
+ * from its own first line.
+ */
 const parseYamlMapping = Effect.fnUntraced(function* (
   encoded: string,
   codes: YamlMappingErrorCodes,
+  firstLine?: number,
 ) {
   const parsed: unknown = yield* Effect.try({
-    catch: (cause) => candidateError(codes.malformed, String(cause)),
-    try: (): unknown => Yaml.parse(encoded),
+    catch: (cause) => candidateError(codes.malformed, Yaml.failure(cause)),
+    try: (): unknown => Yaml.parse(encoded, firstLine),
   });
 
   if (Predicate.isObject(parsed) === false) {
@@ -214,10 +223,14 @@ export const parseSkillDocument = Effect.fnUntraced(function* ({
   encoded,
 }: ParseSkillDocumentInput): Effect.fn.Return<ParsedSkillDocument, CatalogCandidateError> {
   const frontmatterEncoded = yield* extractFrontmatter(encoded);
-  const parsedFrontmatter = yield* parseYamlMapping(frontmatterEncoded, {
-    malformed: "skill-frontmatter-yaml-malformed",
-    root: "skill-frontmatter-root-not-mapping",
-  });
+  const parsedFrontmatter = yield* parseYamlMapping(
+    frontmatterEncoded,
+    {
+      malformed: "skill-frontmatter-yaml-malformed",
+      root: "skill-frontmatter-root-not-mapping",
+    },
+    frontmatterFirstLine,
+  );
   const frontmatter = yield* decodeFrontmatter(parsedFrontmatter).pipe(
     Effect.mapError((cause) => candidateError("skill-frontmatter-schema-invalid", cause.message)),
   );
@@ -320,10 +333,14 @@ export const parseCommandDocument = Effect.fnUntraced(function* (encoded: string
     encoded.split(/\r?\n/)[0] === "---"
       ? yield* extractFrontmatter(encoded).pipe(
           Effect.flatMap((yaml) =>
-            parseYamlMapping(yaml, {
-              malformed: "skill-frontmatter-yaml-malformed",
-              root: "skill-frontmatter-root-not-mapping",
-            }),
+            parseYamlMapping(
+              yaml,
+              {
+                malformed: "skill-frontmatter-yaml-malformed",
+                root: "skill-frontmatter-root-not-mapping",
+              },
+              frontmatterFirstLine,
+            ),
           ),
           Effect.mapError((error) => candidateError("command-frontmatter-invalid", error.message)),
         )

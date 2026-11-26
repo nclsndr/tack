@@ -1,8 +1,8 @@
 import { lstat, readFile, realpath, stat } from "node:fs/promises";
 import { dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
-import { parse } from "yaml";
 import { z } from "zod";
 import type { ReaderConfig } from "./types.ts";
+import { parseYaml, RepeatedYamlKeyError } from "./yaml.ts";
 
 const names = z.array(z.string().trim().min(1));
 const customization = <Preset extends string>(preset: Preset) =>
@@ -162,9 +162,13 @@ export async function readReaderYaml(configPath: string): Promise<unknown> {
     throw new ReaderConfigurationError(`${configPath} is required and must be readable.`);
   }
   try {
-    return parse(source);
-  } catch {
-    throw new ReaderConfigurationError(`${configPath} must contain valid YAML.`);
+    return parseYaml(source);
+  } catch (error) {
+    throw new ReaderConfigurationError(
+      error instanceof RepeatedYamlKeyError
+        ? `${configPath}: ${error.message}`
+        : `${configPath} must contain valid YAML.`,
+    );
   }
 }
 

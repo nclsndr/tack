@@ -3,12 +3,19 @@
  * the same under Node and under Bun.
  */
 import picomatch from "picomatch";
-import { parse, stringify } from "yaml";
+import { parseYaml, RepeatedYamlKeyError } from "@tackup/reader/yaml";
+import { stringify } from "yaml";
 
 /** Reads and writes YAML documents. */
 export const Yaml = {
-  /** Parses one document; a repeated key keeps its last value, as Tack always has. */
-  parse: (text: string): unknown => parse(text, { uniqueKeys: false }),
+  /**
+   * Parses one document as the docs reader does: a key repeated in one mapping is refused with
+   * both of its lines, counted from `firstLine`.
+   */
+  parse: (text: string, firstLine?: number): unknown => parseYaml(text, firstLine),
+  /** Why a text did not parse: a repeated key's own sentence, or the parser's error. */
+  failure: (cause: unknown): string =>
+    cause instanceof RepeatedYamlKeyError ? cause.message : String(cause),
   /** Writes block YAML with two-space indentation and a final newline. */
   stringify: (value: unknown): string => stringify(value, { indent: 2 }),
 };
