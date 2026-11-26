@@ -2,6 +2,7 @@ import { fakeGit } from "../../../test/support/fake-git.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Ref, Sink, Stdio, Stream } from "effect";
 import { vi } from "vitest";
+import { runTackInProcess } from "../../../test/support/host-runner.ts";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
 import { Git } from "../../services/git.ts";
@@ -140,11 +141,32 @@ it.layer(LiveTestLayer)("CLI host", (test) => {
         command: "docs icons",
         result: { kind: "docs-icons", query: "book" },
       });
+      const everyIcon = yield* tack(["docs", "icons"]);
+      expect(everyIcon).toMatchObject({
+        classification: "success",
+        command: "docs icons",
+        result: { kind: "docs-icons", count: expect.any(Number) },
+      });
+      expect(everyIcon.result).not.toHaveProperty("query");
       expect(yield* tack(["docs", "icons", "zzzz"])).toMatchObject({
         classification: "success",
         diagnostics: [{ code: "docs-icons-none", severity: "warning" }],
         result: { count: 0 },
       });
+      expect(yield* fs.exists(state)).toBe(false);
+    }),
+  );
+
+  test.effect.each([
+    ["docs icons", "Matches"],
+    ["docs icons home", "house (was home)"],
+  ] as const)("prints `tack %s` for a person without reading state", ([command, line]) =>
+    Effect.gen(function* () {
+      const { fs, state } = yield* world;
+      const run = yield* runTackInProcess(command.split(" "), { state });
+      expect(run).toMatchObject({ exitCode: 0, stderr: "" });
+      expect(run.stdout).toContain("tack docs icons · ✓ success");
+      expect(run.stdout).toContain(line);
       expect(yield* fs.exists(state)).toBe(false);
     }),
   );
