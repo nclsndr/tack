@@ -2,14 +2,11 @@ import { readFile, realpath, readdir } from "node:fs/promises";
 import { basename, dirname, extname, isAbsolute, relative, resolve, sep } from "node:path";
 import type { Root, RootContent } from "mdast";
 import type { MdxJsxFlowElement } from "mdast-util-mdx-jsx";
-import { unified } from "unified";
-import remarkParse from "remark-parse";
-import remarkMdx from "remark-mdx";
-import remarkFrontmatter from "remark-frontmatter";
 import { parse as parseYaml } from "yaml";
 import { z } from "zod";
 import { ReaderConfigurationError } from "./config.ts";
 import { globMatcher } from "./host.ts";
+import { authoredTree } from "./parsed-source.ts";
 import { readerFile } from "./reader-files.ts";
 import { docsWalkSkips, marksSourceEdge } from "./source-edges.ts";
 import { treeFences } from "./figures/tree-fences.ts";
@@ -24,8 +21,6 @@ import type {
   SourceReference,
 } from "./types.ts";
 
-const markdownParser = unified().use(remarkParse).use(remarkFrontmatter);
-const mdxParser = unified().use(remarkParse).use(remarkMdx).use(remarkFrontmatter);
 const metadataSchema = z.strictObject({
   title: z.string().trim().min(1),
   type: z.string().min(1).optional(),
@@ -70,13 +65,11 @@ function blockId(reference: SourceReference) {
 
 /** Identifies a block's exact authored contents so live edits cannot produce stale citations. */
 export function sourceVersion(text: string): string {
-  return text
-    .split("")
-    .reduce(
-      (hash, character) => Math.imul(hash ^ character.charCodeAt(0), 16777619) >>> 0,
-      2166136261,
-    )
-    .toString(36);
+  // A loop, not split and reduce: this hashes every block of every document on each corpus load.
+  let hash = 2166136261;
+  for (let index = 0; index < text.length; index += 1)
+    hash = Math.imul(hash ^ text.charCodeAt(index), 16777619) >>> 0;
+  return hash.toString(36);
 }
 
 function contributingVersion(raw: string, contents: string[]) {
@@ -195,10 +188,31 @@ function parsedBlocks(path: string, text: string, tree: Root): SourceBlock[] {
     });
 }
 
-function parseSource(path: string, text: string) {
+type ParsedSource = { tree: Root; blocks: SourceBlock[]; imports: DocumentImport[] };
+
+/** The blocks and imports read from each shared tree, so a tree parsed once is analyzed once. */
+const analyses = new WeakMap<Root, ParsedSource>();
+
+function analyzedSource(path: string, text: string): ParsedSource {
+  const tree = authoredTree(path, text);
+  const known = analyses.get(tree);
+  if (known !== undefined) return known;
+  const parsed = {
+    tree,
+    blocks: parsedBlocks(path, text, tree),
+    imports: documentImports(path, tree),
+  };
+  analyses.set(tree, parsed);
+  return parsed;
+}
+
+/**
+ * Parses one authored document, reusing the result for a path and text parsed before: analysis and
+ * contributor resolution of the same saved document share one parse.
+ */
+function parseSource(path: string, text: string): ParsedSource {
   try {
-    const tree = (extname(path) === ".md" ? markdownParser : mdxParser).parse(text);
-    return { tree, blocks: parsedBlocks(path, text, tree), imports: documentImports(path, tree) };
+    return analyzedSource(path, text);
   } catch (error) {
     throw new ReaderConfigurationError(
       // Coverage skip: remark throws Error objects; retain a defensive fallback for foreign throws.

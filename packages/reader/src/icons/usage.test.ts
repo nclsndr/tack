@@ -21,7 +21,7 @@ const mdx = [
 
 describe("documentIconUses", () => {
   it("finds every Icon of an MDX document with its line, and no Icon in code", () => {
-    expect(documentIconUses(mdx, ".mdx")).toEqual([
+    expect(documentIconUses(mdx, "page.mdx")).toEqual([
       { line: 7, name: "database" },
       { line: 7, name: "home" },
       { line: 9, name: undefined },
@@ -31,18 +31,21 @@ describe("documentIconUses", () => {
 
   it("counts a Callout's icon as an Icon, and a Callout without one as none", () => {
     expect(
-      documentIconUses('<Callout icon="rocket">Go</Callout>\n\n<Callout>Plain</Callout>', ".mdx"),
+      documentIconUses(
+        '<Callout icon="rocket">Go</Callout>\n\n<Callout>Plain</Callout>',
+        "page.mdx",
+      ),
     ).toEqual([{ line: 1, name: "rocket" }]);
   });
 
   it("finds none in plain Markdown, which renders no components", () => {
-    expect(documentIconUses('<Icon name="database" />', ".md")).toEqual([]);
+    expect(documentIconUses('<Icon name="database" />', "page.md")).toEqual([]);
   });
 });
 
 describe("iconIssues", () => {
   it("reports each unknown or unreadable name with its line and the closest names", () => {
-    expect(iconIssues(documentIconUses(mdx, ".mdx"))).toEqual([
+    expect(iconIssues(documentIconUses(mdx, "page.mdx"))).toEqual([
       {
         line: 7,
         name: "home",

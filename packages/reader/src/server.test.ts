@@ -613,7 +613,7 @@ describe("foreground reader server", () => {
       await server.close();
     }
   }, 30000);
-  it.each(["before startup", "during preflight"])(
+  it.each(["before startup", "during setup"])(
     "honors an abort %s without spawning an engine",
     async (timing) => {
       const root = await fixture();
@@ -627,7 +627,7 @@ describe("foreground reader server", () => {
         signal: controller.signal,
         diagnostic: () => undefined,
       });
-      if (timing === "during preflight") controller.abort();
+      if (timing === "during setup") controller.abort();
       try {
         await expect(pending).rejects.toMatchObject({ name: "AbortError" });
         expect(spawn).not.toHaveBeenCalled();

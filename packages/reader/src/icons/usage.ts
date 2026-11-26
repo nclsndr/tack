@@ -1,9 +1,6 @@
 import { extname } from "node:path";
 import type { Root, RootContent } from "mdast";
-import remarkFrontmatter from "remark-frontmatter";
-import remarkMdx from "remark-mdx";
-import remarkParse from "remark-parse";
-import { unified } from "unified";
+import { authoredTree } from "../parsed-source.ts";
 import { iconNameFinding } from "./catalog.ts";
 
 /** One `<Icon>` of a document: its line, and its name when written as a plain string. */
@@ -17,8 +14,6 @@ export type IconIssue = IconUse & {
 
 /** An unusable `<Icon>` of one document file, by path and line. */
 export type IconFinding = IconIssue & { readonly path: string };
-
-const mdxParser = unified().use(remarkParse).use(remarkMdx).use(remarkFrontmatter);
 
 /** The attribute that names an icon: `name` on `Icon`, `icon` on `Callout`. */
 const iconAttribute: Readonly<Record<string, string>> = { Icon: "name", Callout: "icon" };
@@ -53,12 +48,13 @@ function iconElements(node: Root | RootContent): readonly IconUse[] {
 
 /**
  * Every `<Icon>` of a document, in order. Only MDX renders components, so a `.md` document has
- * none; code blocks are text, so an `<Icon>` shown in one is not counted.
+ * none; code blocks are text, so an `<Icon>` shown in one is not counted. It reads the document's
+ * shared tree, so a document the corpus already loaded is not parsed again.
  *
- * @param extension - The document's extension, `.md` or `.mdx`.
+ * @param path - The document's path; its extension says whether it is MDX.
  */
-export function documentIconUses(source: string, extension: string): readonly IconUse[] {
-  return extension === ".mdx" ? iconElements(mdxParser.parse(source)) : [];
+export function documentIconUses(source: string, path: string): readonly IconUse[] {
+  return extname(path) === ".mdx" ? iconElements(authoredTree(path, source)) : [];
 }
 
 /** The uses whose name is not in the docs icon set, or not a plain string the reader can bundle. */
@@ -84,7 +80,7 @@ export function iconIssues(uses: readonly IconUse[]): readonly IconIssue[] {
  * @param path - The document's path; its extension says whether it is MDX.
  */
 export function checkDocumentIcons(source: string, path: string): readonly IconFinding[] {
-  return iconIssues(documentIconUses(source, extname(path))).map((issue) => ({ path, ...issue }));
+  return iconIssues(documentIconUses(source, path)).map((issue) => ({ path, ...issue }));
 }
 
 /**

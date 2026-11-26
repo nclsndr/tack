@@ -1,10 +1,7 @@
 import { extname } from "node:path";
 import type { Root, RootContent } from "mdast";
 import type { MdxJsxFlowElement, MdxJsxTextElement } from "mdast-util-mdx-jsx";
-import remarkFrontmatter from "remark-frontmatter";
-import remarkMdx from "remark-mdx";
-import remarkParse from "remark-parse";
-import { unified } from "unified";
+import { authoredTree } from "../parsed-source.ts";
 import { authorComponentNames, calloutLabels, type AuthorComponentName } from "./kinds.ts";
 
 /** A misused author component of one document, by file and line. */
@@ -23,7 +20,6 @@ export type ComponentCheck = {
 
 type Element = MdxJsxFlowElement | MdxJsxTextElement;
 
-const parser = unified().use(remarkParse).use(remarkMdx).use(remarkFrontmatter);
 const authored: ReadonlySet<string> = new Set(authorComponentNames);
 const kinds = Object.keys(calloutLabels);
 
@@ -64,14 +60,15 @@ const tabsOf = (tabs: Element): readonly Element[] =>
 
 /**
  * The component check of one document: every `Callout`, `Tabs`, `Tab` and `Term` of its MDX, and
- * each one used so the reader cannot show it as meant. It reads nothing from disk. A `.md`
+ * each one used so the reader cannot show it as meant. It reads nothing from disk, and reads the
+ * document's shared tree, so a document the corpus already loaded is not parsed again. A `.md`
  * document renders no components.
  *
  * @param path - The document's path; its extension says whether it is MDX.
  */
 export function checkDocumentComponents(source: string, path: string): ComponentCheck {
   if (extname(path) !== ".mdx") return { components: 0, findings: [] };
-  const found = elements(parser.parse(source), false);
+  const found = elements(authoredTree(path, source), false);
   const findings = found.flatMap(([element, inTabs]): readonly ComponentFinding[] => {
     const line = element.position?.start.line ?? 0;
     const finding = (component: ComponentFinding["component"], message: string) => [
