@@ -1,9 +1,8 @@
-import { Effect, FileSystem, Path, Schema, Stdio, Stream } from "effect";
+import { Effect, Schema, Stdio, Stream } from "effect";
 import type { SourceFinding } from "../../../domain/sources/source-check.ts";
 import { emptyState } from "../../../domain/state/state-schema.ts";
 import { checkSource } from "../../../features/sources/source-check.ts";
 import {
-  applyCommand,
   planSourceScaffold,
   refuseScaffoldInsideSources,
   scaffoldLoadsNothing,
@@ -110,31 +109,24 @@ const invalidConfig = (error: SourceConfigInvalidError): PublicOutcome => ({
 });
 
 /**
- * Reads the config `source add --config` names: standard input for `-`, otherwise a file, relative
- * to the working directory. Either one that cannot be read is refused with `config-unreadable`.
+ * The JSON `source add --config` takes: the flag's value itself, or standard input for `-`. Standard
+ * input that cannot be read is refused with `config-unreadable`. A value is never read as a path.
  */
 const readConfig = Effect.fnUntraced(function* (config: string) {
-  const unreadable = (what: string) => (cause: { readonly message: string }) =>
-    new SourceAddRequestError({
-      code: "config-unreadable",
-      message: `Tack could not read ${what}: ${cause.message}`,
-    });
-  if (config === "-") {
-    const stdio = yield* Stdio.Stdio;
-    const text = yield* stdio.stdin.pipe(
-      Stream.decodeText(),
-      Stream.mkString,
-      Effect.mapError(unreadable("the --config declaration from standard input")),
-    );
-    return { text, origin: config } satisfies SourceConfig;
-  }
-  const fs = yield* FileSystem.FileSystem;
-  const path = yield* Path.Path;
-  const file = path.resolve(yield* cwdOrCurrent(undefined), config);
-  const text = yield* fs
-    .readFileString(file)
-    .pipe(Effect.mapError(unreadable(`the --config file ${file}`)));
-  return { text, origin: file } satisfies SourceConfig;
+  if (config !== "-") return { text: config, origin: "argument" } satisfies SourceConfig;
+  const stdio = yield* Stdio.Stdio;
+  const text = yield* stdio.stdin.pipe(
+    Stream.decodeText(),
+    Stream.mkString,
+    Effect.mapError(
+      (cause) =>
+        new SourceAddRequestError({
+          code: "config-unreadable",
+          message: `Tack could not read the --config declaration from standard input: ${cause.message}`,
+        }),
+    ),
+  );
+  return { text, origin: "standard-input" } satisfies SourceConfig;
 });
 
 /**
@@ -258,7 +250,8 @@ const addSourceWith = Effect.fnUntraced(function* (
             ...problems,
             ...(initializes ? [yield* plannedInitialization(stateOptions)] : []),
           ],
-          next: [applyCommand(plan)],
+          // The JSON is not echoed back: the view says to run the same command with --apply.
+          next: [],
           plan: toJson(scaffoldPlanJson(plan)),
         }
       : {

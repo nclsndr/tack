@@ -536,7 +536,7 @@ optional frontmatter.
 ```sh
 tack source add /path/to/my-source   # preview registering a source that has tack.yaml
 tack source add /path/to/my-source --apply   # register it
-tack source add /path/to/folder --config folder.json   # preview the tack.yaml a JSON declaration writes
+tack source add /path/to/skills --config '{"version": 1, "name": "skills", "kind": "skills"}'   # preview the tack.yaml it writes
 tack guide tack-yaml   # every key a tack.yaml takes
 tack source
 tack source relocate <registration-id> /path/to/moved-source
@@ -571,8 +571,8 @@ docs use one combined file:line report, without state or execution.
 `source add` previews registering an existing declaration: the name the source would take, its
 counts and issues, and any state its `--apply` would set up. `--apply` registers it and adds a
 `tack check` hint when the check found issues. For a folder without `tack.yaml`, give its
-declaration as JSON with `--config FILE`, a path from the working directory, or `--config -` to read
-it from standard input. The JSON takes the keys and values of `tack.yaml`, in any of its forms;
+declaration as JSON, as the value of `--config '<json>'`, or `--config -` to read it from standard
+input. A value is never read as a path. The JSON takes the keys and values of `tack.yaml`, in any of its forms;
 `tack guide tack-yaml` lists every key, from the schemas `tack check` decodes with, and prints the
 JSON Schema of the whole declaration. YAML or other text fails with `config-not-json`, and the
 `imports` key with `config-imports-not-allowed`, since only `tack import add` writes it.
@@ -588,7 +588,8 @@ that does not decode fails with exit 2 and every issue at once, each with its fi
 the config: an unknown key names the keys its form takes, and a missing `name` suggests one from the
 folder. Otherwise the preview shows the `tack.yaml` that `--apply` writes, normalized to YAML, the
 name the source would take, and what each entry finds: resource names, counts and problems, at
-their line in the config. `--apply` reads and checks the config again, creates the file without
+their line in the config. It never repeats the JSON back as a next command: run the same command
+again with `--apply`. `--apply` reads and checks the config again, creates the file without
 overwriting and registers the source after state initialization; both name the source as a
 `SOURCE:NAME` reference types it. Pipe the same config again for `--config -`. `--config` on a
 source that has `tack.yaml` fails with `declaration-exists`: edit that file by hand. A bare

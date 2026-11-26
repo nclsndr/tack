@@ -101,10 +101,11 @@ For each folder:
    the rest. Worker: use only what your instructions name.
 2. With `tack.yaml`, `tack source add PATH` previews the registration: the name, counts and
    problems. Without one, write its declaration as JSON and preview it with
-   `tack source add PATH --config -`, piping the JSON, or `--config FILE`. The preview checks it as
+   `tack source add PATH --config '<json>'`, or pipe it to `--config -`. The preview checks it as
    `tack check` would, then shows the `tack.yaml` it would write and what each entry finds: names,
    counts, problems. A bare `tack source add PATH` suggests one from the layout, and
-   `tack guide tack-yaml` lists every key. `--apply` registers either; pipe the same JSON again.
+   `tack guide tack-yaml` lists every key. Rerun the same command with `--apply` to register
+   either, piping the same JSON again for `-`.
    - `PATH/SKILL.md`: PATH is one skill. Offer its parent folder as a skills collection, or
      `tack import add` for a remote repository. Ask.
    - Folders with `SKILL.md` at the top of PATH: a skills collection,

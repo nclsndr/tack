@@ -5,6 +5,11 @@ description: Register a folder of skills, commands and docs as a Tack source, wi
 
 import { Terminal } from "../../../components/terminal.tsx";
 
+export const sourceConfig =
+  '{"version": 1, "name": "agent-setup", "skills": [{"path": "skills"}], "commands": [{"path": "commands"}], "docs": [{"name": "handbook", "path": "handbook"}]}';
+
+export const sourceAddCommand = `tack source add ~/agent-setup --config '${sourceConfig}'`;
+
 export const previewOutput = [
   "tack source add · ✓ success",
   "",
@@ -30,9 +35,8 @@ export const previewOutput = [
   "docs handbook · 1 docs",
   "  handbook",
   "",
-  "Next",
-  "  tack source add /Users/ada/agent-setup --config /Users/ada/agent-setup.json \\",
-  "    --apply",
+  "Run the same command again with --apply to write tack.yaml and register the",
+  "  source.",
 ].join("\n");
 
 export const applyOutput = [
@@ -107,8 +111,8 @@ Say your folder looks like this:
     └── pr-review/SKILL.md
 ```
 
-Write its `tack.yaml` as JSON: the same keys and values, here in `~/agent-setup.json`. Each entry
-names a folder inside the source by what it holds, and `version` and `name` are required:
+Write its `tack.yaml` as JSON: the same keys and values. Each entry names a folder inside the
+source by what it holds, and `version` and `name` are required. Here is the declaration:
 
 ```json
 {
@@ -120,38 +124,40 @@ names a folder inside the source by what it holds, and `version` and `name` are 
 }
 ```
 
-Pass it with `--config`. Tack checks it as `tack check` would, previews the `tack.yaml` it would
-write and what each folder holds, and changes nothing:
+Pass it as the value of `--config`, in single quotes so the shell keeps it as one argument. Tack
+checks it as `tack check` would, previews the `tack.yaml` it would write and what each folder
+holds, and changes nothing:
 
-<Terminal
-  commands={["tack source add ~/agent-setup --config ~/agent-setup.json"]}
-  output={previewOutput}
-/>
+<Terminal commands={[sourceAddCommand]} output={previewOutput} />
 
 Check that every skill, command and docs folder you expect is listed. A file that does not parse is
 left out: the preview then reads `! partial` and lists the file under `Problems`. A mistake in the
 JSON, such as an unknown key or a missing `name`, fails the preview: Tack lists every problem at
-once, each with its field and its line in the JSON. Then apply it: Tack reads the JSON again,
-writes the `tack.yaml` and registers the source. It never writes over a `tack.yaml` that exists.
+once, each with its field and its line in the JSON. Then run the same command with `--apply`:
+Tack reads the JSON again, writes the `tack.yaml` and registers the source. It never writes over a
+`tack.yaml` that exists.
 
-<Terminal
-  commands={["tack source add ~/agent-setup --config ~/agent-setup.json --apply"]}
-  output={applyOutput}
-/>
+<Terminal commands={[`${sourceAddCommand} --apply`]} output={applyOutput} />
 
-To skip the file, write `--config -` and pass the JSON on standard input, with a heredoc for
-instance. Pipe the same JSON again with `--apply`:
+A long declaration reads better over several lines. Write `--config -` and pass the JSON on
+standard input, with a heredoc for instance, then pipe the same JSON again with `--apply`:
 
 ```sh
 tack source add ~/agent-setup --config - <<'EOF'
-{"version": 1, "name": "agent-setup", "skills": [{"path": "skills"}], "commands": [{"path": "commands"}]}
+{
+  "version": 1,
+  "name": "agent-setup",
+  "skills": [{ "path": "skills" }],
+  "commands": [{ "path": "commands" }],
+  "docs": [{ "name": "handbook", "path": "handbook" }]
+}
 EOF
 ```
 
 The JSON takes every key a `tack.yaml` takes: scripts, `include` and `exclude` patterns,
-`depends-on`, `maintainers` and the rest, except `imports`. `tack guide tack-yaml` lists them. The
-config must be JSON: YAML fails with `config-not-json`. Tack writes the `tack.yaml` from what it
-read, so the file holds plain YAML whatever the layout of your JSON.
+`depends-on`, `maintainers` and the rest, except `imports`. `tack guide tack-yaml` lists them.
+`--config` takes the JSON itself: YAML or a file path fails with `config-not-json`. Tack writes the
+`tack.yaml` from what it read, so the file holds plain YAML whatever the layout of your JSON.
 
 Run `tack source add ~/agent-setup` without `--config` and Tack refuses with
 `declaration-config-required`. It reads the top of the folder and suggests a JSON declaration for

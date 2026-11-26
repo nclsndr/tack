@@ -6,7 +6,6 @@ import { Yaml } from "../../domain/runtime-neutral.ts";
 import type { SourceDeclaration } from "../../domain/sources/source-schema.ts";
 import { checkSource } from "./source-check.ts";
 import {
-  applyCommand,
   planSourceScaffold,
   refuseScaffoldInsideSources,
   scaffoldLoadsNothing,
@@ -23,10 +22,10 @@ const sourceOf = (files: Readonly<Record<string, string>>, folder = "source") =>
     return yield* seedSource((yield* Path.Path).join(root, folder), files);
   });
 
-/** A config as `source add --config` reads it: pretty-printed JSON, read from a file. */
+/** A config as `source add --config` takes it: pretty-printed JSON, given as the flag's value. */
 const configOf = (declaration: unknown) => ({
   text: JSON.stringify(declaration, null, 2),
-  origin: "/configs/source.json",
+  origin: "argument" as const,
 });
 
 /** The files of a source that holds every kind, each in its own folder. */
@@ -59,7 +58,7 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
         };
         const plan = yield* planSourceScaffold(root, configOf(declaration));
         expect(plan?.declarationPath).toBe(path.join(root, "tack.yaml"));
-        expect(plan?.config).toBe("/configs/source.json");
+        expect(plan?.config).toBe("argument");
         expect(plan?.content).toBe(
           [
             "version: 1",
@@ -91,15 +90,6 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
           { kind: "context", at: "notes", resources: ["guide.md"] },
           { kind: "script", at: "tools/report.ts", resources: ["report"] },
           { kind: "docs", at: "alpha/documents", resources: ["alpha"] },
-        ]);
-        expect(applyCommand(plan!)).toEqual([
-          "tack",
-          "source",
-          "add",
-          root,
-          "--config",
-          "/configs/source.json",
-          "--apply",
         ]);
         // Once written, tack check counts what the plan's entries found.
         yield* fs.writeFileString(path.join(root, "tack.yaml"), plan?.content ?? "");
@@ -194,7 +184,6 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
         );
         expect(plan === undefined ? undefined : scaffoldLoadsNothing(plan)).toMatchObject({
           code: "declaration-loads-nothing",
-          next: [["tack", "source", "add", root, "--config", "/configs/source.json"]],
         });
       }),
   );
@@ -220,7 +209,7 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
       expect(error).toMatchObject({
         _tag: "SourceConfigInvalidError",
         code: "declaration-schema-invalid",
-        config: "/configs/source.json",
+        config: "argument",
         issues: [
           {
             field: "skils",
@@ -275,12 +264,22 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
     }),
   );
   test.effect.each([
-    { case: "YAML", text: "version: 1\nname: source\n", says: "--config takes a JSON object: " },
-    { case: "truncated JSON", text: '{"version": 1,', says: "--config takes a JSON object: " },
+    {
+      case: "YAML",
+      text: "version: 1\nname: source\n",
+      says: "--config takes the declaration as JSON, or - to read it from standard input: ",
+    },
+    {
+      case: "truncated JSON",
+      text: '{"version": 1,',
+      says: "--config takes the declaration as JSON, or - to read it from standard input: ",
+    },
   ])("refuses a config in $case", (row) =>
     Effect.gen(function* () {
       const root = yield* sourceOf({ "README.md": "# Source" });
-      const error = yield* Effect.flip(planSourceScaffold(root, { text: row.text, origin: "-" }));
+      const error = yield* Effect.flip(
+        planSourceScaffold(root, { text: row.text, origin: "standard-input" }),
+      );
       expect(error).toMatchObject({
         _tag: "SourceAddRequestError",
         code: "config-not-json",
@@ -381,7 +380,7 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
         next: [["tack", "guide", "tack-yaml"]],
       });
       expect(error.message).toBe(
-        `${root} has no tack.yaml. Write its tack.yaml as JSON and preview it with tack source add ${root} --config FILE, or --config - to read it from standard input; tack guide tack-yaml lists every key. Its layout suggests ${row.suggests.replaceAll("ROOT", root)}`,
+        `${root} has no tack.yaml. Write its tack.yaml as JSON and preview it with tack source add ${root} --config 'JSON', or --config - to read it from standard input; tack guide tack-yaml lists every key. Its layout suggests ${row.suggests.replaceAll("ROOT", root)}`,
       );
     }),
   );

@@ -519,8 +519,20 @@ const sourceRows: Rows = [
   [["source", "ls"], { _tag: "source-list" }],
   [["source", "add", "/brain"], { _tag: "source-add", sourcePath: "/brain", apply: false }],
   [
-    ["source", "add", "/brain", "--config", "brain.json", "--apply"],
-    { _tag: "source-add", sourcePath: "/brain", apply: true, config: "brain.json" },
+    [
+      "source",
+      "add",
+      "/brain",
+      "--config",
+      '{"version":1,"name":"brain","kind":"skills"}',
+      "--apply",
+    ],
+    {
+      _tag: "source-add",
+      sourcePath: "/brain",
+      apply: true,
+      config: '{"version":1,"name":"brain","kind":"skills"}',
+    },
   ],
   [
     ["source", "add", "/brain", "--config", "-"],
@@ -833,11 +845,7 @@ const refusals: ReadonlyArray<readonly [ReadonlyArray<string>, string, string]> 
   ...(["--skills", "--commands", "--context", "--docs"] as const).map(
     (flag) => [["source", "add", "/brain", flag, "."], "invalid-flag", "source add"] as const,
   ),
-  [
-    ["source", "add", "/brain", "--config", "a.json", "--config", "b.json"],
-    "invalid-flag",
-    "source add",
-  ],
+  [["source", "add", "/brain", "--config", "{}", "--config", "{}"], "invalid-flag", "source add"],
   [["docs", "attach", "--source", source], "invalid-flag", "docs attach"],
   [["docs", "detach", "--source", source], "invalid-flag", "docs detach"],
   [["docs", "attach", "handbook", "--owner", "team"], "invalid-flag", "docs attach"],

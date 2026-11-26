@@ -341,8 +341,8 @@ export const lenses = [
       },
       {
         title: "No tack.yaml yet? Tack writes it.",
-        text: "Pass its keys as JSON, from a file or standard input. Tack checks them as `tack check` would and previews the `tack.yaml` it would write; `--apply` writes it and registers the source.",
-        command: "tack source add ~/agent-setup --config agent-setup.json",
+        text: "Pass its keys as JSON, inline or on standard input. Tack checks them as `tack check` would and previews the `tack.yaml` it would write; `--apply` writes it and registers the source.",
+        command: `tack source add ~/agent-setup --config '{"version":1,"name":"agent-setup","skills":[{"path":"skills"}]}'`,
       },
       {
         title: "Skills from GitHub, copied into your source.",

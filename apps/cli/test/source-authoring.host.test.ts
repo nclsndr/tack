@@ -6,7 +6,7 @@ import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Schema } from "effect";
 import { exitCodeForEnvelope } from "../src/cli/host/public-outcome.ts";
 import { SourceRegistrationPayloadSchema } from "../src/features/sources/source.ts";
-import { inDirectory, runHost } from "./support/host-runner.ts";
+import { runHost } from "./support/host-runner.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
 
 const git = (root: string) => fakeGit(root, [{ path: root }]);
@@ -31,9 +31,8 @@ const scratch = Effect.gen(function* () {
   const path = yield* Path.Path;
   const root = yield* fs.realPath(yield* fs.makeTempDirectoryScoped({ prefix: "tack-decl-out-" }));
   const write = writeUnder(root);
-  /** Writes `declaration` as the JSON file `name` beside the sources, for `--config`. */
-  const config = (name: string, declaration: unknown) =>
-    write(name, JSON.stringify(declaration, null, 2)).pipe(Effect.as(path.join(root, name)));
+  /** `declaration` as the JSON `--config` takes, pretty-printed so each key has its own line. */
+  const config = (declaration: unknown) => JSON.stringify(declaration, null, 2);
   return { root, state: path.join(root, "state"), path, write, config };
 });
 
@@ -307,7 +306,7 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
         yield* write("source/alpha/documents/index.md", "# Guide");
         const directory = path.join(root, "source");
         const declaration = path.join(directory, "tack.yaml");
-        const file = yield* config("source.json", {
+        const declared = config({
           version: 1,
           name: "source",
           skills: [{ path: "personal/skills" }],
@@ -319,13 +318,19 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
         expect(exitCodeForEnvelope(bare)).toBe(2);
         expect(bare.diagnostics).toMatchObject([{ code: "declaration-config-required" }]);
         expect(bare.next).toEqual(["tack guide tack-yaml"]);
-        const preview = yield* json(root, state, ["source", "add", directory, "--config", file]);
+        const preview = yield* json(root, state, [
+          "source",
+          "add",
+          directory,
+          "--config",
+          declared,
+        ]);
         expect(exitCodeForEnvelope(preview)).toBe(0);
         expect(preview.applied).toBe(null);
         expect(preview.plan).toMatchObject({
           kind: "source-scaffold",
           name: "source",
-          config: file,
+          config: "argument",
           declarationPath: declaration,
           content: expect.stringMatching(/^version: 1\nname: source\n/),
           entries: [
@@ -335,13 +340,17 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
             { kind: "docs", path: "alpha/documents", resources: ["documents"] },
           ],
         });
-        expect(preview.next).toEqual([`tack source add ${directory} --config ${file} --apply`]);
+        expect(preview.next).toEqual([]);
         expect(yield* fs.exists(declaration)).toBe(false);
         expect(yield* fs.exists(state)).toBe(false);
-        expect(yield* run(root, state, ["source", "add", directory, "--config", file])).toContain(
-          "skills personal/skills · 1 skill",
+        const human = yield* run(root, state, ["source", "add", directory, "--config", declared]);
+        expect(human).toContain("skills personal/skills · 1 skill");
+        // The JSON is never echoed back: the preview says to repeat the command with --apply.
+        expect(human.split(/\s+/).join(" ")).toContain(
+          "Run the same command again with --apply to write tack.yaml and register the source.",
         );
-        const flags = ["source", "add", directory, "--config", file, "--apply"];
+        expect(human).not.toContain('"version"');
+        const flags = ["source", "add", directory, "--config", declared, "--apply"];
         const failed = yield* json(root, state, flags);
         expect(exitCodeForEnvelope(failed)).toBe(2);
         expect(yield* fs.exists(declaration)).toBe(false);
@@ -358,7 +367,7 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
         expect(registered.applied).not.toBe(null);
         const afterRegistration = yield* fs.readFileString(stateFile);
         expect(afterRegistration).not.toBe(initial);
-        yield* json(root, state, ["source", "add", directory, "--config", file]);
+        yield* json(root, state, ["source", "add", directory, "--config", declared]);
         expect(yield* fs.readFileString(stateFile)).toBe(afterRegistration);
         const applied = yield* json(root, state, flags);
         expect(exitCodeForEnvelope(applied)).toBe(0);
@@ -386,9 +395,15 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
       const preview = yield* json(root, state, args, stdin);
       expect(preview).toMatchObject({
         classification: "success",
-        plan: { config: "-", content: "version: 1\nname: team\nkind: skills\n" },
-        next: [`tack source add ${directory} --config - --apply`],
+        plan: {
+          config: "standard-input",
+          content: "version: 1\nname: team\nkind: skills\n",
+        },
+        next: [],
       });
+      expect((yield* run(root, state, args, stdin)).split(/\s+/).join(" ")).toContain(
+        "Run the same command again with --apply, piping the same JSON,",
+      );
       yield* run(root, state, ["state", "init"]);
       const applied = yield* json(root, state, [...args, "--apply"], stdin);
       expect(applied.applied).toMatchObject({ scaffolded: path.join(directory, "tack.yaml") });
@@ -406,29 +421,20 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
       expect(empty.diagnostics).toMatchObject([{ code: "source-missing" }]);
     }),
   );
-  test.effect("source add reads a relative --config file from the working directory", () =>
+  test.effect("source add reads --config as JSON, never as a path to a file", () =>
     Effect.gen(function* () {
-      const { root, state, path, write, config } = yield* scratch;
+      const { root, state, path, write } = yield* scratch;
       yield* write("team/review/SKILL.md", "---\nname: review\ndescription: R\n---\n");
-      yield* config("configs/team.json", { version: 1, name: "team", kind: "skills" });
-      const preview = yield* inDirectory(path.join(root, "configs"))(
-        json(root, state, ["source", "add", path.join(root, "team"), "--config", "team.json"]),
-      );
-      expect(preview.plan).toMatchObject({ config: path.join(root, "configs", "team.json") });
-      const missing = yield* json(root, state, [
+      yield* write("team.json", JSON.stringify({ version: 1, name: "team", kind: "skills" }));
+      const refused = yield* json(root, state, [
         "source",
         "add",
         path.join(root, "team"),
         "--config",
-        path.join(root, "nowhere.json"),
+        path.join(root, "team.json"),
       ]);
-      expect(exitCodeForEnvelope(missing)).toBe(2);
-      expect(missing.diagnostics).toMatchObject([
-        {
-          code: "config-unreadable",
-          message: expect.stringContaining(`the --config file ${path.join(root, "nowhere.json")}`),
-        },
-      ]);
+      expect(exitCodeForEnvelope(refused)).toBe(2);
+      expect(refused.diagnostics).toMatchObject([{ code: "config-not-json" }]);
     }),
   );
   test.effect(
@@ -442,12 +448,18 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
           "---\nname: review\ndescription: R\n---\n",
         );
         const directory = path.join(root, "My Skills");
-        const file = yield* config("broken.json", {
+        const declared = config({
           version: 1,
           skils: [{ path: "skills" }],
           "depends-on": ["Bad"],
         });
-        const refused = yield* json(root, state, ["source", "add", directory, "--config", file]);
+        const refused = yield* json(root, state, [
+          "source",
+          "add",
+          directory,
+          "--config",
+          declared,
+        ]);
         expect(exitCodeForEnvelope(refused)).toBe(2);
         expect(refused).toMatchObject({
           classification: "invalid-configuration",
@@ -456,21 +468,21 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
             {
               code: "declaration-schema-invalid",
               message: expect.stringContaining('Unknown key "skils"'),
-              details: { config: file, field: "skils", line: 3 },
+              details: { config: "argument", field: "skils", line: 3 },
             },
             {
               code: "declaration-schema-invalid",
               message: expect.stringContaining("depends-on[0]: "),
-              details: { config: file, field: "depends-on[0]", line: 9 },
+              details: { config: "argument", field: "depends-on[0]", line: 9 },
             },
             {
               code: "declaration-schema-invalid",
               message: expect.stringContaining('Add "name: my-skills" to it'),
-              details: { config: file, field: "name", line: 1 },
+              details: { config: "argument", field: "name", line: 1 },
             },
           ],
         });
-        const human = (yield* run(root, state, ["source", "add", directory, "--config", file]))
+        const human = (yield* run(root, state, ["source", "add", directory, "--config", declared]))
           .split(/\s+/)
           .join(" ");
         expect(human).toContain("field skils");
@@ -494,8 +506,8 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
         yield* write("two/team/review/SKILL.md", "---\nname: review\ndescription: R\n---\n");
         yield* run(root, state, ["state", "init"]);
         yield* json(root, state, ["source", "add", path.join(root, "one", "team"), "--apply"]);
-        const file = yield* config("team.json", { version: 1, name: "team", kind: "skills" });
-        const flags = ["source", "add", path.join(root, "two", "team"), "--config", file];
+        const declared = config({ version: 1, name: "team", kind: "skills" });
+        const flags = ["source", "add", path.join(root, "two", "team"), "--config", declared];
         const preview = yield* json(root, state, flags);
         expect(preview.plan).toMatchObject({ kind: "source-scaffold" });
         expect(preview.plan).not.toHaveProperty("name");
@@ -529,7 +541,7 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
             `---\nname: ${path.basename(name)}\ndescription: S\n---\n`,
           );
         yield* write("flat/commands/hi.md", "# Hi");
-        const file = yield* config("flat.json", { version: 1, name: "flat", kind: "skills" });
+        const declared = config({ version: 1, name: "flat", kind: "skills" });
         const warnings = ["commands", "team"].map((folder) => ({
           code: "collection-folder-not-skill",
           severity: "warning",
@@ -537,7 +549,7 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
           message: expect.stringContaining(`${folder}/ holds no SKILL.md`),
           candidatePath: path.join(flat, folder),
         }));
-        const args = ["source", "add", flat, "--config", file];
+        const args = ["source", "add", flat, "--config", declared];
         const preview = yield* json(root, state, args);
         expect(exitCodeForEnvelope(preview)).toBe(0);
         expect(preview.plan).toMatchObject({
@@ -582,14 +594,14 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
         const { root, state, path, write, config } = yield* scratch;
         const flat = path.join(root, "flat");
         yield* write("flat/commands/hi.md", "# Hi");
-        const file = yield* config("flat.json", { version: 1, name: "flat", kind: "skills" });
+        const declared = config({ version: 1, name: "flat", kind: "skills" });
         yield* run(root, state, ["state", "init"]);
         const applied = yield* json(root, state, [
           "source",
           "add",
           flat,
           "--config",
-          file,
+          declared,
           "--apply",
         ]);
         expect(exitCodeForEnvelope(applied)).toBe(0);
@@ -612,12 +624,12 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
         yield* run(root, state, ["state", "init"]);
         yield* json(root, state, ["source", "add", path.join(root, "parent"), "--apply"]);
         const vendor = path.join(root, "parent", "skills", "vendor");
-        const file = yield* config("vendor.json", {
+        const declared = config({
           version: 1,
           name: "vendor",
           skills: [{ path: "skills" }],
         });
-        const refused = yield* json(root, state, ["source", "add", vendor, "--config", file]);
+        const refused = yield* json(root, state, ["source", "add", vendor, "--config", declared]);
         expect(exitCodeForEnvelope(refused)).toBe(2);
         expect(refused.diagnostics).toMatchObject([
           {
@@ -629,7 +641,7 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
           "parent/tack.yaml",
           'version: 1\nname: parent\nskills:\n  - path: skills\n    exclude: ["vendor/**"]\n',
         );
-        const preview = yield* json(root, state, ["source", "add", vendor, "--config", file]);
+        const preview = yield* json(root, state, ["source", "add", vendor, "--config", declared]);
         expect(exitCodeForEnvelope(preview)).toBe(0);
         expect(preview.plan).toMatchObject({ entries: [{ kind: "skill", resources: ["lint"] }] });
       }),
@@ -646,7 +658,7 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
         // An unquoted colon in a description is a common hand-written frontmatter mistake.
         yield* write("source/commands/ship.md", "---\ndescription: Ship it: now\n---\nShip.\n");
         const directory = path.join(root, "source");
-        const file = yield* config("source.json", {
+        const declared = config({
           version: 1,
           name: "source",
           skills: [{ path: "skills" }],
@@ -654,7 +666,7 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
         });
         yield* run(root, state, ["state", "init"]);
 
-        const args = ["source", "add", directory, "--config", file];
+        const args = ["source", "add", directory, "--config", declared];
         const preview = yield* json(root, state, args);
         expect(exitCodeForEnvelope(preview)).toBe(1);
         expect(preview).toMatchObject({
@@ -666,7 +678,7 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
               details: { file: path.join(directory, "commands", "ship.md") },
             },
           ],
-          next: [`tack source add ${directory} --config ${file} --apply`],
+          next: [],
         });
         const text = yield* run(root, state, args);
         // Listed once, under Problems, not again beside its entry.
@@ -685,7 +697,7 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
         yield* write("source/notes.txt", "Notes\n");
         const directory = path.join(root, "source");
         const declaration = path.join(directory, "tack.yaml");
-        const file = yield* config("source.json", {
+        const declared = config({
           version: 1,
           name: "source",
           skills: [{ path: "guide.md" }],
@@ -695,7 +707,7 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
         const stateFile = path.join(state, "state.json");
         const initial = yield* fs.readFileString(stateFile);
 
-        const args = ["source", "add", directory, "--config", file];
+        const args = ["source", "add", directory, "--config", declared];
         const preview = yield* json(root, state, args);
         expect(exitCodeForEnvelope(preview)).toBe(1);
         expect(preview.diagnostics).toMatchObject([
@@ -725,7 +737,7 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
         const applied = yield* json(root, state, [...args, "--apply"]);
         expect(exitCodeForEnvelope(applied)).toBe(2);
         expect(applied.diagnostics).toMatchObject([{ code: "declaration-loads-nothing" }]);
-        expect(applied.next).toEqual([`tack source add ${directory} --config ${file}`]);
+        expect(applied.next).toEqual([]);
         expect(yield* fs.exists(declaration)).toBe(false);
         expect(yield* fs.readFileString(stateFile)).toBe(initial);
       }),

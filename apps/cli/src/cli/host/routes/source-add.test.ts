@@ -23,11 +23,11 @@ it.layer(LiveTestLayer)("source add route", (test) => {
           path.join(folder, "skills", "review", "SKILL.md"),
           skillText("review", { description: "Review a change.", body: "Review.\n" }),
         );
-        const config = path.join(root, "agent-setup.json");
-        yield* fs.writeFileString(
-          config,
-          JSON.stringify({ version: 1, name: "agent-setup", skills: [{ path: "skills" }] }),
-        );
+        const config = JSON.stringify({
+          version: 1,
+          name: "agent-setup",
+          skills: [{ path: "skills" }],
+        });
         // No `initialAdapters`: the new state would enable no agent, and the preview says so.
         const preview = yield* routeOutcome(
           sourceRoutes["source-add"].run(

@@ -213,101 +213,98 @@ describe("source add", () => {
     }),
   );
 
-  it.effect("previews the tack.yaml its config declares and what each entry finds", () =>
-    Effect.gen(function* () {
-      const brain = `${testHome}/brain`;
-      const envelope = {
-        ...createPublicEnvelope("source add", {
-          classification: "partial",
-          diagnostics: [
+  it("previews the tack.yaml its config declares and what each entry finds", () => {
+    const brain = `${testHome}/brain`;
+    const envelope = {
+      ...createPublicEnvelope("source add", {
+        classification: "partial",
+        diagnostics: [
+          {
+            code: "skill-name-mismatch",
+            message: "The skill folder name must equal name.",
+            severity: "error",
+            details: { file: `${brain}/personal/skills/lint/SKILL.md`, field: "skills[0]" },
+          },
+        ],
+        plan: {
+          kind: "source-scaffold",
+          sourcePath: brain,
+          config: "argument",
+          declarationPath: `${brain}/tack.yaml`,
+          name: "brain",
+          content:
+            "version: 1\nskills:\n  - path: personal/skills\ndocs:\n  - name: documents\n    path: alpha/documents\n",
+          entries: [
             {
-              code: "skill-name-mismatch",
-              message: "The skill folder name must equal name.",
-              severity: "error",
-              details: { file: `${brain}/personal/skills/lint/SKILL.md`, field: "skills[0]" },
+              kind: "skill",
+              path: "personal/skills",
+              resources: ["code-review", "commit-message", "deploy", "release-notes"],
+              findings: [
+                {
+                  code: "skill-name-mismatch",
+                  message: "The skill folder name must equal name.",
+                  severity: "error",
+                  field: "skills[0]",
+                  file: `${brain}/personal/skills/lint/SKILL.md`,
+                },
+              ],
+            },
+            {
+              kind: "docs",
+              path: "alpha/documents",
+              name: "documents",
+              resources: ["documents"],
+              findings: [],
+            },
+            { kind: "command", path: "prompts", resources: [], findings: [] },
+          ],
+          findings: [
+            {
+              code: "collection-folder-not-skill",
+              message: "A folder that is no skill.",
+              severity: "warning",
+              file: `${brain}/tack.yaml`,
             },
           ],
-          plan: {
-            kind: "source-scaffold",
-            sourcePath: brain,
-            config: `${brain}.json`,
-            declarationPath: `${brain}/tack.yaml`,
-            name: "brain",
-            content:
-              "version: 1\nskills:\n  - path: personal/skills\ndocs:\n  - name: documents\n    path: alpha/documents\n",
-            entries: [
-              {
-                kind: "skill",
-                path: "personal/skills",
-                resources: ["code-review", "commit-message", "deploy", "release-notes"],
-                findings: [
-                  {
-                    code: "skill-name-mismatch",
-                    message: "The skill folder name must equal name.",
-                    severity: "error",
-                    field: "skills[0]",
-                    file: `${brain}/personal/skills/lint/SKILL.md`,
-                  },
-                ],
-              },
-              {
-                kind: "docs",
-                path: "alpha/documents",
-                name: "documents",
-                resources: ["documents"],
-                findings: [],
-              },
-              { kind: "command", path: "prompts", resources: [], findings: [] },
-            ],
-            findings: [
-              {
-                code: "collection-folder-not-skill",
-                message: "A folder that is no skill.",
-                severity: "warning",
-                file: `${brain}/tack.yaml`,
-              },
-            ],
-          },
-        }),
-        next: [`tack source add ${brain} --config ${brain}.json --apply`],
-      } satisfies PublicEnvelope;
-      const output = view(envelope, 120);
-      expect(lines(output)).toEqual([
-        "tack source add · ! partial",
-        "",
-        "Would create ~/brain/tack.yaml and register source brain.",
-        "No files or state changed.",
-        "",
-        "  version: 1",
-        "  skills:",
-        "    - path: personal/skills",
-        "  docs:",
-        "    - name: documents",
-        "      path: alpha/documents",
-        "",
-        "skills personal/skills · 4 skills",
-        "  code-review, commit-message, deploy, release-notes",
-        "",
-        "docs alpha/documents · 1 docs",
-        "  documents",
-        "",
-        "commands prompts · 0 commands",
-        "",
-        "warning: collection-folder-not-skill: A folder that is no skill.",
-        "  ~/brain/tack.yaml",
-        "",
-        "Problems",
-        "  ✗ The skill folder name must equal name.",
-        "    error skill-name-mismatch · file ~/brain/personal/skills/lint/SKILL.md · field skills[0]",
-        "",
-        "Next",
-        `  tack source add ${brain} --config ${brain}.json --apply`,
-        "",
-      ]);
-      expect(yield* parseHintsIn(output)).toEqual(["source add"]);
-      expectViewContract(envelope, terminal);
-    }),
-  );
+        },
+      }),
+      next: [],
+    } satisfies PublicEnvelope;
+    const output = view(envelope, 120);
+    expect(lines(output)).toEqual([
+      "tack source add · ! partial",
+      "",
+      "Would create ~/brain/tack.yaml and register source brain.",
+      "No files or state changed.",
+      "",
+      "  version: 1",
+      "  skills:",
+      "    - path: personal/skills",
+      "  docs:",
+      "    - name: documents",
+      "      path: alpha/documents",
+      "",
+      "skills personal/skills · 4 skills",
+      "  code-review, commit-message, deploy, release-notes",
+      "",
+      "docs alpha/documents · 1 docs",
+      "  documents",
+      "",
+      "commands prompts · 0 commands",
+      "",
+      "warning: collection-folder-not-skill: A folder that is no skill.",
+      "  ~/brain/tack.yaml",
+      "",
+      "Problems",
+      "  ✗ The skill folder name must equal name.",
+      "    error skill-name-mismatch · file ~/brain/personal/skills/lint/SKILL.md · field skills[0]",
+      "",
+      "Run the same command again with --apply to write tack.yaml and register the source.",
+      "",
+    ]);
+    expect(hintsIn(output)).toEqual([]);
+    expectViewContract(envelope, terminal);
+  });
 
   it("says register the source when the preview has no name for it", () => {
     const output = view(
@@ -317,7 +314,7 @@ describe("source add", () => {
         plan: {
           kind: "source-scaffold",
           sourcePath: `${testHome}/tack`,
-          config: "-",
+          config: "standard-input",
           declarationPath: `${testHome}/tack/tack.yaml`,
           content: "version: 1\nkind: skills\n",
           entries: [{ kind: "skill", collection: true, resources: ["review"], findings: [] }],
@@ -335,13 +332,13 @@ describe("source add", () => {
         "source add",
         new SourceAddRequestError({
           code: "declaration-config-required",
-          message: `${testHome}/brain has no tack.yaml. Write its tack.yaml as JSON and preview it with tack source add ${testHome}/brain --config FILE.`,
+          message: `${testHome}/brain has no tack.yaml. Write its tack.yaml as JSON and preview it with tack source add ${testHome}/brain --config 'JSON'.`,
           next: [["tack", "guide", "tack-yaml"]],
         }),
       ),
     );
     expect(flat(output)).toContain("declaration-config-required");
-    expect(flat(output)).toContain("--config FILE");
+    expect(flat(output)).toContain("--config 'JSON'");
     expect(hintsIn(output)).toEqual(["tack guide tack-yaml"]);
   });
 

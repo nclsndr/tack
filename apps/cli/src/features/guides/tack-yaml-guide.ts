@@ -154,7 +154,7 @@ export const tackYamlGuide = (): string =>
     "",
     "A source's `tack.yaml` declares what Tack reads from it. Tack builds this guide from the schemas `tack check` and `tack source add --config` validate a declaration with, so it lists every key this release takes.",
     "",
-    "Declare a folder that has no `tack.yaml` with its declaration as JSON: the same keys and values. `tack source add PATH --config FILE` reads a file, and `--config -` reads standard input. The preview reports every issue at once, each with its field and its line, then shows the `tack.yaml` that `--apply` writes. Edit a `tack.yaml` that exists by hand, then run `tack check PATH`.",
+    "Declare a folder that has no `tack.yaml` with its declaration as JSON: the same keys and values. Pass it as the value of `tack source add PATH --config '<json>'`, or pipe it to `--config -`, which reads standard input. The preview reports every issue at once, each with its field and its line, then shows the `tack.yaml` that `--apply` writes. Edit a `tack.yaml` that exists by hand, then run `tack check PATH`.",
     "",
     "```json",
     "{",

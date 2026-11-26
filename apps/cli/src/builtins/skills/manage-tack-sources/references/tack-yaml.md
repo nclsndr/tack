@@ -119,23 +119,24 @@ and a leftover folder is finished or rolled back by the next `import add` or `im
 
 ## Declaration creation
 
-`tack source add PATH --config FILE` writes `tack.yaml` from a declaration you write, never from a
-guess. The config is JSON: the same keys and values as `tack.yaml`, any of the forms above. Use
-`--config -` to read it from standard input, or a file path, which resolves against the working
-directory. YAML or any other text fails with `config-not-json`. `tack guide tack-yaml` lists every
-key each form and each entry takes, and prints the JSON Schema of the whole declaration. The `imports` key is refused with
+`tack source add PATH --config '<json>'` writes `tack.yaml` from a declaration you write, never
+from a guess. The value of `--config` is the declaration itself, as JSON: the same keys and values
+as `tack.yaml`, any of the forms above. `--config -` reads it from standard input instead, which
+suits a long declaration in a heredoc. A value is never read as a path, and YAML or any other text
+fails with `config-not-json`. `tack guide tack-yaml` lists every key each form and each entry takes,
+and prints the JSON Schema of the whole declaration. The `imports` key is refused with
 `config-imports-not-allowed`: only `tack import add` writes it.
 
 ```sh
 tack init # once per machine; it writes at once
-tack source add /absolute/path --config /absolute/path.json # preview the tack.yaml it writes
-tack source add /absolute/path --config /absolute/path.json --apply
+tack source add /absolute/path --config '{"version": 1, "name": "personal", "kind": "skills"}'
+tack source add /absolute/path --config '{"version": 1, "name": "personal", "kind": "skills"}' --apply
 tack check /absolute/path
 tack catalog --details
 ```
 
 For a source with skills under `personal/skills` minus archived folders, a report script and a
-handbook:
+handbook, pass this declaration, on one line or through `--config -`:
 
 ```json
 {
@@ -154,8 +155,9 @@ takes, and a missing `name` suggests one from the folder. Exit 2, and `tack guid
 next command. Otherwise the preview prints the `tack.yaml` that `--apply` writes, normalized to YAML
 in the order of the keys above, the source name to use in `SOURCE:NAME` references, and what each
 entry finds: the names of its resources, their count and its problems at their line in the config.
-It writes neither the file nor state. `--apply` reads and checks the config again, exclusively
-creates the file, then registers the source; pipe the same config again for `--config -`.
+It writes neither the file nor state, and never repeats the JSON back as a next command: run the
+same command again with `--apply`. `--apply` reads and checks the config again, exclusively creates
+the file, then registers the source; pipe the same JSON again for `--config -`.
 
 It never overwrites an existing file, including one created by another process during the
 operation: `--config` on a source that has `tack.yaml` fails with `declaration-exists`. Edit that

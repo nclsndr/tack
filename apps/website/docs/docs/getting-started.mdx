@@ -9,17 +9,9 @@ import { Terminal } from "../../components/terminal.tsx";
 export const sourceConfig =
   '{"version": 1, "name": "agent-setup", "skills": [{"path": "skills"}], "commands": [{"path": "commands"}]}';
 
-export const sourceAddCommand = [
-  "tack source add ~/agent-setup --config - <<'EOF'",
-  sourceConfig,
-  "EOF",
-].join("\n");
+export const sourceAddCommand = `tack source add ~/agent-setup --config '${sourceConfig}'`;
 
-export const sourceApplyCommand = [
-  "tack source add ~/agent-setup --config - --apply <<'EOF'",
-  sourceConfig,
-  "EOF",
-].join("\n");
+export const sourceApplyCommand = `${sourceAddCommand} --apply`;
 
 export const sourceAddOutput = [
   "Would create ~/agent-setup/tack.yaml and register source agent-setup.",
@@ -79,13 +71,13 @@ Skills you made by hand in `~/.claude/skills` and similar folders are listed and
 ## 2. Register your skills
 
 Tell Tack what your folder holds. Write its `tack.yaml` as JSON, with a `version`, a `name` and
-the folder of each kind inside it, and pass it with `--config -` on standard input, or with
-`--config FILE`. Tack previews the `tack.yaml` it would write and what each folder holds, and
-writes it only when you add `--apply`. Check that the list matches every skill you expect.
+the folder of each kind inside it, and pass it as the value of `--config`, in single quotes. To
+read the JSON from standard input instead, write `--config -`. Tack previews the `tack.yaml` it
+would write and what each folder holds, and writes it only when you add `--apply`. Check that the list matches every skill you expect.
 
 <Terminal commands={[sourceAddCommand]} output={sourceAddOutput} />
 
-When the preview looks right, pipe the same JSON again with `--apply` to write the `tack.yaml` and
+When the preview looks right, run the same command with `--apply` to write the `tack.yaml` and
 register the source:
 
 <Terminal commands={[sourceApplyCommand]} />

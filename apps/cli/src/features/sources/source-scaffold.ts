@@ -33,14 +33,17 @@ const PlannedEntrySchema = Schema.Struct({
   findings: Schema.Array(SourceFindingSchema),
 });
 
+/** Where `source add --config` read its JSON: the flag's own value, or standard input for `-`. */
+const ConfigOriginSchema = Schema.Literals(["argument", "standard-input"]);
+
 /** The `source add --config` plan for a source without a declaration: the file it would create. */
 export const SourceScaffoldPlanSchema = Schema.Struct({
   kind: Schema.Literal("source-scaffold"),
   sourcePath: Schema.String,
   /** The label the source would take, absent when a `SOURCE:NAME` reference would need its ID. */
   name: Schema.optionalKey(Schema.String),
-  /** Where the config was read: its file as an absolute path, or `-` for standard input. */
-  config: Schema.String,
+  /** Where the JSON was read; `--apply` reads the same JSON from the same place again. */
+  config: ConfigOriginSchema,
   declarationPath: Schema.String,
   /** The tack.yaml `--apply` writes: the decoded config, normalized to YAML. */
   content: Schema.String,
@@ -79,8 +82,8 @@ export class SourceConfigInvalidError extends Schema.TaggedError<SourceConfigInv
   "SourceConfigInvalidError",
   {
     code: SourceValidationErrorCodeSchema,
-    /** Where the config was read: its file as an absolute path, or `-` for standard input. */
-    config: Schema.String,
+    /** Where the JSON was read. */
+    config: ConfigOriginSchema,
     issues: Schema.Array(
       Schema.Struct({
         field: Schema.optionalKey(Schema.String),
@@ -91,25 +94,14 @@ export class SourceConfigInvalidError extends Schema.TaggedError<SourceConfigInv
   },
 ) {}
 
-/** A config `source add --config` read, and where from: an absolute file path, or `-`. */
-export type SourceConfig = { readonly text: string; readonly origin: string };
+/** The JSON `source add --config` read, and where from. */
+export type SourceConfig = {
+  readonly text: string;
+  readonly origin: typeof ConfigOriginSchema.Type;
+};
 
 /** The guide that lists every key a tack.yaml takes. */
 const tackYamlGuide = ["tack", "guide", "tack-yaml"];
-
-/**
- * The command that writes a previewed declaration: `source add` again with the same config and
- * `--apply`. A config read from standard input has to be piped again.
- */
-export const applyCommand = (plan: typeof SourceScaffoldPlanSchema.Type) => [
-  "tack",
-  "source",
-  "add",
-  plan.sourcePath,
-  "--config",
-  plan.config,
-  "--apply",
-];
 
 /**
  * The plan that writes a validated declaration at its source, with what each of its entries finds.
@@ -220,7 +212,7 @@ export const declarationAdvice = Effect.fnUntraced(function* (root: string) {
       : `${JSON.stringify(declaration)} for ${folder} as a source of its own`,
   );
   return {
-    advice: `Write its tack.yaml as JSON and preview it with tack source add ${root} --config FILE, or --config - to read it from standard input; tack guide tack-yaml lists every key. Its layout suggests ${new Intl.ListFormat("en").format(suggestions)}.`,
+    advice: `Write its tack.yaml as JSON and preview it with tack source add ${root} --config 'JSON', or --config - to read it from standard input; tack guide tack-yaml lists every key. Its layout suggests ${new Intl.ListFormat("en").format(suggestions)}.`,
     next: [tackYamlGuide],
   };
 });
@@ -240,8 +232,6 @@ export const scaffoldLoadsNothing = (plan: typeof SourceScaffoldPlanSchema.Type)
     ? new SourceAddRequestError({
         code: "declaration-loads-nothing",
         message: `Every entry of the tack.yaml this config declares has a problem and finds no resource, so ${plan.sourcePath} would load nothing. Fix the problems under each entry, then preview again.`,
-        // The preview: the apply command without its final --apply.
-        next: [applyCommand(plan).slice(0, -1)],
       })
     : undefined;
 
@@ -288,7 +278,7 @@ export const planSourceScaffold = Effect.fn("sources.planSourceScaffold")(
       catch: (cause) =>
         new SourceAddRequestError({
           code: "config-not-json",
-          message: `--config takes a JSON object: ${String(cause)}. tack guide tack-yaml lists every key.`,
+          message: `--config takes the declaration as JSON, or - to read it from standard input: ${String(cause)}. tack guide tack-yaml lists every key.`,
           next: [tackYamlGuide],
         }),
     });

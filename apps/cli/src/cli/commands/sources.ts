@@ -40,7 +40,7 @@ const sourceAddCommand = Command.make(
     sourcePath: sourcePathArgument,
     config: optionalStringFlag(
       "config",
-      "Declare the source from this JSON file, or - to read it from standard input, in a new tack.yaml; tack guide tack-yaml lists every key",
+      "Declare the source in a new tack.yaml from this JSON declaration, or - to read it from standard input; tack guide tack-yaml lists every key",
     ),
     apply: applyFlag,
   },
@@ -53,7 +53,7 @@ const sourceAddCommand = Command.make(
     }),
 ).pipe(
   Command.withDescription(
-    "Preview registering a source: for a folder that has a tack.yaml, what it holds and the name it takes; --apply registers it. For a folder without one, give its declaration as JSON with --config FILE, or --config - to read standard input: source add validates it as tack check would, previews the tack.yaml it would write and what each entry finds, and --apply writes it and registers the source. --config never writes over an existing tack.yaml.",
+    "Preview registering a source: for a folder that has a tack.yaml, what it holds and the name it takes; --apply registers it. For a folder without one, give its declaration as JSON with --config '<json>', or --config - to read it from standard input: source add validates it as tack check would, previews the tack.yaml it would write and what each entry finds, and --apply writes it and registers the source. --config never writes over an existing tack.yaml.",
   ),
   Command.withExamples([
     {
@@ -62,11 +62,11 @@ const sourceAddCommand = Command.make(
     },
     { command: "tack source add /path/to/source --apply", description: "Register it" },
     {
-      command: "tack source add ~/brain --config brain.json",
+      command: `tack source add ~/brain --config '{"version":1,"name":"brain","skills":[{"path":"skills"}]}'`,
       description: "Preview the tack.yaml a JSON declaration writes for a folder without one",
     },
     {
-      command: "tack source add ~/brain --config brain.json --apply",
+      command: `tack source add ~/brain --config '{"version":1,"name":"brain","skills":[{"path":"skills"}]}' --apply`,
       description: "Write the previewed tack.yaml and register the source",
     },
     {

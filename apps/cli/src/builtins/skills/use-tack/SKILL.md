@@ -176,7 +176,7 @@ Doctor also reports broken published profiles that have never been applied.
 requested task. `sync --no-adapters` plans only docs mounts; `sync --no-docs` plans only resource
 links.
 
-`import add` and `import remove` preview by default too; their `--apply` writes into the requested source, never state. `source add` previews registering a source that has `tack.yaml`, and `--apply` registers it. For a folder without one, `--config FILE` (or `--config -` for standard input) previews the `tack.yaml` its JSON declaration would write, checked as `tack check` would, and `--apply` writes it and registers the source after state initialization. Other registrations, choices, adapter settings, and docs attachment and
+`import add` and `import remove` preview by default too; their `--apply` writes into the requested source, never state. `source add` previews registering a source that has `tack.yaml`, and `--apply` registers it. For a folder without one, `--config '<json>'` (or `--config -` for standard input) previews the `tack.yaml` its JSON declaration would write, checked as `tack check` would, and `--apply` writes it and registers the source after state initialization. Other registrations, choices, adapter settings, and docs attachment and
 configuration persist immediately, without `--apply`, and so does `tack init`. `tack script run` executes immediately.
 
 The printed view is the result: check the status on its first line, the diagnostics and the `Next`

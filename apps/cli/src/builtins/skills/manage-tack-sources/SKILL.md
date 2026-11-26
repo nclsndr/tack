@@ -116,7 +116,7 @@ metadata.
    docs, scripts) and which ones Tack should serve. `PATH/SKILL.md` makes PATH one skill: offer its
    parent as a skills collection, or `tack import add` for a remote repository.
 2. Without `tack.yaml`: write its declaration as JSON and preview it with
-   `tack source add PATH --config FILE`, or `--config -` from standard input. Skill folders at the
+   `tack source add PATH --config '<json>'`, or `--config -` from standard input. Skill folders at the
    top make PATH a skills collection, `{"version": 1, "name": "skills", "kind": "skills"}`;
    otherwise one entry per folder, with patterns, `scripts`, `depends-on` and docs names in the
    same JSON. `tack guide tack-yaml` lists every key; a bare `source add` suggests a declaration.

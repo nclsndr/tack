@@ -4,6 +4,12 @@ export type WalkthroughStep = {
   readonly command: string;
 };
 
+/** Declares the skills folder as a skills collection, with its `tack.yaml` as inline JSON. */
+export const sourceSkills = `tack source add ~/skills --config '{"version":1,"name":"skills","kind":"skills"}'`;
+
+/** Declares the team docs folder's commands and docs, with its `tack.yaml` as inline JSON. */
+export const sourceDocs = `tack source add ~/team-docs --config '{"version":1,"name":"team-docs","commands":[{"path":"commands"}],"docs":[{"name":"handbook","path":"handbook"}]}'`;
+
 /**
  * The tack CLI walkthrough, which the terminal suggests one step at a time once the visitor opens
  * it. Every line runs through the real Tack CLI over the demo machine; a test runs the whole script
@@ -19,20 +25,16 @@ export const demoWalkthrough: ReadonlyArray<WalkthroughStep> = [
     command: "tack init",
   },
   {
-    caption: "The folder holds skills directly. Its tack.yaml, written as JSON, says so.",
-    command: "cat ~/skills.json",
-  },
-  {
-    caption: "Tack checks the JSON and previews the tack.yaml it would write.",
-    command: "tack source add ~/skills --config ~/skills.json",
+    caption: "The folder holds skills directly. Declare its tack.yaml as JSON and preview it.",
+    command: sourceSkills,
   },
   {
     caption: "Apply: it writes tack.yaml and registers the source.",
-    command: "tack source add ~/skills --config ~/skills.json --apply",
+    command: `${sourceSkills} --apply`,
   },
   {
     caption: "The team docs and their command, declared and registered in one go.",
-    command: "tack source add ~/team-docs --config ~/team-docs.json --apply",
+    command: `${sourceDocs} --apply`,
   },
   {
     caption: "Register two Git projects.",

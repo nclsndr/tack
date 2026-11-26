@@ -62,27 +62,6 @@ const docsSource: ReadonlyArray<DemoFile> = [
   ],
 ];
 
-/**
- * The `tack.yaml` of each folder, written as the JSON `tack source add --config` reads: a skills
- * collection, and a folder that declares its commands and its docs.
- */
-const declarations: ReadonlyArray<DemoFile> = [
-  ["skills.json", `${JSON.stringify({ version: 1, name: "skills", kind: "skills" }, null, 2)}\n`],
-  [
-    "team-docs.json",
-    `${JSON.stringify(
-      {
-        version: 1,
-        name: "team-docs",
-        commands: [{ path: "commands" }],
-        docs: [{ name: "handbook", path: "handbook" }],
-      },
-      null,
-      2,
-    )}\n`,
-  ],
-];
-
 const projects: ReadonlyArray<DemoFile> = [
   ["code/app/README.md", "# app\n\nThe web app.\n"],
   ["code/app/.gitignore", "node_modules/\n.env\n"],
@@ -131,7 +110,7 @@ export const writeDemoFiles = (volume: BrowserMachine["volume"], files: Readonly
 /**
  * The demo machine before anything ran, which the coding agent and the terminal share: a folder
  * that holds skills directly and a folder of team docs with one command, neither with a
- * `tack.yaml` yet, and the JSON that declares each; two Git projects under `~/code`; the home folders of three agents, with a skill
+ * `tack.yaml` yet; two Git projects under `~/code`; the home folders of three agents, with a skill
  * made by hand in Claude Code's; and Tack's built-in skills. No Tack state exists yet.
  */
 export const makeDemoMachine = (): BrowserMachine => {
@@ -140,7 +119,6 @@ export const makeDemoMachine = (): BrowserMachine => {
     ...builtInFiles,
     ...skillsSource,
     ...docsSource,
-    ...declarations,
     ...projects,
     ...handMade,
   ]);

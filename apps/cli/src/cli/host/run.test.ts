@@ -239,9 +239,7 @@ it.layer(LiveTestLayer)("CLI host environment", (test) => {
         "---\nname: review\ndescription: Review a change.\n---\nReview.\n",
       );
       const stateDirectory = path.join(home, ".tack");
-      const config = path.join(root, "agent-setup.json");
-      yield* fs.writeFileString(config, JSON.stringify(skillsConfig));
-      const words = ["source", "add", folder, "--config", config];
+      const words = ["source", "add", folder, "--config", JSON.stringify(skillsConfig)];
       const preview = yield* inHome(home, tack(words, false));
       expect(preview).toMatchObject({ classification: "success" });
       expect(preview.diagnostics).toEqual([
@@ -276,9 +274,14 @@ it.layer(LiveTestLayer)("CLI host environment", (test) => {
         path.join(folder, "skills", "review", "SKILL.md"),
         "---\nname: review\ndescription: Review a change.\n---\nReview.\n",
       );
-      const config = path.join(root, "agent-setup.json");
-      yield* fs.writeFileString(config, JSON.stringify(skillsConfig));
-      const applied = yield* tack(["source", "add", folder, "--config", config, "--apply"]);
+      const applied = yield* tack([
+        "source",
+        "add",
+        folder,
+        "--config",
+        JSON.stringify(skillsConfig),
+        "--apply",
+      ]);
       expect(applied).toMatchObject({
         classification: "invalid-configuration",
         diagnostics: [{ code: "state-not-initialized" }],

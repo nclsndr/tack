@@ -63,7 +63,7 @@ export const renderSourceRegistrationPlan: HumanView = (envelope, style) => {
 /**
  * A declaration that `--config` describes is always shown before --apply writes it: the file, then
  * what each entry finds, with the names of its resources and its problems, then why it would not
- * apply when it loads nothing.
+ * apply when it loads nothing, or else how to apply it.
  */
 export const renderSourceScaffold: HumanView = (envelope, style) => {
   if (envelope.applied !== null) return undefined;
@@ -103,6 +103,14 @@ export const renderSourceScaffold: HumanView = (envelope, style) => {
     ]),
     warningLines(plan.findings, 0),
     diagnosticLines(envelope.diagnostics, style),
-    hintLines(envelope.next, style),
+    // The JSON is never echoed back as a command: a preview that can apply says how to apply it.
+    envelope.diagnostics.some((diagnostic) => diagnostic.code === "declaration-loads-nothing")
+      ? undefined
+      : paragraph(
+          plan.config === "standard-input"
+            ? "Run the same command again with --apply, piping the same JSON, to write tack.yaml and register the source."
+            : "Run the same command again with --apply to write tack.yaml and register the source.",
+          { width: style.width, hang: 2 },
+        ),
   );
 };

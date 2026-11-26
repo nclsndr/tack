@@ -62,7 +62,7 @@ tack check /absolute/path/to/source
 tack init # if the machine is not set up
 tack source add /absolute/path/to/source  # preview a source that has tack.yaml
 tack source add /absolute/path/to/source --apply  # register it
-tack source add /absolute/path/to/folder --config /absolute/path/to/folder.json  # preview its tack.yaml
+tack source add /absolute/path/to/skills --config '{"version": 1, "name": "skills", "kind": "skills"}'  # preview its tack.yaml
 tack guide tack-yaml  # every key a tack.yaml takes
 tack project add PROJECT --repository-cwd /absolute/path/to/repository
 tack catalog --details

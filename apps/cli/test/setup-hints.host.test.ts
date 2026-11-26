@@ -355,7 +355,7 @@ it.layer(LiveTestLayer)("setup hints", (hintIt) => {
       const remedy =
         suggests === undefined
           ? `${folder} holds SKILL.md, so it is one skill, not a folder of skills. Register the folder that holds it, or import it into a source with tack import add.`
-          : `Write its tack.yaml as JSON and preview it with tack source add ${folder} --config FILE, or --config - to read it from standard input; tack guide tack-yaml lists every key. Its layout suggests ${suggests}.`;
+          : `Write its tack.yaml as JSON and preview it with tack source add ${folder} --config 'JSON', or --config - to read it from standard input; tack guide tack-yaml lists every key. Its layout suggests ${suggests}.`;
       const checked = yield* json(["check", folder]);
       expect(checked).toMatchObject({
         classification: "success",

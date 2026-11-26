@@ -14,7 +14,7 @@ import {
   spinnerFigures,
 } from "./agent-walkthrough.ts";
 import { makeDemoSession, type DemoSession } from "./demo-shell.ts";
-import { demoWalkthrough } from "./demo-walkthrough.ts";
+import { demoWalkthrough, sourceDocs, sourceSkills } from "./demo-walkthrough.ts";
 
 const escape = String.fromCharCode(27);
 const plain = (text: string) => text.replaceAll(new RegExp(`${escape}\\[[0-9;]*m`, "g"), "");
@@ -40,8 +40,8 @@ const finishInTerminal = async (session: DemoSession, from: number) => {
 const facts: ReadonlyArray<readonly [command: string, fact: string]> = [
   ["tack init", "Enabled claude, codex, cursor."],
   ["tack init", "~/.claude/skills/my-notes"],
-  ["tack source add ~/skills --config ~/skills.json", "2 skills"],
-  ["tack source add ~/team-docs --config ~/team-docs.json", "1 command"],
+  [sourceSkills, "2 skills"],
+  [sourceDocs, "1 command"],
   ["tack check ~/skills", "skill: 2"],
   ["tack sync --project app", "11 changes planned"],
   ["tack sync --project api --apply", "0 failed"],

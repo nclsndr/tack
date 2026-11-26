@@ -50,19 +50,11 @@ export const initOutput = [
 export const sourceConfig =
   '{"version": 1, "name": "agent-setup", "skills": [{"path": "skills"}], "commands": [{"path": "commands"}]}';
 
-export const sourceCommand = [
-  "tack source add ~/agent-setup --config - <<'EOF'",
-  sourceConfig,
-  "EOF",
-].join("\n");
+export const sourceCommand = `tack source add ~/agent-setup --config '${sourceConfig}'`;
 
 export const repoSourceConfig = '{"version": 1, "name": "app", "skills": [{"path": ".ai/skills"}]}';
 
-export const repoSourceCommand = [
-  "tack source add . --config - <<'EOF'",
-  repoSourceConfig,
-  "EOF",
-].join("\n");
+export const repoSourceCommand = `tack source add . --config '${repoSourceConfig}'`;
 
 export const sourceOutput = [
   "tack source add · ✓ success",
@@ -83,8 +75,8 @@ export const sourceOutput = [
   "commands commands · 1 command",
   "  ship",
   "",
-  "Next",
-  "  tack source add /Users/ada/agent-setup --config - --apply",
+  "Run the same command again with --apply to write tack.yaml and register the",
+  "  source.",
 ].join("\n");
 
 export const userSyncOutput = [
@@ -142,8 +134,8 @@ export const repoSourceOutput = [
   "skills .ai/skills · 1 skill",
   "  app-conventions",
   "",
-  "Next",
-  "  tack source add /Users/ada/code/app --config - --apply",
+  "Run the same command again with --apply to write tack.yaml and register the",
+  "  source.",
 ].join("\n");
 
 export const projectSyncOutput = [
@@ -220,18 +212,14 @@ Commit the folder, and push it to a remote of your own when you want a backup or
 
 ## 3. Register the source
 
-The folder has no `tack.yaml` yet. Pass one as JSON on standard input: Tack previews the
+The folder has no `tack.yaml` yet. Pass one as JSON with `--config`: Tack previews the
 `tack.yaml` it would write and what each folder holds.
 
 <Terminal commands={[sourceCommand]} output={sourceOutput} />
 
-Pipe the same JSON again with `--apply` to write the `tack.yaml` and register the source:
+Run the same command with `--apply` to write the `tack.yaml` and register the source:
 
-```sh
-tack source add ~/agent-setup --config - --apply <<'EOF'
-{"version": 1, "name": "agent-setup", "skills": [{"path": "skills"}], "commands": [{"path": "commands"}]}
-EOF
-```
+<Terminal commands={[`${sourceCommand} --apply`]} />
 
 ## 4. Link them back for every project
 
@@ -295,9 +283,8 @@ Register the repository, from its root, with a `tack.yaml` that declares `.ai/sk
 
 <Terminal commands={[repoSourceCommand]} output={repoSourceOutput} />
 
-Apply it by piping the same JSON to `tack source add . --config - --apply`, then sync the
-project. The skill comes back in `.claude/skills` as a link, and Cursor gets it too; the user
-skills are not linked twice:
+Apply it by running the same command with `--apply`, then sync the project. The skill comes back
+in `.claude/skills` as a link, and Cursor gets it too; the user skills are not linked twice:
 
 <Terminal commands={["tack sync --project app"]} output={projectSyncOutput} />
 

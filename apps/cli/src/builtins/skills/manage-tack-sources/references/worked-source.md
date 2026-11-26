@@ -158,7 +158,7 @@ need distinct `name` values before that label can qualify references.
 ## Check the authored source
 
 Create the files before registration. Write each `tack.yaml` by hand, or give its declaration as
-JSON to `tack source add PATH --config FILE`, which previews the `tack.yaml` it writes and checks it
+JSON to `tack source add PATH --config '<json>'`, which previews the `tack.yaml` it writes and checks it
 as `tack check` does. `source add` previews each existing `tack.yaml` as it is; `--apply` registers
 it. Check each source before registration, repair local findings, then initialize state if absent.
 Use absolute paths for the three source directories:

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { makeDemoSession } from "./demo-shell.ts";
+import { sourceDocs, sourceSkills } from "./demo-walkthrough.ts";
 import {
   describeEntry,
   homeRelative,
@@ -41,8 +42,8 @@ describe("machine view", () => {
   it("shows links as leaves with their targets, keeps docs mounts and hides Tack state", async () => {
     const session = makeDemoSession();
     for (const line of [
-      "tack init --adapter claude && tack source add ~/skills --config ~/skills.json --apply",
-      "tack source add ~/team-docs --config ~/team-docs.json --apply",
+      `tack init --adapter claude && ${sourceSkills} --apply`,
+      `${sourceDocs} --apply`,
       "cd ~/code/app && tack project add app && tack docs attach handbook && tack sync --apply",
     ])
       await session.run(line, 80);
@@ -62,8 +63,6 @@ describe("machine view", () => {
       "code",
       "skills",
       "team-docs",
-      "skills.json",
-      "team-docs.json",
     ]);
     expect(linkEdges(app)).toEqual([
       { from: "/home/you/code/app/.claude/skills/commit", to: "/home/you/skills/commit" },
