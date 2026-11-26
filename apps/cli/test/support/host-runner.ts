@@ -12,12 +12,14 @@ const text = (chunk: string | Uint8Array) =>
   typeof chunk === "string" ? chunk : new TextDecoder().decode(chunk);
 
 /**
- * A `Stdio` that serves `args` and an empty stdin and collects what the CLI writes. `onStdout`
- * runs after each stdout chunk, so a test can wait for a long-running command's first output.
+ * A `Stdio` that serves `args` and `stdin`, empty when left out, and collects what the CLI writes.
+ * `onStdout` runs after each stdout chunk, so a test can wait for a long-running command's first
+ * output.
  */
 export const captureStdio = Effect.fnUntraced(function* (
   args: ReadonlyArray<string>,
   onStdout: Effect.Effect<void> = Effect.void,
+  stdin?: string,
 ) {
   const stdout = yield* Ref.make("");
   const stderr = yield* Ref.make("");
@@ -28,7 +30,7 @@ export const captureStdio = Effect.fnUntraced(function* (
   return {
     stdio: Stdio.make({
       args: Effect.succeed(args),
-      stdin: Stream.empty,
+      stdin: stdin === undefined ? Stream.empty : Stream.make(new TextEncoder().encode(stdin)),
       stderr: () => collect(stderr, Effect.void),
       stdout: () => collect(stdout, onStdout),
     }),
@@ -51,6 +53,8 @@ export type HostInput = {
    * throwaway `HOME` fails with `home-directory-unavailable`.
    */
   readonly env?: Readonly<Record<string, string | undefined>>;
+  /** What the run reads from standard input; empty when left out. */
+  readonly stdin?: string;
 };
 
 /** What every run removes from the process environment unless its `env` sets it. */
@@ -101,7 +105,7 @@ export function runHost(
 export function runHost(input: HostInput): Effect.Effect<HostRun, never, CliServices>;
 export function runHost(input: HostInput): Effect.Effect<HostRun, never, CliServices> {
   return Effect.gen(function* () {
-    const capture = yield* captureStdio(input.args);
+    const capture = yield* captureStdio(input.args, Effect.void, input.stdin);
     const program = runCli().pipe(Effect.provideService(Stdio.Stdio, capture.stdio));
     const withGit =
       input.git === undefined ? program : program.pipe(Effect.provideService(Git, input.git));

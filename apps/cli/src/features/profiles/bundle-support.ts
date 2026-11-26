@@ -6,17 +6,18 @@ import type { ArchiveEntry } from "../../domain/bundles/tar.ts";
 import type { ProfilePlanFinding } from "../../domain/profiles/profile-schema.ts";
 import { ResourceKindSchema } from "../../domain/resources/kinds.ts";
 
+/** One resource's support: the files a bundle carries for it and its non-secret requirements. */
+export const BundleSupportEntrySchema = Schema.Struct({
+  kind: ResourceKindSchema,
+  name: Schema.String,
+  complete: Schema.Literal(true),
+  files: Schema.Array(Schema.String),
+  prerequisites: Schema.Array(Schema.String),
+  package: Schema.optionalKey(Schema.Literal("none")),
+});
+
 /** Authors make otherwise unknown support closure and non-secret runtime requirements explicit. */
-export const BundleSupportSchema = Schema.Array(
-  Schema.Struct({
-    kind: ResourceKindSchema,
-    name: Schema.String,
-    complete: Schema.Literal(true),
-    files: Schema.Array(Schema.String),
-    prerequisites: Schema.Array(Schema.String),
-    package: Schema.optionalKey(Schema.Literal("none")),
-  }),
-);
+export const BundleSupportSchema = Schema.Array(BundleSupportEntrySchema);
 export type BundleSupport = typeof BundleSupportSchema.Type;
 const codeFile = /\.[cm]?[jt]sx?$/i;
 

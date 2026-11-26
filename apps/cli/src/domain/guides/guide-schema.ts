@@ -1,11 +1,17 @@
 import { Schema } from "effect";
 
 /**
- * The guides `tack guide` prints, in the order it lists them. Each is the reference of the same
- * name in the built-in `use-tack` skill, so the skill and the command read one file. A guide stays
- * small enough that an agent's tool prints it whole: the larger skill references are not guides.
+ * The guides `tack guide` prints, in the order it lists them. Each but `tack-yaml` is the reference
+ * of the same name in the built-in `use-tack` skill, so the skill and the command read one file;
+ * `tack-yaml` is built from the schemas that validate a `tack.yaml`. A guide stays small enough that
+ * an agent's tool prints it whole: the larger skill references are not guides.
  */
-export const guideTopics = ["onboarding", "agent-instructions", "day-two"] as const;
+export const guideTopics = ["onboarding", "agent-instructions", "day-two", "tack-yaml"] as const;
+
+/** The guides that are a reference file of the built-in `use-tack` skill. */
+export const referenceGuideTopics = guideTopics.filter(
+  (topic): topic is Exclude<GuideTopic, "tack-yaml"> => topic !== "tack-yaml",
+);
 
 /** The name of one guide, as `tack guide <topic>` takes it. */
 export type GuideTopic = (typeof guideTopics)[number];

@@ -61,7 +61,7 @@ export const renderSourceRegistrationPlan: HumanView = (envelope, style) => {
 };
 
 /**
- * A declaration that kind flags describe is always shown before --apply writes it: the file, then
+ * A declaration that `--config` describes is always shown before --apply writes it: the file, then
  * what each entry finds, with the names of its resources and its problems, then why it would not
  * apply when it loads nothing.
  */
@@ -73,6 +73,15 @@ export const renderSourceScaffold: HumanView = (envelope, style) => {
   /** Wraps one line of prose at `indent`, its continuation two columns further in. */
   const wrap = (line: string, indent = 0) =>
     paragraph(line, { width: style.width, indent, hang: indent + 2 });
+  /** A warning, beside what it concerns; an error is listed under Problems. */
+  const warningLines = (findings: ReadonlyArray<SourceFinding>, indent: number) =>
+    findings
+      .filter((finding) => finding.severity === "warning")
+      .flatMap((finding) =>
+        findingLines(finding, style).flatMap((line, index) =>
+          index === 0 ? wrap(line, indent) : wrap(line.trimStart(), indent + 2),
+        ),
+      );
   return sections(
     headerLines(envelope, undefined, style),
     [
@@ -90,15 +99,9 @@ export const renderSourceScaffold: HumanView = (envelope, style) => {
       ...(entry.resources.length === 0
         ? []
         : paragraph(entry.resources.join(", "), { width: style.width, indent: 2 })),
-      // An error is listed under Problems; a warning stays beside its entry.
-      ...entry.findings
-        .filter((finding) => finding.severity === "warning")
-        .flatMap((finding) =>
-          findingLines(finding, style).flatMap((line, index) =>
-            index === 0 ? wrap(line, 2) : wrap(line.trimStart(), 4),
-          ),
-        ),
+      ...warningLines(entry.findings, 2),
     ]),
+    warningLines(plan.findings, 0),
     diagnosticLines(envelope.diagnostics, style),
     hintLines(envelope.next, style),
   );

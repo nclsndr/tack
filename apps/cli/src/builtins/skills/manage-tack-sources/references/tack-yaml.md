@@ -38,7 +38,7 @@ A collection declares nothing else. Other content beside it is its own source wi
 source, move the skills into `skills/` and use the list form.
 
 A skills collection holds skills only: each folder at its top is a skill and holds `SKILL.md`.
-`tack source add --skills .` and `tack check` warn with `collection-folder-not-skill` for each
+`tack source add` and `tack check` warn with `collection-folder-not-skill` for each
 folder there that holds no `SKILL.md`, such as `commands/` or a group folder, and Tack ignores it.
 Add a `SKILL.md` to make it a skill. The warning changes no exit code. Dot, underscore and
 `node_modules` folders and folders with their own `tack.yaml` are not named.
@@ -119,53 +119,59 @@ and a leftover folder is finished or rolled back by the next `import add` or `im
 
 ## Declaration creation
 
-`tack source add` writes `tack.yaml` from the folders you name, never from a guess. Each
-`--skills`, `--commands`, `--context` or `--docs` flag names one path inside the source, relative to
-it, and can repeat. Each becomes one folder entry, which covers every resource under it; a docs
-entry is named after its folder. `.` as the folder writes a collection: `--skills .` writes
-`kind: skills`, `--commands .` writes `kind: commands`, and `--docs .` writes `kind: docs` named
-after the source folder. `.` cannot be combined with another flag (`declaration-flags-conflict`,
-whose next commands register the collection and each other folder as its own source, except a
-context folder, which needs a folder of a source), `--context .` is
-refused because context needs a folder, and `--skills .` on a folder that holds `SKILL.md` fails
-with `source-is-one-skill`. A path that is missing or resolves outside the source, two docs
-folders with one name, a folder name that is no docs name, or two `--skills`, `--commands` or
-`--context` folders that are equal or nested (`declaration-flags-conflict`: flags carry no
-`exclude`, so write `tack.yaml` by hand to keep both) fails before anything is written.
-There is no flag for scripts. The written `name` comes from the source folder's name in lowercase,
-with hyphens for other characters, such as `my-skills` for `My Skills`; a folder whose name leaves
-nothing usable fails with `declaration-name-invalid`. Edit the `name` afterwards to choose another.
+`tack source add PATH --config FILE` writes `tack.yaml` from a declaration you write, never from a
+guess. The config is JSON: the same keys and values as `tack.yaml`, any of the forms above. Use
+`--config -` to read it from standard input, or a file path, which resolves against the working
+directory. YAML or any other text fails with `config-not-json`. `tack guide tack-yaml` lists every
+key each form and each entry takes, and prints the JSON Schema of the whole declaration. The `imports` key is refused with
+`config-imports-not-allowed`: only `tack import add` writes it.
 
 ```sh
 tack init # once per machine; it writes at once
-tack source add /absolute/skills --skills . # a folder of skill folders: preview a collection
-tack source add /absolute/path --skills personal/skills --skills team/skills --docs team/handbook
-tack source add /absolute/path --skills personal/skills --skills team/skills --docs team/handbook --apply
+tack source add /absolute/path --config /absolute/path.json # preview the tack.yaml it writes
+tack source add /absolute/path --config /absolute/path.json --apply
 tack check /absolute/path
 tack catalog --details
 ```
 
-The preview prints the file, the source name to use in `SOURCE:NAME` references, and what each
-entry finds: the names of its resources, their count and its problems, as `tack check` reports
-them. It writes neither the file nor state. `--apply` exclusively creates the file, then registers
-the source. It never overwrites an existing file,
-including one created by another process during the operation: a kind flag on a source that has
-`tack.yaml` fails with `declaration-exists`. A bare `tack source add` on a folder without
-`tack.yaml` fails with `declaration-flags-required`, names the flags, and proposes previews read
-from the folder's top: `--skills .` for skill folders there, plus a source of its own for a
-`commands` or `docs` folder beside them, or one flag per folder named after a kind, such as
-`--skills skills --context context`. A folder that a registered
-source's skills, commands or context walk reaches, or that holds one of its declared paths, fails
-with `declaration-inside-source`: its new `tack.yaml` would take the folder out of that source.
-Exclude the folder there first, as the message says. A preview in which a declared resource cannot
-be read, such as a command whose frontmatter does not parse, is partial and lists each error under
-Problems with its file; `--apply` still registers the source. When every entry has a problem and finds no
-resource, as with `--skills guide.md` on a Markdown file, the source would load nothing: the
-preview is partial with `declaration-loads-nothing` and offers no `--apply`, and `--apply` fails
-with the same code. Name other folders, then preview again.
+For a source with skills under `personal/skills` minus archived folders, a report script and a
+handbook:
 
-The flags declare whole folders. Add the rest by hand, then run `tack check`: `include` and
-`exclude` patterns, `scripts` entries, `depends-on`, or a docs name other than its folder's.
+```json
+{
+  "version": 1,
+  "name": "personal",
+  "skills": [{ "path": "personal/skills", "exclude": ["**/_*/**"] }],
+  "scripts": [{ "name": "report", "path": "tools/report.ts", "description": "Weekly report" }],
+  "docs": [{ "name": "handbook", "path": "team/handbook" }]
+}
+```
+
+`source add` checks the config as `tack check` checks a `tack.yaml`, with the same decoder and the
+same catalog discovery. A config that does not decode fails before anything else, with every issue
+at once, each with its field and its line in the config: an unknown key names the keys its form
+takes, and a missing `name` suggests one from the folder. Exit 2, and `tack guide tack-yaml` is the
+next command. Otherwise the preview prints the `tack.yaml` that `--apply` writes, normalized to YAML
+in the order of the keys above, the source name to use in `SOURCE:NAME` references, and what each
+entry finds: the names of its resources, their count and its problems at their line in the config.
+It writes neither the file nor state. `--apply` reads and checks the config again, exclusively
+creates the file, then registers the source; pipe the same config again for `--config -`.
+
+It never overwrites an existing file, including one created by another process during the
+operation: `--config` on a source that has `tack.yaml` fails with `declaration-exists`. Edit that
+file by hand and run `tack check`. A bare `tack source add` on a folder without `tack.yaml` fails
+with `declaration-config-required` and suggests a declaration read from the folder's top: a skills
+collection for skill folders there, plus a collection of its own for a `commands` or `docs` folder
+beside them, or one entry per folder named after a kind. A folder that a registered source's
+skills, commands or context walk reaches, or that holds one of its declared paths, fails with
+`declaration-inside-source`: its new `tack.yaml` would take the folder out of that source. Exclude
+the folder there first, as the message says. A preview in which a declared resource cannot be read,
+such as a command whose frontmatter does not parse, is partial and lists each error under Problems
+with its file; `--apply` still registers the source. When every entry has a problem and finds no
+resource, as with a skills entry that names a Markdown file, the source would load nothing: the
+preview is partial with `declaration-loads-nothing` and offers no `--apply`, and `--apply` fails
+with the same code. Fix the entries, then preview again.
+
 Registration remains permissive: fix every resource issue and repeat `tack check` until clean, then
-verify `catalog --details`. If registration fails after creation, the generated declaration remains
+verify `catalog --details`. If registration fails after creation, the written declaration remains
 available to inspect and repair.

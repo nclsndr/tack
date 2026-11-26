@@ -36,13 +36,3 @@ export const optionalIntegerFlag = (
 /** Accepts a string flag at most once, yielding `undefined` when it is absent. */
 export const optionalStringFlag = (name: string, description: string) =>
   optionalFlag(Flag.String(name), description);
-
-/** A repeatable string flag, documented as optional, that yields the values it was given in order. */
-export const repeatableStringFlag = (name: string, description: string) =>
-  // `Flag.optional` keeps the repeatable flag documented as optional.
-  Flag.optional(Flag.String(name).pipe(Flag.atLeast(0))).pipe(
-    // Coverage skip: Flag.atLeast(0) always yields a list, so the empty fallback never runs.
-    /* v8 ignore next -- @preserve */
-    Flag.map((values): ReadonlyArray<string> => Option.getOrElse(values, () => [])),
-    Flag.withDescription(description),
-  );

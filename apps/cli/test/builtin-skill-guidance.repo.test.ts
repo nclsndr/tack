@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { expect, it } from "vitest";
-import { guideTopics } from "../src/domain/guides/guide-schema.ts";
+import { referenceGuideTopics } from "../src/domain/guides/guide-schema.ts";
 import { readContracts } from "./support/contracts.ts";
 import { sourceEntrypoint as entrypoint } from "./support/tack-process.ts";
 
@@ -115,7 +115,8 @@ it("ships the guides `tack guide` prints, and points agents at the command, not 
       path.slice("references/".length),
     );
   // A guide reaches an agent the same way from the skill, `tack init` and the landing prompt.
-  for (const topic of guideTopics) {
+  // `tack-yaml` is built from the schemas instead, and the source skill names it.
+  for (const topic of referenceGuideTopics) {
     expect(readdirSync(join(directory, "references"))).toContain(`${topic}.md`);
     expect(skill, topic).not.toContain(`references/${topic}.md`);
     // Printed, a guide has no folder: a relative link in it leads nowhere.

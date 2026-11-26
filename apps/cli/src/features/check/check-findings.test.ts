@@ -34,6 +34,50 @@ it.layer(LiveTestLayer)("check findings", (test) => {
   );
 
   test.effect(
+    "reports each issue of a declaration that does not decode at its field and line",
+    () =>
+      Effect.gen(function* () {
+        const { path, root, write } = yield* sourceFolder;
+        yield* write(
+          "tack.yaml",
+          [
+            "version: 1",
+            "name: tools",
+            "skils: []",
+            "maintainers:",
+            '  - ""',
+            "depends-on: [Bad]",
+            "",
+          ].join("\n"),
+        );
+        const report = yield* checkPaths([root]);
+        expect(report.findings).toEqual([
+          expect.objectContaining({
+            code: "declaration-schema-invalid",
+            field: "skils",
+            line: 3,
+            message: expect.stringMatching(/^Unknown key "skils"\. A list-form tack\.yaml takes: /),
+          }),
+          expect.objectContaining({
+            code: "declaration-schema-invalid",
+            field: "maintainers[0]",
+            line: 5,
+            message: "maintainers[0]: A maintainers entry must not be empty.",
+          }),
+          expect.objectContaining({
+            code: "declaration-schema-invalid",
+            field: "depends-on[0]",
+            line: 6,
+            message: expect.stringContaining("depends-on[0]: "),
+          }),
+        ]);
+        expect(report.findings.every(({ file }) => file === path.join(root, "tack.yaml"))).toBe(
+          true,
+        );
+      }),
+  );
+
+  test.effect(
     "reports each dependency edge that names no single resource at its line in the requester",
     () =>
       Effect.gen(function* () {

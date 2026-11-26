@@ -1,25 +1,20 @@
 import { Yaml } from "../../domain/runtime-neutral.ts";
-import { Effect, FileSystem, Path, Schema } from "effect";
+import { Effect, FileSystem, Path, Predicate, Schema } from "effect";
 import { ResourceKindSchema, resourceKinds } from "../../domain/resources/kinds.ts";
-import { DocsAddressSchema } from "../../domain/sources/catalog-schema.ts";
-import { SourceFindingSchema } from "../../domain/sources/source-check.ts";
+import { SourceFindingSchema, type SourceFinding } from "../../domain/sources/source-check.ts";
 import {
-  SourceLabelSchema,
+  declarationResourceKeys,
+  sourceDeclarationVersion,
+  SourceValidationErrorCodeSchema,
   suggestedSourceName,
   type SourceDeclaration,
 } from "../../domain/sources/source-schema.ts";
 import { NextCommandsSchema } from "../../domain/hints/next-commands.ts";
-import {
-  sourceFolderKeys,
-  type SourceFolderKey,
-  type SourceFolders,
-} from "../../domain/sources/source-folders.ts";
-import { oneSkillMessage, Source, SourceStorageError } from "./source.ts";
+import { fieldLine } from "../../domain/sources/field-line.ts";
+import { Source, SourceStorageError, validateDeclaration } from "./source.ts";
 import { declarationFileName } from "./declaration-file.ts";
-import { declaredPathSyntaxIssue, resolveDeclaredPath } from "./declared-path.ts";
-import { inspectDeclaration } from "./source-check.ts";
+import { inspectValidatedSource } from "./source-check.ts";
 import { declarationReaching } from "./resource-declarations.ts";
-import { isInside, isStrictlyInside } from "../../domain/identity/path-containment.ts";
 import type { DeclaredSourceInspection } from "../../domain/sources/source-inspection.ts";
 import { loadsNothing } from "../../domain/sources/declaration-facts.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
@@ -30,43 +25,45 @@ const PlannedEntrySchema = Schema.Struct({
   /** The declared folder; absent for a collection, whose folder is the source. */
   path: Schema.optionalKey(Schema.String),
   collection: Schema.optionalKey(Schema.Literal(true)),
-  /** The docs name, which is the folder's own name. */
+  /** The docs name. */
   name: Schema.optionalKey(Schema.String),
   /** The names of the resources the entry puts in the catalog, in code-unit order. */
   resources: Schema.Array(Schema.String),
-  /** The entry's problems, as `tack check` reports them. */
+  /** The entry's problems, as `tack check` reports them, at their line in the submitted config. */
   findings: Schema.Array(SourceFindingSchema),
 });
 
-/** The `source add` plan for a source without a declaration: the file its kind flags would create. */
+/** The `source add --config` plan for a source without a declaration: the file it would create. */
 export const SourceScaffoldPlanSchema = Schema.Struct({
   kind: Schema.Literal("source-scaffold"),
   sourcePath: Schema.String,
   /** The label the source would take, absent when a `SOURCE:NAME` reference would need its ID. */
   name: Schema.optionalKey(Schema.String),
+  /** Where the config was read: its file as an absolute path, or `-` for standard input. */
+  config: Schema.String,
   declarationPath: Schema.String,
+  /** The tack.yaml `--apply` writes: the decoded config, normalized to YAML. */
   content: Schema.String,
   entries: Schema.Array(PlannedEntrySchema),
+  /** The findings of the declaration as a whole: its profile publications and its warnings. */
+  findings: Schema.Array(SourceFindingSchema),
 });
 
 /** The plan as `source add` publishes it: the schema's fields only, without the declaration. */
 export const scaffoldPlanJson = Schema.encodeSync(SourceScaffoldPlanSchema);
 
-/** Why `source add` refuses the folders it was asked to declare, before it writes anything. */
+/** Why `source add` refuses to plan or write a declaration, before it writes anything. */
 export class SourceAddRequestError extends Schema.TaggedError<SourceAddRequestError>()(
   "SourceAddRequestError",
   {
     code: Schema.Literals([
-      "declaration-flags-required",
+      "declaration-config-required",
       "declaration-exists",
-      "declaration-flag-path-invalid",
-      "declaration-docs-name-clash",
-      "declaration-docs-name-invalid",
-      "declaration-name-invalid",
       "declaration-inside-source",
-      "declaration-flags-conflict",
-      "source-is-one-skill",
       "declaration-loads-nothing",
+      "config-unreadable",
+      "config-not-json",
+      "config-imports-not-allowed",
     ]),
     message: Schema.String,
     /** The commands the message names as the fix. */
@@ -74,97 +71,78 @@ export class SourceAddRequestError extends Schema.TaggedError<SourceAddRequestEr
   },
 ) {}
 
-/** The flag that declares `key`: `--skills` for `skills`. */
-const flagOf = (key: SourceFolderKey) => `--${key}`;
+/**
+ * A submitted config that does not validate: each issue `tack check` would report for the same
+ * declaration, at its field and its line in the submitted text when it has them.
+ */
+export class SourceConfigInvalidError extends Schema.TaggedError<SourceConfigInvalidError>()(
+  "SourceConfigInvalidError",
+  {
+    code: SourceValidationErrorCodeSchema,
+    /** Where the config was read: its file as an absolute path, or `-` for standard input. */
+    config: Schema.String,
+    issues: Schema.Array(
+      Schema.Struct({
+        field: Schema.optionalKey(Schema.String),
+        message: Schema.String,
+        line: Schema.optionalKey(Schema.Number),
+      }),
+    ),
+  },
+) {}
 
-/** The folders as `/`-separated source-relative paths: a leading `./` and trailing `/` dropped. */
-const normalize = (value: string) => value.replace(/^(\.\/)+/, "").replace(/\/+$/, "");
+/** A config `source add --config` read, and where from: an absolute file path, or `-`. */
+export type SourceConfig = { readonly text: string; readonly origin: string };
+
+/** The guide that lists every key a tack.yaml takes. */
+const tackYamlGuide = ["tack", "guide", "tack-yaml"];
 
 /**
- * The command that writes a previewed declaration: `source add` again with one kind flag per
- * planned entry, in the order the declaration lists them, `.` for a collection, and `--apply`.
+ * The command that writes a previewed declaration: `source add` again with the same config and
+ * `--apply`. A config read from standard input has to be piped again.
  */
 export const applyCommand = (plan: typeof SourceScaffoldPlanSchema.Type) => [
   "tack",
   "source",
   "add",
   plan.sourcePath,
-  ...plan.entries.flatMap((entry) => [
-    `--${resourceKinds[entry.kind].declarationKey}`,
-    entry.path ?? ".",
-  ]),
+  "--config",
+  plan.config,
   "--apply",
 ];
 
 /**
- * The plan that writes `declaration` at `root`, with what each of its entries finds. It keeps the
- * declaration, from which `source add` resolves the label the source would take.
+ * The plan that writes a validated declaration at its source, with what each of its entries finds.
+ * It keeps the declaration, from which `source add` resolves the label the source would take.
+ * A finding on the declaration's field is located at its line in the submitted config.
  */
-const planned = Effect.fnUntraced(function* (root: string, declaration: SourceDeclaration) {
+const planned = Effect.fnUntraced(function* (
+  validated: Effect.Success<ReturnType<typeof validateDeclaration>>,
+  config: SourceConfig,
+) {
   const path = yield* Path.Path;
+  const root = validated.canonicalPath;
+  const declarationPath = path.join(root, declarationFileName);
+  const { entries, findings } = yield* inspectValidatedSource(validated);
+  const located = (finding: SourceFinding): SourceFinding =>
+    finding.file === declarationPath && finding.field !== undefined
+      ? { ...finding, line: fieldLine(config.text, finding.field) }
+      : finding;
   return {
     kind: SourceScaffoldPlanSchema.fields.kind.literal,
     sourcePath: root,
-    declarationPath: path.join(root, declarationFileName),
-    content: Yaml.stringify(declaration),
-    entries: yield* inspectDeclaration(root, declaration),
-    declaration,
+    config: config.origin,
+    declarationPath,
+    content: Yaml.stringify(validated.declaration),
+    entries: entries.map((entry) => ({ ...entry, findings: entry.findings.map(located) })),
+    findings: findings.map(located),
+    declaration: validated.declaration,
   } satisfies typeof SourceScaffoldPlanSchema.Type & { readonly declaration: SourceDeclaration };
 });
 
-/** One folder flag once its path resolved inside the source. */
-type ResolvedFlag = {
-  readonly key: SourceFolderKey;
-  readonly value: string;
-  readonly path: string;
-  readonly resolved: string;
-};
-
-/**
- * Refuses two `--skills`, `--commands` or `--context` folders that are equal or nested, the
- * overlap the declaration would quarantine. Flags carry no exclude, so every such pair overlaps.
- * Docs are never linked by name, so a docs folder may hold or equal any other.
- */
-const refuseOverlappingFlags = Effect.fnUntraced(function* (flags: ReadonlyArray<ResolvedFlag>) {
-  const path = yield* Path.Path;
-  const owning = flags.filter((flag) => flag.key !== "docs");
-  const pair = owning
-    .flatMap((flag, index) => owning.slice(index + 1).map((other) => [flag, other] as const))
-    .find(
-      ([flag, other]) =>
-        isInside(flag.resolved, other.resolved) === true ||
-        isInside(other.resolved, flag.resolved) === true,
-    );
-  if (pair === undefined) return;
-  const [first, second] = pair;
-  const [outer, inner] = isStrictlyInside(second.resolved, first.resolved)
-    ? [second, first]
-    : [first, second];
-  const exclude = path.relative(outer.resolved, inner.resolved).split(path.sep).join("/");
-  yield* new SourceAddRequestError({
-    code: "declaration-flags-conflict",
-    message: `${flagOf(first.key)} ${first.value} and ${flagOf(second.key)} ${second.value} overlap, and each file may belong to one declaration. Keep one of them${exclude === "" ? "" : `, or write tack.yaml by hand with exclude: ["${exclude}/**"] on the ${outer.key} entry "${outer.path}"`}.`,
-  });
-});
-
-/** Whether a flag value names the source folder itself: `.` or `./`. */
-const namesSource = (value: string) => value.replace(/\/+$/, "") === ".";
-
-/** Whether `.` can make a folder a collection of `key`: context needs a folder of a source. */
-const formsCollection = (key: SourceFolderKey) => key !== "context";
-
-/** The `source add` preview of `source` with `flags`. */
-const sourceAdd = (source: string, ...flags: ReadonlyArray<string>) => [
-  "tack",
-  "source",
-  "add",
-  source,
-  ...flags,
-];
-
 /** The key a folder's name says it holds: its declaration key or its kind, `skills` or `skill`. */
 const keyNamedBy = (name: string) =>
-  sourceFolderKeys.find(
+  declarationResourceKeys.find(
     (key) =>
       key === name ||
       Object.entries(resourceKinds).some(
@@ -173,12 +151,13 @@ const keyNamedBy = (name: string) =>
   );
 
 /**
- * The previews that declare what a folder without tack.yaml holds, read from the folders at its top.
- * Skill folders there make it a skills collection, with a source of its own for each commands or
- * docs folder beside them; otherwise each folder named after a kind gets its flag. A placeholder
- * folder remains when neither is found. `source add` and `tack check` both suggest these.
+ * The declarations a folder without tack.yaml suggests, read from the folders at its top. Skill
+ * folders there make it a skills collection, with a collection of its own for each commands or
+ * docs folder beside them; otherwise each folder named after a kind gets an entry. A placeholder
+ * folder remains when neither is found. Each is named after its folder, or `NAME` when the folder
+ * suggests no name.
  */
-export const layoutCommands = Effect.fnUntraced(function* (root: string) {
+const layoutDeclarations = Effect.fnUntraced(function* (root: string) {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
   const names = (yield* fs.readDirectory(root))
@@ -194,109 +173,56 @@ export const layoutCommands = Effect.fnUntraced(function* (root: string) {
     const key = keyNamedBy(name);
     return key === undefined ? [] : [{ key, name }];
   });
+  const head = (folder: string) => ({
+    version: sourceDeclarationVersion,
+    name: suggestedSourceName(path.basename(folder)) ?? "NAME",
+  });
   if (skillFolders.length > 0)
     return [
-      sourceAdd(root, "--skills", "."),
-      ...named
-        .filter((folder) => folder.key !== "skills" && formsCollection(folder.key) === true)
-        .map((folder) => sourceAdd(path.join(root, folder.name), flagOf(folder.key), ".")),
+      { folder: root, declaration: { ...head(root), kind: "skills" } },
+      ...named.flatMap(({ key, name }) =>
+        key === "commands" || key === "docs"
+          ? [{ folder: path.join(root, name), declaration: { ...head(name), kind: key } }]
+          : [],
+      ),
     ];
   if (named.length > 0)
     return [
-      sourceAdd(
-        root,
-        ...sourceFolderKeys.flatMap((key) =>
-          named
-            .filter((folder) => folder.key === key)
-            .flatMap((folder) => [flagOf(key), folder.name]),
-        ),
-      ),
+      {
+        folder: root,
+        declaration: {
+          ...head(root),
+          ...Object.fromEntries(
+            declarationResourceKeys.flatMap((key) => {
+              const entries = named
+                .filter((folder) => folder.key === key)
+                // A docs folder is found by its name, `docs`, which is also a docs name.
+                .map(({ name }) => (key === "docs" ? { name, path: name } : { path: name }));
+              return entries.length === 0 ? [] : [[key, entries]];
+            }),
+          ),
+        },
+      },
     ];
-  return [sourceAdd(root, "--skills", "FOLDER")];
+  return [{ folder: root, declaration: { ...head(root), skills: [{ path: "FOLDER" }] } }];
 });
 
 /**
- * The collection a `.` flag value asks for, or undefined when no flag names the source folder.
- * `.` makes the folder a skills, commands or docs collection, which declares nothing else, so it
- * cannot be combined with another flag. Context needs a folder of the source.
+ * How to declare a folder without tack.yaml: write its declaration as JSON for
+ * `source add --config`, starting from what its layout suggests, and the guide that lists every
+ * key. `source add` and `tack check` both give it.
  */
-const collectionDeclaration = Effect.fnUntraced(function* (root: string, folders: SourceFolders) {
-  const fs = yield* FileSystem.FileSystem;
-  const path = yield* Path.Path;
-  const values = sourceFolderKeys.flatMap((key) => folders[key].map((value) => ({ key, value })));
-  const dotted = values.find((flag) => namesSource(flag.value));
-  if (dotted === undefined) return undefined;
-  const key = dotted.key;
-  if (formsCollection(key) === false)
-    return yield* new SourceAddRequestError({
-      code: "declaration-flag-path-invalid",
-      message: `--context ${dotted.value}: context needs a folder of the source, such as --context notes. Only skills, commands and docs can be a collection.`,
-    });
-  const others = values.filter((flag) => flag !== dotted);
-  const otherCollection = others.find((flag) => namesSource(flag.value) === true);
-  if (otherCollection !== undefined)
-    return yield* new SourceAddRequestError({
-      code: "declaration-flags-conflict",
-      message: `${flagOf(key)} . and ${flagOf(otherCollection.key)} . would both make ${root} a collection, and a folder holds one. Keep one of them.`,
-    });
-  if (others.length > 0) {
-    // Each other folder can be a collection of its own, except context, which needs a source's folder.
-    const split = others.filter((flag) => formsCollection(flag.key) === true);
-    const context = others.filter((flag) => formsCollection(flag.key) === false);
-    const named = (flags: typeof others) =>
-      new Intl.ListFormat("en").format(flags.map((flag) => normalize(flag.value)));
-    return yield* new SourceAddRequestError({
-      code: "declaration-flags-conflict",
-      message: [
-        `${flagOf(key)} . makes ${root} a ${key} collection, which declares nothing else.`,
-        split.length === 0
-          ? "Register the collection alone."
-          : `Register the collection alone, and ${named(split)} as ${split.length === 1 ? "a source of its" : "sources of their"} own.`,
-        ...(context.length === 0
-          ? []
-          : [
-              `Context needs a folder of a source, so ${named(context)} cannot be a source of its own.`,
-            ]),
-      ].join(" "),
-      next: [
-        sourceAdd(root, flagOf(key), "."),
-        ...split.map((flag) =>
-          sourceAdd(path.join(root, normalize(flag.value)), flagOf(flag.key), "."),
-        ),
-      ],
-    });
-  }
-  if (key === "skills" && (yield* fs.exists(path.join(root, "SKILL.md"))) === true)
-    return yield* new SourceAddRequestError({
-      code: "source-is-one-skill",
-      message: oneSkillMessage(root),
-    });
-  // A docs collection's name is also its docs name, which must be the folder's own.
-  if (key === "docs" && Schema.is(SourceLabelSchema)(path.basename(root)) === false)
-    return yield* new SourceAddRequestError({
-      code: "declaration-docs-name-invalid",
-      message: `The folder name "${path.basename(root)}" is no docs name: a docs collection is named after its folder, in lowercase letters, digits and hyphens. Rename the folder, or write tack.yaml by hand with its own name.`,
-    });
+export const declarationAdvice = Effect.fnUntraced(function* (root: string) {
+  const suggested = yield* layoutDeclarations(root);
+  const suggestions = suggested.map(({ folder, declaration }) =>
+    folder === root
+      ? JSON.stringify(declaration)
+      : `${JSON.stringify(declaration)} for ${folder} as a source of its own`,
+  );
   return {
-    version: 1,
-    name: yield* scaffoldSourceName(root),
-    kind: key,
-  } satisfies SourceDeclaration;
-});
-
-/**
- * The `name` a written `tack.yaml` gives its source: the one its folder suggests, which the author
- * can change afterwards. A folder that suggests no name is refused.
- */
-const scaffoldSourceName = Effect.fnUntraced(function* (root: string) {
-  const path = yield* Path.Path;
-  const folderName = path.basename(root);
-  const name = suggestedSourceName(folderName);
-  if (name !== undefined) return name;
-  return yield* new SourceAddRequestError({
-    code: "declaration-name-invalid",
-    message: `The folder name "${folderName}" suggests no source name, in lowercase letters, digits and hyphens. Rename the folder, or write tack.yaml by hand with its own name.`,
-  });
+    advice: `Write its tack.yaml as JSON and preview it with tack source add ${root} --config FILE, or --config - to read it from standard input; tack guide tack-yaml lists every key. Its layout suggests ${new Intl.ListFormat("en").format(suggestions)}.`,
+    next: [tackYamlGuide],
+  };
 });
 
 /**
@@ -313,30 +239,31 @@ export const scaffoldLoadsNothing = (plan: typeof SourceScaffoldPlanSchema.Type)
   )
     ? new SourceAddRequestError({
         code: "declaration-loads-nothing",
-        message: `Every entry of the tack.yaml these flags declare has a problem and finds no resource, so ${plan.sourcePath} would load nothing. Fix the problems under each entry or name other folders, then preview again.`,
+        message: `Every entry of the tack.yaml this config declares has a problem and finds no resource, so ${plan.sourcePath} would load nothing. Fix the problems under each entry, then preview again.`,
         // The preview: the apply command without its final --apply.
         next: [applyCommand(plan).slice(0, -1)],
       })
     : undefined;
 
 /**
- * Plans the declaration `source add` writes from its kind flags. It returns undefined when the
- * source has its tack.yaml and no flag was given, so the source registers as it is. It refuses
- * flags on a source that has tack.yaml, and a source without one that no flag describes.
+ * Plans the declaration `source add --config` writes. It returns undefined when the source has its
+ * tack.yaml and no config was given, so the source registers as it is. It refuses a config for a
+ * source that has tack.yaml, and a source without one that no config describes. A config is JSON,
+ * names no `imports`, and validates as `tack check` validates the tack.yaml it would write.
  */
 export const planSourceScaffold = Effect.fn("sources.planSourceScaffold")(
-  function* (sourcePath: string, folders: SourceFolders) {
+  function* (sourcePath: string, config: SourceConfig | undefined) {
     const sourceService = yield* Source;
     const fs = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
-    // A tack.yaml, healthy or not, is the user's: flags never write over it.
+    // A tack.yaml, healthy or not, is the user's: a config never writes over it.
     if (
-      sourceFolderKeys.some((key) => folders[key].length > 0) &&
+      config !== undefined &&
       (yield* fs.exists(path.join(path.resolve(sourcePath), declarationFileName))) === true
     )
       return yield* new SourceAddRequestError({
         code: "declaration-exists",
-        message: `${path.resolve(sourcePath)} already has tack.yaml, and source add never writes over it. Edit tack.yaml by hand, or register the source as it is.`,
+        message: `${path.resolve(sourcePath)} already has tack.yaml, and source add never writes over it. Edit tack.yaml by hand and run tack check, or register the source as it is.`,
         next: [["tack", "source", "add", path.resolve(sourcePath)]],
       });
     const root = yield* sourceService.validate(sourcePath).pipe(
@@ -348,78 +275,40 @@ export const planSourceScaffold = Effect.fn("sources.planSourceScaffold")(
       ),
     );
     if (root === undefined) return undefined;
-    if (sourceFolderKeys.every((key) => folders[key].length === 0))
+    if (config === undefined) {
+      const { advice, next } = yield* declarationAdvice(root);
       return yield* new SourceAddRequestError({
-        code: "declaration-flags-required",
-        message: `${root} has no tack.yaml. Name the folders it holds with --skills, --commands, --context or --docs, each a path inside it, or use --skills ., --commands . or --docs . alone when what it holds sits at its top, and source add previews the tack.yaml it writes.`,
-        next: yield* layoutCommands(root),
+        code: "declaration-config-required",
+        message: `${root} has no tack.yaml. ${advice}`,
+        next,
       });
-    const collection = yield* collectionDeclaration(root, folders);
-    if (collection !== undefined) return yield* planned(root, collection);
-    const name = yield* scaffoldSourceName(root);
-    /** The entries one kind flag declares, each path checked to exist inside the source. */
-    const declare = (key: SourceFolderKey) =>
-      Effect.forEach(folders[key], (value) =>
-        Effect.gen(function* () {
-          const folder = normalize(value);
-          const refuse = (reason: string) =>
-            new SourceAddRequestError({
-              code: "declaration-flag-path-invalid",
-              message: `${flagOf(key)} ${value}: ${reason}`,
-            });
-          if (declaredPathSyntaxIssue(folder) !== undefined)
-            return yield* refuse(
-              "name a folder relative to the source, written with / and without . or .. segments.",
-            );
-          const resolved = yield* resolveDeclaredPath(root, folder);
-          if (resolved.ok === false)
-            return yield* refuse(
-              resolved.code === "declaration-path-missing"
-                ? `${path.join(root, folder)} does not exist.`
-                : resolved.code === "declaration-path-outside-source"
-                  ? `${path.join(root, folder)} resolves outside the source.`
-                  : resolved.message,
-            );
-          return { key, value, path: folder, resolved: resolved.resolved } satisfies ResolvedFlag;
+    }
+    const parsed = yield* Effect.try({
+      try: (): unknown => JSON.parse(config.text),
+      catch: (cause) =>
+        new SourceAddRequestError({
+          code: "config-not-json",
+          message: `--config takes a JSON object: ${String(cause)}. tack guide tack-yaml lists every key.`,
+          next: [tackYamlGuide],
         }),
-      );
-    const flags = (yield* Effect.forEach(sourceFolderKeys, declare)).flat();
-    yield* refuseOverlappingFlags(flags);
-    const entriesOf = (key: SourceFolderKey) =>
-      flags.filter((flag) => flag.key === key).map((flag) => ({ path: flag.path }));
-    const declared = {
-      skills: entriesOf("skills"),
-      commands: entriesOf("commands"),
-      context: entriesOf("context"),
-      docs: entriesOf("docs").map((entry) => ({ name: path.basename(entry.path), ...entry })),
-    } satisfies Record<SourceFolderKey, ReadonlyArray<{ readonly path: string }>>;
-    const invalid = declared.docs.find(
-      (entry) => Schema.is(DocsAddressSchema.fields.name)(entry.name) === false,
-    );
-    if (invalid !== undefined)
+    });
+    if (Predicate.hasProperty(parsed, "imports") === true)
       return yield* new SourceAddRequestError({
-        code: "declaration-docs-name-invalid",
-        message: `The folder name "${invalid.name}" is no docs name: docs are named after their folder, in lowercase letters, digits and hyphens. Rename the folder, or write tack.yaml by hand with its own name.`,
+        code: "config-imports-not-allowed",
+        message:
+          "--config cannot declare imports: tack import add writes that key when it imports a skill. Remove it, register the source, then import with tack import add.",
       });
-    const clash = declared.docs.flatMap((entry, index) => {
-      const first = declared.docs.slice(0, index).find((other) => other.name === entry.name);
-      return first === undefined ? [] : [{ first, entry }];
-    })[0];
-    if (clash !== undefined)
-      return yield* new SourceAddRequestError({
-        code: "declaration-docs-name-clash",
-        message: `Both ${clash.first.path} and ${clash.entry.path} would be docs "${clash.entry.name}", and docs names must differ. Write tack.yaml by hand with a name for each.`,
-      });
-    const declaration = {
-      version: 1,
-      name,
-      ...Object.fromEntries(
-        sourceFolderKeys.flatMap((key) =>
-          declared[key].length === 0 ? [] : [[key, declared[key]]],
-        ),
+    const validated = yield* validateDeclaration(root, { text: config.text, parsed }).pipe(
+      Effect.mapError(
+        (error) =>
+          new SourceConfigInvalidError({
+            code: error.code,
+            config: config.origin,
+            issues: error.issues ?? [{ message: error.message }],
+          }),
       ),
-    } satisfies SourceDeclaration;
-    return yield* planned(root, declaration);
+    );
+    return yield* planned(validated, config);
   },
   (effect, sourcePath) =>
     effect.pipe(

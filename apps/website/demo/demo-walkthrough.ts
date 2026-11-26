@@ -19,16 +19,20 @@ export const demoWalkthrough: ReadonlyArray<WalkthroughStep> = [
     command: "tack init",
   },
   {
-    caption: "The folder holds skills directly: Tack previews the tack.yaml it would write.",
-    command: "tack source add ~/skills --skills .",
+    caption: "The folder holds skills directly. Its tack.yaml, written as JSON, says so.",
+    command: "cat ~/skills.json",
+  },
+  {
+    caption: "Tack checks the JSON and previews the tack.yaml it would write.",
+    command: "tack source add ~/skills --config ~/skills.json",
   },
   {
     caption: "Apply: it writes tack.yaml and registers the source.",
-    command: "tack source add ~/skills --skills . --apply",
+    command: "tack source add ~/skills --config ~/skills.json --apply",
   },
   {
     caption: "The team docs and their command, declared and registered in one go.",
-    command: "tack source add ~/team-docs --docs handbook --commands commands --apply",
+    command: "tack source add ~/team-docs --config ~/team-docs.json --apply",
   },
   {
     caption: "Register two Git projects.",

@@ -167,10 +167,13 @@ it("documents every source declaration key and declaration quarantine code", () 
 });
 
 /** The `tack.yaml` examples in a text: fenced YAML blocks that open with `version: 1`. */
+/** The fenced declarations in `text`: YAML for a `tack.yaml`, JSON for a `source add --config`. */
 const declarationExamples = (text: string): ReadonlyArray<string> =>
-  [...text.matchAll(/```ya?ml\n([\s\S]*?)```/g)]
+  [...text.matchAll(/```(?:ya?ml|json)\n([\s\S]*?)```/g)]
     .map((match) => match[1] ?? "")
-    .filter((block) => block.startsWith("version: 1\n"));
+    .filter(
+      (block) => block.startsWith("version: 1\n") || /^\{\s*"version": 1,\s*"name":/.test(block),
+    );
 
 it("keeps every tack.yaml example in the guidance a valid declaration", () => {
   const files = [

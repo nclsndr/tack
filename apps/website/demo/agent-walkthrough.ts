@@ -45,8 +45,8 @@ const stepOf = (command: string, occurrence = 0) => {
   return index;
 };
 
-const sourceSkills = "tack source add ~/skills --skills .";
-const sourceDocs = "tack source add ~/team-docs --commands commands --docs handbook";
+const sourceSkills = "tack source add ~/skills --config ~/skills.json";
+const sourceDocs = "tack source add ~/team-docs --config ~/team-docs.json";
 
 /**
  * What the recorded session printed for the commands the demo machine cannot run: npm, the guide,
@@ -125,7 +125,7 @@ export const agentWalkthrough: ReadonlyArray<AgentBeat> = [
     events: [
       {
         kind: "user",
-        text: "Yes, run it. Quick. My skills are in ~/skills and the team handbook is in ~/team-docs. Link them into ~/code/app and ~/code/api.",
+        text: "Yes, run it. Quick. My skills are in ~/skills and the team handbook is in ~/team-docs; I wrote their tack.yaml as JSON in ~/skills.json and ~/team-docs.json. Link them into ~/code/app and ~/code/api.",
       },
       { kind: "thinking" },
       {
@@ -166,8 +166,7 @@ export const agentWalkthrough: ReadonlyArray<AgentBeat> = [
         kind: "tool-call",
         tool: "shell",
         command: `${sourceDocs} --apply`,
-        checkpoint:
-          stepOf("tack source add ~/team-docs --docs handbook --commands commands --apply") + 1,
+        checkpoint: stepOf(`${sourceDocs} --apply`) + 1,
       },
       { kind: "tool-call", tool: "shell", command: "tack check ~/skills" },
       {

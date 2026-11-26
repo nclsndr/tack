@@ -4,7 +4,7 @@ import { docsWalkSkips, marksSourceEdge } from "@tackup/reader/source-edges";
 import { declarationFileName } from "../sources/declaration-file.ts";
 import { topLevelSkillFolders } from "./top-level-skills.ts";
 import { oneSkillMessage } from "../sources/source.ts";
-import { layoutCommands } from "../sources/source-scaffold.ts";
+import { declarationAdvice } from "../sources/source-scaffold.ts";
 
 export type CheckInput = {
   readonly kind: CheckItem["kind"];
@@ -47,19 +47,15 @@ const skillsLayoutOrFails = Effect.fnUntraced(function* (folder: string) {
 
 /**
  * What a folder of skills without `tack.yaml` needs, as a remedy and the commands it names: the
- * previews a bare `source add` on the same folder suggests.
+ * advice a bare `source add` on the same folder gives.
  */
 const sourceAddRemedy = Effect.fnUntraced(function* (
   folder: string,
   layout: "one" | "top" | "skills",
 ) {
   if (layout === "one") return { remedy: oneSkillMessage(folder) } satisfies Partial<CheckFinding>;
-  const next = yield* layoutCommands(folder);
-  const [first] = next;
-  return {
-    remedy: `Run ${first?.join(" ")} to preview ${layout === "top" ? "a skills collection" : "its tack.yaml"}, then apply it.`,
-    next,
-  } satisfies Partial<CheckFinding>;
+  const { advice, next } = yield* declarationAdvice(folder);
+  return { remedy: advice, next } satisfies Partial<CheckFinding>;
 });
 
 /** Detects paths independently, so one unreadable input cannot suppress the remaining checks. */

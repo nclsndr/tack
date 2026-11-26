@@ -1,6 +1,6 @@
 import { skillText } from "../../../../test/support/source-tree.ts";
 import { expect, it } from "@effect/vitest";
-import { Effect, FileSystem, Path } from "effect";
+import { Effect, FileSystem, Path, PlatformError, Sink, Stdio, Stream } from "effect";
 import { LiveTestLayer } from "../../../../test/support/live-test-layer.ts";
 import { routeOutcome } from "./route.test-support.ts";
 import { sourceRoutes } from "./sources.ts";
@@ -23,15 +23,15 @@ it.layer(LiveTestLayer)("source add route", (test) => {
           path.join(folder, "skills", "review", "SKILL.md"),
           skillText("review", { description: "Review a change.", body: "Review.\n" }),
         );
+        const config = path.join(root, "agent-setup.json");
+        yield* fs.writeFileString(
+          config,
+          JSON.stringify({ version: 1, name: "agent-setup", skills: [{ path: "skills" }] }),
+        );
         // No `initialAdapters`: the new state would enable no agent, and the preview says so.
         const preview = yield* routeOutcome(
           sourceRoutes["source-add"].run(
-            {
-              _tag: "source-add",
-              sourcePath: folder,
-              apply: false,
-              folders: { skills: ["skills"], commands: [], context: [], docs: [] },
-            },
+            { _tag: "source-add", sourcePath: folder, apply: false, config },
             { environment: {}, homeDirectory: home },
           ),
         );
@@ -72,12 +72,7 @@ it.layer(LiveTestLayer)("source add route", (test) => {
         );
         const preview = yield* routeOutcome(
           sourceRoutes["source-add"].run(
-            {
-              _tag: "source-add",
-              sourcePath: folder,
-              apply: false,
-              folders: { skills: [], commands: [], context: [], docs: [] },
-            },
+            { _tag: "source-add", sourcePath: folder, apply: false },
             { environment: {}, homeDirectory: home },
           ),
         );
@@ -94,5 +89,39 @@ it.layer(LiveTestLayer)("source add route", (test) => {
         });
         expect(yield* fs.exists(path.join(home, ".tack"))).toBe(false);
       }),
+  );
+  test.effect("refuses a --config - whose standard input cannot be read", () =>
+    Effect.gen(function* () {
+      const fs = yield* FileSystem.FileSystem;
+      const root = yield* fs.makeTempDirectoryScoped({ prefix: "tack-source-add-" });
+      const failing = Stdio.make({
+        args: Effect.succeed([]),
+        stdin: Stream.fail(
+          PlatformError.systemError({
+            _tag: "Unknown",
+            module: "Stdio",
+            method: "stdin",
+            description: "the pipe closed",
+          }),
+        ),
+        stdout: () => Sink.drain,
+        stderr: () => Sink.drain,
+      });
+      const error = yield* Effect.flip(
+        routeOutcome(
+          sourceRoutes["source-add"].run(
+            { _tag: "source-add", sourcePath: root, apply: false, config: "-" },
+            { environment: {}, homeDirectory: root },
+          ),
+        ),
+      ).pipe(Effect.provideService(Stdio.Stdio, failing));
+      expect(error).toMatchObject({
+        _tag: "SourceAddRequestError",
+        code: "config-unreadable",
+        message: expect.stringContaining(
+          "Tack could not read the --config declaration from standard input: ",
+        ),
+      });
+    }),
   );
 });

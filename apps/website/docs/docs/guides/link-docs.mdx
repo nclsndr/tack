@@ -104,9 +104,9 @@ This guide links the `handbook` folder of `~/agent-setup` into the project `app`
 
 ## 1. Declare the docs
 
-A source declares each docs folder by name in its `tack.yaml`. `tack source add --docs handbook`
-writes this entry for you, as [Add a source](./add-a-source) shows; in an existing `tack.yaml`, add
-it by hand:
+A source declares each docs folder by name in its `tack.yaml`. For a folder without one, put the
+entry in the JSON you pass to `tack source add` with `--config`, as
+[Add a source](./add-a-source) shows; in an existing `tack.yaml`, add it yourself:
 
 ```yaml
 docs:

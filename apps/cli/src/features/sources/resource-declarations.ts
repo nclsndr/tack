@@ -72,15 +72,15 @@ export const patternSelector = (
 type PatternSelector = ReturnType<typeof patternSelector>;
 
 const patterns = Schema.optionalKey(Schema.Array(Schema.String));
-const folderEntrySchema = Schema.Struct({
+export const folderEntrySchema = Schema.Struct({
   path: Schema.String,
   include: patterns,
   exclude: patterns,
 });
-const scriptEntrySchema = Schema.Struct({
+export const scriptEntrySchema = Schema.Struct({
   name: SkillNameSchema,
   path: Schema.String,
-  description: Schema.String.check(Schema.isPattern(/\S/)),
+  description: Schema.String.check(Schema.isPattern(/\S/u)),
 });
 
 type FolderEntry = typeof folderEntrySchema.Type;

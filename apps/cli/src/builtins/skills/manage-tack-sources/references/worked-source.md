@@ -82,7 +82,8 @@ inside a docs resource, as described in the reader author guide.
 ## Pair source dependencies with skill metadata
 
 The separate `base-skills` directory holds its skills at its top, such as `lint/SKILL.md`, and
-nothing else, so it is a skills collection (`tack source add PATH --skills .` writes it):
+nothing else, so it is a skills collection (`tack source add PATH --config -` writes it from the
+same declaration as JSON):
 
 ```yaml
 version: 1
@@ -156,10 +157,11 @@ need distinct `name` values before that label can qualify references.
 
 ## Check the authored source
 
-Create the files before registration. The kind flags of `source add` declare whole folders only,
-so this layout, with scripts, patterns and `depends-on`, is written by hand, and `source add`
-previews each `tack.yaml` as it is; `--apply` registers it. Check each source before registration, repair local findings,
-then initialize state if absent. Use absolute paths for the three source directories:
+Create the files before registration. Write each `tack.yaml` by hand, or give its declaration as
+JSON to `tack source add PATH --config FILE`, which previews the `tack.yaml` it writes and checks it
+as `tack check` does. `source add` previews each existing `tack.yaml` as it is; `--apply` registers
+it. Check each source before registration, repair local findings, then initialize state if absent.
+Use absolute paths for the three source directories:
 
 ```sh
 tack check /absolute/path/base-skills

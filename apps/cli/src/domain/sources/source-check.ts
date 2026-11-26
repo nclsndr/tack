@@ -7,6 +7,8 @@ export const SourceFindingSchema = Schema.Struct({
   severity: Schema.Literals(["warning", "error"]),
   file: Schema.String,
   field: Schema.optionalKey(Schema.String),
+  /** The line in `file`, when the check that found it read the text the finding concerns. */
+  line: Schema.optionalKey(Schema.Number),
   candidatePath: Schema.optionalKey(Schema.String),
 });
 export type SourceFinding = typeof SourceFindingSchema.Type;

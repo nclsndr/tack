@@ -1,6 +1,7 @@
 import { Effect, FileSystem, Path, Schema } from "effect";
 import { guideTopics, type GuideTopic } from "../../domain/guides/guide-schema.ts";
 import { Source } from "../sources/source.ts";
+import { tackYamlGuide } from "./tack-yaml-guide.ts";
 
 /** The running Tack cannot read one of its own guides: its installation is incomplete. */
 export class GuideUnreadableError extends Schema.TaggedError<GuideUnreadableError>()(
@@ -18,9 +19,11 @@ export const isGuideTopic = (topic: string): topic is GuideTopic =>
 
 /**
  * Reads one guide from the running version's built-in `use-tack` skill, where the skill's agents
- * read it too. It reads no Tack state and writes nothing.
+ * read it too, or builds `tack-yaml` from the schemas that validate a `tack.yaml`. It reads no Tack
+ * state and writes nothing.
  */
 export const readGuide = Effect.fn("guides.readGuide")(function* (topic: GuideTopic) {
+  if (topic === "tack-yaml") return tackYamlGuide();
   const fileSystem = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
   const relative = path.join("skills", "use-tack", "references", `${topic}.md`);

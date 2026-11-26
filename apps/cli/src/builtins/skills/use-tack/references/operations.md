@@ -62,8 +62,8 @@ tack check /absolute/path/to/source
 tack init # if the machine is not set up
 tack source add /absolute/path/to/source  # preview a source that has tack.yaml
 tack source add /absolute/path/to/source --apply  # register it
-tack source add /absolute/path/to/folder --skills skills --docs handbook  # preview its tack.yaml
-tack source add /absolute/path/to/skills --skills .  # skill folders at its top: a collection
+tack source add /absolute/path/to/folder --config /absolute/path/to/folder.json  # preview its tack.yaml
+tack guide tack-yaml  # every key a tack.yaml takes
 tack project add PROJECT --repository-cwd /absolute/path/to/repository
 tack catalog --details
 ```
@@ -314,10 +314,10 @@ companion source folders for cross-source profile linkage. Source folders includ
 published profiles and docs figures. Findings have file:line locations; errors exit 1, warnings
 exit 0. Figures, icons and author components use the reader's static rules without running a page. Unknown icons produce `icon-unknown`; misused components produce `component-issue`. Computed props produce
 `figure-not-checked`; unavailable inputs produce `check-path-unavailable`. A folder of skills
-without `tack.yaml` produces the warning `check-not-a-source` and names the same previews as a bare
-`tack source add PATH`: `--skills .` for skill folders at its top, or one flag per folder named
-after a kind, such as `--skills skills --commands commands`, and the folder above for a `SKILL.md`
-at PATH. The
+without `tack.yaml` produces the warning `check-not-a-source` and gives the same advice as a bare
+`tack source add PATH`: a JSON declaration for `--config` read from its layout, a skills collection
+for skill folders at its top or one entry per folder named after a kind, and the folder above for
+a `SKILL.md` at PATH. The
 `write-reader-figures` skill teaches figure authoring.
 
 `tack docs icons [WORD]` lists the Lucide icons a document may draw with `<Icon name>`, by category,

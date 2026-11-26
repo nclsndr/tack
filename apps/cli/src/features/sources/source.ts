@@ -12,7 +12,7 @@ import {
   SourceRegistrationSchema,
   declarationResourceKeys,
   isCollection,
-  missingSourceNameMessage,
+  declarationIssues,
   type SourceDeclaration,
   type SourceRegistration,
   sourceDeclarationVersion,
@@ -30,6 +30,7 @@ import { type State } from "../../domain/state/state-schema.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
 import { discoverDocs } from "./docs-discovery.ts";
 import { kindFoldersAt, undeclaredFoldersMessage } from "./undeclared-folders.ts";
+import { fieldLine } from "../../domain/sources/field-line.ts";
 import {
   checkDeclarationVersion,
   declarationFileName,
@@ -37,13 +38,24 @@ import {
   readDeclarationText,
 } from "./declaration-file.ts";
 
-/** Reports a stable validation classification for an unusable source path or declaration. */
+/** One issue of a declaration that does not decode, at its line in the declaration's text. */
+const DeclarationIssueSchema = Schema.Struct({
+  field: Schema.optionalKey(Schema.String),
+  message: Schema.String,
+  line: Schema.Number,
+});
+
+/**
+ * Reports a stable validation classification for an unusable source path or declaration. A
+ * declaration that does not decode lists each of its issues, and its message joins them.
+ */
 export class SourceValidationError extends Schema.TaggedError<SourceValidationError>()(
   "SourceValidationError",
   {
     code: SourceValidationErrorCodeSchema,
     message: Schema.String,
     sourcePath: Schema.String,
+    issues: Schema.optionalKey(Schema.Array(DeclarationIssueSchema)),
   },
 ) {}
 
@@ -283,7 +295,27 @@ const validateSource = Effect.fnUntraced(function* (
       }),
     try: (): unknown => Yaml.parse(encodedDeclaration),
   });
+  return yield* validateDeclaration(canonicalPath, {
+    text: encodedDeclaration,
+    parsed: parsedDeclaration,
+  });
+});
 
+/** A declaration's text, which locates each issue, and the value the text parses to. */
+export type DeclarationDocument = { readonly text: string; readonly parsed: unknown };
+
+/**
+ * Validates a parsed declaration for the source folder at `canonicalPath`, whether it was read
+ * from the folder's tack.yaml or submitted to `source add --config`: its shape, every schema issue
+ * at once at its line in the text, and the layout rules that need the folder.
+ */
+export const validateDeclaration = Effect.fnUntraced(function* (
+  canonicalPath: string,
+  document: DeclarationDocument,
+): Effect.fn.Return<ValidatedSource, SourceValidationError, FileSystem.FileSystem | Path.Path> {
+  const fileSystem = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
+  const parsedDeclaration = document.parsed;
   if (Predicate.isObject(parsedDeclaration) === false) {
     return yield* new SourceValidationError({
       code: "declaration-root-not-mapping",
@@ -305,23 +337,18 @@ const validateSource = Effect.fnUntraced(function* (
     });
   }
 
-  if (Predicate.hasProperty(parsedDeclaration, "name") === false) {
-    return yield* new SourceValidationError({
-      code: "declaration-schema-invalid",
-      message: missingSourceNameMessage(path.basename(canonicalPath)),
-      sourcePath: canonicalPath,
-    });
-  }
-
   const declaration = yield* decodeDeclaration(parsedDeclaration).pipe(
-    Effect.mapError(
-      (cause) =>
-        new SourceValidationError({
-          code: "declaration-schema-invalid",
-          message: cause.message,
-          sourcePath: canonicalPath,
-        }),
-    ),
+    Effect.mapError((cause) => {
+      const issues = declarationIssues(parsedDeclaration, cause, path.basename(canonicalPath)).map(
+        (issue) => ({ ...issue, line: fieldLine(document.text, issue.field) }),
+      );
+      return new SourceValidationError({
+        code: "declaration-schema-invalid",
+        message: issues.map((issue) => issue.message).join("\n"),
+        sourcePath: canonicalPath,
+        issues,
+      });
+    }),
   );
 
   if (isCollection(declaration)) {

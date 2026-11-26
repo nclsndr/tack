@@ -133,7 +133,7 @@ describe("demo session", () => {
     expect(await runAll(session, ["ls code/app/.git/missing"])).toMatchObject({ exitCode: 1 });
     await runAll(session, ["cd /home/you/code/app", "ls -al"]);
     const linked = await runAll(session, [
-      "tack init --adapter claude && tack source add ~/skills --skills . --apply",
+      "tack init --adapter claude && tack source add ~/skills --config ~/skills.json --apply",
       "tack project add app && tack sync --apply",
       "ls -l .claude/skills",
     ]);

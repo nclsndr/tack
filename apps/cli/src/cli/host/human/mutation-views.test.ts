@@ -213,7 +213,7 @@ describe("source add", () => {
     }),
   );
 
-  it.effect("previews the tack.yaml its kind flags declare and what each entry finds", () =>
+  it.effect("previews the tack.yaml its config declares and what each entry finds", () =>
     Effect.gen(function* () {
       const brain = `${testHome}/brain`;
       const envelope = {
@@ -230,6 +230,7 @@ describe("source add", () => {
           plan: {
             kind: "source-scaffold",
             sourcePath: brain,
+            config: `${brain}.json`,
             declarationPath: `${brain}/tack.yaml`,
             name: "brain",
             content:
@@ -258,9 +259,17 @@ describe("source add", () => {
               },
               { kind: "command", path: "prompts", resources: [], findings: [] },
             ],
+            findings: [
+              {
+                code: "collection-folder-not-skill",
+                message: "A folder that is no skill.",
+                severity: "warning",
+                file: `${brain}/tack.yaml`,
+              },
+            ],
           },
         }),
-        next: [`tack source add ${brain} --skills personal/skills --docs alpha/documents --apply`],
+        next: [`tack source add ${brain} --config ${brain}.json --apply`],
       } satisfies PublicEnvelope;
       const output = view(envelope, 120);
       expect(lines(output)).toEqual([
@@ -284,12 +293,15 @@ describe("source add", () => {
         "",
         "commands prompts · 0 commands",
         "",
+        "warning: collection-folder-not-skill: A folder that is no skill.",
+        "  ~/brain/tack.yaml",
+        "",
         "Problems",
         "  ✗ The skill folder name must equal name.",
         "    error skill-name-mismatch · file ~/brain/personal/skills/lint/SKILL.md · field skills[0]",
         "",
         "Next",
-        `  tack source add ${brain} --skills personal/skills --docs alpha/documents --apply`,
+        `  tack source add ${brain} --config ${brain}.json --apply`,
         "",
       ]);
       expect(yield* parseHintsIn(output)).toEqual(["source add"]);
@@ -305,9 +317,11 @@ describe("source add", () => {
         plan: {
           kind: "source-scaffold",
           sourcePath: `${testHome}/tack`,
+          config: "-",
           declarationPath: `${testHome}/tack/tack.yaml`,
           content: "version: 1\nkind: skills\n",
           entries: [{ kind: "skill", collection: true, resources: ["review"], findings: [] }],
+          findings: [],
         },
         next: [],
       }),
@@ -315,26 +329,20 @@ describe("source add", () => {
     expect(lines(output)).toContain("Would create ~/tack/tack.yaml and register the source.");
   });
 
-  it("names the kind flags when a folder without tack.yaml has none, with each proposed command", () => {
+  it("names --config and the guide when a folder without tack.yaml has no config", () => {
     const output = view(
       failed(
         "source add",
         new SourceAddRequestError({
-          code: "declaration-flags-required",
-          message: `${testHome}/brain has no tack.yaml. Name the folders it holds with --skills, --commands, --context or --docs.`,
-          next: [
-            ["tack", "source", "add", `${testHome}/brain`, "--skills", "."],
-            ["tack", "source", "add", `${testHome}/brain/commands`, "--commands", "."],
-          ],
+          code: "declaration-config-required",
+          message: `${testHome}/brain has no tack.yaml. Write its tack.yaml as JSON and preview it with tack source add ${testHome}/brain --config FILE.`,
+          next: [["tack", "guide", "tack-yaml"]],
         }),
       ),
     );
-    expect(flat(output)).toContain("declaration-flags-required");
-    expect(flat(output)).toContain("--skills, --commands, --context or --docs");
-    expect(hintsIn(output)).toEqual([
-      `tack source add ${testHome}/brain --skills .`,
-      `tack source add ${testHome}/brain/commands --commands .`,
-    ]);
+    expect(flat(output)).toContain("declaration-config-required");
+    expect(flat(output)).toContain("--config FILE");
+    expect(hintsIn(output)).toEqual(["tack guide tack-yaml"]);
   });
 
   it("shows the same registration when the path was already registered", () => {

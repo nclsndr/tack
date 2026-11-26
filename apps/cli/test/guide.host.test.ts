@@ -6,6 +6,7 @@ import type { TerminalContextShape } from "../src/cli/host/human/terminal-contex
 import { exitCodeForEnvelope } from "../src/cli/host/public-outcome.ts";
 import { guideTopics } from "../src/domain/guides/guide-schema.ts";
 import { Source } from "../src/features/sources/source.ts";
+import { tackYamlGuide } from "../src/features/guides/tack-yaml-guide.ts";
 import { builtInSource } from "../src/release.ts";
 import { StateStore } from "../src/services/state-store.ts";
 import { currentVersionReport } from "../src/version.ts";
@@ -76,6 +77,21 @@ it.layer(LiveTestLayer)("tack guide", (guideIt) => {
       }),
   );
 
+  guideIt.effect(
+    "prints the tack-yaml guide it builds from the schemas, even without its built-in guides",
+    () =>
+      Effect.gen(function* () {
+        const envelope = yield* json(["guide", "tack-yaml"], null);
+        expect(exitCodeForEnvelope(envelope)).toBe(0);
+        expect(envelope.result).toEqual({
+          kind: "guide",
+          topic: "tack-yaml",
+          version: stamp,
+          markdown: tackYamlGuide(),
+        });
+      }),
+  );
+
   guideIt.effect("lists every guide by its title, and names the onboarding guide next", () =>
     Effect.gen(function* () {
       const envelope = yield* json(["guide"]);
@@ -84,7 +100,7 @@ it.layer(LiveTestLayer)("tack guide", (guideIt) => {
         kind: "guide-index",
         guides: guideTopics.map((topic) => ({
           topic,
-          title: /^# (.+)$/m.exec(shipped(topic))?.[1],
+          title: /^# (.+)$/m.exec(topic === "tack-yaml" ? tackYamlGuide() : shipped(topic))?.[1],
         })),
       });
       const { stdout } = yield* tack(["guide"]);

@@ -2,271 +2,138 @@ import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { seedSource, skillText } from "../../../test/support/source-tree.ts";
-import type { SourceFolders } from "../../domain/sources/source-folders.ts";
+import { Yaml } from "../../domain/runtime-neutral.ts";
 import type { SourceDeclaration } from "../../domain/sources/source-schema.ts";
+import { checkSource } from "./source-check.ts";
 import {
   applyCommand,
   planSourceScaffold,
   refuseScaffoldInsideSources,
+  scaffoldLoadsNothing,
   writeSourceScaffold,
 } from "./source-scaffold.ts";
 
-/** No folder of any kind: the plain registration of a source that has its tack.yaml. */
-const noFolders: SourceFolders = { skills: [], commands: [], context: [], docs: [] };
-
-/** A fresh source folder holding `files`, without tack.yaml unless `files` has one. */
-const sourceOf = (files: Readonly<Record<string, string>>) =>
+/** A fresh source folder named `folder` holding `files`, without tack.yaml unless `files` has one. */
+const sourceOf = (files: Readonly<Record<string, string>>, folder = "source") =>
   Effect.gen(function* () {
     const fs = yield* FileSystem.FileSystem;
     const root = yield* fs.realPath(
       yield* fs.makeTempDirectoryScoped({ prefix: "tack-scaffold-" }),
     );
-    return yield* seedSource((yield* Path.Path).join(root, "source"), files);
+    return yield* seedSource((yield* Path.Path).join(root, folder), files);
   });
+
+/** A config as `source add --config` reads it: pretty-printed JSON, read from a file. */
+const configOf = (declaration: unknown) => ({
+  text: JSON.stringify(declaration, null, 2),
+  origin: "/configs/source.json",
+});
+
+/** The files of a source that holds every kind, each in its own folder. */
+const everyKind = {
+  "personal/skills/review/SKILL.md": skillText("review"),
+  "personal/skills/group/commit/SKILL.md": skillText("commit"),
+  "alpha/documents/index.md": "# Alpha",
+  "prompts/ship.md": "Ship it",
+  "notes/guide.md": "Guide",
+  "tools/report.ts": "export {}",
+};
 
 it.layer(LiveTestLayer)("source declaration creation", (test) => {
   test.effect(
-    "writes one folder entry per kind flag, in kind order, docs named after their folder",
+    "plans a config as the normalized tack.yaml it writes, which tack check reads the same way",
     () =>
       Effect.gen(function* () {
+        const fs = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const root = yield* sourceOf({
-          "personal/skills/review/SKILL.md": skillText("review"),
-          "personal/skills/group/commit/SKILL.md": skillText("commit"),
-          "alpha/skills/deploy/SKILL.md": skillText("deploy"),
-          "alpha/documents/index.md": "# Alpha",
-          "prompts/ship.md": "Ship it",
-          "notes/guide.md": "Guide",
-        });
-        const plan = yield* planSourceScaffold(root, {
-          ...noFolders,
-          docs: ["alpha/documents"],
-          context: ["notes/"],
-          skills: ["./personal/skills", "alpha/skills"],
-          commands: ["prompts"],
-        });
+        const root = yield* sourceOf(everyKind);
+        // Keys out of the schema's order, which the written tack.yaml puts back in order.
+        const declaration = {
+          docs: [{ path: "alpha/documents", name: "alpha" }],
+          scripts: [{ name: "report", path: "tools/report.ts", description: "Weekly report" }],
+          context: [{ path: "notes" }],
+          commands: [{ path: "prompts" }],
+          skills: [{ path: "personal/skills", exclude: ["**/_*/**"] }],
+          name: "brain",
+          version: 1,
+        };
+        const plan = yield* planSourceScaffold(root, configOf(declaration));
         expect(plan?.declarationPath).toBe(path.join(root, "tack.yaml"));
+        expect(plan?.config).toBe("/configs/source.json");
         expect(plan?.content).toBe(
           [
             "version: 1",
-            "name: source",
+            "name: brain",
             "skills:",
             "  - path: personal/skills",
-            "  - path: alpha/skills",
+            "    exclude:",
+            '      - "**/_*/**"',
             "commands:",
             "  - path: prompts",
             "context:",
             "  - path: notes",
+            "scripts:",
+            "  - name: report",
+            "    path: tools/report.ts",
+            "    description: Weekly report",
             "docs:",
-            "  - name: documents",
-            "    path: alpha/documents",
+            "  - path: alpha/documents",
+            "    name: alpha",
             "",
           ].join("\n"),
         );
-        expect(plan?.entries).toEqual([
-          { kind: "skill", path: "personal/skills", resources: ["commit", "review"], findings: [] },
-          { kind: "skill", path: "alpha/skills", resources: ["deploy"], findings: [] },
-          { kind: "command", path: "prompts", resources: ["ship"], findings: [] },
-          { kind: "context", path: "notes", resources: ["guide.md"], findings: [] },
-          {
-            kind: "docs",
-            path: "alpha/documents",
-            name: "documents",
-            resources: ["documents"],
-            findings: [],
-          },
+        expect(Yaml.parse(plan?.content ?? "")).toEqual(declaration);
+        expect(
+          plan?.entries.map(({ kind, path: at, resources }) => ({ kind, at, resources })),
+        ).toEqual([
+          { kind: "skill", at: "personal/skills", resources: ["commit", "review"] },
+          { kind: "command", at: "prompts", resources: ["ship"] },
+          { kind: "context", at: "notes", resources: ["guide.md"] },
+          { kind: "script", at: "tools/report.ts", resources: ["report"] },
+          { kind: "docs", at: "alpha/documents", resources: ["alpha"] },
         ]);
-      }),
-  );
-  test.effect.each([
-    {
-      flag: "skills",
-      files: {
-        "review/SKILL.md": skillText("review"),
-        "git/SKILL.md": skillText("git"),
-        "README.md": "# Skills",
-      },
-      content: "version: 1\nname: notes\nkind: skills\n",
-      entry: { kind: "skill", resources: ["git", "review"] },
-    },
-    {
-      flag: "commands",
-      files: { "ship.md": "Ship it", "README.md": "# Commands" },
-      content: "version: 1\nname: notes\nkind: commands\n",
-      entry: { kind: "command", resources: ["ship"] },
-    },
-    {
-      flag: "docs",
-      files: { "index.md": "# Notes", ".obsidian/app.md": "state" },
-      content: "version: 1\nname: notes\nkind: docs\n",
-      entry: { kind: "docs", name: "notes", resources: ["notes"] },
-    },
-  ])("writes a $flag collection for --$flag .", (row) =>
-    Effect.gen(function* () {
-      const path = yield* Path.Path;
-      const parent = yield* sourceOf({});
-      const root = yield* seedSource(path.join(parent, "notes"), row.files);
-      for (const value of [".", "./"]) {
-        const plan = yield* planSourceScaffold(root, { ...noFolders, [row.flag]: [value] });
-        expect(plan?.content).toBe(row.content);
-        expect(plan?.entries).toEqual([{ ...row.entry, collection: true, findings: [] }]);
-        expect(plan === undefined ? [] : applyCommand(plan)).toEqual([
+        expect(applyCommand(plan!)).toEqual([
           "tack",
           "source",
           "add",
           root,
-          `--${row.flag}`,
-          ".",
+          "--config",
+          "/configs/source.json",
           "--apply",
         ]);
-      }
-    }),
+        // Once written, tack check counts what the plan's entries found.
+        yield* fs.writeFileString(path.join(root, "tack.yaml"), plan?.content ?? "");
+        const report = yield* checkSource(root);
+        expect(report.findings).toEqual([]);
+        expect(report.counts).toEqual({ skill: 2, command: 1, context: 1, script: 1, docs: 1 });
+      }),
   );
   test.effect.each([
     {
-      case: "--context .",
-      folders: { context: ["."] },
-      code: "declaration-flag-path-invalid",
-      says: "--context .: context needs a folder of the source, such as --context notes. Only skills, commands and docs can be a collection.",
+      declaration: { version: 1, name: "skills", kind: "skills" },
+      files: { "review/SKILL.md": skillText("review") },
+      entry: { kind: "skill", collection: true, resources: ["review"] },
     },
     {
-      case: "--skills . with another flag",
-      folders: { skills: ["."], docs: ["handbook"] },
-      code: "declaration-flags-conflict",
-      says: "--skills . makes ROOT a skills collection, which declares nothing else. Register the collection alone, and handbook as a source of its own.",
-      next: [
-        ["tack", "source", "add", "ROOT", "--skills", "."],
-        ["tack", "source", "add", "ROOT/handbook", "--docs", "."],
-      ],
+      declaration: { version: 1, name: "prompts", kind: "commands" },
+      files: { "ship.md": "Ship it" },
+      entry: { kind: "command", collection: true, resources: ["ship"] },
     },
     {
-      case: "--skills . with commands, docs and context flags",
-      folders: { skills: ["."], commands: ["./prompts/"], docs: ["handbook"], context: ["notes"] },
-      code: "declaration-flags-conflict",
-      says: "--skills . makes ROOT a skills collection, which declares nothing else. Register the collection alone, and prompts and handbook as sources of their own. Context needs a folder of a source, so notes cannot be a source of its own.",
-      next: [
-        ["tack", "source", "add", "ROOT", "--skills", "."],
-        ["tack", "source", "add", "ROOT/prompts", "--commands", "."],
-        ["tack", "source", "add", "ROOT/handbook", "--docs", "."],
-      ],
+      declaration: { version: 1, name: "notes", kind: "docs" },
+      files: { "index.md": "# Notes" },
+      entry: { kind: "docs", collection: true, name: "notes", resources: ["notes"] },
     },
-    {
-      case: "--commands . with a context flag",
-      folders: { commands: ["."], context: ["notes"] },
-      code: "declaration-flags-conflict",
-      says: "--commands . makes ROOT a commands collection, which declares nothing else. Register the collection alone. Context needs a folder of a source, so notes cannot be a source of its own.",
-      next: [["tack", "source", "add", "ROOT", "--commands", "."]],
-    },
-    {
-      case: "two collections",
-      folders: { skills: ["."], commands: ["."] },
-      code: "declaration-flags-conflict",
-      says: "--skills . and --commands . would both make ROOT a collection, and a folder holds one. Keep one of them.",
-    },
-    {
-      case: "a flag folder inside another",
-      folders: { context: ["lib"], commands: ["lib/vendor/"] },
-      code: "declaration-flags-conflict",
-      says: '--commands lib/vendor/ and --context lib overlap, and each file may belong to one declaration. Keep one of them, or write tack.yaml by hand with exclude: ["vendor/**"] on the context entry "lib".',
-    },
-    {
-      case: "one folder named by two flags",
-      folders: { skills: ["handbook"], commands: ["./handbook"] },
-      code: "declaration-flags-conflict",
-      says: "--skills handbook and --commands ./handbook overlap, and each file may belong to one declaration. Keep one of them.",
-    },
-    {
-      case: "--skills . on one skill",
-      folders: { skills: ["."] },
-      oneSkill: true,
-      code: "source-is-one-skill",
-      says: "ROOT holds SKILL.md, so it is one skill, not a folder of skills. Register the folder that holds it, or import it into a source with tack import add.",
-    },
-  ])("refuses $case", (row) =>
+  ])("plans the $declaration.kind collection a config declares", (row) =>
     Effect.gen(function* () {
-      const fs = yield* FileSystem.FileSystem;
-      const path = yield* Path.Path;
-      const root = yield* sourceOf({
-        "handbook/index.md": "# Handbook",
-        "review/SKILL.md": skillText("review"),
-        "lib/vendor/ship.md": "Ship",
-        ...(row.oneSkill === true ? { "SKILL.md": skillText("one") } : {}),
-      });
-      const error = yield* Effect.flip(planSourceScaffold(root, { ...noFolders, ...row.folders }));
-      expect(error).toMatchObject({
-        _tag: "SourceAddRequestError",
-        code: row.code,
-        message: row.says.replaceAll("ROOT", root),
-        ...(row.next === undefined
-          ? {}
-          : { next: row.next.map((command) => command.map((part) => part.replace("ROOT", root))) }),
-      });
-      expect(yield* fs.exists(path.join(root, "tack.yaml"))).toBe(false);
+      const root = yield* sourceOf(row.files);
+      const plan = yield* planSourceScaffold(root, configOf(row.declaration));
+      expect(plan?.content).toBe(Yaml.stringify(row.declaration));
+      expect(plan?.entries).toEqual([{ ...row.entry, findings: [] }]);
+      expect(plan?.findings).toEqual([]);
     }),
   );
-  test.effect("lets a docs folder hold or equal another kind's folder", () =>
-    Effect.gen(function* () {
-      const root = yield* sourceOf({
-        "handbook/index.md": "# Handbook",
-        "handbook/notes/team.md": "Team",
-      });
-      const plan = yield* planSourceScaffold(root, {
-        ...noFolders,
-        context: ["handbook/notes"],
-        docs: ["handbook"],
-      });
-      expect(plan?.entries.map((entry) => entry.findings)).toEqual([[], []]);
-    }),
-  );
-  test.effect("refuses --docs . on a folder whose name is no docs name", () =>
-    Effect.gen(function* () {
-      const path = yield* Path.Path;
-      const parent = yield* sourceOf({});
-      const root = yield* seedSource(path.join(parent, "My Notes"), { "index.md": "# Notes" });
-      const error = yield* Effect.flip(planSourceScaffold(root, { ...noFolders, docs: ["."] }));
-      expect(error).toMatchObject({
-        _tag: "SourceAddRequestError",
-        code: "declaration-docs-name-invalid",
-      });
-    }),
-  );
-  test.effect.each([
-    { folder: "My Skills", flag: "skills", value: "skills", name: "my-skills" },
-    { folder: "Team_Prompts", flag: "commands", value: ".", name: "team-prompts" },
-  ])("names the source $name after the folder $folder", (row) =>
-    Effect.gen(function* () {
-      const path = yield* Path.Path;
-      const parent = yield* sourceOf({});
-      const root = yield* seedSource(path.join(parent, row.folder), {
-        "skills/review/SKILL.md": skillText("review"),
-        "ship.md": "Ship it",
-      });
-      const plan = yield* planSourceScaffold(root, { ...noFolders, [row.flag]: [row.value] });
-      expect(plan?.content).toContain(`version: 1\nname: ${row.name}\n`);
-    }),
-  );
-  test.effect.each([
-    { flag: "skills", value: "skills" },
-    { flag: "commands", value: "." },
-  ])("refuses --$flag $value on a folder that suggests no source name", (row) =>
-    Effect.gen(function* () {
-      const path = yield* Path.Path;
-      const parent = yield* sourceOf({});
-      const root = yield* seedSource(path.join(parent, "___"), {
-        "skills/review/SKILL.md": skillText("review"),
-        "ship.md": "Ship it",
-      });
-      const error = yield* Effect.flip(
-        planSourceScaffold(root, { ...noFolders, [row.flag]: [row.value] }),
-      );
-      expect(error).toMatchObject({
-        _tag: "SourceAddRequestError",
-        code: "declaration-name-invalid",
-        message: expect.stringContaining('The folder name "___" suggests no source name'),
-      });
-    }),
-  );
-  test.effect("reports the problems of each entry as tack check reports them", () =>
+  test.effect("reports the problems of each entry as tack check, at their line in the config", () =>
     Effect.gen(function* () {
       const path = yield* Path.Path;
       const root = yield* sourceOf({
@@ -274,10 +141,14 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
         "skills/fine/SKILL.md": skillText("fine"),
         "guide.md": "Not a folder of skills",
       });
-      const plan = yield* planSourceScaffold(root, {
-        ...noFolders,
-        skills: ["skills", "guide.md"],
-      });
+      const plan = yield* planSourceScaffold(
+        root,
+        configOf({
+          version: 1,
+          name: "source",
+          skills: [{ path: "skills" }, { path: "guide.md" }],
+        }),
+      );
       expect(plan?.entries).toEqual([
         {
           kind: "skill",
@@ -297,95 +168,135 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
           path: "guide.md",
           resources: [],
           findings: [
-            expect.objectContaining({
+            {
               code: "declaration-path-wrong-type",
+              severity: "error",
+              message: expect.any(String),
               field: "skills[1]",
               file: path.join(root, "tack.yaml"),
-            }),
+              candidatePath: path.join(root, "guide.md"),
+              line: 8,
+            },
           ],
         },
       ]);
-    }),
-  );
-  test.effect.each([
-    { case: "an absolute path", value: "/etc", reason: "relative to the source" },
-    { case: "a path that climbs out", value: "../other", reason: "relative to the source" },
-    { case: "a missing path", value: "nowhere", reason: "does not exist" },
-    { case: "a link out of the source", value: "escape", reason: "outside" },
-    { case: "a folder of another source", value: "vendor/skills", reason: "another source" },
-  ])("refuses a kind flag that names $case", (row) =>
-    Effect.gen(function* () {
-      const fs = yield* FileSystem.FileSystem;
-      const path = yield* Path.Path;
-      const root = yield* sourceOf({
-        "vendor/tack.yaml": "version: 1\nname: vendor\n",
-        "vendor/skills/lint/SKILL.md": skillText("lint"),
-      });
-      const outside = yield* fs.makeTempDirectoryScoped({ prefix: "tack-outside-" });
-      yield* fs.symlink(outside, path.join(root, "escape"));
-      const error = yield* Effect.flip(
-        planSourceScaffold(root, { ...noFolders, skills: [row.value] }),
-      );
-      expect(error).toMatchObject({
-        _tag: "SourceAddRequestError",
-        code: "declaration-flag-path-invalid",
-        message: expect.stringContaining(`--skills ${row.value}`),
-      });
-      expect(error.message).toContain(row.reason);
-      expect(yield* fs.exists(path.join(root, "tack.yaml"))).toBe(false);
+      expect(plan === undefined ? undefined : scaffoldLoadsNothing(plan)).toBeUndefined();
     }),
   );
   test.effect(
-    "refuses a kind flag that names a folder it cannot read, and a source it cannot reach",
+    "refuses to write a config every entry of which has a problem and finds nothing",
     () =>
       Effect.gen(function* () {
-        const fs = yield* FileSystem.FileSystem;
-        const path = yield* Path.Path;
-        const root = yield* sourceOf({ "locked/skills/review/SKILL.md": skillText("review") });
-        const locked = path.join(root, "locked");
-        yield* fs.chmod(locked, 0o000);
-        const [unreadable, unreachable] = yield* Effect.all([
-          Effect.flip(planSourceScaffold(root, { ...noFolders, skills: ["locked"] })),
-          Effect.flip(
-            planSourceScaffold(path.join(locked, "skills"), { ...noFolders, skills: ["x"] }),
-          ),
-        ]).pipe(Effect.ensuring(fs.chmod(locked, 0o755).pipe(Effect.orDie)));
-        expect(unreadable).toMatchObject({
-          _tag: "SourceAddRequestError",
-          code: "declaration-flag-path-invalid",
-          message: expect.stringContaining("--skills locked: "),
-        });
-        expect(unreachable).toMatchObject({
-          _tag: "SourceStorageError",
-          code: "source-access-failed",
-          operation: "plan source declaration",
-          path: path.join(locked, "skills"),
+        const root = yield* sourceOf({ "README.md": "# Source" });
+        const plan = yield* planSourceScaffold(
+          root,
+          configOf({ version: 1, name: "source", skills: [{ path: "nowhere" }] }),
+        );
+        expect(plan === undefined ? undefined : scaffoldLoadsNothing(plan)).toMatchObject({
+          code: "declaration-loads-nothing",
+          next: [["tack", "source", "add", root, "--config", "/configs/source.json"]],
         });
       }),
   );
+  test.effect("keeps the warnings of the declaration as a whole beside its entries", () =>
+    Effect.gen(function* () {
+      const root = yield* sourceOf({ "README.md": "# Source" });
+      const plan = yield* planSourceScaffold(root, configOf({ version: 1, name: "source" }));
+      expect(plan?.entries).toEqual([]);
+      expect(plan?.findings).toEqual([
+        expect.objectContaining({ code: "source-declares-no-resources", severity: "warning" }),
+      ]);
+    }),
+  );
+  test.effect("reports every issue of a config that does not decode, at its line", () =>
+    Effect.gen(function* () {
+      const root = yield* sourceOf({ "skills/review/SKILL.md": skillText("review") });
+      const error = yield* Effect.flip(
+        planSourceScaffold(
+          root,
+          configOf({ version: 1, skils: [], maintainers: [""], skills: [{ path: "skills" }] }),
+        ),
+      );
+      expect(error).toMatchObject({
+        _tag: "SourceConfigInvalidError",
+        code: "declaration-schema-invalid",
+        config: "/configs/source.json",
+        issues: [
+          {
+            field: "skils",
+            line: 3,
+            message: expect.stringContaining('Unknown key "skils". A list-form tack.yaml takes:'),
+          },
+          {
+            field: "name",
+            message:
+              'tack.yaml has no name. Add "name: source" to it: the name is the source label that depends-on and source: references use on every machine.',
+          },
+          {
+            field: "maintainers[0]",
+            line: 5,
+            message: "maintainers[0]: A maintainers entry must not be empty.",
+          },
+        ],
+      });
+    }),
+  );
   test.effect.each([
     {
-      case: "two docs folders share a name",
-      docs: ["a/docs", "b/docs"],
-      code: "declaration-docs-name-clash",
-      says: 'Both a/docs and b/docs would be docs "docs"',
+      case: "a skills collection whose folder holds SKILL.md",
+      declaration: { version: 1, name: "source", kind: "skills" },
+      code: "source-is-one-skill",
     },
     {
-      case: "a docs folder name is no docs name",
-      docs: ["My Docs"],
-      code: "declaration-docs-name-invalid",
-      says: 'The folder name "My Docs" is no docs name',
+      case: "folders of a kind it does not declare",
+      declaration: { version: 1, name: "source", docs: [{ name: "kb", path: "kb" }] },
+      code: "declaration-resources-undeclared",
     },
-  ])("refuses docs flags when $case", (row) =>
+    {
+      case: "an unsupported version",
+      declaration: { version: 3, name: "source" },
+      code: "declaration-version-unsupported",
+    },
+    { case: "a list", declaration: [{ version: 1 }], code: "declaration-root-not-mapping" },
+  ])("refuses a config with $case as tack check refuses it", (row) =>
     Effect.gen(function* () {
       const root = yield* sourceOf({
-        "a/docs/index.md": "A",
-        "b/docs/index.md": "B",
-        "My Docs/index.md": "Mine",
+        "SKILL.md": skillText("source"),
+        "skills/review/SKILL.md": skillText("review"),
+        "kb/index.md": "# Kb",
       });
-      const error = yield* Effect.flip(planSourceScaffold(root, { ...noFolders, docs: row.docs }));
-      expect(error).toMatchObject({ _tag: "SourceAddRequestError", code: row.code });
+      expect(yield* Effect.flip(planSourceScaffold(root, configOf(row.declaration)))).toMatchObject(
+        {
+          _tag: "SourceConfigInvalidError",
+          code: row.code,
+          issues: [{ message: expect.any(String) }],
+        },
+      );
+    }),
+  );
+  test.effect.each([
+    { case: "YAML", text: "version: 1\nname: source\n", says: "--config takes a JSON object: " },
+    { case: "truncated JSON", text: '{"version": 1,', says: "--config takes a JSON object: " },
+  ])("refuses a config in $case", (row) =>
+    Effect.gen(function* () {
+      const root = yield* sourceOf({ "README.md": "# Source" });
+      const error = yield* Effect.flip(planSourceScaffold(root, { text: row.text, origin: "-" }));
+      expect(error).toMatchObject({
+        _tag: "SourceAddRequestError",
+        code: "config-not-json",
+        next: [["tack", "guide", "tack-yaml"]],
+      });
       expect(error.message).toContain(row.says);
+    }),
+  );
+  test.effect("refuses a config that declares imports, which only tack import writes", () =>
+    Effect.gen(function* () {
+      const root = yield* sourceOf({ "README.md": "# Source" });
+      expect(
+        yield* Effect.flip(
+          planSourceScaffold(root, configOf({ version: 1, name: "source", imports: [] })),
+        ),
+      ).toMatchObject({ _tag: "SourceAddRequestError", code: "config-imports-not-allowed" });
     }),
   );
   test.effect.each([
@@ -394,7 +305,7 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
       declaration: "version: 1\nname: source\nskills:\n  - path: skills\n",
     },
     { case: "a broken tack.yaml", declaration: "version: [" },
-  ])("never writes over $case, whatever kind flag names", (row) =>
+  ])("never writes over $case, whatever the config declares", (row) =>
     Effect.gen(function* () {
       const fs = yield* FileSystem.FileSystem;
       const path = yield* Path.Path;
@@ -403,7 +314,7 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
         "skills/review/SKILL.md": skillText("review"),
       });
       const error = yield* Effect.flip(
-        planSourceScaffold(root, { ...noFolders, skills: ["skills"] }),
+        planSourceScaffold(root, configOf({ version: 1, name: "source", kind: "skills" })),
       );
       expect(error).toMatchObject({
         _tag: "SourceAddRequestError",
@@ -413,10 +324,10 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
       expect(yield* fs.readFileString(path.join(root, "tack.yaml"))).toBe(row.declaration);
     }),
   );
-  test.effect("registers a source with tack.yaml as it is when no kind flag is given", () =>
+  test.effect("registers a source with tack.yaml as it is when no config is given", () =>
     Effect.gen(function* () {
       const root = yield* sourceOf({ "tack.yaml": "version: 1\nname: source\n" });
-      expect(yield* planSourceScaffold(root, noFolders)).toBeUndefined();
+      expect(yield* planSourceScaffold(root, undefined)).toBeUndefined();
     }),
   );
   test.effect.each([
@@ -427,7 +338,7 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
         "git/SKILL.md": skillText("git"),
         "README.md": "# Skills",
       },
-      next: [["ROOT", "--skills", "."]],
+      suggests: '{"version":1,"name":"source","kind":"skills"}.',
     },
     {
       layout: "skill folders at its top beside skills, commands, docs and context folders",
@@ -439,75 +350,86 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
         "context/rules.md": "Rules",
       },
       // The collection holds skills/; context needs a folder of a source, so it is no source of its own.
-      next: [
-        ["ROOT", "--skills", "."],
-        ["ROOT/commands", "--commands", "."],
-        ["ROOT/docs", "--docs", "."],
-      ],
+      suggests:
+        '{"version":1,"name":"source","kind":"skills"}, {"version":1,"name":"commands","kind":"commands"} for ROOT/commands as a source of its own, and {"version":1,"name":"docs","kind":"docs"} for ROOT/docs as a source of its own.',
     },
     {
       layout: "folders named after the kinds they hold",
       files: {
         "skills/review/SKILL.md": skillText("review"),
         "context/rules.md": "Rules",
-        "docs/index.md": "# Docs",
+        "Docs/index.md": "# Docs",
         "command/ship.md": "Ship it",
         ".git/HEAD": "ref",
         "notes/todo.md": "Todo",
       },
-      next: [
-        [
-          "ROOT",
-          "--skills",
-          "skills",
-          "--commands",
-          "command",
-          "--context",
-          "context",
-          "--docs",
-          "docs",
-        ],
-      ],
+      suggests:
+        '{"version":1,"name":"source","skills":[{"path":"skills"}],"commands":[{"path":"command"}],"context":[{"path":"context"}]}.',
     },
     {
       layout: "folders that name no kind",
       files: { "personal/skills/review/SKILL.md": skillText("review"), "notes/todo.md": "Todo" },
-      next: [["ROOT", "--skills", "FOLDER"]],
+      suggests: '{"version":1,"name":"source","skills":[{"path":"FOLDER"}]}.',
     },
-  ])("refuses a folder without tack.yaml and no kind flag, proposing $layout", (row) =>
+  ])("refuses a folder without tack.yaml and no config, suggesting one from $layout", (row) =>
     Effect.gen(function* () {
       const root = yield* sourceOf(row.files);
-      const error = yield* Effect.flip(planSourceScaffold(root, noFolders));
+      const error = yield* Effect.flip(planSourceScaffold(root, undefined));
       expect(error).toMatchObject({
         _tag: "SourceAddRequestError",
-        code: "declaration-flags-required",
-        next: row.next.map(([source = "", ...flags]) => [
-          "tack",
-          "source",
-          "add",
-          source.replace("ROOT", root),
-          ...flags,
-        ]),
+        code: "declaration-config-required",
+        next: [["tack", "guide", "tack-yaml"]],
       });
-      for (const flag of ["--skills", "--commands", "--context", "--docs"])
-        expect(error.message).toContain(flag);
+      expect(error.message).toBe(
+        `${root} has no tack.yaml. Write its tack.yaml as JSON and preview it with tack source add ${root} --config FILE, or --config - to read it from standard input; tack guide tack-yaml lists every key. Its layout suggests ${row.suggests.replaceAll("ROOT", root)}`,
+      );
+    }),
+  );
+  test.effect("suggests a placeholder name for a folder whose name suggests none", () =>
+    Effect.gen(function* () {
+      const root = yield* sourceOf({ "review/SKILL.md": skillText("review") }, "___");
+      const error = yield* Effect.flip(planSourceScaffold(root, undefined));
+      expect(error.message).toContain(
+        'Its layout suggests {"version":1,"name":"NAME","kind":"skills"}.',
+      );
     }),
   );
   test.effect("keeps the validation failure of a path that is no source folder", () =>
     Effect.gen(function* () {
       const path = yield* Path.Path;
-      const root = yield* sourceOf({});
+      const root = yield* sourceOf({ "README.md": "# Source" });
       const missing = yield* Effect.flip(
-        planSourceScaffold(path.join(root, "missing"), { ...noFolders, skills: ["skills"] }),
+        planSourceScaffold(path.join(root, "missing"), configOf({ version: 1, name: "source" })),
       );
       expect(missing).toMatchObject({ _tag: "SourceValidationError", code: "source-missing" });
+    }),
+  );
+  test.effect("refuses a source folder it cannot reach", () =>
+    Effect.gen(function* () {
+      const fs = yield* FileSystem.FileSystem;
+      const path = yield* Path.Path;
+      const root = yield* sourceOf({ "locked/skills/review/SKILL.md": skillText("review") });
+      const locked = path.join(root, "locked");
+      yield* fs.chmod(locked, 0o000);
+      const unreachable = yield* Effect.flip(
+        planSourceScaffold(path.join(locked, "skills"), configOf({ version: 1, name: "skills" })),
+      ).pipe(Effect.ensuring(fs.chmod(locked, 0o755).pipe(Effect.orDie)));
+      expect(unreachable).toMatchObject({
+        _tag: "SourceStorageError",
+        code: "source-access-failed",
+        operation: "plan source declaration",
+        path: path.join(locked, "skills"),
+      });
     }),
   );
   test.effect("refuses a file created between planning and exclusive creation", () =>
     Effect.gen(function* () {
       const fs = yield* FileSystem.FileSystem;
       const root = yield* sourceOf({ "skills/review/SKILL.md": skillText("review") });
-      const plan = yield* planSourceScaffold(root, { ...noFolders, skills: ["skills"] });
+      const plan = yield* planSourceScaffold(
+        root,
+        configOf({ version: 1, name: "source", skills: [{ path: "skills" }] }),
+      );
       expect(plan).toBeDefined();
       if (plan === undefined) return;
       yield* fs.writeFileString(plan.declarationPath, "version: 1\n# written by another process\n");

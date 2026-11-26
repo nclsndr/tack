@@ -5,10 +5,13 @@ export const IdentifierSchema = Schema.String.check(
   Schema.isPattern(/^[A-Za-z0-9][A-Za-z0-9._-]*$/),
 );
 
-/** A portable lowercase name used by skills, commands, and source labels. */
+/**
+ * A portable lowercase name used by skills, commands, and source labels. The pattern carries the
+ * `u` flag, which matches the same ASCII names, so a JSON Schema built from it keeps the pattern.
+ */
 export const PortableNameSchema = Schema.String.check(Schema.isMinLength(1))
   .check(Schema.isMaxLength(64))
-  .check(Schema.isPattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/));
+  .check(Schema.isPattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u));
 
 const absolutePathPattern = /^(?:\/|[A-Za-z]:[\\/]|\\\\)/;
 const windowsVolumeRootPattern = /^[A-Za-z]:[\\/]$/;

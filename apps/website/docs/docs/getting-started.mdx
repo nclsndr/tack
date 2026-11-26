@@ -6,6 +6,21 @@ description: Install Tack, set up this machine, register a folder of skills and 
 import { Agent, Human } from "../../components/audience.tsx";
 import { Terminal } from "../../components/terminal.tsx";
 
+export const sourceConfig =
+  '{"version": 1, "name": "agent-setup", "skills": [{"path": "skills"}], "commands": [{"path": "commands"}]}';
+
+export const sourceAddCommand = [
+  "tack source add ~/agent-setup --config - <<'EOF'",
+  sourceConfig,
+  "EOF",
+].join("\n");
+
+export const sourceApplyCommand = [
+  "tack source add ~/agent-setup --config - --apply <<'EOF'",
+  sourceConfig,
+  "EOF",
+].join("\n");
+
 export const sourceAddOutput = [
   "Would create ~/agent-setup/tack.yaml and register source agent-setup.",
   "No files or state changed.",
@@ -63,33 +78,30 @@ Skills you made by hand in `~/.claude/skills` and similar folders are listed and
 
 ## 2. Register your skills
 
-Tell Tack what your folder holds. Name each folder inside it with `--skills`, `--commands`,
-`--context` or `--docs`. Tack previews the `tack.yaml` it would write and what each folder holds,
-and writes it only when you add `--apply`. Check that the list matches every skill you expect.
+Tell Tack what your folder holds. Write its `tack.yaml` as JSON, with a `version`, a `name` and
+the folder of each kind inside it, and pass it with `--config -` on standard input, or with
+`--config FILE`. Tack previews the `tack.yaml` it would write and what each folder holds, and
+writes it only when you add `--apply`. Check that the list matches every skill you expect.
 
-<Terminal
-  commands={["tack source add ~/agent-setup --skills skills --commands commands"]}
-  output={sourceAddOutput}
-/>
+<Terminal commands={[sourceAddCommand]} output={sourceAddOutput} />
 
-When the preview looks right, apply it to write the `tack.yaml` and register the source:
+When the preview looks right, pipe the same JSON again with `--apply` to write the `tack.yaml` and
+register the source:
 
-<Terminal
-  commands={["tack source add ~/agent-setup --skills skills --commands commands --apply"]}
-/>
+<Terminal commands={[sourceApplyCommand]} />
 
-When your skill folders sit directly in the folder, such as `~/skills/review/SKILL.md`, write
-`--skills .` instead: `tack source add ~/skills --skills .` previews a skills collection, a
+When your skill folders sit directly in the folder, such as `~/skills/review/SKILL.md`, declare a
+skills collection instead: `{"version": 1, "name": "skills", "kind": "skills"}` gives a
 `tack.yaml` that holds `kind: skills`. A folder of commands or docs beside them is then a source
-of its own, such as `tack source add ~/skills/commands --commands .` or
-`tack source add ~/skills/handbook --docs .`. When you run `tack source add` on a folder without
-any flag, Tack reads the top of the folder and names the commands that fit what it finds there.
+of its own, with `"kind": "commands"` or `"kind": "docs"`. When you run `tack source add` on a
+folder without `--config`, Tack reads the top of the folder and suggests a JSON declaration that
+fits what it finds there. `tack guide tack-yaml` lists every key the JSON takes, scripts included.
 
 A folder that already has a `tack.yaml`, such as a team repository you cloned, previews too:
-`tack source add ~/code/acme-agent-skills`, then the same command with `--apply`. Without one, name its folders as above. In a
-repository you share, commit the `tack.yaml` that Tack writes, so others get the same source.
-Repeat this section for each folder of skills. Scripts and anything else the flags cannot say go
-into `tack.yaml` by hand; your agent's `manage-tack-sources` skill knows how.
+`tack source add ~/code/acme-agent-skills`, then the same command with `--apply`. In a repository
+you share, commit the `tack.yaml` that Tack writes, so others get the same source. Repeat this
+section for each folder of skills. To change a source later, edit its `tack.yaml`; your agent's
+`manage-tack-sources` skill knows how.
 
 Every agent gets your skills. Commands reach Cline, Cursor, OpenCode and Pi only: Claude Code,
 Codex, GitHub Copilot CLI and Gemini CLI have no Markdown commands folder Tack links into, and the

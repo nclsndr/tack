@@ -207,6 +207,9 @@ export const features = {
   more: { label: "See every feature, lens by lens →", href: "/features" },
 } as const;
 
+/** The `tack.yaml` of the getting-started source, as the JSON `tack source add --config -` reads. */
+const agentSetupConfig = '{"version": 1, "name": "agent-setup", "skills": [{"path": "skills"}]}';
+
 /** Getting started: the install command, the first commands and the Node requirement. */
 export const getStarted = {
   heading: "Start with one prompt.",
@@ -215,8 +218,8 @@ export const getStarted = {
   commands: [
     "npm install --global @tackup/cli",
     "tack init",
-    "tack source add ~/agent-setup --skills skills",
-    "tack source add ~/agent-setup --skills skills --apply",
+    `tack source add ~/agent-setup --config - <<'EOF'\n${agentSetupConfig}\nEOF`,
+    `tack source add ~/agent-setup --config - --apply <<'EOF'\n${agentSetupConfig}\nEOF`,
     "tack project add app",
     "tack sync --project app",
     "tack sync --project app --apply",

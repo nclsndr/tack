@@ -1,6 +1,7 @@
 import { expect, it } from "vitest";
 import { Effect, Schema } from "effect";
 import {
+  declarationIssues,
   decodeSourceDeclaration,
   ListDeclarationSchema,
   missingSourceNameMessage,
@@ -79,4 +80,67 @@ it.each([
   { folder: "0EDF1F6F-C71B-40C6-BF98-FDE02235A02F", says: "Add a name: line" },
 ])("suggests a name for the folder $folder", ({ folder, says }) => {
   expect(missingSourceNameMessage(folder)).toContain(says);
+});
+
+/** Every issue `parsed` has, as `declarationIssues` reports them for a folder named `brain`. */
+const issuesOf = (parsed: unknown) =>
+  Effect.runSync(
+    decodeSourceDeclaration(parsed).pipe(
+      Effect.map(() => []),
+      Effect.catch((error) => Effect.succeed(declarationIssues(parsed, error, "brain"))),
+    ),
+  );
+
+it("reports every issue of a declaration at once, each with its field", () => {
+  expect(
+    issuesOf({ version: 1, name: "brain", skils: [], maintainers: [""], "depends-on": ["Bad"] }),
+  ).toEqual([
+    {
+      field: "skils",
+      message: `Unknown key "skils". A list-form tack.yaml takes: ${Object.keys(ListDeclarationSchema.fields).join(", ")}.`,
+    },
+    { field: "maintainers[0]", message: "maintainers[0]: A maintainers entry must not be empty." },
+    {
+      field: "depends-on[0]",
+      message: expect.stringMatching(/^depends-on\[0\]: Expected a string matching/),
+    },
+  ]);
+});
+
+it.each([
+  {
+    parsed: { version: 1, kind: "skills", name: "brain", docs: [] },
+    says: 'Unknown key "docs". A skills collection takes: version, name, maintainers, kind, depends-on, imports.',
+  },
+  {
+    parsed: { version: 1, kind: "docs", name: "brain", imports: [] },
+    says: 'Unknown key "imports". A docs collection takes: version, name, maintainers, kind, reader.',
+  },
+])("names the keys a collection takes on an unknown key", ({ parsed, says }) => {
+  expect(issuesOf(parsed)).toEqual([{ field: Object.keys(parsed).at(-1), message: says }]);
+});
+
+it("suggests a name when the name is missing, beside the other issues", () => {
+  expect(issuesOf({ version: 1, skils: [] })).toEqual([
+    expect.objectContaining({ field: "skils" }),
+    { field: "name", message: missingSourceNameMessage("brain") },
+  ]);
+});
+
+it("names the field of a value of the wrong type", () => {
+  expect(issuesOf({ version: 1, name: 5 })).toEqual([
+    { field: "name", message: "name: Expected string" },
+  ]);
+});
+
+it("names a missing key other than the name", () => {
+  expect(issuesOf({ name: "brain" })).toEqual([
+    { field: "version", message: 'Missing key "version".' },
+  ]);
+});
+
+it("reports a rule over the whole declaration without a field", () => {
+  expect(issuesOf({ version: 1, name: "brain", profiles: [] })).toEqual([
+    { message: "The profiles and bundle-support keys require source declaration version 2." },
+  ]);
 });
