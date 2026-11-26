@@ -120,13 +120,13 @@ const failureView = (envelope: PublicEnvelope, style: Style): string =>
 /** Dedicated views take a failure envelope first: it carries no plan, applied or result. */
 const withFailure =
   (view: HumanView): HumanView =>
-  (envelope, style) =>
+  (envelope, style, details) =>
     envelope.status === "failure" &&
     envelope.plan === null &&
     envelope.applied === null &&
     envelope.result === null
       ? failureView(envelope, style)
-      : view(envelope, style);
+      : view(envelope, style, details);
 
 const candidateFacts = (candidate: ImportCandidate) =>
   [

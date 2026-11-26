@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { Argument, Command } from "effect/cli";
 import { listAlias } from "./list-alias.ts";
-import { booleanFlag, optionalStringFlag } from "./flag-utils.ts";
+import { booleanFlag, cleanupDetailsFlag, optionalStringFlag } from "./flag-utils.ts";
 import { handle, invalid, receive } from "./invocation-receiver.ts";
 import { applyFlag, immediate, previewApply, readOnly } from "./operation-contract.ts";
 import { cwdFlag, projectFlag } from "./target-selector.ts";
@@ -41,10 +41,11 @@ const projectRefreshCommand = Command.make(
     projectName: projectFlag,
     all: booleanFlag("all", "Select every registered project"),
     cwd: cwdFlag,
+    details: cleanupDetailsFlag,
   },
   handle(
     "project-refresh",
-    Effect.fnUntraced(function* ({ apply, projectName, all, cwd }) {
+    Effect.fnUntraced(function* ({ apply, projectName, all, cwd, details }) {
       if (projectName !== undefined && all)
         return yield* invalid("invalid-selector", "--project and --all cannot be used together.");
       if (cwd !== undefined && (projectName !== undefined || all))
@@ -52,6 +53,7 @@ const projectRefreshCommand = Command.make(
       return {
         _tag: "project-refresh",
         apply,
+        details,
         ...(cwd === undefined ? {} : { cwd }),
         selector:
           projectName === undefined
@@ -78,8 +80,9 @@ const projectRemoveCommand = Command.make(
   {
     name: Argument.String("name").pipe(Argument.withDescription("Registered project name")),
     apply: applyFlag,
+    details: cleanupDetailsFlag,
   },
-  ({ name, apply }) => receive({ _tag: "project-remove", name, apply }),
+  ({ name, apply, details }) => receive({ _tag: "project-remove", name, apply, details }),
 ).pipe(
   Command.withDescription(
     "Preview removing a whole project: every link and docs mount in its roots, its picks, docs settings and fixed profile application; --apply removes them, then the registration. The worktrees are never touched.",

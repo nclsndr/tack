@@ -406,7 +406,10 @@ Refresh updates registered worktrees and their managed resources. A new worktree
 it, `tack project refresh --apply` adds its root, then `tack sync` previews its links. Until then,
 `status --project PROJECT` there warns with `worktree-not-registered`. `state clean` removes managed resource
 and docs links for the selected scope while retaining configuration. `state clean --pending` retries pending removals, which agent links and docs mounts both owe when a removal could not be made safely. Adapter
-disablement previews cleanup before changing the enabled adapter list. `source remove` and
+disablement previews cleanup before changing the enabled adapter list: its scope is every project
+and the user target, and after `--apply` run `tack status --all`. Every cleanup view counts its
+actions per adapter and target, such as `cursor → app (3 roots) · 36 to remove`, then lists the
+first 10 actions; `--details` lists them all. `source remove` and
 `project remove` preview the cleanup and the intent they delete before unregistering; a project
 whose link stays blocked keeps `removal requested` until a second `--apply` or
 `state clean --pending` settles it. `state reset` previews removal

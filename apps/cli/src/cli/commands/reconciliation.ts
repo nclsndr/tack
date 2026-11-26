@@ -8,7 +8,7 @@ import {
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
 import { listAlias } from "./list-alias.ts";
 import { InvocationIssue, type ReconcilePlanningRequest } from "./model.ts";
-import { booleanFlag, optionalFlag } from "./flag-utils.ts";
+import { booleanFlag, cleanupDetailsFlag, optionalFlag } from "./flag-utils.ts";
 import { handle, invalid, receive } from "./invocation-receiver.ts";
 import { applyFlag, immediate, previewApply, readOnly } from "./operation-contract.ts";
 import { allFlag, cwdFlag, projectFlag, selectorFrom, userFlag } from "./target-selector.ts";
@@ -53,8 +53,8 @@ const adapterSetCommand = Command.make(
 );
 const adapterDisableCommand = Command.make(
   "disable",
-  { adapter: adapterArgument, apply: applyFlag },
-  ({ adapter, apply }) => receive({ _tag: "adapter-disable", adapter, apply }),
+  { adapter: adapterArgument, apply: applyFlag, details: cleanupDetailsFlag },
+  ({ adapter, apply, details }) => receive({ _tag: "adapter-disable", adapter, apply, details }),
 ).pipe(
   Command.withDescription(
     "Preview removing an adapter's managed links and disabling it; --apply cleans up, then disables",

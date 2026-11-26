@@ -76,6 +76,8 @@ export type ViewOptions = {
   readonly references?: ReferenceIndex;
   /** The views to render through; every registered view when absent. */
   readonly views?: HumanViewRegistry;
+  /** Renders as `--details` does: every row a view would otherwise cap. */
+  readonly details?: boolean;
 };
 
 /** The style a terminal with these options gets. */
@@ -100,10 +102,12 @@ const contractWidths = [40, 80, 120] as const;
 export const expectViewContract = (envelope: PublicEnvelope, options: ViewOptions = {}) => {
   const views = options.views ?? humanViews;
   for (const width of contractWidths) {
-    const plain = renderHuman(envelope, styleOf({ ...options, width, color: false }), views);
+    const render = (style: Style) =>
+      renderHuman(envelope, style, views, { details: options.details === true });
+    const plain = render(styleOf({ ...options, width, color: false }));
     const label = `tack ${envelope.command} at ${width} columns`;
     expect(plain, label).not.toContain("\u001B");
-    const colored = renderHuman(envelope, styleOf({ ...options, width, color: true }), views);
+    const colored = render(styleOf({ ...options, width, color: true }));
     expect(colored, label).toContain("\u001B[");
     expect(
       lines(stripAnsi(colored)).map((line) => line.trimEnd()),
@@ -118,7 +122,9 @@ export const expectViewContract = (envelope: PublicEnvelope, options: ViewOption
 
 /** Renders `envelope` as the CLI prints it on a terminal with these options. */
 export const renderView = (envelope: PublicEnvelope, options: ViewOptions = {}): string =>
-  renderHuman(envelope, styleOf(options), options.views ?? humanViews);
+  renderHuman(envelope, styleOf(options), options.views ?? humanViews, {
+    details: options.details === true,
+  });
 
 const fixtureDirectory = new URL("../../../../test/fixtures/human/", import.meta.url);
 

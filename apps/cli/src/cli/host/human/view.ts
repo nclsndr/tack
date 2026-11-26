@@ -41,6 +41,21 @@ export const plural = (count: number, singular: string, pluralForm = `${singular
 export const needAttention = (count: number, noun?: string) =>
   `${noun === undefined ? count : plural(count, noun)} ${count === 1 ? "needs" : "need"} attention`;
 
+/** How many rows a long list shows unless `--details`: status destinations and cleanup actions. */
+export const cappedRows = 10;
+
+/**
+ * The first {@link cappedRows} items of a long list, or all of them under `--details`, and the line
+ * that says how many more `--details` shows.
+ */
+export const capRows = <A>(items: ReadonlyArray<A>, details: boolean) =>
+  details === true || items.length <= cappedRows
+    ? { shown: items, more: [] }
+    : {
+        shown: items.slice(0, cappedRows),
+        more: [`  ${items.length - cappedRows} more; use --details`],
+      };
+
 /** How each resource kind reads as a plural noun: `2 skills`, `2 context`. */
 export const kindPlurals: Readonly<Record<ResourceKind, string>> = {
   skill: "skills",

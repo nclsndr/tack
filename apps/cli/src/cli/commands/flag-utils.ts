@@ -9,6 +9,12 @@ export const booleanFlag = (name: string, description: string) =>
     Flag.withDescription(description),
   );
 
+/** `--details` on a command that removes links: its text view lists every action, not the first ones. */
+export const cleanupDetailsFlag = booleanFlag(
+  "details",
+  "List every cleanup action in the text view, not only the first ones",
+);
+
 /**
  * Accepts a flag at most once, yielding `undefined` when it is absent. The outer `Flag.optional`
  * keeps the flag documented as optional; `Flag.atMost` alone would be reported as required.

@@ -13,6 +13,8 @@ import type { PublicEnvelope } from "../public-outcome.ts";
 import type { Style } from "./style.ts";
 import { cell, sanitize, table, wrapText, type Cell } from "./text.ts";
 import {
+  capRows,
+  cappedRows,
   diagnosticLines,
   factRows,
   headerLines,
@@ -99,10 +101,11 @@ const destinationLines = (
   const attention = destinations.filter(({ _tag }) => _tag !== "matching");
   const matching = destinations.filter(({ _tag }) => _tag === "matching");
   const linked = matching.length;
+  const { shown, more } = capRows(attention, details);
   return [
     ...headingLines("Destinations", `${linked} linked, ${needAttention(attention.length)}`, style),
     ...table(
-      (details ? [...attention, ...matching] : attention.slice(0, 10)).map((destination) => [
+      (details ? [...shown, ...matching] : shown).map((destination) => [
         destinationCell(destination, style),
         cell(destination.adapter),
         cell(destinationText(destination, style)),
@@ -110,9 +113,7 @@ const destinationLines = (
       ]),
       { width: style.width },
     ),
-    ...(details || attention.length <= 10
-      ? []
-      : [`  ${attention.length - 10} more; use --details`]),
+    ...more,
   ];
 };
 
@@ -436,7 +437,7 @@ const nextSteps = (report: StatusPayload, style: Style): ReadonlyArray<string> =
 export const renderStatus = (
   envelope: PublicEnvelope,
   style: Style,
-  details = false,
+  details: boolean,
 ): string | undefined =>
   Option.match(decodeStatus(envelope.result), {
     onNone: () => withoutPayload(envelope, undefined, style),
@@ -450,7 +451,7 @@ export const renderStatus = (
           .map((namespace) => namespaceLines(namespace, style)),
         ...(details ? [aliasLines(report, style), ...ignoreLines(report, style)] : []),
         diagnosticLines(
-          (details ? envelope.diagnostics : envelope.diagnostics.slice(0, 10)).filter(
+          (details ? envelope.diagnostics : envelope.diagnostics.slice(0, cappedRows)).filter(
             ({ code }) => !repeatedByView(code),
           ),
           style,

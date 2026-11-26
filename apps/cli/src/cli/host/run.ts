@@ -120,7 +120,8 @@ const stateInitializedNotice = ({
 type Output = {
   readonly format: OutputFormat;
   readonly terminal: TerminalContextShape;
-  readonly statusDetails: boolean;
+  /** True under `--details`: views show every row they would otherwise cap. */
+  readonly details: boolean;
   /** Where the invocation read its state; absent when it ran without state. */
   readonly stateOptions?: StateOptions;
 };
@@ -140,7 +141,7 @@ const render = Effect.fnUntraced(function* (envelope: PublicEnvelope, output: Ou
       : loadReferenceIndex(envelope, output.stateOptions);
   if (output.format !== "json") {
     const text = renderHuman(envelope, styleWith(yield* loadReferences()), undefined, {
-      statusDetails: output.statusDetails,
+      details: output.details,
     });
     yield* Stream.succeed(text).pipe(Stream.run(stdio.stdout()));
     return;
@@ -182,7 +183,7 @@ export const runCli = Effect.fnUntraced(function* () {
       let output: Output = {
         format: resolveOutputFormat(jsonRequestInArguments(args)).format,
         terminal,
-        statusDetails: false,
+        details: false,
       };
       const envelope = yield* parseInvocation(args).pipe(
         Effect.matchEffect({
@@ -193,7 +194,7 @@ export const runCli = Effect.fnUntraced(function* () {
               Effect.gen(function* () {
                 output = {
                   ...output,
-                  statusDetails: invocation._tag === "status" && invocation.details,
+                  details: "details" in invocation && invocation.details === true,
                 };
                 const tag = invocation._tag;
                 const command = commandNameOf(tag);

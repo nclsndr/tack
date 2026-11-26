@@ -43,6 +43,8 @@ type DocsResourceChange = DocsSelection & {
 
 type SelectedRemoval = {
   readonly apply: boolean;
+  /** Lists every cleanup action in the text view. */
+  readonly details: boolean;
   readonly cwd?: string;
   readonly selector: TargetSelector;
 };
@@ -188,13 +190,24 @@ export type Invocation =
       readonly sourcePath: string;
     }
   | { readonly _tag: "source-list" }
-  | { readonly _tag: "source-remove"; readonly source: string; readonly apply: boolean }
+  | {
+      readonly _tag: "source-remove";
+      readonly source: string;
+      readonly apply: boolean;
+      readonly details: boolean;
+    }
   | { readonly _tag: "project-add"; readonly name: string; readonly repositoryCwd?: string }
   | { readonly _tag: "project-list" }
-  | { readonly _tag: "project-remove"; readonly name: string; readonly apply: boolean }
+  | {
+      readonly _tag: "project-remove";
+      readonly name: string;
+      readonly apply: boolean;
+      readonly details: boolean;
+    }
   | {
       readonly _tag: "project-refresh";
       readonly apply: boolean;
+      readonly details: boolean;
       readonly cwd?: string;
       readonly selector: Extract<TargetSelector, { readonly _tag: "bare" | "project" | "all" }>;
     }
@@ -232,7 +245,12 @@ export type Invocation =
     }
   | { readonly _tag: "pick-list"; readonly namespace?: ChoiceNamespace }
   | { readonly _tag: "adapter-set"; readonly adapters: ReadonlyArray<AgentAdapterId> }
-  | { readonly _tag: "adapter-disable"; readonly adapter: AgentAdapterId; readonly apply: boolean }
+  | {
+      readonly _tag: "adapter-disable";
+      readonly adapter: AgentAdapterId;
+      readonly apply: boolean;
+      readonly details: boolean;
+    }
   | { readonly _tag: "adapter-list" }
   | {
       readonly _tag: "status";
@@ -243,7 +261,7 @@ export type Invocation =
     }
   | ({ readonly _tag: "clean" } & SelectedRemoval)
   | ({ readonly _tag: "retry" } & SelectedRemoval)
-  | { readonly _tag: "reset"; readonly apply: boolean }
+  | { readonly _tag: "reset"; readonly apply: boolean; readonly details: boolean }
   | { readonly _tag: "upgrade-status" }
   | { readonly _tag: "upgrade" }
   | ({ readonly _tag: "sync"; readonly apply: boolean } & ReconcilePlanningRequest);

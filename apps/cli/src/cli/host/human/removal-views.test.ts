@@ -15,6 +15,7 @@ import {
 } from "./human.test-support.ts";
 import { docsSummary, removalScopeBlock, removalScopeText } from "./removal-rows.ts";
 import { removalViews } from "./removal-views.ts";
+import { nextCommandsOf } from "./render.ts";
 import { renderSync } from "./sync.ts";
 import { previewOutcome, removalOutcome, syncOutcome } from "../outcomes.ts";
 import { createPublicEnvelope, type PublicEnvelope } from "../public-outcome.ts";
@@ -592,6 +593,8 @@ describe("reset", () => {
         "Preview only: nothing was written. 2 to remove, 1 to forget.",
       );
       expect(rows.filter((row) => /^ {2}[−·] (remove|forget)/.test(row)).length).toBe(3);
+      expect(rows).toContain("claude → demo · 1 to remove, 1 to forget");
+      expect(rows).toContain("codex → user · 1 to remove");
       expect(output).toContain("/home/me/.agents/skills/review");
       expect(rowsOf(output).join(" ")).toContain(
         `skill ${sourceRegistrationId}:stale · claude · project demo · pending (clean)`,
@@ -749,6 +752,73 @@ describe("adapter disable", () => {
   it("keeps the view contract", () => {
     expectViewContract(adapterEnvelope(adapterPlan(removal)));
   });
+
+  // The user target and project demo through two roots: 2 + 6 + 6 = 14 actions, over the cap.
+  const demoWorktree = {
+    _tag: "project-root",
+    canonicalPath: "/home/me/demo-fix",
+    projectName: "demo",
+  } as const;
+  const skillNames = ["a1", "a2", "a3", "a4", "a5", "a6"];
+  const wideActions = [
+    ...["u1", "u2"].map((name) => removeOf(evidence(name, userTarget, "cursor"))),
+    ...skillNames.map((name) => removeOf(evidence(name, demoRoot, "cursor"))),
+    ...skillNames.map((name) => removeOf(evidence(name, demoWorktree, "cursor"))),
+  ];
+  const wide = removalPlan({ _tag: "adapter", adapter: "cursor" }, wideActions, {
+    cause: "adapter-disable",
+  });
+  const actionRowsOf = (output: string) =>
+    rowsOf(output).filter((row) => /^[−·!✓✗] (remove|forget|blocked|applied|failed)/.test(row));
+
+  it("states the scope and sums the removals per target in the words of sync", () => {
+    const output = render(adapterEnvelope(adapterPlan(wide)));
+    const rows = lines(output);
+    expect(rows).toContain("Scope  every project and the user target");
+    expect(rows).toContain("cursor → user · 2 to remove");
+    expect(rows).toContain("cursor → demo (2 roots) · 12 to remove");
+    expect(rows.indexOf("cursor → user · 2 to remove")).toBeLessThan(rows.indexOf("Actions"));
+  });
+
+  it("lists the first 10 actions, the rest only with --details", () => {
+    const output = render(adapterEnvelope(adapterPlan(wide)));
+    expect(actionRowsOf(output)).toHaveLength(10);
+    expect(lines(output)).toContain("  4 more; use --details");
+    const detailed = renderView(adapterEnvelope(adapterPlan(wide)), { details: true });
+    expect(actionRowsOf(detailed)).toHaveLength(14);
+    expect(detailed).not.toContain("more; use --details");
+  });
+
+  it("lists actions that need attention before the cap hides them", () => {
+    const withBlocked = removalPlan(
+      { _tag: "adapter", adapter: "cursor" },
+      [...wideActions, blockedOf(evidence("zz", demoRoot, "cursor"))],
+      { cause: "adapter-disable" },
+    );
+    const output = render(adapterEnvelope(adapterPlan(withBlocked)));
+    expect(actionRowsOf(output)[0]).toMatch(/^! blocked/);
+    expect(lines(output)).toContain("cursor → demo (2 roots) · 12 to remove, 1 blocked");
+  });
+
+  it.effect("names status for every target after a successful apply, in text and JSON", () =>
+    Effect.gen(function* () {
+      const envelope = adapterEnvelope(
+        adapterPlan(wide),
+        adapterResult(removalResult(wideActions.map(appliedOutcomeOf))),
+      );
+      const output = render(envelope);
+      expect(lines(output)).toContain("cursor → user · 2 removed");
+      expect(lines(output)).toContain("cursor → demo (2 roots) · 12 removed");
+      expect(hintsIn(output)).toEqual(["tack status --all"]);
+      expect(yield* parseHintsIn(output)).toEqual(["status"]);
+      expect(nextCommandsOf(envelope, plainStyle)).toEqual(["tack status --all"]);
+    }),
+  );
+
+  it("keeps the view contract with many targets, capped and detailed", () => {
+    expectViewContract(adapterEnvelope(adapterPlan(wide)));
+    expectViewContract(adapterEnvelope(adapterPlan(wide)), { details: true });
+  });
 });
 
 // source remove, project remove
@@ -893,6 +963,24 @@ describe("source remove", () => {
   it("keeps the view contract", () => {
     expectViewContract(registrationEnvelope("source remove", sourcePlan([removeOf(review)])));
   });
+
+  it("states the scope, sums each target and caps the actions unless --details", () => {
+    const names = Array.from({ length: 11 }, (_, index) => `s${index}`);
+    const plan = sourcePlan([
+      ...names.map((name) => removeOf(evidence(name))),
+      removeOf(evidence("u1", userTarget, "codex")),
+    ]);
+    const output = render(registrationEnvelope("source remove", plan));
+    const rows = lines(output);
+    expect(rows).toContain("Scope  every project and the user target");
+    expect(rows).toContain("claude → demo · 11 to remove");
+    expect(rows).toContain("codex → user · 1 to remove");
+    expect(rows).toContain("  2 more; use --details");
+    expect(output).not.toContain("/home/me/demo/.claude/skills/s9");
+    const detailed = renderView(registrationEnvelope("source remove", plan), { details: true });
+    expect(detailed).not.toContain("more; use --details");
+    expect(detailed).toContain("/home/me/demo/.claude/skills/s9");
+  });
 });
 
 describe("project remove", () => {
@@ -925,6 +1013,8 @@ describe("project remove", () => {
         registrationEnvelope("project remove", projectPlan([removeOf(review)])),
       );
       expect(lines(output)[0]).toBe("tack project remove · project demo · ✓ success");
+      expect(lines(output)).toContain("Scope  every root of project demo");
+      expect(lines(output)).toContain("claude → demo · 1 to remove");
       expect(statementOf(output)).toBe(
         "Preview only: nothing was written. 1 to remove, 1 pick to delete, 1 docs attachment to detach.",
       );
@@ -1963,7 +2053,9 @@ describe("state clean view with nothing to remove", () => {
       },
     });
     expect(flatText).toContain("tack state clean · project demo · ✓ success");
-    expect(flatText).toContain("Targets none selected from the containing root ~/demo Actions");
+    expect(flatText).toContain(
+      "Targets none selected from the containing root ~/demo claude → user · 1 blocked claude → demo · 1 blocked claude → other · 1 blocked Actions",
+    );
     expect(hints).toEqual([
       "tack status --project demo",
       "tack status --project other",
@@ -1991,7 +2083,7 @@ describe("removal scope text", () => {
 });
 
 describe("removal scope block", () => {
-  it("states one root of a project, or one adapter", () => {
+  it("states one root of a project, or every target for an adapter or a source", () => {
     expect(
       removalScopeBlock(
         { _tag: "project-root", canonicalRoot: "/home/me/demo", projectName: "demo" },
@@ -2000,8 +2092,11 @@ describe("removal scope block", () => {
       ),
     ).toEqual(["Scope  root ~/demo of project demo"]);
     expect(removalScopeBlock({ _tag: "adapter", adapter: "codex" }, undefined, plainStyle)).toEqual(
-      ["Scope  adapter codex"],
+      ["Scope  every project and the user target"],
     );
+    expect(
+      removalScopeBlock({ _tag: "source", sourceRegistrationId }, undefined, plainStyle),
+    ).toEqual(["Scope  every project and the user target"]);
   });
 });
 
