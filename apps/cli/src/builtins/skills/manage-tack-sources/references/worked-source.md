@@ -82,13 +82,14 @@ inside a docs resource, as described in the reader author guide.
 ## Pair source dependencies with skill metadata
 
 The separate `base-skills` directory holds its skills at its top, such as `lint/SKILL.md`, and
-nothing else, so it is a skills collection (`tack source add PATH --config -` writes it from the
-same declaration as JSON):
+nothing else, so its skills entry is the source folder itself, `.`
+(`tack source add PATH --config -` writes it from the same declaration as JSON):
 
 ```yaml
 version: 1
 name: base-skills
-kind: skills
+skills:
+  - path: .
 ```
 
 In `audit-tools`, provide `skills/lint/SKILL.md` and `knowledge/index.md`:

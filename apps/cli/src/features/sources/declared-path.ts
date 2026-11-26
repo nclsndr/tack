@@ -1,18 +1,21 @@
 import { Effect, FileSystem, Path } from "effect";
 import { marksSourceEdge } from "@tackup/reader/source-edges";
 import { isStrictlyInside } from "../../domain/identity/path-containment.ts";
+import { sourceFolderPath } from "../../domain/sources/source-schema.ts";
 
 /**
  * Explains why a declared path breaks the syntax rules, or returns undefined when it follows
- * them: non-empty, relative, `/`-separated, with no `.`, `..` or empty segment and no backslash.
+ * them: `.` alone, which names the source folder, or a relative, `/`-separated path with no `.`,
+ * `..` or empty segment and no backslash.
  */
 export const declaredPathSyntaxIssue = (value: string): string | undefined =>
-  value.length > 0 &&
-  value.startsWith("/") === false &&
-  value.includes("\\") === false &&
-  value.split("/").every((part) => part.length > 0 && part !== ".." && part !== ".")
+  value === sourceFolderPath ||
+  (value.length > 0 &&
+    value.startsWith("/") === false &&
+    value.includes("\\") === false &&
+    value.split("/").every((part) => part.length > 0 && part !== ".." && part !== "."))
     ? undefined
-    : "A declared path must be a source-relative, /-separated path without ., .. or empty segments.";
+    : "A declared path must be . for the source folder, or a source-relative, /-separated path without ., .. or empty segments.";
 
 /**
  * The first folder from below the source root down to `resolved` that is the root of another
@@ -26,7 +29,9 @@ const sourceEdgeOnPath = Effect.fnUntraced(function* (
 ) {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
-  const parts = path.relative(sourceRoot, resolved).split(path.sep);
+  const relative = path.relative(sourceRoot, resolved);
+  // The source folder itself is the root of this source, never of another one.
+  const parts = relative === "" ? [] : relative.split(path.sep);
   const folders = (type === "Directory" ? parts : parts.slice(0, -1)).map((_, index) =>
     path.join(sourceRoot, ...parts.slice(0, index + 1)),
   );
@@ -43,8 +48,8 @@ const sourceEdgeOnPath = Effect.fnUntraced(function* (
 
 /**
  * Resolves a syntactically valid declared path against its source: the target must exist, must
- * lie strictly inside the source after symlinks, must not be or lie inside another source, and
- * must be readable. The caller checks the type.
+ * lie strictly inside the source after symlinks, or be the source folder that `.` names, must not
+ * be or lie inside another source, and must be readable. The caller checks the type.
  */
 export const resolveDeclaredPath = Effect.fnUntraced(function* (
   sourceRoot: string,
@@ -54,7 +59,10 @@ export const resolveDeclaredPath = Effect.fnUntraced(function* (
   const path = yield* Path.Path;
   return yield* Effect.gen(function* () {
     const resolved = yield* fs.realPath(path.join(sourceRoot, declared));
-    if (isStrictlyInside(sourceRoot, resolved) === false)
+    if (
+      isStrictlyInside(sourceRoot, resolved) === false &&
+      (declared !== sourceFolderPath || resolved !== sourceRoot)
+    )
       return {
         ok: false as const,
         code: "declaration-path-outside-source" as const,

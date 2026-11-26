@@ -82,10 +82,10 @@ register the source:
 
 <Terminal commands={[sourceApplyCommand]} />
 
-When your skill folders sit directly in the folder, such as `~/skills/review/SKILL.md`, declare a
-skills collection instead: `{"version": 1, "name": "skills", "kind": "skills"}` gives a
-`tack.yaml` that holds `kind: skills`. A folder of commands or docs beside them is then a source
-of its own, with `"kind": "commands"` or `"kind": "docs"`. When you run `tack source add` on a
+When your skill folders sit directly in the folder, such as `~/skills/review/SKILL.md`, declare the
+folder itself with the path `.`: `{"version": 1, "name": "skills", "skills": [{"path": "."}]}`.
+That `tack.yaml` declares skills only, so a folder of commands or docs beside them is a source of
+its own, with its own `.` entry under `commands` or `docs`. When you run `tack source add` on a
 folder without `--config`, Tack reads the top of the folder and suggests a JSON declaration that
 fits what it finds there. `tack guide tack-yaml` lists every key the JSON takes, scripts included.
 

@@ -18,8 +18,6 @@ export const DeclarationFactsSchema = Schema.Struct({
   kind: ResourceKindSchema,
   /** The declared path, absent when the entry has none. */
   path: Schema.optionalKey(Schema.String),
-  /** Whether the declaration is the source's collection, which names no path. */
-  collection: Schema.optionalKey(Schema.Literal(true)),
   /** The declared name of a scripts or docs entry. */
   name: Schema.optionalKey(Schema.String),
   include: Schema.optionalKey(Schema.Array(Schema.String)),

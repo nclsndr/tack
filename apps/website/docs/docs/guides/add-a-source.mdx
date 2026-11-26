@@ -164,12 +164,11 @@ Run `tack source add ~/agent-setup` without `--config` and Tack refuses with
 the folders it recognises by name, here `skills` and `commands`; add the `handbook` docs yourself.
 Its `Next` is `tack guide tack-yaml`.
 
-When the skill folders sit at the top of the folder, such as `~/skills/review/SKILL.md`, declare a
-skills collection instead: `{"version": 1, "name": "skills", "kind": "skills"}`. Its `tack.yaml`
-holds `kind: skills` and the name, nothing else. A folder of commands or docs beside it is then a
-source of its own, with `"kind": "commands"` or `"kind": "docs"`. Until it is, the preview warns
-`collection-folder-not-skill` about that folder and leaves it out; the warning changes nothing
-else.
+When the skill folders sit at the top of the folder, such as `~/skills/review/SKILL.md`, declare the
+folder itself with the path `.`: `{"version": 1, "name": "skills", "skills": [{"path": "."}]}`. Its
+walk passes over dot and underscore folders, `node_modules` and the folders of other sources. A
+`tack.yaml` with a `.` entry declares that one kind, so a folder of commands or docs beside the
+skills is a source of its own, with its own `.` entry under `commands` or `docs`.
 
 ## A folder that already has a tack.yaml
 
@@ -180,14 +179,15 @@ writes nothing into the folder and links nothing. This is how you add a team rep
 
 <Terminal commands={["tack source add ~/code/acme-agent-skills --apply"]} output={teamOutput} />
 
-Its `tack.yaml` is a skills collection with a name and its maintainers:
+Its `tack.yaml` declares its own folder as its skills folder, with a name and its maintainers:
 
 ```yaml
 version: 1
 name: acme
-kind: skills
 maintainers:
   - platform-team
+skills:
+  - path: .
 ```
 
 The `name` is the label you and other sources type, as in `acme:release-notes`. Every `tack.yaml`

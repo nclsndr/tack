@@ -100,21 +100,24 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
   );
   test.effect.each([
     {
-      declaration: { version: 1, name: "skills", kind: "skills" },
+      key: "skills",
+      declaration: { version: 1, name: "skills", skills: [{ path: "." }] },
       files: { "review/SKILL.md": skillText("review") },
-      entry: { kind: "skill", collection: true, resources: ["review"] },
+      entry: { kind: "skill", path: ".", resources: ["review"] },
     },
     {
-      declaration: { version: 1, name: "prompts", kind: "commands" },
+      key: "commands",
+      declaration: { version: 1, name: "prompts", commands: [{ path: "." }] },
       files: { "ship.md": "Ship it" },
-      entry: { kind: "command", collection: true, resources: ["ship"] },
+      entry: { kind: "command", path: ".", resources: ["ship"] },
     },
     {
-      declaration: { version: 1, name: "notes", kind: "docs" },
+      key: "docs",
+      declaration: { version: 1, name: "notes", docs: [{ name: "notes", path: "." }] },
       files: { "index.md": "# Notes" },
-      entry: { kind: "docs", collection: true, name: "notes", resources: ["notes"] },
+      entry: { kind: "docs", path: ".", name: "notes", resources: ["notes"] },
     },
-  ])("plans the $declaration.kind collection a config declares", (row) =>
+  ])("plans the $key entry at . a config declares", (row) =>
     Effect.gen(function* () {
       const root = yield* sourceOf(row.files);
       const plan = yield* planSourceScaffold(root, configOf(row.declaration));
@@ -197,6 +200,26 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
       ]);
     }),
   );
+  test.effect("refuses kind in a config with the JSON to pass instead", () =>
+    Effect.gen(function* () {
+      const root = yield* sourceOf({ "index.md": "# Notes" });
+      const error = yield* Effect.flip(
+        planSourceScaffold(root, configOf({ version: 1, name: "notes", kind: "docs" })),
+      );
+      expect(error).toMatchObject({
+        _tag: "SourceConfigInvalidError",
+        code: "declaration-schema-invalid",
+        issues: [
+          {
+            field: "kind",
+            line: 4,
+            message:
+              'A tack.yaml takes no kind key: a "." entry declares the folder that holds it. Write instead:\n  {"version":1,"name":"notes","docs":[{"name":"notes","path":"."}]}',
+          },
+        ],
+      });
+    }),
+  );
   test.effect("reports every issue of a config that does not decode, at its line", () =>
     Effect.gen(function* () {
       const root = yield* sourceOf({ "skills/review/SKILL.md": skillText("review") });
@@ -214,7 +237,7 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
           {
             field: "skils",
             line: 3,
-            message: expect.stringContaining('Unknown key "skils". A list-form tack.yaml takes:'),
+            message: expect.stringContaining('Unknown key "skils". A tack.yaml takes:'),
           },
           {
             field: "name",
@@ -232,8 +255,8 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
   );
   test.effect.each([
     {
-      case: "a skills collection whose folder holds SKILL.md",
-      declaration: { version: 1, name: "source", kind: "skills" },
+      case: "a skills entry at . whose folder holds SKILL.md",
+      declaration: { version: 1, name: "source", skills: [{ path: "." }] },
       code: "source-is-one-skill",
     },
     {
@@ -313,7 +336,7 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
         "skills/review/SKILL.md": skillText("review"),
       });
       const error = yield* Effect.flip(
-        planSourceScaffold(root, configOf({ version: 1, name: "source", kind: "skills" })),
+        planSourceScaffold(root, configOf({ version: 1, name: "source", skills: [{ path: "." }] })),
       );
       expect(error).toMatchObject({
         _tag: "SourceAddRequestError",
@@ -337,7 +360,7 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
         "git/SKILL.md": skillText("git"),
         "README.md": "# Skills",
       },
-      suggests: '{"version":1,"name":"source","kind":"skills"}.',
+      suggests: '{"version":1,"name":"source","skills":[{"path":"."}]}.',
     },
     {
       layout: "skill folders at its top beside skills, commands, docs and context folders",
@@ -348,9 +371,10 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
         "docs/index.md": "# Docs",
         "context/rules.md": "Rules",
       },
-      // The collection holds skills/; context needs a folder of a source, so it is no source of its own.
+      // The skills entry "." holds skills/; context needs a folder of a source, so it is no source
+      // of its own.
       suggests:
-        '{"version":1,"name":"source","kind":"skills"}, {"version":1,"name":"commands","kind":"commands"} for ROOT/commands as a source of its own, and {"version":1,"name":"docs","kind":"docs"} for ROOT/docs as a source of its own.',
+        '{"version":1,"name":"source","skills":[{"path":"."}]}, {"version":1,"name":"commands","commands":[{"path":"."}]} for ROOT/commands as a source of its own, and {"version":1,"name":"docs","docs":[{"name":"docs","path":"."}]} for ROOT/docs as a source of its own.',
     },
     {
       layout: "folders named after the kinds they hold",
@@ -389,7 +413,7 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
       const root = yield* sourceOf({ "review/SKILL.md": skillText("review") }, "___");
       const error = yield* Effect.flip(planSourceScaffold(root, undefined));
       expect(error.message).toContain(
-        'Its layout suggests {"version":1,"name":"NAME","kind":"skills"}.',
+        'Its layout suggests {"version":1,"name":"NAME","skills":[{"path":"."}]}.',
       );
     }),
   );
@@ -493,7 +517,7 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
     { case: "a skill folder holds it", entry: { path: "skills" }, inSkill: true },
     { case: "only a docs folder holds it", docs: true },
     { case: "the source is unhealthy", unhealthy: true },
-    { case: "the source is a skills collection", collection: true },
+    { case: "a skills entry at . passes over other sources", dot: true },
     { case: "a folder between cannot be listed", entry: { path: "skills" }, locked: true },
   ])("writes a tack.yaml where no walk reaches it: $case", (row) =>
     Effect.gen(function* () {
@@ -522,8 +546,8 @@ it.layer(LiveTestLayer)("source declaration creation", (test) => {
               status: "healthy",
               registration,
               declaration:
-                row.collection === true
-                  ? { version: 1, name: "parent", kind: "skills" }
+                row.dot === true
+                  ? { version: 1, name: "parent", skills: [{ path: "." }] }
                   : row.docs === true
                     ? { version: 1, name: "parent", docs: [{ name: "kb", path: "skills" }] }
                     : {

@@ -4,7 +4,7 @@ import {
   type ProfilePublication,
   type ProfileFinding,
 } from "../../domain/profiles/profile-schema.ts";
-import { isCollection, type SourceDeclaration } from "../../domain/sources/source-schema.ts";
+import type { SourceDeclaration } from "../../domain/sources/source-schema.ts";
 
 /** Creates a structural finding at the authored file or publication field. */
 export const profileStructureFinding = (
@@ -31,8 +31,7 @@ export const profilePublications = (
   readonly publications: ReadonlyArray<ProfilePublication>;
   readonly findings: ReadonlyArray<ProfileFinding>;
 } => {
-  if (isCollection(declaration) || declaration.profiles === undefined)
-    return { publications: [], findings: [] };
+  if (declaration.profiles === undefined) return { publications: [], findings: [] };
   const file = `${sourcePath}/tack.yaml`;
   if (Array.isArray(declaration.profiles) === false)
     return {

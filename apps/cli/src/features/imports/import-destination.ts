@@ -4,11 +4,12 @@ import { declaredPathSyntaxIssue } from "../sources/declared-path.ts";
 import { isInside } from "../../domain/identity/path-containment.ts";
 import {
   declaredSkillsFolders,
+  passesOver,
   patternSelector,
   type DeclaredSkillsFolder,
 } from "../sources/resource-declarations.ts";
 import type { DeclaredSourceInspection } from "../../domain/sources/source-inspection.ts";
-import { isCollection } from "../../domain/sources/source-schema.ts";
+import { sourceFolderPath } from "../../domain/sources/source-schema.ts";
 import { ImportError, importFailure } from "./import-error.ts";
 
 /** A registered, healthy, non-built-in source that an import can write into. */
@@ -35,11 +36,19 @@ export type ImportDestination = {
 };
 
 /**
- * The path of a skill folder named `name` in a destination folder, relative to the source root. A
- * skills collection's folder is the source itself, written as the empty path.
+ * The path of a skill folder named `name` in a destination folder, relative to the source root.
+ * The source folder itself is written `.`, as its skills entry declares it.
  */
 export const skillFolderPath = (folder: string, name: string) =>
-  folder === "" ? name : `${folder}/${name}`;
+  folder === sourceFolderPath ? name : `${folder}/${name}`;
+
+/** The segments of `folder` below the declared folder that covers it, outermost first. */
+export const segmentsBelow = (declaredPath: string, folder: string) =>
+  folder === declaredPath
+    ? []
+    : declaredPath === sourceFolderPath
+      ? folder.split("/")
+      : folder.slice(declaredPath.length + 1).split("/");
 
 /** One way a source can receive imports, as the preview without `--into` lists it. */
 export type DestinationChoice = {
@@ -143,15 +152,12 @@ const missingBelow = Effect.fnUntraced(function* (
 ) {
   const fileSystem = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
-  const below =
-    folder === covering.declaredPath
-      ? []
-      : folder.slice(covering.declaredPath.length + 1).split("/");
+  const below = segmentsBelow(covering.declaredPath, folder);
   let current = covering.resolved;
   let relative = covering.declaredPath;
   const missing: Array<string> = [];
   for (const segment of below) {
-    relative = `${relative}/${segment}`;
+    relative = skillFolderPath(relative, segment);
     if (missing.length > 0) {
       missing.push(relative);
       continue;
@@ -177,10 +183,7 @@ const missingBelow = Effect.fnUntraced(function* (
 const insideSkill = Effect.fnUntraced(function* (covering: DeclaredSkillsFolder, folder: string) {
   const fileSystem = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
-  const segments =
-    folder === covering.declaredPath
-      ? []
-      : folder.slice(covering.declaredPath.length + 1).split("/");
+  const segments = segmentsBelow(covering.declaredPath, folder);
   const chain = [
     covering.resolved,
     ...segments.map((_, index) => path.join(covering.resolved, ...segments.slice(0, index + 1))),
@@ -239,11 +242,6 @@ export const resolveDestination = Effect.fnUntraced(function* (
       );
     return result(only, only.declaredPath, []);
   }
-  if (isCollection(inspection.declaration))
-    return yield* importFailure(
-      "import-destination-invalid",
-      `The source ${name} is a skills collection, which holds skills at its top only. Import with --into ${name}.`,
-    );
   const folder = folderText.endsWith("/") ? folderText.slice(0, -1) : folderText;
   const syntax = declaredPathSyntaxIssue(folder);
   if (syntax !== undefined)
@@ -253,7 +251,9 @@ export const resolveDestination = Effect.fnUntraced(function* (
     );
   const covering = sorted.find(
     (candidate) =>
-      folder === candidate.declaredPath || folder.startsWith(`${candidate.declaredPath}/`),
+      candidate.declaredPath === sourceFolderPath ||
+      folder === candidate.declaredPath ||
+      folder.startsWith(`${candidate.declaredPath}/`),
   );
   if (covering === undefined)
     return yield* importFailure(
@@ -265,13 +265,20 @@ export const resolveDestination = Effect.fnUntraced(function* (
             sorted.map((entry) => entry.declaredPath),
           )}, or add ${skillsEntryHint(folder)} to its tack.yaml by hand.`,
     );
-  const relative =
-    folder === covering.declaredPath ? "" : folder.slice(covering.declaredPath.length + 1);
-  const excluded = patternSelector(covering.include, covering.exclude).prunedFolder(relative);
+  const below = segmentsBelow(covering.declaredPath, folder);
+  const passed = below.find((segment) => passesOver(covering.declaredPath, segment));
+  if (passed !== undefined)
+    return yield* importFailure(
+      "import-destination-invalid",
+      `${folder} holds ${passed}, a name the skills entry "." passes over, as it passes over every dot, underscore and node_modules name, so skills there are not in the catalog. Choose another folder.`,
+    );
+  const excluded = patternSelector(covering.include, covering.exclude).prunedFolder(
+    below.join("/"),
+  );
   if (excluded !== undefined)
     return yield* importFailure(
       "import-destination-invalid",
-      `${covering.declaredPath}/${excluded} is excluded by the exclude patterns of the skills entry ${JSON.stringify(covering.declaredPath)}, so skills there are not in the catalog. Choose another folder, or change the patterns by hand.`,
+      `${skillFolderPath(covering.declaredPath, excluded)} is excluded by the exclude patterns of the skills entry ${JSON.stringify(covering.declaredPath)}, so skills there are not in the catalog. Choose another folder, or change the patterns by hand.`,
     );
   const walked = yield* missingBelow(inspection, covering, folder);
   if (walked.problem !== undefined)

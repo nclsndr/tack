@@ -7,7 +7,7 @@ import {
   applyDeclarationTextEdits,
   type DeclarationTextEdit,
 } from "../sources/declaration-text.ts";
-import { SourceDeclarationSchema } from "../sources/source-schema.ts";
+import { DeclarationSchema } from "../sources/source-schema.ts";
 
 /** Edits YAML node ranges, preserving unrelated authored bytes and validating the complete result. */
 export const publishProfileText = (
@@ -17,7 +17,7 @@ export const publishProfileText = (
   | { readonly text: string; readonly error?: never }
   | { readonly error: string; readonly text?: never } => {
   try {
-    const decode = Schema.decodeUnknownSync(SourceDeclarationSchema, { onExcessProperty: "error" });
+    const decode = Schema.decodeUnknownSync(DeclarationSchema, { onExcessProperty: "error" });
     const before = decode(Yaml.parse(text));
     const document = parseDocument(text);
     if (

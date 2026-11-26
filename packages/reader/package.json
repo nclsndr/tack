@@ -12,7 +12,6 @@
     "./search": "./src/search-entry.ts",
     "./search-core": "./src/search.ts",
     "./source-edges": "./src/source-edges.ts",
-    "./yaml": "./src/yaml.ts",
     "./figure-check": "./src/figures/check.ts",
     "./icons": "./src/icons/catalog.ts",
     "./figure-reference": "./src/figures/reference.ts"

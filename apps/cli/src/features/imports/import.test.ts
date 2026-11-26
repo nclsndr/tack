@@ -89,10 +89,10 @@ it.layer(LiveTestLayer)("import add", (test) => {
     ),
   );
 
-  test.effect("apply into a skills collection writes at its top and records the skill there", () =>
+  test.effect("apply into a skills entry at . writes at its top and records the skill there", () =>
     withImportWorld(
       {
-        declaration: declare("personal-brain", "kind: skills"),
+        declaration: declare("personal-brain", "skills:", "  - path: ."),
         files: { "mine/SKILL.md": skillText("mine") },
         commits: [commit],
       },
@@ -110,7 +110,7 @@ it.layer(LiveTestLayer)("import add", (test) => {
           const plan = yield* previewImport(world.options, request);
           expect(plan).toMatchObject({
             outcome: "ready",
-            destination: { folder: "", declaredFolder: "", newFolders: [] },
+            destination: { folder: ".", declaredFolder: ".", newFolders: [] },
             writes: [{ name: "pdf", path: "pdf" }],
           });
           const { applied } = yield* applyImport(world.options, request);
@@ -119,7 +119,7 @@ it.layer(LiveTestLayer)("import add", (test) => {
             skillText("pdf"),
           );
           const yaml = yield* fileSystem.readFileString(path.join(world.root, "tack.yaml"));
-          expect(yaml).toContain("kind: skills");
+          expect(yaml).toContain("  - path: .\n");
           expect(yaml).toContain("path: pdf\n");
         }),
     ),

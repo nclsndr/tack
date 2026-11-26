@@ -3,11 +3,10 @@ import { resourceKinds } from "../../domain/resources/kinds.ts";
 import type { SourceCheckReport, SourceFinding } from "../../domain/sources/source-check.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
 import { resolveCatalog } from "./catalog.ts";
-import { isCollection, type SourceDeclaration } from "../../domain/sources/source-schema.ts";
+import type { SourceDeclaration } from "../../domain/sources/source-schema.ts";
 import { Source } from "./source.ts";
 import { checkProfilePublications } from "./profile-files.ts";
 import { declarationFileName } from "./declaration-file.ts";
-import { nonSkillCollectionFolders, nonSkillFolderMessage } from "./collection-folders.ts";
 
 /** Inspects a directory through catalog discovery without registration, state or network. */
 export const checkSource = Effect.fn("sources.checkSource")(function* (sourcePath: string) {
@@ -80,32 +79,13 @@ export const inspectDeclaration = Effect.fnUntraced(function* (
   const catalog = yield* resolveCatalog([{ status: "healthy", registration, declaration }]);
   const declarationFile = path.join(canonicalPath, declarationFileName);
   const rows = catalog.declarations?.[registration.id] ?? [];
-  const nonSkills =
-    isCollection(declaration) && declaration.kind === "skills"
-      ? yield* nonSkillCollectionFolders(canonicalPath)
-      : [];
-  // Each folder of a skills collection that is not a skill warns on its one entry; none fails it.
-  const nonSkillWarnings = nonSkills.map((folder): SourceFinding => ({
-    code: "collection-folder-not-skill",
-    message: nonSkillFolderMessage(folder),
-    severity: "warning",
-    field: "kind",
-    file: declarationFile,
-    candidatePath: path.join(canonicalPath, folder),
-  }));
   return rows.map((row, position) => {
     const key = resourceKinds[row.kind].declarationKey;
     const index = rows.slice(0, position).filter(({ kind }) => kind === row.kind).length;
-    // A collection's one declaration is its kind; the list form names each entry of a key.
-    const field = isCollection(declaration)
-      ? "kind"
-      : Array.isArray(declaration[key])
-        ? `${key}[${index}]`
-        : key;
+    const field = Array.isArray(declaration[key]) ? `${key}[${index}]` : key;
     return {
       kind: row.kind,
       ...(row.path === undefined ? {} : { path: row.path }),
-      ...(row.collection === true ? { collection: true as const } : {}),
       ...(row.name === undefined ? {} : { name: row.name }),
       resources: catalog.entries
         .filter(
@@ -128,7 +108,6 @@ export const inspectDeclaration = Effect.fnUntraced(function* (
               : (problem.candidatePath ?? declarationFile),
           ...(problem.candidatePath === undefined ? {} : { candidatePath: problem.candidatePath }),
         })),
-        ...(row.collection === true ? nonSkillWarnings : []),
       ],
     };
   });

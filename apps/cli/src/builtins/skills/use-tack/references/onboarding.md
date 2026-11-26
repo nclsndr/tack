@@ -106,16 +106,18 @@ For each folder:
    counts, problems. A bare `tack source add PATH` suggests one from the layout, and
    `tack guide tack-yaml` lists every key. Rerun the same command with `--apply` to register
    either, piping the same JSON again for `-`.
-   - `PATH/SKILL.md`: PATH is one skill. Offer its parent folder as a skills collection, or
+   - `PATH/SKILL.md`: PATH is one skill. Offer its parent folder as a folder of skills, or
      `tack import add` for a remote repository. Ask.
-   - Folders with `SKILL.md` at the top of PATH: a skills collection,
-     `{"version": 1, "name": "skills", "kind": "skills"}`. Each other folder there that holds docs
-     or commands is its own source, such as `{"version": 1, "name": "handbook", "kind": "docs"}`
-     for `PATH/handbook`.
+   - Folders with `SKILL.md` at the top of PATH: PATH itself is the skills folder,
+     `{"version": 1, "name": "skills", "skills": [{"path": "."}]}`. Each other folder there that
+     holds docs or commands is its own source, such as
+     `{"version": 1, "name": "handbook", "docs": [{"name": "handbook", "path": "."}]}` for
+     `PATH/handbook`.
    - Folders that group skills, commands or docs, such as `skills/`, and nothing at the top: one
      entry per folder, each relative to PATH, such as
      `{"version": 1, "name": "team", "skills": [{"path": "skills"}]}`.
-   - Markdown at the top and nothing else: a docs collection, `"kind": "docs"`.
+   - Markdown at the top and nothing else: PATH itself is the docs folder,
+     `"docs": [{"name": "NAME", "path": "."}]`.
 3. Compare each skills entry's count with `find FOLDER -name SKILL.md`. Scripts, `include` or
    `exclude` patterns and a docs name other than its folder's go into the same JSON, with the
    `manage-tack-sources` skill. To keep folders whose name starts with `_`, such as `_archive`,

@@ -46,7 +46,7 @@ const declarationLines = (
   const rows = tableRows(
     declarations.map((declaration) => [
       cell(resourceKinds[declaration.kind].declarationKey),
-      cell(declaration.collection === true ? "(collection)" : (declaration.path ?? "(no path)")),
+      cell(declaration.path ?? "(no path)"),
       cell(plural(declaration.resources, "resource")),
       cell(
         [

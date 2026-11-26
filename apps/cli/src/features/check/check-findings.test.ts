@@ -33,6 +33,21 @@ it.layer(LiveTestLayer)("check findings", (test) => {
     }),
   );
 
+  test.effect("orders the refusals of two keys beside a . entry on one line by message", () =>
+    Effect.gen(function* () {
+      const { root, write } = yield* sourceFolder;
+      // A flow mapping puts every key on line 1, where the message alone orders the findings.
+      yield* write(
+        "tack.yaml",
+        "{version: 1, name: flow, skills: [{path: .}], docs: [], commands: []}\n",
+      );
+      const report = yield* checkPaths([root]);
+      expect(
+        report.findings.map(({ line, message }) => `${line} ${message.split(":")[0]}`),
+      ).toEqual(["1 commands", "1 docs"]);
+    }),
+  );
+
   test.effect(
     "reports each issue of a declaration that does not decode at its field and line",
     () =>
@@ -56,7 +71,7 @@ it.layer(LiveTestLayer)("check findings", (test) => {
             code: "declaration-schema-invalid",
             field: "skils",
             line: 3,
-            message: expect.stringMatching(/^Unknown key "skils"\. A list-form tack\.yaml takes: /),
+            message: expect.stringMatching(/^Unknown key "skils"\. A tack\.yaml takes: /),
           }),
           expect.objectContaining({
             code: "declaration-schema-invalid",

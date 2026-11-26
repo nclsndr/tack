@@ -193,13 +193,9 @@ export const CatalogQuarantineReasonSchema = Schema.Literals([
 /** Marks a resource provided by the source bundled with this Tack release. */
 const builtinOrigin = { origin: Schema.optionalKey(Schema.Literals(["builtin", "bundle"])) };
 
-/**
- * The declared path of the `tack.yaml` entry that put a resource in the catalog, or, for a
- * collection, which names no path, that the collection did.
- */
+/** The declared path of the `tack.yaml` entry that put a resource in the catalog. */
 const declaredByField = {
   declaredPath: Schema.optionalKey(Schema.String),
-  collection: Schema.optionalKey(Schema.Literal(true)),
 };
 
 /** A validated, source-owned entry that can participate in later selection. */

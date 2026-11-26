@@ -320,7 +320,7 @@ it.layer(LiveTestLayer)("setup hints", (hintIt) => {
     {
       layout: "flat skill folders",
       files: ["review/SKILL.md", "notes.md"],
-      suggests: '{"version":1,"name":"skills-folder","kind":"skills"}',
+      suggests: '{"version":1,"name":"skills-folder","skills":[{"path":"."}]}',
     },
     {
       layout: "a skills folder",

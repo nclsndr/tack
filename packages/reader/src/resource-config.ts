@@ -48,13 +48,6 @@ const sourceDeclaration = z.object({
   docs: z.array(z.unknown()),
 });
 const docsDeclaration = z.object({ name: z.string(), reader: z.unknown().optional() });
-/** A docs collection: the whole source folder is one docs resource, with its settings on top. */
-const docsCollection = z.object({
-  version: z.literal(1),
-  kind: z.literal("docs"),
-  name: z.string(),
-  reader: z.unknown().optional(),
-});
 const yamlLink = z
   .string()
   .min(1)
@@ -81,7 +74,7 @@ async function sourcePath(source: string, path: string) {
   return actual;
 }
 
-/** The docs entries of a list-form declaration, each with its name and reader settings. */
+/** The docs entries of a declaration, each with its name and reader settings. */
 function docsEntries(value: unknown, path: string) {
   const declaration = sourceDeclaration.safeParse(value);
   if (declaration.success === false) {
@@ -105,9 +98,7 @@ async function readSettings(resource: ReaderResource, source: string) {
   const path = await sourcePath(source, reference.path);
   const value = await readReaderYaml(path);
   if (reference.kind === "file") return { value, path };
-  const collection = docsCollection.safeParse(value);
-  const entries = collection.success === true ? [collection.data] : docsEntries(value, path);
-  const entry = entries.find((item) => item.name === resource.name);
+  const entry = docsEntries(value, path).find((item) => item.name === resource.name);
   if (entry === undefined) {
     throw new ReaderConfigurationError(
       `${path}: docs resource ${resource.name} is no longer declared.`,

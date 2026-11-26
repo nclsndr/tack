@@ -5,6 +5,7 @@ import { SourceFindingSchema, type SourceFinding } from "../../domain/sources/so
 import {
   declarationResourceKeys,
   sourceDeclarationVersion,
+  sourceFolderPath,
   SourceValidationErrorCodeSchema,
   suggestedSourceName,
   type SourceDeclaration,
@@ -22,9 +23,8 @@ import { compareCodeUnits } from "../../domain/identity/ordering.ts";
 /** One entry of the declaration `source add` would write, with what catalog discovery finds under it. */
 const PlannedEntrySchema = Schema.Struct({
   kind: ResourceKindSchema,
-  /** The declared folder; absent for a collection, whose folder is the source. */
+  /** The declared folder or file, `.` for the source folder itself. */
   path: Schema.optionalKey(Schema.String),
-  collection: Schema.optionalKey(Schema.Literal(true)),
   /** The docs name. */
   name: Schema.optionalKey(Schema.String),
   /** The names of the resources the entry puts in the catalog, in code-unit order. */
@@ -144,10 +144,10 @@ const keyNamedBy = (name: string) =>
 
 /**
  * The declarations a folder without tack.yaml suggests, read from the folders at its top. Skill
- * folders there make it a skills collection, with a collection of its own for each commands or
- * docs folder beside them; otherwise each folder named after a kind gets an entry. A placeholder
- * folder remains when neither is found. Each is named after its folder, or `NAME` when the folder
- * suggests no name.
+ * folders there make it a folder of skills, declared as the skills entry `.`, and each commands
+ * or docs folder beside them a source of its own, declared the same way; otherwise each folder
+ * named after a kind gets an entry. A placeholder folder remains when neither is found. Each is
+ * named after its folder, or `NAME` when the folder suggests no name.
  */
 const layoutDeclarations = Effect.fnUntraced(function* (root: string) {
   const fs = yield* FileSystem.FileSystem;
@@ -171,12 +171,25 @@ const layoutDeclarations = Effect.fnUntraced(function* (root: string) {
   });
   if (skillFolders.length > 0)
     return [
-      { folder: root, declaration: { ...head(root), kind: "skills" } },
-      ...named.flatMap(({ key, name }) =>
-        key === "commands" || key === "docs"
-          ? [{ folder: path.join(root, name), declaration: { ...head(name), kind: key } }]
-          : [],
-      ),
+      { folder: root, declaration: { ...head(root), skills: [{ path: sourceFolderPath }] } },
+      ...named.flatMap(({ key, name }): ReadonlyArray<{ folder: string; declaration: object }> => {
+        const own = head(name);
+        return key === "commands"
+          ? [
+              {
+                folder: path.join(root, name),
+                declaration: { ...own, commands: [{ path: sourceFolderPath }] },
+              },
+            ]
+          : key === "docs"
+            ? [
+                {
+                  folder: path.join(root, name),
+                  declaration: { ...own, docs: [{ name: own.name, path: sourceFolderPath }] },
+                },
+              ]
+            : [];
+      }),
     ];
   if (named.length > 0)
     return [
@@ -225,7 +238,7 @@ export const scaffoldLoadsNothing = (plan: typeof SourceScaffoldPlanSchema.Type)
   loadsNothing(
     plan.entries.map((entry) => ({
       resources: entry.resources.length,
-      // A warning, such as folders a collection skips, never stops the declaration loading.
+      // A warning never stops the declaration loading.
       problems: entry.findings.filter((finding) => finding.severity === "error"),
     })),
   )
@@ -288,7 +301,11 @@ export const planSourceScaffold = Effect.fn("sources.planSourceScaffold")(
         message:
           "--config cannot declare imports: tack import add writes that key when it imports a skill. Remove it, register the source, then import with tack import add.",
       });
-    const validated = yield* validateDeclaration(root, { text: config.text, parsed }).pipe(
+    const validated = yield* validateDeclaration(root, {
+      text: config.text,
+      parsed,
+      format: "json",
+    }).pipe(
       Effect.mapError(
         (error) =>
           new SourceConfigInvalidError({

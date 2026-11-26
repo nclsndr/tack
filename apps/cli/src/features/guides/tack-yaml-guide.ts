@@ -1,10 +1,6 @@
 import { Schema } from "effect";
 import { ProfilePublicationSchema } from "../../domain/profiles/profile-schema.ts";
-import {
-  collectionKinds,
-  collectionSchemas,
-  ListDeclarationSchema,
-} from "../../domain/sources/source-schema.ts";
+import { DeclarationSchema } from "../../domain/sources/source-schema.ts";
 import { BundleSupportEntrySchema } from "../profiles/bundle-support.ts";
 import { authoringJsonSchema } from "./authoring-schema.ts";
 import { docsEntrySchema } from "../sources/docs-discovery.ts";
@@ -16,14 +12,13 @@ type Fields = { readonly [key: string]: Schema.Top };
 /** What each key of `F` takes, in words: one entry per key, so a new key needs its words. */
 type Described<F extends Fields> = { readonly [K in keyof F]: string };
 
-/** What the keys of a declaration take, in any form that has them. */
+/** What the keys of a declaration take. */
 const declarationKeys = {
-  version: "`1`. A list-form `tack.yaml` that declares `profiles` or `bundle-support` takes `2`.",
-  name: "The source label: lowercase letters, digits and single hyphens, at most 64 characters. `depends-on` and `source:` references name the source by it on every machine; a docs collection is also named by it.",
+  version: "`1`. A `tack.yaml` that declares `profiles` or `bundle-support` takes `2`.",
+  name: "The source label: lowercase letters, digits and single hyphens, at most 64 characters. `depends-on` and `source:` references name the source by it on every machine.",
   maintainers:
     "A list of the people or teams to contact about the source, such as `Ada <ada@example.com>`. It grants no permission.",
   "depends-on": "A list of source names whose resources this source's resources may depend on.",
-  kind: "`skills`, `commands` or `docs`: the folder that holds the `tack.yaml` is the collection.",
   skills: "A list of folder entries, each a folder of skills or one skill folder.",
   commands: "A list of folder entries, each a folder of `.md` commands or one `.md` file.",
   context: "A list of folder entries, each a folder or one file of context.",
@@ -32,12 +27,9 @@ const declarationKeys = {
   profiles: "A list of profile publications. Needs version 2.",
   "bundle-support":
     "A list of the support a profile bundle carries for one resource. Needs version 2.",
-  reader:
-    "Docs reader settings: an inline mapping, or a source-relative `.yaml` file that holds them.",
   imports:
     "The records `tack import add` writes, one per imported skill. Never write it: `source add --config` refuses it.",
-} satisfies Described<typeof ListDeclarationSchema.fields> &
-  Described<(typeof collectionSchemas)[keyof typeof collectionSchemas]["fields"]>;
+} satisfies Described<typeof DeclarationSchema.fields>;
 
 /** The entry shapes, each with the declaration keys that take it and what each of its keys takes. */
 const entryShapes = [
@@ -46,7 +38,7 @@ const entryShapes = [
     keys: "`skills`, `commands` and `context`",
     fields: folderEntrySchema.fields,
     described: {
-      path: "The folder or file, relative to the source, written with `/` and without `.` or `..`.",
+      path: "The folder or file, relative to the source, written with `/` and without `.` or `..` segments; `.` alone for the source folder itself.",
       include:
         "Glob patterns that a resource's path inside the folder must match; any path when absent.",
       exclude:
@@ -69,8 +61,9 @@ const entryShapes = [
     fields: docsEntrySchema.fields,
     described: {
       name: "The docs name: lowercase letters, digits and single hyphens.",
-      path: "The folder of Markdown, relative to the source.",
-      reader: declarationKeys.reader,
+      path: "The folder of Markdown, relative to the source; `.` for the source folder itself.",
+      reader:
+        "Docs reader settings: an inline mapping, or a source-relative `.yaml` file that holds them.",
     } satisfies Described<typeof docsEntrySchema.fields>,
   },
   {
@@ -165,22 +158,16 @@ export const tackYamlGuide = (): string =>
     "}",
     "```",
     "",
-    "## List form",
+    "## Keys",
     "",
-    "A `tack.yaml` without `kind` declares each folder or file that holds resources under the key of its kind.",
+    "A `tack.yaml` declares each folder or file that holds resources under the key of its kind.",
     "",
-    ...keyTable(ListDeclarationSchema.fields, declarationKeys),
+    ...keyTable(DeclarationSchema.fields, declarationKeys),
     "",
-    "## Collections",
+    "## The source folder",
     "",
-    "A `tack.yaml` with `kind` makes its own folder the collection: skills or commands at its top, or the whole folder as one docs resource. It declares nothing else.",
+    'An entry whose `path` is `.` declares the folder that holds the `tack.yaml` itself: a folder of skills, of commands or of docs, such as `"skills": [{ "path": "." }]`. Its walk passes over dot, underscore and `node_modules` names. A `tack.yaml` with a `.` entry declares that one kind: another resource key would read the same files, so `tack check` refuses it. A `context` entry is never `.`, since context would take every file.',
     "",
-    ...collectionKinds.flatMap((kind) => [
-      `### kind: ${kind}`,
-      "",
-      ...keyTable(collectionSchemas[kind].fields, declarationKeys),
-      "",
-    ]),
     "## Entries",
     "",
     "Each resource key takes a list of entries. A bad entry is quarantined alone: the rest of the source keeps working.",
@@ -197,7 +184,7 @@ export const tackYamlGuide = (): string =>
     "",
     "## JSON Schema",
     "",
-    "The whole shape at once, for a JSON Schema validator or an editor. Tack builds it from the same entry schemas. It cannot state the rules that need the folder, such as a path that must exist, so `source add --config` and `tack check` remain the check.",
+    "The whole shape at once, for a JSON Schema validator or an editor. Tack builds it from the same entry schemas. It cannot state the rules that need the folder, such as a path that must exist, nor that a `.` entry leaves no other resource key, so `source add --config` and `tack check` remain the check.",
     "",
     "```json",
     compactJson(authoringJsonSchema()),

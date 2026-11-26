@@ -1,5 +1,5 @@
 import { Schema } from "effect";
-import { SourceDeclarationSchema } from "../sources/source-schema.ts";
+import { DeclarationSchema } from "../sources/source-schema.ts";
 import { expect, it } from "vitest";
 import { publishProfileText } from "./publication-text.ts";
 
@@ -36,7 +36,7 @@ it.each([
     ];
     const result = publishProfileText(input, publications);
     expect(result.error).toBeUndefined();
-    const before = Schema.decodeUnknownSync(SourceDeclarationSchema)(Bun.YAML.parse(input));
+    const before = Schema.decodeUnknownSync(DeclarationSchema)(Bun.YAML.parse(input));
     expect(Bun.YAML.parse(result.text ?? "")).toEqual({
       ...before,
       version: 2,

@@ -9,6 +9,10 @@ describe("runtime-neutral YAML", () => {
     );
   });
 
+  it("passes over a key that is no scalar, which names no key to repeat", () => {
+    expect(Yaml.parse("? [a, b]\n: 1\nname: x\n")).toEqual({ "[ a, b ]": 1, name: "x" });
+  });
+
   it("rejects malformed YAML", () => {
     expect(() => Yaml.parse("key: [unclosed\n")).toThrow();
   });

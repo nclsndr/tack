@@ -1,6 +1,10 @@
-import { isScalar, LineCounter, parseDocument, visit, type Node } from "yaml";
+import { isScalar, LineCounter, parseDocument, visit, type Range, type Scalar } from "yaml";
 
-/** A mapping of a YAML document names one key twice; a mapping takes each key once. */
+/**
+ * A mapping of a YAML document names one key twice; a mapping takes each key once. The CLI refuses
+ * the same documents with the same sentence: `yaml-parsers-agree.unit.test.ts` holds the two
+ * parsers to one verdict.
+ */
 export class RepeatedYamlKeyError extends Error {
   override name = "RepeatedYamlKeyError";
   /** The repeated key, as the document spells its value. */
@@ -16,9 +20,16 @@ export class RepeatedYamlKeyError extends Error {
   }
 }
 
+/** A scalar key with the range the parser gives it, which locates it in the text. */
+type LocatedKey = Scalar & { readonly range: Range };
+
+/** Whether a mapping key is a scalar the parser located; a key that is no scalar names no key. */
+const isLocatedKey = (key: unknown): key is LocatedKey =>
+  isScalar(key) && key.range !== null && key.range !== undefined;
+
 /**
- * Parses one YAML document, as Tack and its docs reader read every `tack.yaml`, reader settings
- * file and `SKILL.md` frontmatter: malformed YAML or several documents throw the parser's error,
+ * Parses one YAML document, as the docs reader reads every `tack.yaml` and reader settings file:
+ * malformed YAML or several documents throw the parser's error,
  * and a mapping that names a key twice throws {@link RepeatedYamlKeyError} for the first one.
  *
  * @param firstLine - The file line the text starts at, so frontmatter reports its file's lines.
@@ -28,13 +39,13 @@ export const parseYaml = (text: string, firstLine = 1): unknown => {
   const document = parseDocument(text, { lineCounter, uniqueKeys: false });
   const [error] = document.errors;
   if (error !== undefined) throw error;
-  const lineOf = (node: Node) => lineCounter.linePos(node.range?.[0] ?? 0).line + firstLine - 1;
+  const lineOf = (key: LocatedKey) => lineCounter.linePos(key.range[0]).line + firstLine - 1;
   let repeated: RepeatedYamlKeyError | undefined;
   visit(document, {
     Map(_, map) {
-      const seen = new Map<unknown, Node>();
+      const seen = new Map<unknown, LocatedKey>();
       for (const { key } of map.items) {
-        if (isScalar(key) === false) continue;
+        if (isLocatedKey(key) === false) continue;
         const first = seen.get(key.value);
         if (first !== undefined) {
           repeated = new RepeatedYamlKeyError(String(key.value), [lineOf(first), lineOf(key)]);

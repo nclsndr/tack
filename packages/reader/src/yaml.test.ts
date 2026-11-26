@@ -26,16 +26,21 @@ describe("parseYaml", () => {
       return undefined;
     })();
     expect(error).toBeInstanceOf(RepeatedYamlKeyError);
-    expect(error).toMatchObject({ key, lines });
-    expect(String((error as Error).message)).toBe(
-      `The key "${key}" appears twice, at lines ${lines[0]} and ${lines[1]}. Keep one of them.`,
-    );
+    expect(error).toMatchObject({
+      key,
+      lines,
+      message: `The key "${key}" appears twice, at lines ${lines[0]} and ${lines[1]}. Keep one of them.`,
+    });
   });
 
   it("counts lines from the first line the text starts at in its file", () => {
     expect(() => parseYaml("name: a\nname: b\n", 2)).toThrow(
       'The key "name" appears twice, at lines 2 and 3. Keep one of them.',
     );
+  });
+
+  it("passes over a key that is no scalar, which names no key to repeat", () => {
+    expect(parseYaml("? [a, b]\n: 1\nname: x\n")).toEqual({ "[ a, b ]": 1, name: "x" });
   });
 
   it("keeps the same key in two mappings", () => {

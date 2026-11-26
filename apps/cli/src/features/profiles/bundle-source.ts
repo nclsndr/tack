@@ -11,7 +11,7 @@ import {
   resourceAddressIdentity,
   type Catalog,
 } from "../../domain/sources/catalog-schema.ts";
-import { isCollection, type SourceDeclaration } from "../../domain/sources/source-schema.ts";
+import { sourceFolderPath, type SourceDeclaration } from "../../domain/sources/source-schema.ts";
 import { marksSourceEdge } from "@tackup/reader/source-edges";
 import type { BundleContent } from "../../domain/bundles/bundle-schema.ts";
 import { bundleDigest } from "../../domain/bundles/bundle-codec.ts";
@@ -59,17 +59,16 @@ export const collectBundleSource = Effect.fnUntraced(function* (request: {
   const path = yield* Path.Path;
   const root = source.registration.canonicalPath;
   const authored = source.declaration;
-  /** A docs collection is its whole folder, so its own folder is its complete support closure. */
-  const docsCollection = isCollection(authored) && authored.kind === "docs" ? authored : undefined;
   const prefix = `sources/${key}/`;
   const findings: ProfilePlanFinding[] = [];
   const collector = yield* makeBundleFileCollector(root, prefix, findings, budget);
   const { entries: sourceEntries, add, include, checkDeclaredPath } = collector;
   /**
-   * Includes a docs collection's folder: every entry at its top but its own `tack.yaml`, which the
-   * projection writes, tool state and dependencies, and the folders of another source.
+   * Includes the source folder, for a docs resource declared at `.`: every entry at its top but its
+   * own `tack.yaml`, which the projection writes, tool state and dependencies, and the folders of
+   * another source.
    */
-  const includeCollectionFolder = Effect.fnUntraced(function* () {
+  const includeSourceFolder = Effect.fnUntraced(function* () {
     for (const name of [...(yield* fs.readDirectory(root))].sort(compareCodeUnits)) {
       if (name === declarationFileName || name.startsWith(".") || name === "node_modules") continue;
       const names = yield* fs
@@ -80,7 +79,7 @@ export const collectBundleSource = Effect.fnUntraced(function* (request: {
   });
   const supportDecoded = yield* Schema.decodeUnknownEffect(BundleSupportSchema, {
     onExcessProperty: "error",
-  })((isCollection(authored) ? undefined : authored["bundle-support"]) ?? []).pipe(Effect.option);
+  })(authored["bundle-support"] ?? []).pipe(Effect.option);
   const support = Option.getOrUndefined(supportDecoded) ?? [];
   if (Option.isNone(supportDecoded))
     findings.push({
@@ -137,14 +136,12 @@ export const collectBundleSource = Effect.fnUntraced(function* (request: {
       }),
     docs: (entry, relative) =>
       Effect.gen(function* () {
-        const declared =
-          docsCollection ??
-          Schema.decodeUnknownSync(Schema.Array(docsEntrySchema))(
-            isCollection(authored) ? [] : authored.docs,
-          ).find((item) => item.name === entry.address.name);
+        const declared = Schema.decodeUnknownSync(Schema.Array(docsEntrySchema))(
+          authored.docs,
+        ).find((item) => item.name === entry.address.name);
         declarations.docs.push({
           name: entry.address.name,
-          path: relative,
+          path: relative === "" ? sourceFolderPath : relative,
           ...(declared?.reader === undefined ? {} : { reader: declared.reader }),
         });
         if (typeof declared?.reader === "string") {
@@ -178,7 +175,9 @@ export const collectBundleSource = Effect.fnUntraced(function* (request: {
       (item) => item.kind === entry.address.kind && item.name === entry.address.name,
     );
     const bundling = kindBundling[entry.address.kind];
-    if (bundling.needsSupport === true && extra === undefined && docsCollection === undefined)
+    // A docs resource declared at `.` is the whole source folder, its complete support closure.
+    const wholeSource = relative === "";
+    if (bundling.needsSupport === true && extra === undefined && wholeSource === false)
       findings.push({
         code: "profile-bundle-incomplete",
         message: `${entry.address.kind} ${entry.address.name} has unknown support closure. Declare bundle-support with complete: true, files and non-secret prerequisites before export.`,
@@ -215,8 +214,8 @@ export const collectBundleSource = Effect.fnUntraced(function* (request: {
         message: `${entry.address.name}: replace machine-local dependency UUIDs with portable source names before export.`,
       });
     if (entry.declaredPath !== undefined) yield* checkDeclaredPath(entry.declaredPath);
-    if (docsCollection === undefined) yield* include(relative);
-    else yield* includeCollectionFolder();
+    if (wholeSource === false) yield* include(relative);
+    else yield* includeSourceFolder();
     for (const file of extra?.files ?? []) yield* include(file);
     let provenance: BundleContent["sources"][number]["resources"][number]["provenance"];
     if (
@@ -254,35 +253,24 @@ export const collectBundleSource = Effect.fnUntraced(function* (request: {
     yield* declare(entry, relative);
   }
   const dependsOn = ("depends-on" in authored ? authored["depends-on"] : undefined) ?? [];
-  // A docs collection projects as itself; every other source projects as the list form.
-  const declaration: SourceDeclaration =
-    docsCollection === undefined
+  const declaration: SourceDeclaration = {
+    version: 2,
+    name: authored.name,
+    "depends-on": dependsOn.filter(
+      (name) => bindings[name] !== undefined || ambientSources.has(name) === true,
+    ),
+    ...Object.fromEntries(Object.entries(declarations).filter(([, values]) => values.length > 0)),
+    ...(defining !== undefined
       ? {
-          version: 2,
-          name: authored.name,
-          "depends-on": dependsOn.filter(
-            (name) => bindings[name] !== undefined || ambientSources.has(name) === true,
-          ),
-          ...Object.fromEntries(
-            Object.entries(declarations).filter(([, values]) => values.length > 0),
-          ),
-          ...(defining !== undefined
-            ? {
-                profiles: [
-                  {
-                    name: defining.profile.name,
-                    path: path.relative(root, defining.file).split(path.sep).join("/"),
-                  },
-                ],
-              }
-            : {}),
+          profiles: [
+            {
+              name: defining.profile.name,
+              path: path.relative(root, defining.file).split(path.sep).join("/"),
+            },
+          ],
         }
-      : {
-          version: 1,
-          kind: "docs",
-          name: docsCollection.name,
-          ...(docsCollection.reader === undefined ? {} : { reader: docsCollection.reader }),
-        };
+      : {}),
+  };
   if (defining !== undefined)
     yield* include(path.relative(root, defining.file).split(path.sep).join("/"));
   add({

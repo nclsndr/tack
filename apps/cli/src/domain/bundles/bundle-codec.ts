@@ -104,7 +104,7 @@ const validateBundleEntries = (entries: ReadonlyArray<ArchiveEntry>) => {
       invalid(`Missing projected declaration for ${source.key}.`);
     const resources = new Set<string>();
     for (const resource of source.resources) {
-      // A docs collection is its source's whole folder, written as the empty path.
+      // A docs resource declared at "." is its source's whole folder, written as the empty path.
       const wholeSource = resource.kind === "docs" && resource.path === "";
       if (wholeSource === false) validateBundlePath(resource.path);
       const key = `${resource.kind}:${resource.name}`;

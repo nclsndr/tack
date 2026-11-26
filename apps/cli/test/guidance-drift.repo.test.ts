@@ -49,9 +49,13 @@ const retiredLayout = [
   /^\s*entrypoints:/,
   /starts with an underscore[^.]*\bskipped\b/i,
   /top level; every kind folder is optional/i,
+  // A `tack.yaml` declares its own folder with a `.` entry, never with `kind`.
+  /^\s*kind: (?:skills|commands|docs)\b/,
+  /"kind":\s*"(?:skills|commands|docs)"/,
+  /\b(?:skills|commands|docs) collections?\b/i,
 ];
 
-it("keeps every guide and skill free of kind folders, area declarations and the underscore rule", () => {
+it("keeps every guide and skill free of kind folders, area declarations, the underscore rule and kind collections", () => {
   const hits = guidance.flatMap((file) =>
     readFileSync(join(repository, file), "utf8")
       .split("\n")
@@ -71,6 +75,9 @@ it("recognizes each retired statement and allows the migration wording", () => {
     "A context area names its files.",
     "entrypoints:",
     "A folder whose name starts with an underscore is skipped, so archives stay out.",
+    "kind: skills",
+    '{"version":1,"name":"notes","kind":"docs"}',
+    "A skills collection holds skills at its top.",
   ];
   for (const line of stale)
     expect(

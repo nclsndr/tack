@@ -61,28 +61,24 @@ describe("source-owned YAML reader configuration", () => {
     expect((await loadProjectCorpus(input)).documents.map((doc) => doc.title)).toEqual(["Guide"]);
   });
 
-  it("reads the top-level reader settings of a docs collection, which is its whole folder", async () => {
+  it("reads the reader settings of a docs entry declared at ., which is the whole source folder", async () => {
     const { input, path, sourcePath } = await fixture(selection);
     await writeFile(join(sourcePath, "top.md"), "# Top\n");
-    await writeFile(
-      path,
-      stringify({ version: 1, kind: "docs", name: "handbook", reader: selection }),
-    );
-    const collection = {
+    const declaration = (docs: unknown) => stringify({ version: 1, name: "source", docs });
+    await writeFile(path, declaration([{ name: "handbook", path: ".", reader: selection }]));
+    const whole = {
       ...input,
       resources: input.resources.map((resource) => ({ ...resource, directoryPath: sourcePath })),
     };
-    expect((await loadProjectCorpus(collection)).documents.map((doc) => doc.title)).toEqual([
-      "Guide",
-    ]);
-    await writeFile(path, stringify({ version: 1, kind: "docs", name: "handbook" }));
-    expect((await loadProjectCorpus(collection)).documents.map((doc) => doc.title).sort()).toEqual([
+    expect((await loadProjectCorpus(whole)).documents.map((doc) => doc.title)).toEqual(["Guide"]);
+    await writeFile(path, declaration([{ name: "handbook", path: "." }]));
+    expect((await loadProjectCorpus(whole)).documents.map((doc) => doc.title).sort()).toEqual([
       "Guide",
       "Hidden",
       "Top",
     ]);
-    await writeFile(path, stringify({ version: 1, kind: "docs", name: "other" }));
-    expect((await loadProjectCorpus(collection)).issues).toEqual([
+    await writeFile(path, declaration([{ name: "other", path: "." }]));
+    expect((await loadProjectCorpus(whole)).issues).toEqual([
       expect.objectContaining({
         message: expect.stringContaining("handbook is no longer declared"),
       }),

@@ -187,9 +187,9 @@ const candidateLines = (
   ]);
 };
 
-/** `SOURCE:FOLDER`, or `SOURCE` alone for a skills collection, whose folder is the source. */
+/** `SOURCE:FOLDER`, or `SOURCE` alone for the skills entry `.`, whose folder is the source. */
 const intoText = (source: string, folder: string) =>
-  folder === "" ? source : `${source}:${folder}`;
+  folder === "." ? source : `${source}:${folder}`;
 
 const intoValue = (destination: NonNullable<ImportPlan["destination"]>) =>
   intoText(destination.source, destination.folder);
@@ -295,7 +295,7 @@ const intoHint = (plan: ImportPlan): string | undefined => {
     ? undefined
     : first.folders.length === 1
       ? first.name
-      : intoText(first.name, first.folders[0] ?? "");
+      : intoText(first.name, first.folders[0] ?? ".");
 };
 
 const previewView = (envelope: PublicEnvelope, plan: ImportPlan, style: Style): string => {
@@ -319,7 +319,7 @@ const previewView = (envelope: PublicEnvelope, plan: ImportPlan, style: Style): 
           : [
               [
                 "Into",
-                `${intoValue(into)} · ${style.path(into.folder === "" ? into.root : `${into.root}/${into.folder}`)}`,
+                `${intoValue(into)} · ${style.path(into.folder === "." ? into.root : `${into.root}/${into.folder}`)}`,
               ] as const,
             ]),
       ],

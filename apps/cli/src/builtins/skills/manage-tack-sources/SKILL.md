@@ -46,10 +46,9 @@ requested scope, using the source's normal review process where applicable.
 
 Tack reads resources only from the `tack.yaml` at the top of the source. A folder is never read because of its
 name: a folder called `skills/` means nothing until a declaration names it. A folder of skill
-folders, `.md` commands or docs alone is a **collection**: `version: 1` and `kind: skills`,
-`kind: commands` or `kind: docs` ([collections](references/tack-yaml.md#collections)). Otherwise use
-the list form below. Each `tack.yaml` is the edge of its source: configs never merge, and one that
-another source's declaration reaches is an error.
+folders, `.md` commands or docs alone declares itself as `.`, such as `skills: [{ path: . }]`
+([the source folder](references/tack-yaml.md#the-source-folder)). Each `tack.yaml` is the edge of
+its source: configs never merge, and one that another source's declaration reaches is an error.
 
 ```yaml
 version: 1
@@ -79,15 +78,15 @@ folders between a declared folder and a resource, organize a source and never ch
   Picks store IDs, never labels.
 - `maintainers` lists descriptive contacts. Tack shows it and never interprets it.
 - `depends-on` lists labels of other sources.
-- `skills`, `commands` and `context` entries have a `path` to a folder, or to one resource, and
-  optional `include` and `exclude` globs that need a folder. `scripts` entries have `name`, `path`
-  to one `.ts` file and a non-empty `description`. `docs` entries have `name`, `path` to a folder
-  and an optional `reader`. Scripts and docs take no patterns.
+- `skills`, `commands` and `context` entries have a `path` to a folder or one resource, `.` for the
+  source folder (never for `context`), and optional `include` and `exclude` globs that need a
+  folder. `scripts` entries have `name`, `path` to one `.ts` file and a non-empty `description`.
+  `docs` entries have `name`, `path` to a folder and an optional `reader`. Neither takes patterns.
 
-A fault in the file makes the whole source unhealthy: `declaration-missing`,
-`declaration-malformed` (broken YAML), `declaration-version-unsupported`, and
-`declaration-schema-invalid` for an unknown top-level key or a missing or bad `name`, `maintainers` or
-`depends-on`. A bad entry inside a resource key is quarantined alone; the rest keeps working.
+A fault in the file makes the whole source unhealthy: `declaration-missing`, `declaration-malformed`
+(broken YAML, or a key twice in one mapping), `declaration-version-unsupported`, and
+`declaration-schema-invalid` for an unknown top-level key such as `kind`, another resource key
+beside a `.` entry, or a bad `name`, `maintainers` or `depends-on`. A bad entry is quarantined alone.
 
 Read [references/tack-yaml.md](references/tack-yaml.md) before writing an entry: paths, overlap,
 patterns, the leaf rule, scripts, docs, and the `imports` section Tack writes: never edit it.
@@ -114,10 +113,10 @@ metadata.
 
 1. Look inside the folder, then ask the person what each folder holds (skills, commands, context,
    docs, scripts) and which ones Tack should serve. `PATH/SKILL.md` makes PATH one skill: offer its
-   parent as a skills collection, or `tack import add` for a remote repository.
+   parent as a folder of skills, or `tack import add` for a remote repository.
 2. Without `tack.yaml`: write its declaration as JSON and preview it with
    `tack source add PATH --config '<json>'`, or `--config -` from standard input. Skill folders at the
-   top make PATH a skills collection, `{"version": 1, "name": "skills", "kind": "skills"}`;
+   top make PATH a folder of skills, `{"version": 1, "name": "skills", "skills": [{"path": "."}]}`;
    otherwise one entry per folder, with patterns, `scripts`, `depends-on` and docs names in the
    same JSON. `tack guide tack-yaml` lists every key; a bare `source add` suggests a declaration.
    The preview reports every issue at once with its field and line, then the `tack.yaml` it writes
@@ -174,17 +173,17 @@ other.
 | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `declaration-resources-undeclared`                                                               | The source has no resource key and a folder named for a resource kind. Add the entries its message names, or an empty list.                                                                                                         |
 | `declaration-entry-invalid`                                                                      | The entry does not decode: an unknown key, a wrong type, a missing `path`, or patterns on one skill, command or file. Other entries still load.                                                                                     |
-| `declaration-path-invalid`                                                                       | The `path` is empty, absolute, has `.`, `..`, an empty segment or a backslash, or names the source's own `tack.yaml`.                                                                                                               |
-| `declaration-path-outside-source`                                                                | The path resolves outside the source, or is the source folder itself. Point it inside, or move the content into the source.                                                                                                         |
+| `declaration-path-invalid`                                                                       | The `path` is empty, absolute, has a `.` or `..` segment, an empty segment or a backslash, names the source's own `tack.yaml`, or is a `context` entry `.`.                                                                         |
+| `declaration-path-outside-source`                                                                | The path resolves outside the source, or to the source folder by another path than `.`. Point it inside, or move the content into the source.                                                                                       |
 | `declaration-path-missing`                                                                       | Nothing exists at the path. Create it, fix the spelling, or delete the entry.                                                                                                                                                       |
 | `declaration-path-wrong-type`                                                                    | The path has the wrong type: a folder for `skills` and `docs`, a folder or file for `context`, a folder or `.md` file for `commands`, a `.ts` file for `scripts`.                                                                   |
 | `declaration-path-overlap`                                                                       | Two skills, commands, context or scripts entries, or a profile publication and one of them, are equal or nested; every one is refused. Add the `exclude` the message names to the outer folder entry, or keep one. Docs are exempt. |
 | `declaration-reaches-source`                                                                     | The path is or lies inside a folder with its own `tack.yaml`, or a walk met one and skipped it. Declare those resources there, add `exclude: ["FOLDER/**"]`, or delete the nested `tack.yaml`.                                      |
-| `source-is-one-skill`, `declaration-inside-source`                                               | A skills collection holds `SKILL.md`: register its parent. `source add` refused a `tack.yaml` another source reaches: exclude the folder there first.                                                                               |
+| `source-is-one-skill`, `declaration-inside-source`                                               | A source with a skills entry `.` holds `SKILL.md`: register its parent. `source add` refused a `tack.yaml` another source reaches: exclude the folder there first.                                                                  |
 | `declaration-invalid`                                                                            | A `docs` key that is not a list, or a docs entry with an unknown key or a bad `name`. Fix it as the message says.                                                                                                                   |
 | `resource-boundary-violation`                                                                    | A file or link inside a declared folder resolves outside it. Declare the real path, or remove the link.                                                                                                                             |
 | `skill-name-mismatch`, `skill-frontmatter-*`, `skill-metadata-*`, `command-*`                    | Fix the frontmatter the message names. The skill folder name must equal `name`.                                                                                                                                                     |
-| `source-declares-no-resources`, `collection-folder-not-skill`: warnings                          | Empty but healthy: add a resource key, `docs`, or an empty list. Not a skill: a skills collection holds skills only and ignores the folder named; add a `SKILL.md` to make it one. No exit code changes.                            |
+| `source-declares-no-resources`: warning                                                          | Empty but healthy: add a resource key, `docs`, or an empty list. No exit code changes.                                                                                                                                              |
 | Dependency source undeclared or ambiguous                                                        | Add the label to `depends-on`, or add `source: LABEL` to the edge.                                                                                                                                                                  |
 | Declared source not registered, or unhealthy                                                     | `tack source add` for it, or remove the label from `depends-on`. An unhealthy one: `tack check` the path the blocker names.                                                                                                         |
 | `skill-address-duplicate` or `resource-address-duplicate`: one kind and name twice in one source | Both are quarantined, whichever declarations found them. Rename or delete one. Only the same name in different sources is allowed.                                                                                                  |

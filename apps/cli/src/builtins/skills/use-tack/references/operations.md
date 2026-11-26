@@ -62,7 +62,7 @@ tack check /absolute/path/to/source
 tack init # if the machine is not set up
 tack source add /absolute/path/to/source  # preview a source that has tack.yaml
 tack source add /absolute/path/to/source --apply  # register it
-tack source add /absolute/path/to/skills --config '{"version": 1, "name": "skills", "kind": "skills"}'  # preview its tack.yaml
+tack source add /absolute/path/to/skills --config '{"version": 1, "name": "skills", "skills": [{"path": "."}]}'  # preview its tack.yaml
 tack guide tack-yaml  # every key a tack.yaml takes
 tack project add PROJECT --repository-cwd /absolute/path/to/repository
 tack catalog --details
@@ -320,7 +320,7 @@ published profiles and docs figures. Findings have file:line locations; errors e
 exit 0. Figures, icons and author components use the reader's static rules without running a page. Unknown icons produce `icon-unknown`; misused components produce `component-issue`. Computed props produce
 `figure-not-checked`; unavailable inputs produce `check-path-unavailable`. A folder of skills
 without `tack.yaml` produces the warning `check-not-a-source` and gives the same advice as a bare
-`tack source add PATH`: a JSON declaration for `--config` read from its layout, a skills collection
+`tack source add PATH`: a JSON declaration for `--config` read from its layout, a skills entry `.`
 for skill folders at its top or one entry per folder named after a kind, and the folder above for
 a `SKILL.md` at PATH. The
 `write-reader-figures` skill teaches figure authoring.

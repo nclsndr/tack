@@ -223,91 +223,41 @@ it.layer(LiveTestLayer)("source check", (test) => {
     }),
   );
 
-  test.effect.each([
-    {
-      case: "each folder at the top of a skills collection that holds no SKILL.md",
-      declaration: "version: 1\nname: fixture\nkind: skills\n",
-      files: [
-        "alpha/SKILL.md",
-        "commands/hi.md",
-        "notes/readme.md",
-        "team/review/SKILL.md",
-        "README.md",
-      ],
-      links: { mirror: "notes", gone: "missing" },
-      notSkills: ["commands", "mirror", "notes", "team"],
-    },
-    {
-      case: "no hidden, draft, node_modules or other-source folder of a skills collection",
-      declaration: "version: 1\nname: fixture\nkind: skills\n",
-      files: [
-        "alpha/SKILL.md",
-        ".git/config",
-        "_drafts/x/SKILL.md",
-        "node_modules/pkg/index.js",
-        "split/tack.yaml",
-        "split/review/SKILL.md",
-      ],
-      notSkills: [],
-    },
-    {
-      case: "no folder of a commands collection, which never reads folders",
-      declaration: "version: 1\nname: fixture\nkind: commands\n",
-      files: ["hi.md", "commands/hi.md", "team/review/SKILL.md"],
-      notSkills: [],
-    },
-  ])("warns about $case", (row) =>
+  test.effect("refuses kind at its line and shows the tack.yaml to write instead", () =>
     Effect.gen(function* () {
-      const { fs, path, root, write } = yield* folders;
-      yield* write("tack.yaml", row.declaration);
-      for (const file of row.files)
-        yield* write(
-          file,
-          file.endsWith("SKILL.md") ? bareSkillText(path.basename(path.dirname(file))) : "x",
-        );
-      for (const [link, target] of Object.entries(row.links ?? {}))
-        yield* fs.symlink(target, path.join(root, link));
-      const report = yield* checkSource(root);
-      expect(report.findings.filter((finding) => finding.severity === "warning")).toEqual(
-        row.notSkills.map((folder) => ({
-          code: "collection-folder-not-skill",
-          message: expect.stringContaining(`${folder}/ holds no SKILL.md`),
-          severity: "warning",
-          field: "kind",
-          file: path.join(root, "tack.yaml"),
-          candidatePath: path.join(root, folder),
-        })),
-      );
-      expect(report.findings.filter((finding) => finding.severity === "error")).toEqual([]);
-    }),
-  );
-
-  test.effect("leaves an unlistable skills collection to the error its reader reports", () =>
-    Effect.gen(function* () {
-      const { fs, root, write } = yield* folders;
-      yield* write("tack.yaml", "version: 1\nname: fixture\nkind: skills\n");
-      yield* write("team/review/SKILL.md", bareSkillText("review"));
-      yield* fs.chmod(root, 0o300);
-      const report = yield* checkSource(root).pipe(
-        Effect.ensuring(fs.chmod(root, 0o755).pipe(Effect.orDie)),
-      );
-      expect(report.findings.map(({ severity }) => severity)).toEqual(["error"]);
-    }),
-  );
-
-  test.effect("says a folder that is not a skill is ignored and how to make it one", () =>
-    Effect.gen(function* () {
-      const { root, write } = yield* folders;
+      const { path, root, write } = yield* folders;
       yield* write("tack.yaml", "version: 1\nname: fixture\nkind: skills\n");
       yield* write("alpha/SKILL.md", bareSkillText("alpha"));
-      yield* write("commands/hi.md", "# Hi");
-      const [entry] = yield* inspectDeclaration(root, {
-        version: 1,
-        name: "fixture",
-        kind: "skills",
-      });
-      expect(entry?.findings.map((finding) => finding.message)).toEqual([
-        "commands/ holds no SKILL.md, so it is not a skill, and a skills collection holds skills only: Tack ignores it. Add a SKILL.md to make it a skill.",
+      const report = yield* checkSource(root);
+      expect(report.findings).toEqual([
+        {
+          code: "declaration-schema-invalid",
+          severity: "error",
+          file: path.join(root, "tack.yaml"),
+          field: "kind",
+          line: 3,
+          message: [
+            'A tack.yaml takes no kind key: a "." entry declares the folder that holds it. Write instead:',
+            "  version: 1",
+            "  name: fixture",
+            "  skills:",
+            "    - path: .",
+          ].join("\n"),
+        },
+      ]);
+    }),
+  );
+
+  test.effect("refuses another resource key beside a . entry at that key's line", () =>
+    Effect.gen(function* () {
+      const { root, write } = yield* folders;
+      yield* write(
+        "tack.yaml",
+        "version: 1\nname: fixture\nskills:\n  - path: .\ncommands:\n  - path: prompts\n",
+      );
+      const report = yield* checkSource(root);
+      expect(report.findings).toMatchObject([
+        { code: "declaration-schema-invalid", field: "commands", line: 5 },
       ]);
     }),
   );

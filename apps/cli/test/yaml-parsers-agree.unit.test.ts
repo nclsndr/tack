@@ -15,6 +15,7 @@ const documents: ReadonlyArray<readonly [string, string]> = [
   ["a repeated top key", "version: 1\nname: one\nname: two\n"],
   ["a repeated entry key", "docs:\n  - name: a\n    path: a\n    path: b\n"],
   ["a repeated flow key", "reader: {content: [], content: []}\n"],
+  ["a key that is no scalar", "? [a, b]\n: 1\nname: x\n"],
   ["malformed YAML", "version: [\n"],
   ["two documents", "version: 1\n---\nversion: 2\n"],
 ];
@@ -42,14 +43,17 @@ const readerVerdict = async (file: string) => {
   }
 };
 
-it.each(documents)("parses %s to the same verdict in the CLI and the reader", async (name, text) => {
-  const file = join(directory, `${name.replaceAll(" ", "-")}.yaml`);
-  await writeFile(file, text);
-  expect(await readerVerdict(file)).toEqual(verdict(() => Yaml.parse(text)));
-});
+it.each(documents)(
+  "parses %s to the same verdict in the CLI and the reader",
+  async (name, text) => {
+    const file = join(directory, `${name.replaceAll(" ", "-")}.yaml`);
+    await writeFile(file, text);
+    expect(await readerVerdict(file)).toEqual(verdict(() => Yaml.parse(text)));
+  },
+);
 
 it("refuses every repeated key the matrix holds in both parsers", () => {
-  expect(
-    documents.filter(([, text]) => "repeated" in verdict(() => Yaml.parse(text))).length,
-  ).toBe(3);
+  expect(documents.filter(([, text]) => "repeated" in verdict(() => Yaml.parse(text))).length).toBe(
+    3,
+  );
 });

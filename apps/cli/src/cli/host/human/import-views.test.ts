@@ -838,13 +838,13 @@ describe("import add preview", () => {
   });
 });
 
-describe("import add into a skills collection", () => {
-  it("names the collection by its source alone, in choices, the destination and the hint", () => {
+describe("import add into a skills entry at .", () => {
+  it("names the source folder by its source alone, in choices, the destination and the hint", () => {
     const choices = renderRecorded("import add", {
       plan: plan({
         candidates: [smallCandidate({ name: "pdf" })],
         selected: ["pdf"],
-        destinations: [{ name: "flat", registrationId, folders: [""] }],
+        destinations: [{ name: "flat", registrationId, folders: ["."] }],
         outcome: "needs-destination",
       }),
     });
@@ -856,7 +856,7 @@ describe("import add into a skills collection", () => {
       plan: plan({
         candidates: [smallCandidate({ name: "pdf" })],
         selected: ["pdf"],
-        destination: { ...destination, source: "flat", folder: "", declaredFolder: "" },
+        destination: { ...destination, source: "flat", folder: ".", declaredFolder: "." },
         writes: [{ name: "pdf", path: "pdf", upstreamPath: "skills/pdf", files: 1, bytes: 100 }],
       }),
     });

@@ -1,6 +1,7 @@
 import { BundleDigestSchema, BundleFileSchema } from "../bundles/bundle-facts.ts";
-import { Effect, Predicate, Schema, SchemaIssue } from "effect";
+import { Predicate, Schema, SchemaIssue } from "effect";
 import { CanonicalPathSchema, PortableNameSchema } from "../identity/identity-schema.ts";
+import { Yaml } from "../runtime-neutral.ts";
 
 /** The original source version, used for declarations without profiles. */
 export const sourceDeclarationVersion = 1 as const;
@@ -52,10 +53,57 @@ const MaintainerSchema = Schema.String.check(
 );
 
 /**
- * The list form of a source's `tack.yaml`: no `kind`, and resource keys whose entries name the
- * folders and files that hold resources.
+ * The resource keys of a declaration. `docs` is a resource key, but a source that declares only
+ * `docs` still has its resource folders checked.
  */
-export const ListDeclarationSchema = Schema.Struct({
+export const declarationResourceKeys = [
+  "skills",
+  "commands",
+  "context",
+  "scripts",
+  "docs",
+] as const;
+
+/** The declared path that names the source folder itself, the one that holds the `tack.yaml`. */
+export const sourceFolderPath = ".";
+
+/** The resource keys that hold an entry whose path is `.`, in declaration key order. */
+export const keysAtSourceFolder = (value: { readonly [key: string]: unknown }) =>
+  declarationResourceKeys.filter((key) => {
+    const entries = value[key];
+    return (
+      Array.isArray(entries) &&
+      entries.some(
+        (entry: unknown) =>
+          Predicate.hasProperty(entry, "path") === true && entry.path === sourceFolderPath,
+      )
+    );
+  });
+
+/**
+ * A declaration with a `.` entry declares one resource kind: the folder that holds its
+ * `tack.yaml` is that kind's folder, so another resource key would read the same files. Each
+ * other resource key is an issue at its own field. Both the runtime and the authoring schema
+ * check it.
+ */
+export const oneKindAtSourceFolder = Schema.makeFilter(
+  (value: { readonly [key: string]: unknown }) => {
+    const [key] = keysAtSourceFolder(value);
+    if (key === undefined) return [];
+    return declarationResourceKeys
+      .filter((other) => other !== key && value[other] !== undefined)
+      .map((other) => ({
+        path: [other],
+        issue: `The ${key} entry "." declares the source folder itself, so this tack.yaml declares ${key} only. Move ${other} to a tack.yaml of its own folder, or name the folder that holds the ${key} instead of ".".`,
+      }));
+  },
+);
+
+/**
+ * A source's `tack.yaml`: resource keys whose entries name the folders and files that hold
+ * resources, where `.` names the source folder itself.
+ */
+export const DeclarationSchema = Schema.Struct({
   version: Schema.Literals([sourceDeclarationVersion, profileSourceDeclarationVersion]),
   name: SourceLabelSchema,
   maintainers: Schema.optionalKey(Schema.Array(MaintainerSchema)),
@@ -79,111 +127,58 @@ export const ListDeclarationSchema = Schema.Struct({
       ? ["The profiles and bundle-support keys require source declaration version 2."]
       : [],
   ),
+  oneKindAtSourceFolder,
 );
 
-/** The list form of a validated declaration. */
-type ListDeclaration = typeof ListDeclarationSchema.Type;
-
-/**
- * The keys every collection takes: it names no path, because its folder is the collection. Its
- * `name` is the source label, required like the list form's.
- */
-const collectionFields = {
-  version: Schema.Literal(sourceDeclarationVersion),
-  name: SourceLabelSchema,
-  maintainers: Schema.optionalKey(Schema.Array(MaintainerSchema)),
-};
-
-/**
- * The collections, by `kind`: the folder that holds the `tack.yaml` is the collection. Skills and
- * commands are read at its top only; a docs collection is the whole folder as one docs resource,
- * named by its required `name`, which is also the source label.
- */
-export const collectionSchemas = {
-  skills: Schema.Struct({
-    ...collectionFields,
-    kind: Schema.Literal("skills"),
-    "depends-on": Schema.optionalKey(Schema.Array(SourceLabelSchema)),
-    imports: Schema.optionalKey(Schema.Unknown),
-  }),
-  commands: Schema.Struct({
-    ...collectionFields,
-    kind: Schema.Literal("commands"),
-    "depends-on": Schema.optionalKey(Schema.Array(SourceLabelSchema)),
-  }),
-  docs: Schema.Struct({
-    ...collectionFields,
-    kind: Schema.Literal("docs"),
-    reader: Schema.optionalKey(Schema.Unknown),
-  }),
-} as const;
-
-/** The kinds a collection can hold, as its `kind` spells them. */
-export const collectionKinds = ["skills", "commands", "docs"] as const;
-
-/** A validated collection declaration. */
-export type CollectionDeclaration =
-  (typeof collectionSchemas)[keyof typeof collectionSchemas]["Type"];
-
-/** A validated source declaration: the list form or one collection. */
-export type SourceDeclaration = ListDeclaration | CollectionDeclaration;
-
-/** Every shape of `tack.yaml`; decode it with {@link decodeSourceDeclaration} for precise issues. */
-export const SourceDeclarationSchema = Schema.Union([
-  ListDeclarationSchema,
-  collectionSchemas.skills,
-  collectionSchemas.commands,
-  collectionSchemas.docs,
-]);
-
-/** Whether a declaration is a collection rather than the list form. */
-export const isCollection = (
-  declaration: SourceDeclaration,
-): declaration is CollectionDeclaration => "kind" in declaration;
-
-type CollectionKind = (typeof collectionKinds)[number];
-
-const isCollectionKind = (kind: string): kind is CollectionKind =>
-  collectionKinds.some((known) => known === kind);
-
-/** The `kind` of a declaration, checked alone so a wrong value gets its own message. */
-const CollectionKindSchema = Schema.Struct({
-  kind: Schema.String.check(
-    Schema.makeFilter((kind) =>
-      kind === "skill"
-        ? [
-            "Write kind: skills. A folder with SKILL.md is one skill: register the folder that holds it.",
-          ]
-        : [],
-    ),
-  ).pipe(
-    Schema.refine(isCollectionKind, {
-      message: "A collection's kind is skills, commands or docs.",
-    }),
-  ),
-});
+/** A validated source declaration. */
+export type SourceDeclaration = typeof DeclarationSchema.Type;
 
 /** Every issue at once, and no key the shape does not name. */
 const decodeOptions = { onExcessProperty: "error", errors: "all" } as const;
 
 /**
- * Decodes a parsed `tack.yaml`, refusing keys its shape does not name and reporting every issue at
- * once. A document with `kind` is a collection: the kind is read first and then decoded with that
- * collection's schema alone, so a stray key or a wrong kind gets a precise message rather than a
- * union error.
+ * Decodes a parsed `tack.yaml`, refusing keys it does not name and reporting every issue at once.
  */
 export const decodeSourceDeclaration = (parsed: unknown) =>
-  Predicate.hasProperty(parsed, "kind") === false
-    ? Schema.decodeUnknownEffect(
-        ListDeclarationSchema,
-        decodeOptions,
-      )(parsed).pipe(Effect.map((declaration): SourceDeclaration => declaration))
-    : Schema.decodeUnknownEffect(CollectionKindSchema)(parsed).pipe(
-        Effect.flatMap(({ kind }) =>
-          Schema.decodeUnknownEffect(collectionSchemas[kind], decodeOptions)(parsed),
-        ),
-        Effect.map((declaration): SourceDeclaration => declaration),
-      );
+  Schema.decodeUnknownEffect(DeclarationSchema, decodeOptions)(parsed);
+
+/** The resource keys a retired `kind` key named, each now declared by a `.` entry. */
+const retiredKinds = ["skills", "commands", "docs"] as const;
+
+/** How a declaration is written: a `tack.yaml`, or the JSON `source add --config` takes. */
+export type DeclarationFormat = "yaml" | "json";
+
+/**
+ * Why a declaration with the retired `kind` key is refused, with the declaration to write instead:
+ * the same keys, and the kind's resource key with one `.` entry. A docs entry takes the source
+ * name and the `reader` settings.
+ */
+const kindMessage = (parsed: { readonly [key: string]: unknown }, format: DeclarationFormat) => {
+  const { kind, ...rest } = parsed;
+  const retired = retiredKinds.find((known) => known === kind);
+  if (retired === undefined)
+    return `A tack.yaml takes no kind key. Declare the folder that holds it as a "." entry, such as skills: [{ path: "." }]; tack guide tack-yaml lists every key.`;
+  const { reader, ...others } = rest;
+  const replacement =
+    retired === "docs"
+      ? {
+          ...others,
+          docs: [
+            {
+              name: rest["name"],
+              path: sourceFolderPath,
+              ...(reader === undefined ? {} : { reader }),
+            },
+          ],
+        }
+      : { ...rest, [retired]: [{ path: sourceFolderPath }] };
+  const text = format === "json" ? JSON.stringify(replacement) : Yaml.stringify(replacement);
+  return `A tack.yaml takes no kind key: a "." entry declares the folder that holds it. Write instead:\n${text
+    .trimEnd()
+    .split("\n")
+    .map((line) => `  ${line}`)
+    .join("\n")}`;
+};
 
 /** One reason a parsed declaration does not decode, and the field it concerns when it has one. */
 export type DeclarationIssue = { readonly field?: string; readonly message: string };
@@ -218,14 +213,6 @@ const fieldOf = (path: ReadonlyArray<unknown>) =>
     "",
   );
 
-/** The shape `parsed` is decoded as, by the words a message names it with, and the keys it takes. */
-const shapeOf = (parsed: unknown) => {
-  const kind = Predicate.hasProperty(parsed, "kind") === true ? parsed.kind : undefined;
-  return typeof kind === "string" && isCollectionKind(kind) === true
-    ? { words: `A ${kind} collection`, keys: Object.keys(collectionSchemas[kind].fields) }
-    : { words: "A list-form tack.yaml", keys: Object.keys(ListDeclarationSchema.fields) };
-};
-
 /**
  * Each issue of a declaration that {@link decodeSourceDeclaration} refused, in the order the
  * schema reports them. An unknown key names the keys its shape takes, read from the schema, and a
@@ -235,38 +222,28 @@ export const declarationIssues = (
   parsed: unknown,
   error: Schema.SchemaError,
   folderName: string,
+  format: DeclarationFormat,
 ): ReadonlyArray<DeclarationIssue> =>
-  formatIssues(error.issue).issues.map(({ path, message }): DeclarationIssue => {
-    // The formatter gives every issue a path, the empty one for the declaration as a whole.
-    const field = fieldOf(path ?? /* v8 ignore next -- @preserve */ []);
-    if (field === "") return { message };
-    if (message === leafMarkers.unexpected) {
-      const shape = shapeOf(parsed);
-      return {
-        field,
-        message: `Unknown key "${field}". ${shape.words} takes: ${shape.keys.join(", ")}.`,
-      };
-    }
-    if (message === leafMarkers.missing)
-      return {
-        field,
-        message:
-          field === "name" ? missingSourceNameMessage(folderName) : `Missing key "${field}".`,
-      };
-    return { field, message: `${field}: ${message}` };
-  });
-
-/**
- * The resource keys of a declaration. `docs` is a resource key, but a source that declares only
- * `docs` still has its resource folders checked.
- */
-export const declarationResourceKeys = [
-  "skills",
-  "commands",
-  "context",
-  "scripts",
-  "docs",
-] as const;
+  // The retired kind key is the one issue to fix first: what replaces it decodes differently.
+  Predicate.isObject(parsed) === true && "kind" in parsed
+    ? [{ field: "kind", message: kindMessage(parsed, format) }]
+    : formatIssues(error.issue).issues.map(({ path, message }): DeclarationIssue => {
+        // The formatter gives every issue a path, the empty one for the declaration as a whole.
+        const field = fieldOf(path ?? /* v8 ignore next -- @preserve */ []);
+        if (field === "") return { message };
+        if (message === leafMarkers.unexpected)
+          return {
+            field,
+            message: `Unknown key "${field}". A tack.yaml takes: ${Object.keys(DeclarationSchema.fields).join(", ")}.`,
+          };
+        if (message === leafMarkers.missing)
+          return {
+            field,
+            message:
+              field === "name" ? missingSourceNameMessage(folderName) : `Missing key "${field}".`,
+          };
+        return { field, message: `${field}: ${message}` };
+      });
 
 /** A heads-up about a healthy source, which never changes its health or an exit code. */
 export const SourceWarningSchema = Schema.Struct({
