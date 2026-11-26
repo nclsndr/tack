@@ -68,9 +68,19 @@ async function listening(port: number) {
   });
 }
 
-/** The temporary reader themes left in one `TMPDIR`. */
-async function themes(temporary: string) {
-  return (await readdir(temporary)).filter((name) => name.startsWith("tack-reader-theme-"));
+/** What the reader keeps in one project's cache under the state directory, and in `TMPDIR`. */
+async function readerFiles(state: string, temporary: string) {
+  const reader = join(state, "cache", "reader");
+  const projects = await readdir(reader).catch(() => []);
+  const cached = await Promise.all(
+    projects.map(async (project) =>
+      (await readdir(join(reader, project))).map((entry) => `${project}/${entry}`),
+    ),
+  );
+  return {
+    cache: cached.flat().map((entry) => entry.replace(/^demo-[0-9a-f]{12}\//, "")),
+    temporary: (await readdir(temporary)).filter((name) => name.startsWith("tack-reader-")),
+  };
 }
 
 /**
@@ -93,7 +103,7 @@ it.each<Stop>([
   // A crashed engine runs none of its own cleanup.
   { signal: "SIGKILL", target: "engine", edit: false, exitCode: 1 },
 ])(
-  "$signal to the $target releases the real reader and its theme (saved edit: $edit)",
+  "$signal to the $target releases the real reader, its theme and its cache (saved edit: $edit)",
   async ({ signal, target, edit, exitCode }) => {
     // Keep failures inspectable; every CLI and compiler write stays in this disposable fixture.
     const root = await realpath(await mkdtemp(join(tmpdir(), "tack-reader-shutdown-")));
@@ -204,7 +214,11 @@ it.each<Stop>([
         }, "saved-edit compilation");
         children = [...new Set([...children, ...descendants(child.pid)])];
       }
-      expect(await themes(temporary)).toHaveLength(1);
+      // The session builds in the project's cache, which it holds, not in a private theme.
+      expect(await readerFiles(state, temporary)).toEqual({
+        cache: expect.arrayContaining(["session.lock", "theme"]),
+        temporary: [],
+      });
       if (target === "cli") child.kill(signal);
       else if (target === "terminal") {
         await child.stdin?.write("close\n");
@@ -224,7 +238,10 @@ it.each<Stop>([
       expect(await listening(port)).toBe(false);
       expect(await reservePort(port)).toBe(port);
       expect(stdout + stderr).not.toContain("ObjectRef is not unref");
-      expect(await themes(temporary)).toEqual([]);
+      // The theme and the lock go; only the build cache stays, for the next session.
+      const left = await readerFiles(state, temporary);
+      expect(left.cache.filter((entry) => entry !== "build")).toEqual([]);
+      expect(left.temporary).toEqual([]);
     } finally {
       if (child.exitCode === null) child.kill("SIGINT");
       await until(() => child.exitCode !== null, "cleanup CLI exit");

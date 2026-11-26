@@ -2,6 +2,8 @@ import { Effect, Stdio, Stream } from "effect";
 import { resolveProjectDocs } from "../../../features/docs/docs.ts";
 import { searchReader } from "../../../features/reader/search.ts";
 import { Reader } from "../../../services/reader.ts";
+import { resolveStateDirectory } from "../../../services/state-store.ts";
+import { holdReaderCache } from "../../../features/reader/reader-cache.ts";
 import { interactiveAllowed, TerminalContext } from "../human/terminal-context.ts";
 import { lookUpDocsIcons } from "../../../features/reader/icon-lookup.ts";
 import { ReaderSessionPayloadSchema } from "../../../features/reader/session.ts";
@@ -27,11 +29,17 @@ export const docsReaderRoutes: RoutesFor<"docs-icons" | "docs-search" | "docs-se
     run: (invocation, stateOptions) =>
       Effect.gen(function* () {
         const input = yield* resolveProjectDocs(stateOptions, invocation);
+        // Held before the reader starts, so it is released only once the reader has stopped.
+        const cacheDirectory = yield* holdReaderCache(
+          yield* resolveStateDirectory(stateOptions),
+          input.project,
+        );
         const reader = yield* Reader;
         const terminal = yield* TerminalContext;
         const session = yield* Effect.acquireRelease(
           reader.start({
             input,
+            ...(cacheDirectory === undefined ? {} : { cacheDirectory }),
             open: invocation.open ?? interactiveAllowed(terminal),
             ...(invocation.port === undefined ? {} : { port: invocation.port }),
           }),

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFile, realpath, readdir } from "node:fs/promises";
 import { basename, dirname, extname, isAbsolute, relative, resolve, sep } from "node:path";
 import type { Root, RootContent } from "mdast";
@@ -360,6 +361,32 @@ export function remarkSourceBlocks(
       } satisfies MdxJsxFlowElement;
     });
   };
+}
+
+/**
+ * Identifies what {@link remarkSourceBlocks} compiles into a page besides the page's own file: the
+ * other files its block versions draw on (imported data and fragments) and the page routes its
+ * links resolve against. Rspack tracks each page's file and the components it imports, so a build
+ * cache keyed on this digest survives an edit to either, and is replaced when a file Rspack cannot
+ * connect to the page's output changes.
+ */
+export async function sourceBlocksDigest(documents: readonly ReaderDocument[]): Promise<string> {
+  const paths = [
+    ...new Set(
+      documents.flatMap((document) =>
+        document.blocks
+          .flatMap((block) => block.contributors.map((reference) => reference.path))
+          .filter((path) => path !== document.path),
+      ),
+    ),
+  ].sort();
+  const files = await Promise.all(
+    // A file removed since the corpus loaded still yields a digest; the watcher rebuilds after it.
+    paths.map(async (path) => [path, await readFile(path, "utf8").catch(() => null)]),
+  );
+  return createHash("sha256")
+    .update(JSON.stringify({ pages: documents.map(({ path, route }) => [path, route]), files }))
+    .digest("hex");
 }
 
 /**

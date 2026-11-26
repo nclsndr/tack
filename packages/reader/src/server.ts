@@ -1,5 +1,5 @@
 import { realpathSync } from "node:fs";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { ReaderConfigurationError } from "./config.ts";
@@ -18,6 +18,14 @@ export type ReaderOptions = {
   input: ReaderProjectInput;
   /** The Tack release stamp the reader shows; the reader package cannot read the CLI's own. */
   version?: string;
+  /**
+   * A directory this session holds alone, such as one its caller locked for the project. The engine
+   * builds its theme in `theme`, removed on exit, and keeps Rspack's build cache in `build`, so the
+   * next session at the same path reuses it. Rspack keys that cache on absolute paths, so only a
+   * stable directory lets it hit. Without one, the session builds in a private temporary theme,
+   * from a cold cache.
+   */
+  cacheDirectory?: string;
   port?: number;
   open?: boolean;
   diagnostic?: (message: string) => void;
@@ -34,10 +42,29 @@ const readyMessage = z.discriminatedUnion("type", [
   }),
 ]);
 
-/** Spawns the engine that builds into `theme`; its IPC settles `ready` with the URL or a failure. */
+/** Where one session builds: its theme, removed once the engine exits, and Rspack's build cache. */
+type BuildDirectories = { theme: string; buildCache: string };
+
+/**
+ * Prepares an empty theme in the session's cache directory, or a private temporary one that also
+ * holds its build cache, so both go together.
+ */
+async function buildDirectories(cacheDirectory: string | undefined): Promise<BuildDirectories> {
+  if (cacheDirectory === undefined) {
+    const theme = await mkdtemp(join(tmpdir(), "tack-reader-theme-"));
+    return { theme, buildCache: join(theme, "build") };
+  }
+  const theme = join(cacheDirectory, "theme");
+  // A session that could not clean up leaves its theme, whose page proxies no longer match.
+  await rm(theme, { recursive: true, force: true });
+  await mkdir(theme, { recursive: true });
+  return { theme, buildCache: join(cacheDirectory, "build") };
+}
+
+/** Spawns the engine that builds into `directories`; its IPC settles `ready` with the URL or a failure. */
 function spawnEngine(
   options: ReaderOptions,
-  theme: string,
+  directories: BuildDirectories,
   ready: PromiseWithResolvers<string>,
 ): ReaderProcess {
   return readerProcesses.spawn({
@@ -47,7 +74,7 @@ function spawnEngine(
       JSON.stringify({
         input: options.input,
         port: options.port ?? 4173,
-        theme,
+        ...directories,
         ...(options.version === undefined ? {} : { version: options.version }),
       }),
     ],
@@ -84,7 +111,8 @@ export async function startReader(options: ReaderOptions): Promise<ReaderServer>
   const diagnostic = options.diagnostic ?? ((message) => process.stderr.write(message));
   // The server owns the engine's generated theme: the engine can stop without its own cleanup (a
   // crash, or Rsbuild's forced exit on a signal), so the theme goes once the engine has exited.
-  const theme = await mkdtemp(join(tmpdir(), "tack-reader-theme-"));
+  const directories = await buildDirectories(options.cacheDirectory);
+  const { theme } = directories;
   const removeTheme = () =>
     rm(theme, { recursive: true, force: true }).catch((error: unknown) => {
       diagnostic(
@@ -95,7 +123,7 @@ export async function startReader(options: ReaderOptions): Promise<ReaderServer>
   try {
     // An abort while the theme was created spawns no engine.
     options.signal?.throwIfAborted();
-    worker = spawnEngine(options, theme, ready);
+    worker = spawnEngine(options, directories, ready);
   } catch (error) {
     await removeTheme();
     throw error;

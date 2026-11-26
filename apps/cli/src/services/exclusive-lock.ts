@@ -18,6 +18,19 @@ export type LockProtocol = {
   readonly directoryMode?: number;
 };
 
+/** A private lock whose record is the owning process id, held for as long as that process lives. */
+export const processLockProtocol: LockProtocol = {
+  record: (pid) => `${pid}\n`,
+  holder: (record) => {
+    const value = record.trim();
+    if (!/^[1-9]\d*$/.test(value)) return undefined;
+    const pid = Number(value);
+    return Number.isSafeInteger(pid) ? { pid, expired: false } : undefined;
+  },
+  fileMode: 0o600,
+  directoryMode: 0o700,
+};
+
 /** Reports that a live process, or an owner that cannot be identified, holds the lock. */
 export class LockBusyError extends Schema.TaggedError<LockBusyError>()("LockBusyError", {
   lockPath: Schema.String,
