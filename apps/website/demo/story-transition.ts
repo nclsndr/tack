@@ -1,47 +1,14 @@
 import type { LinkField } from "./link-field.ts";
 
-/**
- * The ways the landing carries the hero's demo window into the story plate below it: links that
- * run down from the window onto the saddle like reins, a drafting rule that draws the plate in as
- * it scrolls up, or a racetrack laid across the seam that a runner laps one leg per command.
- */
-const transitions = ["reins", "plotter", "track"] as const;
-
-/** One way to carry the demo into the story plate. */
-export type Transition = (typeof transitions)[number];
-
-/** The direction the landing shows when the address names none. */
-export const defaultTransition: Transition = "reins";
-
-/** The letter each direction answers to in `?transition=`, in the order they are listed. */
-const letters: ReadonlyArray<readonly [string, Transition]> = transitions.map((name, index) => [
-  String.fromCharCode(97 + index),
-  name,
-]);
-
-/**
- * The direction `?transition=` names in `search`, by letter (`a`, `b`, `c`) or by name, or the
- * default when it names none or one that does not exist.
- */
-export const transitionFrom = (search: string): Transition => {
-  const value = new URLSearchParams(search).get("transition")?.toLowerCase();
-  if (value === undefined) return defaultTransition;
-  return (
-    letters.find(([letter, name]) => letter === value || name === value)?.[1] ?? defaultTransition
-  );
-};
-
-/** How many links the demo machine holds, how many the last command made, and the places served. */
-type LinkTally = { readonly total: number; readonly fresh: number; readonly scopes: number };
+/** How many links the demo machine holds, and how many the last command made. */
+type LinkTally = { readonly total: number; readonly fresh: number };
 
 /** Counts the links in the demo's field; nothing before the machine loads. */
 export const tallyLinks = (field: LinkField | undefined): LinkTally => {
-  const rows = field?.rows ?? [];
-  const links = rows.flatMap((row) => row.links);
+  const links = (field?.rows ?? []).flatMap((row) => row.links);
   return {
     total: links.length,
     fresh: links.filter((link) => link.fresh === true).length,
-    scopes: new Set(rows.map((row) => row.scope)).size,
   };
 };
 
@@ -91,29 +58,4 @@ export const reinPath = (
 ) => {
   const handle = bend + (target.y - bend) / 2;
   return `M ${x} 0 L ${x} ${bend} C ${x} ${handle}, ${target.x} ${handle}, ${target.x} ${target.y}`;
-};
-
-/** How a tick of the plotter's rule reads: one per link, the new ones in brass. */
-type Tick = "idle" | "lit" | "fresh";
-
-/** The `count` ticks of the plotter's rule: one lit per link, the fresh ones last. */
-export const rulerTicks = (total: number, fresh: number, count: number): ReadonlyArray<Tick> => {
-  const lit = Math.min(total, count);
-  const newest = lit - Math.min(fresh, lit);
-  return Array.from({ length: count }, (_, index) =>
-    index >= lit ? "idle" : index >= newest ? "fresh" : "lit",
-  );
-};
-
-/** The track's lanes: one per place the links serve, the home and each project, up to three. */
-export const laneCount = (scopes: number) => Math.min(3, Math.max(1, scopes));
-
-/**
- * A point on the track at `fraction` of a lap, in percentages of the track's box: the lap starts
- * at the bottom and runs clockwise. `inset` shrinks the lane by that share of the outer one.
- */
-export const trackPoint = (fraction: number, inset = 0) => {
-  const angle = Math.PI / 2 + fraction * 2 * Math.PI;
-  const radius = 50 * (1 - inset);
-  return { left: 50 + radius * Math.cos(angle), top: 50 + radius * Math.sin(angle) };
 };

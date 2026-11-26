@@ -1,51 +1,9 @@
-import {
-  animate,
-  motion,
-  useMotionValue,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-  useMotionValueEvent,
-} from "motion/react";
-import {
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-  type ReactNode,
-  type RefObject,
-} from "react";
-import {
-  defaultTransition,
-  laneCount,
-  layoutReins,
-  reinPath,
-  reinSpan,
-  rulerTicks,
-  tallyLinks,
-  trackPoint,
-  transitionFrom,
-  type Transition,
-} from "../../demo/story-transition.ts";
+import { motion, useReducedMotion } from "motion/react";
+import { useEffect, useRef, useState, type RefObject } from "react";
+import { layoutReins, reinPath, reinSpan, tallyLinks } from "../../demo/story-transition.ts";
 import { story } from "./content.ts";
 import { useDemoLinks } from "./demo-links.tsx";
 import { ease } from "./drafting-sheet.tsx";
-
-const unsubscribe = () => undefined;
-const subscribe = () => unsubscribe;
-
-/**
- * The way the page carries the demo into the story, from `?transition=` in the address. The page
- * is built with the default, and a visitor's choice applies once it runs, which only swaps the
- * decoration: every layer it draws is out of the flow.
- */
-export function useTransitionChoice(): Transition {
-  return useSyncExternalStore(
-    subscribe,
-    () => transitionFrom(window.location.search),
-    () => defaultTransition,
-  );
-}
 
 /** The demo's links counted, how many commands made links, and how many commands ran. */
 function useDemoBeat() {
@@ -148,17 +106,18 @@ function Rein({
 }
 
 /**
- * Direction A, the seam: the reins leave the demo window's bottom edge and run straight down
+ * The reins across the seam: they leave the demo window's bottom edge and run straight down
  * through the space under it, one per link the demo has made, or dashed guides before it has made
- * any. They carry on in the story frame, which picks them up at the same places.
+ * any. They carry on in the story frame, which picks them up at the same places. It sits in the
+ * story's stage but reaches up under the demo window.
  */
-function ReinsSeam({ stage }: { readonly stage: RefObject<HTMLElement | null> }) {
+export function ReinsSeam({ stage }: { readonly stage: RefObject<HTMLElement | null> }) {
   const column = useColumn(stage);
   const beat = useDemoBeat();
   if (column === undefined) return null;
   const reins = layoutReins(beat.total, beat.fresh, reinSpan(column.left, column.span));
   return (
-    <svg className="transition-seam reins" aria-hidden="true">
+    <svg className="transition-seam" aria-hidden="true">
       {reins.map((rein, index) => (
         <Rein
           key={`${index}-${rein.x}`}
@@ -205,10 +164,11 @@ function useReinFrame(frame: RefObject<HTMLElement | null>) {
 }
 
 /**
- * Direction A, the frame: the reins come down from the top of the story frame where the seam
- * left them, bend over the plate and land on the saddle, whose buckle beats once per command.
+ * The reins in the pinned story frame, behind the heading and over the plate: they come down from
+ * the top of the frame where the seam left them, bend over the plate and land on the saddle, whose
+ * buckle beats once per command.
  */
-function ReinsFrame({ frame }: { readonly frame: RefObject<HTMLElement | null> }) {
+export function ReinsFrame({ frame }: { readonly frame: RefObject<HTMLElement | null> }) {
   const box = useReinFrame(frame);
   const beat = useDemoBeat();
   const layer = useRef<HTMLDivElement>(null);
@@ -252,146 +212,4 @@ function ReinsFrame({ frame }: { readonly frame: RefObject<HTMLElement | null> }
       ) : null}
     </div>
   );
-}
-
-/** How many ticks the plotter's rule carries. */
-const tickCount = 32;
-
-/**
- * Direction B: a drafting rule draws the plate in as the story scrolls up under the demo, the
- * plate showing above the rule and the bare sheet below it. Once drawn, the rule rests under the
- * plate as its scale, one tick lit per link the demo has made, the newest in brass. Under reduced
- * motion, and before the page runs, the plate is drawn and the rule rests.
- */
-function PlotterPlate({ children }: { readonly children: ReactNode }) {
-  const still = useReducedMotion() === true;
-  const plotter = useRef<HTMLDivElement>(null);
-  const [live, setLive] = useState(false);
-  // The rule sets off once the plate's top edge is on screen and rests by the time it reaches the
-  // upper third, where the pinned frame holds it, so the drawing happens in view.
-  const { scrollYProgress: draw } = useScroll({
-    target: plotter,
-    offset: ["start 85%", "start 35%"],
-  });
-  // The stylesheet rests the rule at `--draw: 1`; the scroll moves it only while the page runs.
-  const place = (value: number) => plotter.current?.style.setProperty("--draw", String(value));
-  useMotionValueEvent(draw, "change", (value) => {
-    if (still === false) place(value);
-  });
-  useEffect(() => {
-    place(still ? 1 : draw.get());
-    setLive(still === false);
-  }, [still, draw]);
-  const beat = useDemoBeat();
-  const ticks = rulerTicks(beat.total, beat.fresh, tickCount);
-  return (
-    <div ref={plotter} className="plotter" data-drawing={live}>
-      <div className="plotter-sheet">{children}</div>
-      <div className="plotter-rule" aria-hidden="true">
-        <span className="plotter-ticks">
-          {ticks.map((tick, index) => (
-            <span key={index} className="plotter-tick" data-state={tick} />
-          ))}
-        </span>
-        <span className="plotter-label">{`${beat.total} links`}</span>
-      </div>
-    </div>
-  );
-}
-
-/** How many legs a lap of the track has: the runner moves one per command. */
-const legs = 10;
-
-/** How far in each inner lane sits, as a share of the outer lane. */
-const laneInset = 0.14;
-
-/** The runner on the outer lane, a leg further round for each command the demo runs. */
-function Runner({ commands }: { readonly commands: number }) {
-  const still = useReducedMotion() === true;
-  const lap = useMotionValue(commands / legs);
-  useEffect(() => {
-    const target = commands / legs;
-    if (still) {
-      lap.set(target);
-      return undefined;
-    }
-    const controls = animate(lap, target, { duration: 1.4, ease });
-    return () => controls.stop();
-  }, [commands, still, lap]);
-  const left = useTransform(lap, (fraction) => `${trackPoint(fraction).left}%`);
-  const top = useTransform(lap, (fraction) => `${trackPoint(fraction).top}%`);
-  return <motion.span className="track-runner" style={{ left, top }} />;
-}
-
-/**
- * Direction C: the plate's racetrack laid across the seam, its top half rounding the demo
- * window's foot and its bottom half in the space above the story's heading. A lane for each place
- * the demo links into, and a brass runner a leg further round for each command.
- */
-function TrackSeam() {
-  const beat = useDemoBeat();
-  const lanes = laneCount(beat.scopes);
-  const start = trackPoint(0);
-  return (
-    <div className="transition-seam track" aria-hidden="true">
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-        {Array.from({ length: lanes }, (_, lane) => {
-          const radius = 50 * (1 - lane * laneInset);
-          return (
-            <motion.ellipse
-              key={lane}
-              className="track-lane"
-              cx="50"
-              cy="50"
-              rx={radius}
-              ry={radius}
-              initial={lane === 0 ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, ease }}
-            />
-          );
-        })}
-      </svg>
-      <span className="track-start" style={{ left: `${start.left}%`, top: `${start.top}%` }} />
-      <Runner commands={beat.commands} />
-    </div>
-  );
-}
-
-/**
- * The transition's part that sits across the seam between the hero and the story, in the story's
- * stage but reaching up under the demo window.
- */
-export function TransitionSeam({
-  choice,
-  stage,
-}: {
-  readonly choice: Transition;
-  readonly stage: RefObject<HTMLElement | null>;
-}) {
-  if (choice === "reins") return <ReinsSeam stage={stage} />;
-  if (choice === "track") return <TrackSeam />;
-  return null;
-}
-
-/** The transition's part inside the pinned story frame, behind the heading and the plate. */
-export function TransitionFrame({
-  choice,
-  frame,
-}: {
-  readonly choice: Transition;
-  readonly frame: RefObject<HTMLElement | null>;
-}) {
-  return choice === "reins" ? <ReinsFrame frame={frame} /> : null;
-}
-
-/** The plate, drawn in by the plotter's rule in direction B, and as it is otherwise. */
-export function TransitionPlate({
-  choice,
-  children,
-}: {
-  readonly choice: Transition;
-  readonly children: ReactNode;
-}) {
-  return choice === "plotter" ? <PlotterPlate>{children}</PlotterPlate> : children;
 }

@@ -481,8 +481,10 @@
 
   position: relative;
   /* `clip`, not `hidden`: a hidden overflow makes the hero a scroll container, and the pin's view
-     timeline would then measure the hero instead of the viewport. */
-  overflow: clip;
+     timeline would then measure the hero instead of the viewport. Only the sides clip: the demo
+     window's shadow reaches past the hero's foot and fades out over the story below it. */
+  overflow-x: clip;
+  overflow-y: visible;
   margin-top: calc(-1 * var(--landing-header-height));
   padding-bottom: var(--hero-tail);
 }

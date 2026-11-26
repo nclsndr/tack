@@ -4,12 +4,7 @@ import { story } from "./content.ts";
 import { corners, ease, InView, settle } from "./drafting-sheet.tsx";
 import { Illustration } from "./illustration.tsx";
 import { InlineCode, Proof } from "./inline-code.tsx";
-import {
-  TransitionFrame,
-  TransitionPlate,
-  TransitionSeam,
-  useTransitionChoice,
-} from "./story-transition.tsx";
+import { ReinsFrame, ReinsSeam } from "./story-transition.tsx";
 
 /**
  * Which beat of the story the page is on: 0 before the stage pins, then one beat per stretch of
@@ -153,25 +148,19 @@ function HorsePlate({ beat }: { readonly beat: number }) {
  * pinned while the page scrolls: the agent is the horse, Tack the gear. The heading and its intro
  * hold at the top; each beat brings one part of the plate back in colour, drafting marks close in
  * on it and its caption rises in, with a command or fact as its proof. On narrow screens and under
- * reduced motion the beats stack under the plate. A decorative transition carries the demo window
- * down into the plate (`story-transition.tsx`); it follows the demo but never waits for it.
+ * reduced motion the beats stack under the plate. The demo's links run down from the window into
+ * the plate like reins and land on the saddle (`story-transition.tsx`): decoration that follows
+ * the demo but never waits for it.
  */
 export function Story() {
   const stage = useRef<HTMLElement>(null);
   const frame = useRef<HTMLDivElement>(null);
   const beat = useStoryBeat(stage, story.beats.length);
-  const choice = useTransitionChoice();
   return (
-    <section
-      ref={stage}
-      className="story-stage"
-      data-beat={beat}
-      data-transition={choice}
-      aria-labelledby="story-title"
-    >
-      <TransitionSeam choice={choice} stage={stage} />
+    <section ref={stage} className="story-stage" data-beat={beat} aria-labelledby="story-title">
+      <ReinsSeam stage={stage} />
       <div ref={frame} className="story-sticky">
-        <TransitionFrame choice={choice} frame={frame} />
+        <ReinsFrame frame={frame} />
         <InView className="landing-shell story-head">
           <motion.h2 id="story-title" data-intro="" variants={settle(0, 16)}>
             {story.heading}
@@ -181,9 +170,7 @@ export function Story() {
           </motion.p>
         </InView>
         <div className="story-figure">
-          <TransitionPlate choice={choice}>
-            <HorsePlate beat={beat} />
-          </TransitionPlate>
+          <HorsePlate beat={beat} />
           {story.beats.map((step, index) => (
             <RegionMarks key={step.id} region={step.region} on={beat === index + 1} />
           ))}

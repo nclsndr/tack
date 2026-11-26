@@ -1,17 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { nextLinkField } from "./link-field.ts";
 import {
-  defaultTransition,
   layoutReins,
-  laneCount,
   plannedReins,
   reinCap,
   reinPath,
   reinSpan,
-  rulerTicks,
   tallyLinks,
-  trackPoint,
-  transitionFrom,
 } from "./story-transition.ts";
 
 const home = "/home/you";
@@ -36,32 +31,14 @@ const sync = nextLinkField(
   home,
 );
 
-describe("transitionFrom", () => {
-  it("defaults to the recommended direction without a choice", () => {
-    expect(transitionFrom("")).toBe(defaultTransition);
-    expect(transitionFrom("?other=b")).toBe(defaultTransition);
-  });
-
-  it("reads a direction by letter or by name, in any case", () => {
-    expect(transitionFrom("?transition=a")).toBe("reins");
-    expect(transitionFrom("?transition=B")).toBe("plotter");
-    expect(transitionFrom("?transition=c")).toBe("track");
-    expect(transitionFrom("?transition=track")).toBe("track");
-  });
-
-  it("falls back to the default on an unknown value", () => {
-    expect(transitionFrom("?transition=z")).toBe(defaultTransition);
-  });
-});
-
 describe("tallyLinks", () => {
   it("counts nothing before the machine loads", () => {
-    expect(tallyLinks(undefined)).toEqual({ total: 0, fresh: 0, scopes: 0 });
+    expect(tallyLinks(undefined)).toEqual({ total: 0, fresh: 0 });
   });
 
-  it("counts every link, the fresh ones and the places they serve", () => {
-    expect(tallyLinks(init)).toEqual({ total: 2, fresh: 0, scopes: 1 });
-    expect(tallyLinks(sync)).toEqual({ total: 4, fresh: 2, scopes: 3 });
+  it("counts every link and the fresh ones", () => {
+    expect(tallyLinks(init)).toEqual({ total: 2, fresh: 0 });
+    expect(tallyLinks(sync)).toEqual({ total: 4, fresh: 2 });
   });
 });
 
@@ -105,38 +82,5 @@ describe("reinPath", () => {
     expect(reinPath(800, { x: 500, y: 1000 }, 400)).toBe(
       "M 800 0 L 800 400 C 800 700, 500 700, 500 1000",
     );
-  });
-});
-
-describe("rulerTicks", () => {
-  it("lights one tick per link, the fresh ones last", () => {
-    expect(rulerTicks(3, 1, 5)).toEqual(["lit", "lit", "fresh", "idle", "idle"]);
-  });
-
-  it("lights at most every tick", () => {
-    expect(rulerTicks(9, 9, 3)).toEqual(["fresh", "fresh", "fresh"]);
-  });
-});
-
-describe("laneCount", () => {
-  it("keeps one lane before any link and at most three", () => {
-    expect(laneCount(0)).toBe(1);
-    expect(laneCount(2)).toBe(2);
-    expect(laneCount(7)).toBe(3);
-  });
-});
-
-describe("trackPoint", () => {
-  it("starts at the bottom of the track and runs clockwise", () => {
-    expect(trackPoint(0)).toEqual({ left: 50, top: 100 });
-    const quarter = trackPoint(0.25);
-    expect(quarter.left).toBeCloseTo(0);
-    expect(quarter.top).toBeCloseTo(50);
-  });
-
-  it("draws an inner lane inside the outer one", () => {
-    const inner = trackPoint(0, 0.2);
-    expect(inner.left).toBeCloseTo(50);
-    expect(inner.top).toBeCloseTo(90);
   });
 });
