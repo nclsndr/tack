@@ -8,6 +8,10 @@ import {
   removeSkillChoice,
   setSkillChoice,
 } from "../../../features/choices/choice.ts";
+import {
+  userLinkedExcludes,
+  userLinksOf,
+} from "../../../features/reconciliation/linked-for-user.ts";
 import { withCommandWriter } from "../../../features/writer/recovered-writer.ts";
 import { readInvocationSnapshot } from "../../../features/snapshot/command-snapshot.ts";
 import type { StateOptions } from "../../../services/state-store.ts";
@@ -136,7 +140,11 @@ const setPick = (
         decision: request.decision,
         namespace: request.namespace,
       });
-      return choiceSetOutcome(applied, catalogAddressCandidates(catalog, applied.choice.address));
+      return choiceSetOutcome(
+        applied,
+        catalogAddressCandidates(catalog, applied.choice.address),
+        userLinkedExcludes(userLinksOf(snapshot.state, catalog, false), [applied.choice]),
+      );
     }),
   );
 

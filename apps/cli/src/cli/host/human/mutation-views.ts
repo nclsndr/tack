@@ -25,6 +25,7 @@ import { StateInitializationPayloadSchema } from "../../../services/state-store.
 import { commandLine, selectorFlags } from "../command-line.ts";
 import type { PublicEnvelope } from "../public-outcome.ts";
 import { handMadeLines } from "./hand-made.ts";
+import { userExcludeCommands } from "../collision-hints.ts";
 import { displayWidth, padEnd, wrapText } from "./text.ts";
 import {
   addressText,
@@ -265,6 +266,7 @@ const choiceSetView = mutationView(
             commandLine("choice-remove", ...addressOperands(choice.address, style), ...flags),
           ],
         }),
+        ...userExcludeCommands(envelope.diagnostics, style.reference),
         commandLine("sync", ...flags),
       ],
     };

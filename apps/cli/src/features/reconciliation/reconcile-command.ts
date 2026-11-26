@@ -30,9 +30,10 @@ import type { ReconciliationPlan } from "../../domain/reconciliation/reconciliat
 import { selectedDependencyAddresses } from "../../domain/choices/dependency-resolution.ts";
 import { quarantineIssue } from "../../domain/sources/catalog-report.ts";
 import { resolveContextSelection } from "../../domain/profiles/profile-application.ts";
+import { allSkillChoices } from "../../domain/state/state-intent.ts";
 import type { StateOptions } from "../../services/state-store.ts";
 import type { CommandSnapshot } from "../snapshot/command-snapshot.ts";
-import { userLinksOf } from "./linked-for-user.ts";
+import { userLinkedExcludes, userLinksOf, type UserLinkedExclude } from "./linked-for-user.ts";
 
 /** Invocation-scoped inputs for one complete Phase 2 reconciliation command. */
 export type ReconcileCommandOptions = {
@@ -50,6 +51,8 @@ export type PreparedReconciliation = {
   readonly plan: ReconciliationPlan;
   readonly projectNames: ReadonlyArray<string>;
   readonly selection: SelectionEcho;
+  /** The excludes of the planned projects that cannot hide their resource from the project. */
+  readonly userLinkedExcludes: ReadonlyArray<UserLinkedExclude>;
 };
 
 export const prepareReconciliation = Effect.fnUntraced(function* (
@@ -117,6 +120,7 @@ export const prepareReconciliation = Effect.fnUntraced(function* (
         ]
       : [];
   });
+  const userLinks = userLinksOf(state, catalog, options.includeOptional);
   const plan = yield* planReconciliation({
     ...plannerInputCore({
       adapters: enabledAdapters,
@@ -127,7 +131,7 @@ export const prepareReconciliation = Effect.fnUntraced(function* (
       targets,
     }),
     managedLinks: plannedManagedLinks(state, catalog),
-    userLinks: userLinksOf(state, catalog, options.includeOptional),
+    userLinks,
     ...(options.requiredCapability === undefined
       ? {}
       : { requiredCapability: options.requiredCapability }),
@@ -141,6 +145,14 @@ export const prepareReconciliation = Effect.fnUntraced(function* (
       selectedDependencyAddresses(resolution).some((address) => address.kind !== "context"),
     );
 
+  const projectNames = [
+    ...new Set(
+      selection.targets.flatMap((target) =>
+        target._tag === "project-root" ? [target.projectName] : [],
+      ),
+    ),
+  ];
+
   return {
     causes: [
       ...fixedIssues,
@@ -152,13 +164,15 @@ export const prepareReconciliation = Effect.fnUntraced(function* (
       ...reconciliationPlanCauses(plan),
     ],
     plan,
-    projectNames: [
-      ...new Set(
-        selection.targets.flatMap((target) =>
-          target._tag === "project-root" ? [target.projectName] : [],
-        ),
-      ),
-    ],
+    projectNames,
     selection: selectionEcho(selection),
+    userLinkedExcludes: userLinkedExcludes(
+      userLinks,
+      allSkillChoices(state).filter(
+        (choice) =>
+          choice.namespace._tag === "project" &&
+          projectNames.includes(choice.namespace.projectName),
+      ),
+    ),
   } satisfies PreparedReconciliation;
 });

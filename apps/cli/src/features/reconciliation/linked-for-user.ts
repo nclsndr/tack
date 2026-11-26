@@ -1,10 +1,13 @@
+import { Schema } from "effect";
 import { agentAdapterDescriptor } from "../../domain/agents/agent-adapter.ts";
 import { deliversKind } from "../../domain/agents/agent-layout.ts";
+import type { SkillChoice } from "../../domain/choices/choice-schema.ts";
 import { selectedDependencyAddresses } from "../../domain/choices/dependency-resolution.ts";
 import type { AgentAdapterId } from "../../domain/links/agent-adapter-schema.ts";
 import { resolveContextSelection } from "../../domain/profiles/profile-application.ts";
 import {
   isLinkableAddress,
+  LinkableAddressSchema,
   resourceAddressIdentity,
   type Catalog,
   type LinkableAddress,
@@ -65,5 +68,34 @@ export const linkedForUser = (
     );
   return selected.filter(
     (address) => linked.has(resourceAddressIdentity(address)) && sharesName(address) === false,
+  );
+};
+
+/** A project exclude that cannot hide its resource, because the user namespace links it. */
+export const UserLinkedExcludeSchema = Schema.Struct({
+  address: LinkableAddressSchema,
+  projectName: Schema.String,
+});
+
+/** A project exclude that cannot hide its resource; see {@link UserLinkedExcludeSchema}. */
+export type UserLinkedExclude = typeof UserLinkedExcludeSchema.Type;
+
+/**
+ * The project excludes among `choices` whose resource `userLinks` links for the user. The
+ * project's own link goes, but the user's stays in front of every agent in the project, so such
+ * an exclude hides nothing until the resource is excluded for the user too.
+ */
+export const userLinkedExcludes = (
+  userLinks: ReadonlyArray<UserLink>,
+  choices: ReadonlyArray<SkillChoice>,
+): ReadonlyArray<UserLinkedExclude> => {
+  const linked = new Set(userLinks.map((link) => resourceAddressIdentity(link.address)));
+  return choices.flatMap(({ address, decision, namespace }) =>
+    decision === "exclude" &&
+    namespace._tag === "project" &&
+    isLinkableAddress(address) &&
+    linked.has(resourceAddressIdentity(address))
+      ? [{ address, projectName: namespace.projectName }]
+      : [],
   );
 };
