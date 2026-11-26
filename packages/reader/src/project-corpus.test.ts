@@ -1,8 +1,11 @@
 import { stringify } from "yaml";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { mkdtemp, mkdir, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { unified } from "unified";
+import { readerBoot } from "./boot.ts";
+import { corpusIconNames } from "./icons/collect.ts";
 import { loadProjectCorpus } from "./project-corpus.ts";
 import type { ReaderProjectInput } from "./types.ts";
 
@@ -603,5 +606,69 @@ describe("project reader corpus", () => {
     expect(corpus.issues[0]?.message).toBe(
       `docs-a: reader configuration archive folders must stay inside declared docs resource ${entry.directoryPath}.`,
     );
+  });
+});
+
+describe("parsing a project corpus", () => {
+  const texts = {
+    "guide.md": "# Guide\n\nPlain prose.\n",
+    "icons.mdx":
+      '# Icons\n\nimport Shared from "./shared.mdx"\n\n<Icon name="house" />\n\n<Callout icon="rocket" kind="note">Go</Callout>\n\n<Shared />\n',
+    "shared.mdx": "Shared fragment.\n",
+  };
+
+  async function parsedCorpus() {
+    const docs = await resource("parsed");
+    await Promise.all(
+      Object.entries(texts).map(([name, text]) => writeFile(join(docs.directoryPath, name), text)),
+    );
+    const input = {
+      project: { name: "Tack", root: docs.sourcePath },
+      resources: [{ sourceRegistrationId: "source-a", name: "docs-a", ...docs }],
+      issues: [],
+    } satisfies ReaderProjectInput;
+    // Every remark parser of the reader is a unified processor, so this counts each full parse.
+    const parse = vi.spyOn(Object.getPrototypeOf(unified), "parse");
+    const parses = () =>
+      Object.fromEntries(
+        Object.entries(texts).map(([name, text]) => [
+          name,
+          parse.mock.calls.filter(([value]) => value === text).length,
+        ]),
+      );
+    return { docs, input, parse, parses };
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("parses each document once from its load through the icon and component checks", async () => {
+    const { input, parses } = await parsedCorpus();
+
+    const corpus = await loadProjectCorpus(input);
+    const names = await corpusIconNames(corpus);
+    const boot = readerBoot({ input, corpus, generation: "one", token: "session", checkout: null });
+
+    expect(corpus.documents.map((document) => document.relativePath)).toEqual(Object.keys(texts));
+    expect(names).toEqual(["house", "rocket"]);
+    expect(boot.iconIssues).toEqual([]);
+    expect(boot.componentIssues).toEqual([]);
+    expect(parses()).toEqual({ "guide.md": 1, "icons.mdx": 1, "shared.mdx": 1 });
+  });
+
+  it("reloads without parsing again, and forgets a document the corpus no longer holds", async () => {
+    const { docs, input, parse, parses } = await parsedCorpus();
+    const guide = join(docs.directoryPath, "guide.md");
+    await loadProjectCorpus(input);
+    await rm(guide);
+    await loadProjectCorpus(input);
+    await writeFile(guide, texts["guide.md"]);
+    parse.mockClear();
+
+    const corpus = await loadProjectCorpus(input);
+
+    expect(corpus.documents).toHaveLength(3);
+    expect(parses()).toEqual({ "guide.md": 1, "icons.mdx": 0, "shared.mdx": 0 });
   });
 });

@@ -2,6 +2,7 @@ import { readFile, realpath } from "node:fs/promises";
 import { dirname, extname, isAbsolute, relative, resolve, sep } from "node:path";
 import { ReaderConfigurationError } from "./config.ts";
 import { checkBrowserBuild, resolveModule, scanImports } from "./host.ts";
+import { keepTreesUsedBy } from "./parsed-source.ts";
 import { loadResourceConfig } from "./resource-config.ts";
 import { loadCorpusReport, type CorpusDocumentFailure } from "./source.ts";
 import type {
@@ -248,26 +249,29 @@ async function loadResourceCorpus(
 /**
  * Loads every selected docs resource independently so one saved-source error leaves healthy docs
  * usable. Inside a resource each selected document is also independent: a bad document yields its
- * own issue, and a bad resource-level configuration makes only that resource unavailable.
+ * own issue, and a bad resource-level configuration makes only that resource unavailable. A
+ * document parsed by an earlier load is parsed again only when its saved text changed.
  */
 export async function loadProjectCorpus(
   input: ReaderProjectInput,
   options: ProjectCorpusOptions = {},
 ): Promise<ReaderProjectCorpus> {
-  const resources = await Promise.all(
-    input.resources.map(async (resource): Promise<ReaderResourceLoadResult> => {
-      try {
-        return await loadResourceCorpus(resource, options);
-      } catch (error) {
-        const issue: ReaderResourceIssue = {
-          resource: resourceReference(resource),
-          sourcePath: resource.sourcePath,
-          code: "resource-load",
-          message: causeMessage(error),
-        };
-        return { resource, documents: [], issues: [issue] };
-      }
-    }),
+  const resources = await keepTreesUsedBy(() =>
+    Promise.all(
+      input.resources.map(async (resource): Promise<ReaderResourceLoadResult> => {
+        try {
+          return await loadResourceCorpus(resource, options);
+        } catch (error) {
+          const issue: ReaderResourceIssue = {
+            resource: resourceReference(resource),
+            sourcePath: resource.sourcePath,
+            code: "resource-load",
+            message: causeMessage(error),
+          };
+          return { resource, documents: [], issues: [issue] };
+        }
+      }),
+    ),
   );
   const issues = [...input.issues, ...resources.flatMap((resource) => resource.issues)];
   return {

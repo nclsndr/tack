@@ -257,7 +257,7 @@ export async function checkDocument(path: string): Promise<FigureCheckDocument> 
   return {
     path: absolute,
     figures,
-    icons: documentIconUses(source, extname(absolute)).length,
+    icons: documentIconUses(source, absolute).length,
     iconIssues: checkDocumentIcons(source, absolute).map(({ path: _path, ...issue }) => issue),
     components: componentCheck.components,
     componentIssues: componentCheck.findings.map(({ path: _path, ...finding }) => finding),

@@ -11,9 +11,6 @@ import {
 /** An `<Icon>` of a served document that the reader cannot draw, for the issue popover. */
 export type DocumentIconIssue = IconFinding;
 
-const mdxUses = (document: ReaderDocument) =>
-  documentIconUses(document.source, document.path.endsWith(".mdx") ? ".mdx" : ".md");
-
 /** Every unusable `<Icon>` of the corpus's documents, by path and line, in document order. */
 export function corpusIconIssues(documents: readonly ReaderDocument[]): DocumentIconIssue[] {
   return documents.flatMap((document) => checkDocumentIcons(document.source, document.path));
@@ -41,7 +38,9 @@ export async function corpusIconNames(corpus: ReaderProjectCorpus): Promise<Docs
     ),
   );
   const names = [
-    ...corpus.documents.flatMap((document) => mdxUses(document).flatMap(({ name }) => name ?? [])),
+    ...corpus.documents.flatMap((document) =>
+      documentIconUses(document.source, document.path).flatMap(({ name }) => name ?? []),
+    ),
     ...moduleNames.flat(),
   ];
   return [...new Set(names.filter(isDocsIconName))].toSorted();

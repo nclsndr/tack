@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { chmod, mkdtemp, mkdir, readdir, stat, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
+import { unified } from "unified";
 import { readerProcesses, type ReaderProcess } from "./host.ts";
 import { startReader as startProjectReader } from "./server.ts";
 import type { ReaderProjectInput } from "./types.ts";
@@ -133,6 +134,20 @@ describe("reader subprocess boundary", () => {
       expect(stderr).toHaveBeenCalledWith("engine output\n");
       expect(stderr).toHaveBeenCalledWith("engine diagnostic\n");
       expect(mock.commands).toHaveLength(1);
+    } finally {
+      await server.close();
+    }
+  });
+
+  it("leaves the corpus to the engine and parses no document before it spawns", async () => {
+    const root = await fixture();
+    const mock = engine();
+    // Every remark parser of the reader is a unified processor, so this counts each full parse.
+    const parse = vi.spyOn(Object.getPrototypeOf(unified), "parse");
+    const server = await startReader({ worktree: root, open: false, diagnostic: () => undefined });
+    try {
+      expect(mock.commands).toHaveLength(1);
+      expect(parse).not.toHaveBeenCalled();
     } finally {
       await server.close();
     }

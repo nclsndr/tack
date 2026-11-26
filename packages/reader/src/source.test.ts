@@ -48,6 +48,19 @@ afterEach(async () => {
   await Promise.all(temporary.splice(0).map((path) => rm(path, { recursive: true, force: true })));
 });
 
+describe("sourceVersion", () => {
+  // Pinned values: how the hash is computed may change, the version of a block may not.
+  it.each([
+    ["", "ztntfp"],
+    ["a", "1r9wi7g"],
+    ["before", "fm3l1a"],
+    ["Saved content.\n", "1m4m759"],
+    ["emoji 🧭 and é", "1t0ug4c"],
+  ])("hashes %j to %s", (text, version) => {
+    expect(sourceVersion(text)).toBe(version);
+  });
+});
+
 describe("authored source provenance", () => {
   it("preserves physical frontmatter offsets and separates authored blocks", () => {
     const result = analyzeDocument("/project/reader/example.mdx", document);

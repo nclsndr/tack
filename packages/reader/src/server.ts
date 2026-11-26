@@ -3,7 +3,6 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { ReaderConfigurationError } from "./config.ts";
-import { loadProjectCorpus } from "./project-corpus.ts";
 import type { ReaderProjectInput } from "./types.ts";
 import { z } from "zod";
 import { readerProcesses, type ReaderProcess } from "./host.ts";
@@ -74,10 +73,11 @@ function spawnEngine(
   });
 }
 
-/** Starts one isolated Rspress process with logs separated from Tack's public stdout. */
+/**
+ * Starts one isolated Rspress process with logs separated from Tack's public stdout. The engine
+ * loads the corpus itself, and reports a corpus it cannot serve through its startup error.
+ */
 export async function startReader(options: ReaderOptions): Promise<ReaderServer> {
-  options.signal?.throwIfAborted();
-  await loadProjectCorpus(options.input);
   options.signal?.throwIfAborted();
   let stopping = false;
   const ready = Promise.withResolvers<string>();
@@ -93,6 +93,8 @@ export async function startReader(options: ReaderOptions): Promise<ReaderServer>
     });
   let worker: ReaderProcess;
   try {
+    // An abort while the theme was created spawns no engine.
+    options.signal?.throwIfAborted();
     worker = spawnEngine(options, theme, ready);
   } catch (error) {
     await removeTheme();
