@@ -101,7 +101,7 @@ export const docsCommand = docsRoot.pipe(
       ]),
       immediate,
     ),
-    listAlias(docsRoot.pipe(Effect.flatMap(listDocs))),
+    listAlias({}, () => docsRoot.pipe(Effect.flatMap(listDocs))),
     docsSearchCommand,
     docsIconsCommand,
     docsServeCommand,

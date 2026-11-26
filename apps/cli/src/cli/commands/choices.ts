@@ -90,7 +90,7 @@ export const pickCommand = pickRoot.pipe(
     choiceSetCommand("include"),
     choiceSetCommand("exclude"),
     choiceRemoveCommand,
-    listAlias(pickRoot.pipe(Effect.flatMap(listPicks))),
+    listAlias({}, () => pickRoot.pipe(Effect.flatMap(listPicks))),
   ]),
   Command.withDescription(
     "List persisted choices in every namespace, or only in --project or --user; include, exclude and remove change them",

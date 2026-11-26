@@ -69,7 +69,7 @@ const adapterCommand = Command.make("adapter", {}, () => receive({ _tag: "adapte
   Command.withSubcommands([
     adapterSetCommand,
     adapterDisableCommand,
-    listAlias(receive({ _tag: "adapter-list" })),
+    listAlias({}, () => receive({ _tag: "adapter-list" })),
   ]),
   Command.withDescription(
     "Enable and disable the coding-agent adapters that receive links; bare `adapter` lists the enabled ones",

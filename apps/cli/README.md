@@ -675,7 +675,8 @@ all/some/none counts using the staged state. `c` reviews each child's change bef
 writes anything. Leaving with `q` and confirming discards the staged changes. Built-in skills stay
 locked in every namespace. In a profile or save-selection destination, `i` includes members and
 `x` excludes them with the same toggles; built-ins are never members.
-The bare read parents `source`, `project`, `pick`, `adapter` and `docs` also accept `list` and `ls`.
+The bare read parents `source`, `project`, `pick`, `adapter`, `docs` and `script history` also accept
+`list` and `ls`.
 
 State is written as format 1, under the envelope key `format` as the file's first field. This
 release reads and writes format 1 only and reports `stateFormat: 1`. A format above 1 fails with

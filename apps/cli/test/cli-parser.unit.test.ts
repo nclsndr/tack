@@ -765,6 +765,16 @@ const scriptRows: Rows = [
     ["script", "history", "--limit", "1", "--offset", "35"],
     { _tag: "history-list", limit: 1, offset: 35 },
   ],
+  [["script", "history", "list"], { _tag: "history-list", limit: 20, offset: 0 }],
+  [["script", "history", "ls"], { _tag: "history-list", limit: 20, offset: 0 }],
+  [
+    ["script", "history", "list", "--limit", "5", "--offset", "2"],
+    { _tag: "history-list", limit: 5, offset: 2 },
+  ],
+  [
+    ["script", "history", "ls", "--limit", "1", "--offset", "35"],
+    { _tag: "history-list", limit: 1, offset: 35 },
+  ],
   [["script", "history", "show", runId], { _tag: "history-show", runId: runId }],
   [["script", "history", "clear"], { _tag: "history-clear", apply: false }],
   [["script", "history", "clear", "--apply"], { _tag: "history-clear", apply: true }],

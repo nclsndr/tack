@@ -99,7 +99,7 @@ export const projectCommand = Command.make("project", {}, () =>
     projectAddCommand,
     projectRefreshCommand,
     projectRemoveCommand,
-    listAlias(receive({ _tag: "project-list" })),
+    listAlias({}, () => receive({ _tag: "project-list" })),
   ]),
   Command.withDescription(
     "Register, refresh and remove Git projects; bare `project` inspects every registered project, its roots and its health",
