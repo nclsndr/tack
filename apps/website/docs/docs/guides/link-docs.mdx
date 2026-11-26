@@ -173,6 +173,9 @@ press Ctrl+C.
 
 `--port` picks the port, and `--no-open` keeps the browser closed.
 
+The first launch for a project compiles every page. Later launches reuse the compiled pages, which
+Tack keeps in its state directory.
+
 ## Detach
 
 `tack docs detach handbook --project app` forgets the attachment. The next

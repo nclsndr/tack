@@ -12,8 +12,7 @@ import { readerProcesses, type ReaderProcess } from "./host.ts";
 import { readerEntry, readerFile } from "./reader-files.ts";
 import { isolateReaderStylesheet } from "./postcss.ts";
 import { loadProjectCorpus } from "./project-corpus.ts";
-import { remarkSourceBlocks } from "./source.ts";
-import { corpusRevision } from "./api.ts";
+import { remarkSourceBlocks, sourceBlocksDigest } from "./source.ts";
 import { readerRoutes } from "./routes.ts";
 import { readerBoot } from "./boot.ts";
 import { readCheckout } from "./checkout.ts";
@@ -64,6 +63,8 @@ const options = z
     port: z.number().int().min(0).max(65535),
     /** The generated theme directory; the server creates it and removes it once this process exits. */
     theme: z.string(),
+    /** Rspack's persistent build cache, outside the project so its repository stays clean. */
+    buildCache: z.string(),
     version: z.string().optional(),
   })
   .parse(JSON.parse(process.argv[2] ?? "{}"));
@@ -127,7 +128,6 @@ function bodyStream(req: IncomingMessage): ReadableStream<Uint8Array> {
 async function start() {
   const corpus = await loadProjectCorpus(options.input);
   documents = corpus.documents;
-  const issues = corpus.issues;
   generation = randomUUID();
   const loadedResources = corpus.resources.filter((resource) => resource.config !== undefined);
   const customizationLoaders = loadedResources
@@ -248,11 +248,13 @@ export function Layout() {
         image: { checkDeadImages: false },
       },
       builderConfig: {
-        // Compilation depends on the source plugin implementation and saved contributor files.
+        // Compilation depends on the source plugin implementation and the files its blocks draw on
+        // beyond each page; Rspack tracks the pages themselves, so an edit to a page keeps the cache.
         performance: {
           buildCache: {
+            cacheDirectory: options.buildCache,
             buildDependencies: [fileURLToPath(import.meta.url), readerFile("source.ts")],
-            cacheDigest: [corpusRevision(documents, issues)],
+            cacheDigest: [await sourceBlocksDigest(documents)],
           },
         },
         source: { define: { tackReaderBoot: JSON.stringify(boot) } },

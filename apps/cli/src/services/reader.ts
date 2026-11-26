@@ -4,6 +4,8 @@ import type { ReaderProjectInput } from "@tackup/reader/search-core";
 /** One resolved worktree reader startup request. */
 export type ReaderOptions = {
   readonly input: ReaderProjectInput;
+  /** The project's reader cache, which this session holds; without it the reader builds cold. */
+  readonly cacheDirectory?: string;
   readonly port?: number;
   readonly open: boolean;
 };

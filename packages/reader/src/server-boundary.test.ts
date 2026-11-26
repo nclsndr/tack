@@ -54,6 +54,7 @@ function readerInput(root: string): ReaderProjectInput {
 }
 function startReader(options: {
   worktree: string;
+  cacheDirectory?: string;
   port?: number;
   open?: boolean;
   diagnostic?: (message: string) => void;
@@ -344,35 +345,71 @@ describe("reader theme directory", () => {
     vi.stubEnv("TMPDIR", root);
     return root;
   }
-  /** The theme directory the server handed the engine on its command line. */
-  function themeOf(commands: unknown[]) {
+  /** The engine options the server handed the engine on its command line. */
+  function engineOptionsOf(commands: unknown[]) {
     const [command] = commands;
     if (Array.isArray(command) === false) throw new Error("Expected the engine command");
     const argument: unknown = command[2];
     if (typeof argument !== "string") throw new Error("Expected the engine options");
     const parsed: unknown = JSON.parse(argument);
-    if (typeof parsed !== "object" || parsed === null || "theme" in parsed === false)
-      throw new Error("Expected a theme in the engine options");
-    if (typeof parsed.theme !== "string") throw new Error("Expected a theme path");
-    return parsed.theme;
+    if (
+      typeof parsed !== "object" ||
+      parsed === null ||
+      "theme" in parsed === false ||
+      "buildCache" in parsed === false ||
+      typeof parsed.theme !== "string" ||
+      typeof parsed.buildCache !== "string"
+    )
+      throw new Error("Expected a theme and a build cache in the engine options");
+    return { theme: parsed.theme, buildCache: parsed.buildCache };
   }
+  /** The theme directory the server handed the engine on its command line. */
+  const themeOf = (commands: unknown[]) => engineOptionsOf(commands).theme;
   const present = (path: string) =>
     stat(path).then(
       () => true,
       () => false,
     );
 
-  it("creates the theme in TMPDIR, hands it to the engine and removes it on close", async () => {
+  it("without a cache directory, builds in a private theme in TMPDIR and removes it on close", async () => {
     const root = await fixture();
     const temporary = await temporaryRoot();
     const mock = engine();
     const server = await startReader({ worktree: root, open: false, diagnostic: () => undefined });
-    const theme = themeOf(mock.commands);
+    const { theme, buildCache } = engineOptionsOf(mock.commands);
     expect(dirname(theme)).toBe(temporary);
     expect(basename(theme)).toMatch(/^tack-reader-theme-/);
+    // The private build cache goes with the theme, so a second session leaves nothing behind.
+    expect(dirname(buildCache)).toBe(theme);
     expect(await present(theme)).toBe(true);
     await server.close();
     expect(await present(theme)).toBe(false);
+  });
+
+  it("builds in the cache directory, replaces a stale theme and keeps the build cache on close", async () => {
+    const root = await fixture();
+    const cacheDirectory = await mkdtemp(join(tmpdir(), "tack-reader-cache-"));
+    fixtures.push(cacheDirectory);
+    // A session that could not clean up left its theme, and an earlier build left its cache.
+    await mkdir(join(cacheDirectory, "theme", "pages"), { recursive: true });
+    await writeFile(join(cacheDirectory, "theme", "pages", "page-9.tsx"), "stale");
+    await mkdir(join(cacheDirectory, "build"));
+    await writeFile(join(cacheDirectory, "build", "entry"), "cached");
+    const mock = engine();
+    const server = await startReader({
+      worktree: root,
+      cacheDirectory,
+      open: false,
+      diagnostic: () => undefined,
+    });
+    expect(engineOptionsOf(mock.commands)).toEqual({
+      theme: join(cacheDirectory, "theme"),
+      buildCache: join(cacheDirectory, "build"),
+    });
+    expect(await readdir(join(cacheDirectory, "theme"))).toEqual([]);
+    await server.close();
+    expect(await readdir(cacheDirectory)).toEqual(["build"]);
+    expect(await readdir(join(cacheDirectory, "build"))).toEqual(["entry"]);
   });
 
   it("removes the theme once the engine has exited, not before", async () => {

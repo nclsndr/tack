@@ -1,5 +1,5 @@
 import { encodeStateFixture } from "./support/state-fixture.ts";
-import { mkdtemp, realpath, writeFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, realpath, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
@@ -11,6 +11,8 @@ import { makeReaderService } from "../src/platform/reader/reader.ts";
 import { TestClock } from "effect/testing";
 import { Git } from "../src/services/git.ts";
 import { captureStdio } from "./support/host-runner.ts";
+import { readerCacheDirectory } from "../src/features/reader/reader-cache.ts";
+import { existsSync } from "node:fs";
 
 const unusedGit = Git.of({
   resolveCommonDirectory: () => Effect.die("Reader must not discover project registrations."),
@@ -92,56 +94,79 @@ it.effect("cancels engine startup before readiness and emits one interruption en
   }),
 );
 
-it.effect("emits readiness once, waits in the foreground, and closes on interruption", () =>
-  Effect.gen(function* () {
-    const fixture = yield* hostFixture([
-      "docs",
-      "serve",
-      "--cwd",
-      "/tmp/worktree",
-      "--port",
-      "0",
-      "--no-open",
-    ]);
-    const closed = yield* Ref.make(0);
-    const requests = yield* Ref.make<ReadonlyArray<Parameters<ReaderService["start"]>[0]>>([]);
-    const reader = Reader.of({
-      start: (request) =>
-        Effect.gen(function* () {
-          yield* Ref.update(requests, (previous) => [...previous, request]);
-          return { url: "http://127.0.0.1:3000", close: Ref.update(closed, (count) => count + 1) };
-        }),
-    });
-    const fiber = yield* runCli().pipe(
-      Effect.provideService(Reader, reader),
-      Effect.provideService(Stdio.Stdio, fixture.stdio),
-      Effect.provideService(Git, unusedGit),
-      Effect.provide(LiveTestLayer),
-      Effect.forkChild,
-    );
-    yield* Deferred.await(fixture.ready);
-    expect(JSON.parse(yield* fixture.stdout)).toMatchObject({
-      command: "docs serve",
-      classification: "success",
-      result: {
-        kind: "reader-session",
-        url: "http://127.0.0.1:3000",
-        project: { name: "demo", root: fixture.root },
-      },
-    });
-    expect(yield* Ref.get(requests)).toEqual([
-      {
-        input: { project: { name: "demo", root: fixture.root }, resources: [], issues: [] },
-        port: 0,
-        open: false,
-      },
-    ]);
-    yield* Fiber.interrupt(fiber);
-    const exit = yield* Fiber.await(fiber);
-    expect(Exit.isFailure(exit) && Cause.hasInterruptsOnly(exit.cause)).toBe(true);
-    expect(yield* Ref.get(closed)).toBe(1);
-    expect((yield* fixture.stdout).trim().split("\n")).toHaveLength(1);
-  }),
+it.effect.each([
+  { cache: "held by this session", busy: false },
+  { cache: "busy with another session", busy: true },
+])(
+  "emits readiness once, waits in the foreground, and closes on interruption (cache $cache)",
+  ({ busy }) =>
+    Effect.gen(function* () {
+      const fixture = yield* hostFixture([
+        "docs",
+        "serve",
+        "--cwd",
+        "/tmp/worktree",
+        "--port",
+        "0",
+        "--no-open",
+      ]);
+      const project = { name: "demo", root: fixture.root };
+      // The project's cache lives under the state directory; a live process may already hold it.
+      const cacheDirectory = readerCacheDirectory(fixture.root, project);
+      const lock = join(cacheDirectory, "session.lock");
+      if (busy === true) {
+        yield* Effect.promise(async () => {
+          await mkdir(cacheDirectory, { recursive: true });
+          await writeFile(lock, `${process.pid}\n`);
+        });
+      }
+      const closed = yield* Ref.make(0);
+      const requests = yield* Ref.make<ReadonlyArray<Parameters<ReaderService["start"]>[0]>>([]);
+      const reader = Reader.of({
+        start: (request) =>
+          Effect.gen(function* () {
+            yield* Ref.update(requests, (previous) => [...previous, request]);
+            return {
+              url: "http://127.0.0.1:3000",
+              close: Ref.update(closed, (count) => count + 1),
+            };
+          }),
+      });
+      const fiber = yield* runCli().pipe(
+        Effect.provideService(Reader, reader),
+        Effect.provideService(Stdio.Stdio, fixture.stdio),
+        Effect.provideService(Git, unusedGit),
+        Effect.provide(LiveTestLayer),
+        Effect.forkChild,
+      );
+      yield* Deferred.await(fixture.ready);
+      expect(JSON.parse(yield* fixture.stdout)).toMatchObject({
+        command: "docs serve",
+        classification: "success",
+        result: {
+          kind: "reader-session",
+          url: "http://127.0.0.1:3000",
+          project: { name: "demo", root: fixture.root },
+        },
+      });
+      // A busy cache leaves the reader to build from a private one; the session starts anyway.
+      expect(yield* Ref.get(requests)).toEqual([
+        {
+          input: { project, resources: [], issues: [] },
+          ...(busy === true ? {} : { cacheDirectory }),
+          port: 0,
+          open: false,
+        },
+      ]);
+      expect(existsSync(lock)).toBe(true);
+      yield* Fiber.interrupt(fiber);
+      const exit = yield* Fiber.await(fiber);
+      expect(Exit.isFailure(exit) && Cause.hasInterruptsOnly(exit.cause)).toBe(true);
+      expect(yield* Ref.get(closed)).toBe(1);
+      // The session releases only its own hold.
+      expect(existsSync(lock)).toBe(busy);
+      expect((yield* fixture.stdout).trim().split("\n")).toHaveLength(1);
+    }),
 );
 
 it.effect(

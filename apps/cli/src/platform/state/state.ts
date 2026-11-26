@@ -6,8 +6,8 @@ import { decodeState, encodeState } from "../../domain/state/state-codec.ts";
 import { historyDirectory } from "../../domain/execution/history-location.ts";
 import {
   acquireExclusiveLock,
+  processLockProtocol,
   type LockOwnership,
-  type LockProtocol,
 } from "../../services/exclusive-lock.ts";
 
 import {
@@ -77,18 +77,6 @@ const parseState = (
       Effect.mapError((cause) => new StateCorruptError({ message: cause.message, statePath })),
     );
   });
-
-const writerLockProtocol: LockProtocol = {
-  record: (pid) => `${pid}\n`,
-  holder: (record) => {
-    const value = record.trim();
-    if (!/^[1-9]\d*$/.test(value)) return undefined;
-    const pid = Number(value);
-    return Number.isSafeInteger(pid) ? { pid, expired: false } : undefined;
-  },
-  fileMode: restrictedFileMode,
-  directoryMode: restrictedDirectoryMode,
-};
 
 const releaseWriterLock = (ownership: LockOwnership) =>
   ownership.release.pipe(
@@ -206,7 +194,7 @@ export const makeStateStoreService = (
   });
 
   const acquireWriterLock = (lockPath: string) =>
-    acquireExclusiveLock(lockPath, writerLockProtocol).pipe(
+    acquireExclusiveLock(lockPath, processLockProtocol).pipe(
       // The shared lock helper reads the file system from its context.
       Effect.provideService(FileSystem.FileSystem, fileSystem),
       Effect.catchTag("LockBusyError", (busy) =>

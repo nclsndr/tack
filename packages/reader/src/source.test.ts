@@ -1,6 +1,6 @@
 import { stringify } from "yaml";
 import { afterEach, describe, expect, it } from "vitest";
-import { mkdtemp, mkdir, realpath, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -8,6 +8,7 @@ import {
   formatCopy,
   loadCorpus,
   remarkSourceBlocks,
+  sourceBlocksDigest,
   sourceVersion,
 } from "./source.ts";
 import { loadReaderConfig } from "./config.ts";
@@ -661,5 +662,80 @@ describe("authored source provenance", () => {
       { path: second[0]?.path, value: current },
     );
     expect(JSON.stringify(compiled)).toContain(second[0]?.blocks[2]?.version);
+  });
+});
+
+describe("source blocks build digest", () => {
+  const page =
+    '---\ntitle: Digest page\n---\n\nimport { steps } from "./data.ts"\nimport Fragment from "./fragment.mdx"\nimport Custom from "./custom.tsx"\n\nOwn paragraph.\n\n<Walkthrough steps={steps} />\n\n<Fragment />\n\n<Custom />\n';
+  const files = {
+    "page.mdx": page,
+    "data.ts": 'export const steps = [{ title: "Imported step" }];\n',
+    "fragment.mdx": "Fragment paragraph.\n",
+    "custom.tsx": "export default () => <div>Custom</div>;\n",
+  };
+  /** Compiles the page as the reader's build does and returns the block versions it emits. */
+  async function compiledVersions(path: string) {
+    const value = await readFile(path, "utf8");
+    const processor = unified()
+      .use(remarkParse)
+      .use(remarkMdx)
+      .use(remarkFrontmatter)
+      .use(remarkSourceBlocks);
+    const compiled = await processor.run(processor.parse({ path, value }), { path, value });
+    return JSON.stringify(compiled).match(/"name":"version","value":"[^"]+"/g) ?? [];
+  }
+
+  it("changes when an imported data file changes, as the page's compiled block version does", async () => {
+    const { directory, config } = await corpusFixture(files);
+    const path = join(directory, "reader/page.mdx");
+    const before = await sourceBlocksDigest(await loadCorpus(config));
+    const compiledBefore = await compiledVersions(path);
+    await writeFile(
+      join(directory, "reader/data.ts"),
+      'export const steps = [{ title: "Edited imported step" }];\n',
+    );
+    // The page's own file did not change, so Rspack alone would serve its cached block version.
+    expect(await compiledVersions(path)).not.toEqual(compiledBefore);
+    expect(await sourceBlocksDigest(await loadCorpus(config))).not.toBe(before);
+  });
+
+  it.each([
+    {
+      edited: "the page's own text",
+      name: "page.mdx",
+      text: page.replace("Own paragraph.", "Edited paragraph."),
+      changes: false,
+    },
+    { edited: "a fragment", name: "fragment.mdx", text: "Edited fragment.\n", changes: true },
+    // The page imports its components, so Rspack rebuilds the page when one changes.
+    {
+      edited: "an implementation",
+      name: "custom.tsx",
+      text: "export default () => <div>Edited</div>;\n",
+      changes: false,
+    },
+  ])("changes the digest on an edit to $edited: $changes", async ({ name, text, changes }) => {
+    const { directory, config } = await corpusFixture(files);
+    const before = await sourceBlocksDigest(await loadCorpus(config));
+    await writeFile(join(directory, "reader", name), text);
+    const after = await sourceBlocksDigest(await loadCorpus(config));
+    expect(after !== before).toBe(changes);
+  });
+
+  it("changes when the page routes change", async () => {
+    const { config } = await corpusFixture(files);
+    const documents = await loadCorpus(config);
+    expect(
+      await sourceBlocksDigest(documents.map((entry) => ({ ...entry, route: "/moved" }))),
+    ).not.toBe(await sourceBlocksDigest(documents));
+  });
+
+  it("still digests a contributor that is gone by the time the build starts", async () => {
+    const { directory, config } = await corpusFixture(files);
+    const documents = await loadCorpus(config);
+    const present = await sourceBlocksDigest(documents);
+    await rm(join(directory, "reader/data.ts"));
+    expect(await sourceBlocksDigest(documents)).not.toBe(present);
   });
 });

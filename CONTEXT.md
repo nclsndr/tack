@@ -493,6 +493,12 @@ The saved documents selected from a project's attached docs resources for readin
 Resource issues can leave a corpus explicitly incomplete.
 _Avoid_: entire source tree, current working directory, copied documentation
 
+**Reader cache**:
+The reader's build cache for one project root, at `cache/reader/<project>-<root hash>` in the state
+directory. One `docs serve` session holds it at a time and keeps its compiled pages for the next
+launch; a second session on the same root starts from a private, cold cache instead.
+_Avoid_: theme (the files one session generates there and removes when it stops), project cache
+
 ### Script execution
 
 **Tack script**:
