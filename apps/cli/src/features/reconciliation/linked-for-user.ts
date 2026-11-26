@@ -1,13 +1,11 @@
-import { Schema } from "effect";
 import { agentAdapterDescriptor } from "../../domain/agents/agent-adapter.ts";
 import { deliversKind } from "../../domain/agents/agent-layout.ts";
-import type { SkillChoice } from "../../domain/choices/choice-schema.ts";
+import type { SkillChoice, UserLinkedExclude } from "../../domain/choices/choice-schema.ts";
 import { selectedDependencyAddresses } from "../../domain/choices/dependency-resolution.ts";
 import type { AgentAdapterId } from "../../domain/links/agent-adapter-schema.ts";
 import { resolveContextSelection } from "../../domain/profiles/profile-application.ts";
 import {
   isLinkableAddress,
-  LinkableAddressSchema,
   resourceAddressIdentity,
   type Catalog,
   type LinkableAddress,
@@ -70,15 +68,6 @@ export const linkedForUser = (
     (address) => linked.has(resourceAddressIdentity(address)) && sharesName(address) === false,
   );
 };
-
-/** A project exclude that cannot hide its resource, because the user namespace links it. */
-export const UserLinkedExcludeSchema = Schema.Struct({
-  address: LinkableAddressSchema,
-  projectName: Schema.String,
-});
-
-/** A project exclude that cannot hide its resource; see {@link UserLinkedExcludeSchema}. */
-export type UserLinkedExclude = typeof UserLinkedExcludeSchema.Type;
 
 /**
  * The project excludes among `choices` whose resource `userLinks` links for the user. The

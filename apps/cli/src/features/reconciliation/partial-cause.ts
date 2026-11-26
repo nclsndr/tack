@@ -1,7 +1,11 @@
 import { Match, Schema } from "effect";
 import type { AgentAdapterId, AgentCapability } from "../../domain/links/agent-adapter-schema.ts";
 import type { ManagedLinkTarget } from "../../domain/links/managed-link-schema.ts";
-import { ChoiceNamespaceSchema, type ChoiceNamespace } from "../../domain/choices/choice-schema.ts";
+import {
+  ChoiceNamespaceSchema,
+  type ChoiceNamespace,
+  type UserLinkedExclude,
+} from "../../domain/choices/choice-schema.ts";
 import { RequiredDependencyBlockerSchema } from "../../domain/choices/dependency-resolution.ts";
 import { projectLifecycle } from "../../domain/projects/project-schema.ts";
 import { type ProjectInspection, type TargetSelection } from "../projects/project.ts";
@@ -111,6 +115,10 @@ export type PartialCause =
         readonly namespace: ChoiceNamespace;
         readonly reason: "missing" | "quarantined";
       };
+    }
+  | {
+      readonly code: "project-exclude-linked-for-user";
+      readonly subject: UserLinkedExclude;
     }
   | {
       readonly code: "no-adapters-enabled";

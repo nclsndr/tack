@@ -149,7 +149,7 @@ const choiceSet = (
   };
   return createPublicEnvelope(
     decision === "exclude" ? "pick exclude" : "pick include",
-    choiceSetOutcome(result, catalogAddressCandidates(catalog, address), []),
+    choiceSetOutcome(result, catalogAddressCandidates(catalog, address)),
   );
 };
 

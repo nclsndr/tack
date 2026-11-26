@@ -27,7 +27,6 @@ import {
   sourceCauses,
 } from "../../features/reconciliation/partial-cause.ts";
 import type { SyncApplication, SyncPlan } from "../../features/reconciliation/sync-command.ts";
-import type { UserLinkedExclude } from "../../features/reconciliation/linked-for-user.ts";
 import type {
   ProfileApplyExecution,
   ProfileApplyPlan,
@@ -112,32 +111,17 @@ export const appliedAs =
     appliedOutcome(payloadAs(schema, applied));
 
 /**
- * A note that a project exclude hides nothing: the user namespace links the resource, so every
- * agent in the project still sees it. It is a note, not a warning, so the exclude keeps its exit
- * status; the views name the user exclude under Next.
- */
-const userLinkedExcludeDiagnostic = ({ address, projectName }: UserLinkedExclude): Diagnostic => ({
-  code: "project-exclude-linked-for-user",
-  details: toJson({ subject: { address, projectName } }),
-  message: `Project ${projectName} cannot hide ${address.kind} ${address.name}: the user namespace links it, so every agent in the project still sees it. Excluding it for the user turns it off everywhere.`,
-  severity: "info",
-});
-
-/**
  * Presents a persisted choice. A choice whose address the catalog lacks is still kept, since a
  * source can provide it later, but it is not accepted silently: a warning names the address and
- * the catalog addresses the operator probably meant. A project exclude that the user namespace
- * outranks is noted the same way.
+ * the catalog addresses the operator probably meant.
  */
 export const choiceSetOutcome = (
   applied: SetSkillChoiceResult,
   candidates: ReadonlyArray<SelectableAddress> | undefined,
-  userLinked: ReadonlyArray<UserLinkedExclude>,
 ): PublicOutcome => ({
   ...appliedAs(ChoiceChangePayloadSchema)(applied),
-  diagnostics: [
-    ...userLinked.map(userLinkedExcludeDiagnostic),
-    ...(candidates === undefined
+  diagnostics:
+    candidates === undefined
       ? []
       : [
           {
@@ -147,10 +131,9 @@ export const choiceSetOutcome = (
               subject: { address: applied.choice.address },
             } satisfies ChoiceAddressCandidates),
             message: "The chosen address is not in the current catalog; check it for a typo.",
-            severity: "warning" as const,
+            severity: "warning",
           },
-        ]),
-  ],
+        ],
 });
 
 /** Reports `partial` with the given warnings when any are present, and success otherwise. */
@@ -265,27 +248,22 @@ export const syncOutcome = (
         };
   const pendingField =
     plan.docsPending.length === 0 ? {} : { docsPendingRemovals: plan.docsPending };
-  const warned = partialWhen([
-    ...[
-      ...(plan.resources?.causes ?? []),
-      ...(applied?.resources === undefined
-        ? []
-        : reconciliationApplicationCauses(applied.resources)),
-    ].map(partialCauseDiagnostic),
-    ...docsPlans.flatMap((docs, index) => docsWarnings(docs, application?.docs[index])),
-    ...plan.docsPending.map((pending) =>
-      partialCauseDiagnostic({
-        code: "pending-removal",
-        subject: { cause: pending.cause, destinationPath: pending.evidence.destinationPath },
-      }),
-    ),
-  ]);
   return {
-    classification: warned.classification,
-    diagnostics: [
-      ...warned.diagnostics,
-      ...(plan.resources?.userLinkedExcludes ?? []).map(userLinkedExcludeDiagnostic),
-    ],
+    ...partialWhen([
+      ...[
+        ...(plan.resources?.causes ?? []),
+        ...(applied?.resources === undefined
+          ? []
+          : reconciliationApplicationCauses(applied.resources)),
+      ].map(partialCauseDiagnostic),
+      ...docsPlans.flatMap((docs, index) => docsWarnings(docs, application?.docs[index])),
+      ...plan.docsPending.map((pending) =>
+        partialCauseDiagnostic({
+          code: "pending-removal",
+          subject: { cause: pending.cause, destinationPath: pending.evidence.destinationPath },
+        }),
+      ),
+    ]),
     plan: toJson(
       payloadAs(SyncPlanSchema, {
         resources:

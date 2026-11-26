@@ -33,7 +33,7 @@ import { resolveContextSelection } from "../../domain/profiles/profile-applicati
 import { allSkillChoices } from "../../domain/state/state-intent.ts";
 import type { StateOptions } from "../../services/state-store.ts";
 import type { CommandSnapshot } from "../snapshot/command-snapshot.ts";
-import { userLinkedExcludes, userLinksOf, type UserLinkedExclude } from "./linked-for-user.ts";
+import { userLinkedExcludes, userLinksOf } from "./linked-for-user.ts";
 
 /** Invocation-scoped inputs for one complete Phase 2 reconciliation command. */
 export type ReconcileCommandOptions = {
@@ -51,8 +51,6 @@ export type PreparedReconciliation = {
   readonly plan: ReconciliationPlan;
   readonly projectNames: ReadonlyArray<string>;
   readonly selection: SelectionEcho;
-  /** The excludes of the planned projects that cannot hide their resource from the project. */
-  readonly userLinkedExcludes: ReadonlyArray<UserLinkedExclude>;
 };
 
 export const prepareReconciliation = Effect.fnUntraced(function* (
@@ -162,17 +160,17 @@ export const prepareReconciliation = Effect.fnUntraced(function* (
       ...selectionRootCauses(selection),
       ...(deliversNothing ? [noAdaptersCause] : []),
       ...reconciliationPlanCauses(plan),
+      ...userLinkedExcludes(
+        userLinks,
+        allSkillChoices(state).filter(
+          (choice) =>
+            choice.namespace._tag === "project" &&
+            projectNames.includes(choice.namespace.projectName),
+        ),
+      ).map((subject): PartialCause => ({ code: "project-exclude-linked-for-user", subject })),
     ],
     plan,
     projectNames,
     selection: selectionEcho(selection),
-    userLinkedExcludes: userLinkedExcludes(
-      userLinks,
-      allSkillChoices(state).filter(
-        (choice) =>
-          choice.namespace._tag === "project" &&
-          projectNames.includes(choice.namespace.projectName),
-      ),
-    ),
   } satisfies PreparedReconciliation;
 });

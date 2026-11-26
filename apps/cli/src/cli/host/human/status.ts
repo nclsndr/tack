@@ -7,7 +7,7 @@ import {
 } from "../../../domain/status/status-schema.ts";
 import { destinationPlace } from "../../../domain/status/destination-place.ts";
 import { compareCodeUnits } from "../../../domain/identity/ordering.ts";
-import { collisionExcludeCommands } from "../collision-hints.ts";
+import { collisionExcludeCommands, userExcludeCommands } from "../collision-hints.ts";
 import { commandLine, selectorFlags } from "../command-line.ts";
 import type { PublicEnvelope } from "../public-outcome.ts";
 import type { Style } from "./style.ts";
@@ -455,6 +455,15 @@ export const renderStatus = (
           ),
           style,
         ),
-        hintLines([...new Set([...envelope.next, ...nextSteps(report, style)])], style),
+        hintLines(
+          [
+            ...new Set([
+              ...envelope.next,
+              ...userExcludeCommands(envelope.diagnostics, style.reference),
+              ...nextSteps(report, style),
+            ]),
+          ],
+          style,
+        ),
       ),
   });

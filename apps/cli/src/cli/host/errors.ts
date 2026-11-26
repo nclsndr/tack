@@ -7,6 +7,7 @@ import type { InvocationError } from "../commands/index.ts";
 import type {
   ChoiceProjectNotFoundError,
   ChoiceProjectRemovingError,
+  ChoiceUserLinkedError,
 } from "../../features/choices/choice.ts";
 import type { DocsError } from "../../domain/docs/docs-schema.ts";
 import type { HistoryNotFoundError } from "../../features/execution/execution.ts";
@@ -80,6 +81,7 @@ export type HostFailure =
   | AgentSelectionValidationError
   | ChoiceProjectNotFoundError
   | ChoiceProjectRemovingError
+  | ChoiceUserLinkedError
   | DocsError
   | ExecutionError
   | ExplorerInterruptedError
@@ -252,6 +254,12 @@ export const errorRegistry: ErrorRegistry = {
     classification: "domain",
     message: (error) =>
       `Project "${error.projectName}" is being removed, so its choices cannot change.`,
+  },
+  // The request asks a project to hide what it cannot; the user exclude is the one that works.
+  ChoiceUserLinkedError: {
+    classification: "invalid-invocation",
+    details: (error) => ({ subject: safeFields(error, ["message", "next"]) }),
+    next: (error) => error.next,
   },
   DocsError: {
     classification: (error) => docsClassifications[error.code] ?? "invalid-configuration",

@@ -5,6 +5,7 @@ import { AgentAdapterIdSchema, EnabledAdaptersSchema } from "../links/agent-adap
 import {
   ChoiceNamespaceSchema,
   SkillChoiceSchema,
+  UserLinkedExcludeSchema,
   choiceNamespaceIdentity,
 } from "../choices/choice-schema.ts";
 import { DependencyResolutionSchema } from "../choices/dependency-resolution.ts";
@@ -296,6 +297,11 @@ export const StatusReportSchema = Schema.Struct({
   scope: StatusScopeSchema,
   sources: Schema.Array(StatusSourceSchema),
   stateDirectory: CanonicalPathSchema,
+  /**
+   * The excludes of the reported projects that hide nothing, because the user namespace links their
+   * resource; absent when there is none.
+   */
+  userLinkedExcludes: Schema.optionalKey(Schema.Array(UserLinkedExcludeSchema)),
   version: Schema.Literal(statusReportVersion),
 });
 

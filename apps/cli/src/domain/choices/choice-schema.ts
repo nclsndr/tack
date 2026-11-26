@@ -1,6 +1,7 @@
 import { Match, Schema } from "effect";
 import { ProjectNameSchema } from "../projects/project-schema.ts";
 import {
+  LinkableAddressSchema,
   SelectableAddressSchema,
   resourceAddressIdentity,
   type SelectableAddress,
@@ -44,3 +45,15 @@ export const skillChoiceIdentity = (choice: {
   readonly namespace: ChoiceNamespace;
 }) =>
   `${choiceNamespaceIdentity(choice.namespace)}\u0000${resourceAddressIdentity(choice.address)}`;
+
+/**
+ * A project exclude that cannot hide its resource, because the user namespace links it: the
+ * project's own link goes, but the user's stays in front of every agent in the project.
+ */
+export const UserLinkedExcludeSchema = Schema.Struct({
+  address: LinkableAddressSchema,
+  projectName: ProjectNameSchema,
+});
+
+/** A project exclude that cannot hide its resource; see {@link UserLinkedExcludeSchema}. */
+export type UserLinkedExclude = typeof UserLinkedExcludeSchema.Type;

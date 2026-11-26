@@ -134,9 +134,11 @@ that case as a `selection-collision` diagnostic whose message names that command
 and a failed reference keeps `--project` or `--user` in every command it suggests.
 New picks store the source registration ID, kind, name and decision. Use exactly one of `--project PROJECT` or `--user` for choice mutations. Removing a choice restores
 metadata-driven selection, including opt-in user activation when `user-activation` is omitted. Project choices cannot suppress a global skill,
-one the user namespace selects and links at user level. `pick exclude --project` and that project's
-`sync` report such an exclude as the note `project-exclude-linked-for-user` and name
-`pick exclude SOURCE:NAME --user` under Next, which turns the resource off everywhere. Inspect
+one the user namespace selects and links at user level. `pick exclude --project` refuses such a
+resource with `project-exclude-refused` and records nothing; its Next names
+`pick exclude SOURCE:NAME --kind KIND --user`, which turns the resource off everywhere. An exclude
+recorded before the user namespace linked the resource stays, and `sync` and `status` warn about it
+with `project-exclude-linked-for-user` and the same Next command. Inspect
 `status --user` when that explains unexpected availability.
 
 Every pick stores its source, so there is no pick without one: a bare name that matches several

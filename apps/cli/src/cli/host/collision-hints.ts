@@ -1,5 +1,5 @@
 import { Option, Schema } from "effect";
-import { UserLinkedExcludeSchema } from "../../features/reconciliation/linked-for-user.ts";
+import { UserLinkedExcludeSchema } from "../../domain/choices/choice-schema.ts";
 import type { ManagedLinkTarget } from "../../domain/links/managed-link-schema.ts";
 import { commandLine, selectorFlags } from "./command-line.ts";
 

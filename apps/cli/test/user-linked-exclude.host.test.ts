@@ -7,8 +7,9 @@ import { runHost } from "./support/host-runner.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
 
 /**
- * A source with `user-wide`, which the user namespace links, and `plain`, which only projects
- * link, plus one registered project `workspace` and the claude adapter.
+ * A source with `user-wide`, which the user namespace links by default, and `plain`, which only
+ * projects link until the user includes it, plus one registered project `workspace` and the claude
+ * adapter.
  */
 const fixture = Effect.gen(function* () {
   const fileSystem = yield* FileSystem.FileSystem;
@@ -36,22 +37,20 @@ const fixture = Effect.gen(function* () {
     ),
   );
   const git = fakeGit(anchor, [{ path: projectRoot }]);
-  const run = (flags: ReadonlyArray<string>, arguments_: ReadonlyArray<string>) =>
-    runHost({ args: [...flags, "--state-dir", stateDirectory, ...arguments_], git }).pipe(
+  const run = (flags: ReadonlyArray<string>, command: ReadonlyArray<string>) =>
+    runHost({ args: [...flags, "--state-dir", stateDirectory, ...command], git }).pipe(
       Effect.map(({ stdout }) => stdout),
     );
-  const tack = (arguments_: ReadonlyArray<string>) =>
-    run(["--json"], arguments_).pipe(Effect.map(decodeEnvelope));
+  const tack = (command: ReadonlyArray<string>) =>
+    run(["--json"], command).pipe(Effect.map(decodeEnvelope));
   /** The human view of a command, as an operator reads it. */
-  const human = (arguments_: ReadonlyArray<string>) => run([], arguments_);
+  const human = (command: ReadonlyArray<string>) => run([], command);
   yield* tack(["state", "init"]);
   yield* tack(["adapter", "enable", "claude"]);
   yield* tack(["source", "add", source, "--apply"]);
   yield* tack(["project", "add", "workspace", "--repository-cwd", projectRoot]);
   return { human, tack };
 });
-
-const userExclude = "tack pick exclude user-wide --kind skill --user";
 
 /** The commands a human view lists under its Next heading. */
 const nextSection = (text: string) =>
@@ -63,68 +62,83 @@ const nextSection = (text: string) =>
     .map((line) => line.trim())
     .filter((line) => line.length > 0) ?? [];
 
+const projectPicks = ["pick", "--project", "workspace"];
+
 it.layer(LiveTestLayer)("a project exclude of a user-linked resource", (excludeIt) => {
-  excludeIt.effect("says that pick exclude cannot hide it and names the user exclude", () =>
+  excludeIt.effect("is refused, records nothing and names the user exclude", () =>
     Effect.gen(function* () {
       const { human, tack } = yield* fixture;
-      const command = ["pick", "exclude", "source:user-wide", "--project", "workspace"];
+      const command = ["pick", "exclude", "user-wide", "--project", "workspace"];
+      const userExclude = "tack pick exclude source:user-wide --kind skill --user";
 
       const envelope = yield* tack(command);
 
-      expect(envelope.classification).toBe("success");
+      expect(envelope.classification).toBe("invalid-invocation");
       expect(envelope.diagnostics).toEqual([
         {
-          code: "project-exclude-linked-for-user",
+          code: "project-exclude-refused",
           details: {
             subject: {
               address: expect.objectContaining({ kind: "skill", name: "user-wide" }),
               projectName: "workspace",
             },
           },
-          message:
-            "Project workspace cannot hide skill user-wide: the user namespace links it, so every agent in the project still sees it. Excluding it for the user turns it off everywhere.",
-          severity: "info",
+          message: `Project workspace cannot hide skill user-wide: the user namespace links it, so every agent in the project would still see it. Nothing was recorded. Run \`${userExclude}\` to turn it off everywhere.`,
+          severity: "error",
         },
       ]);
-      expect(envelope.next).toEqual([userExclude, "tack sync --project workspace"]);
-      expect(nextSection(yield* human(command))).toEqual([
-        userExclude,
-        "tack sync --project workspace",
-      ]);
+      expect(envelope.next).toEqual([userExclude]);
+      expect(nextSection(yield* human(command))).toEqual([userExclude]);
+      expect((yield* tack(projectPicks)).result).toEqual({ kind: "choices", choices: [] });
     }),
   );
 
-  excludeIt.effect("keeps saying it in the sync preview while the exclude is recorded", () =>
+  excludeIt.effect("is warned about by sync and status once the user links it later", () =>
     Effect.gen(function* () {
       const { human, tack } = yield* fixture;
-      yield* tack(["pick", "exclude", "source:user-wide", "--project", "workspace"]);
-      const command = ["sync", "--project", "workspace"];
+      expect(
+        (yield* tack(["pick", "exclude", "plain", "--project", "workspace"])).classification,
+      ).toBe("success");
+      yield* tack(["pick", "include", "plain", "--user"]);
+      const userExclude = "tack pick exclude plain --kind skill --user";
+      const warning = {
+        code: "project-exclude-linked-for-user",
+        details: {
+          subject: {
+            address: expect.objectContaining({ kind: "skill", name: "plain" }),
+            projectName: "workspace",
+          },
+        },
+        message:
+          "A project exclude cannot hide a resource that the user namespace links, so every agent in the project still sees it. Exclude it for the user to turn it off everywhere.",
+        severity: "warning",
+      };
 
-      const envelope = yield* tack(command);
-
-      expect(envelope.classification).toBe("success");
-      expect(envelope.diagnostics.map(({ code, severity }) => [code, severity])).toEqual([
-        ["project-exclude-linked-for-user", "info"],
-      ]);
-      expect(envelope.next).toEqual([userExclude, "tack sync --project workspace --apply"]);
-      const text = yield* human(command);
-      expect(text).toContain("Project workspace cannot hide skill user-wide");
-      expect(nextSection(text)).toEqual([userExclude, "tack sync --project workspace --apply"]);
+      for (const command of [
+        ["sync", "--project", "workspace"],
+        ["status", "--project", "workspace"],
+      ]) {
+        const envelope = yield* tack(command);
+        expect(envelope.classification).toBe("partial");
+        expect(envelope.diagnostics).toContainEqual(warning);
+        expect(envelope.next).toContain(userExclude);
+        expect(nextSection(yield* human(command))).toContain(userExclude);
+      }
     }),
   );
 
-  excludeIt.effect("adds nothing for an exclude of a resource only projects link", () =>
+  excludeIt.effect("is recorded silently for a resource only projects link", () =>
     Effect.gen(function* () {
       const { tack } = yield* fixture;
 
-      const picked = yield* tack(["pick", "exclude", "source:plain", "--project", "workspace"]);
+      const picked = yield* tack(["pick", "exclude", "plain", "--project", "workspace"]);
       const synced = yield* tack(["sync", "--project", "workspace"]);
 
+      expect(picked.classification).toBe("success");
       expect(picked.diagnostics).toEqual([]);
       expect(picked.next).toEqual(["tack sync --project workspace"]);
+      expect(synced.classification).toBe("success");
       expect(synced.diagnostics).toEqual([]);
-      // The only other skill is linked for the user, so the preview has nothing left to apply.
-      expect(synced.next).toEqual([]);
     }),
   );
 });

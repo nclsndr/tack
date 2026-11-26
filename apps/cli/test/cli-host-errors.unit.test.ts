@@ -11,6 +11,7 @@ import {
 import {
   ChoiceProjectNotFoundError,
   ChoiceProjectRemovingError,
+  ChoiceUserLinkedError,
 } from "../src/features/choices/choice.ts";
 import { DocsError } from "../src/domain/docs/docs-schema.ts";
 import { HistoryNotFoundError } from "../src/features/execution/execution.ts";
@@ -196,6 +197,33 @@ const cases: ReadonlyArray<Case> = [
     code: "choice-project-removing",
     message: 'Project "old" is being removed, so its choices cannot change.',
     details: { projectName: "old" },
+  },
+  {
+    error: new ChoiceUserLinkedError({
+      code: "project-exclude-refused",
+      address: {
+        kind: "skill",
+        name: "review",
+        sourceRegistrationId: "00000000-0000-4000-8000-000000000001",
+      },
+      projectName: "app",
+      message: "Project app cannot hide skill review.",
+      next: [["tack", "pick", "exclude", "tools:review", "--kind", "skill", "--user"]],
+    }),
+    classification: "invalid-invocation",
+    code: "project-exclude-refused",
+    message: "Project app cannot hide skill review.",
+    details: {
+      subject: {
+        address: {
+          kind: "skill",
+          name: "review",
+          sourceRegistrationId: "00000000-0000-4000-8000-000000000001",
+        },
+        projectName: "app",
+      },
+    },
+    next: [["tack", "pick", "exclude", "tools:review", "--kind", "skill", "--user"]],
   },
   {
     error: new DocsError({ code: "docs-default-unset", message: "Configure a default." }),
