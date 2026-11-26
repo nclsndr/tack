@@ -4,6 +4,9 @@
   /* The header's height. It stays at the top of the screen, so the pinned frames hold below it and
      in-page jumps land below it. */
   --landing-header-height: 80px;
+  /* The space between the demo window's foot and the end of the hero, where the story's transition
+     reaches up to the window. */
+  --hero-tail: clamp(48px, 7vw, 96px);
 
   min-height: 100vh;
   background: var(--tack-bg);
@@ -478,10 +481,12 @@
 
   position: relative;
   /* `clip`, not `hidden`: a hidden overflow makes the hero a scroll container, and the pin's view
-     timeline would then measure the hero instead of the viewport. */
-  overflow: clip;
+     timeline would then measure the hero instead of the viewport. Only the sides clip: the demo
+     window's shadow reaches past the hero's foot and fades out over the story below it. */
+  overflow-x: clip;
+  overflow-y: visible;
   margin-top: calc(-1 * var(--landing-header-height));
-  padding-bottom: clamp(48px, 7vw, 96px);
+  padding-bottom: var(--hero-tail);
 }
 
 /* The docs keep room at the top for their navbar with `scroll-padding-top`; the landing keeps it

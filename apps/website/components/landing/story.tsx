@@ -4,6 +4,7 @@ import { story } from "./content.ts";
 import { corners, ease, InView, settle } from "./drafting-sheet.tsx";
 import { Illustration } from "./illustration.tsx";
 import { InlineCode, Proof } from "./inline-code.tsx";
+import { ReinsFrame, ReinsSeam } from "./story-transition.tsx";
 
 /**
  * Which beat of the story the page is on: 0 before the stage pins, then one beat per stretch of
@@ -143,17 +144,23 @@ function HorsePlate({ beat }: { readonly beat: number }) {
 }
 
 /**
- * The metaphor of the features, on the blueprint plate, pinned while the page scrolls: the agent is
- * the horse, Tack the gear. The heading and its intro hold at the top; each beat brings one part of
- * the plate back in colour, drafting marks close in on it and its caption rises in, with a command
- * or fact as its proof. On narrow screens and under reduced motion the beats stack under the plate.
+ * The metaphor of what the demo showed, on the blueprint plate straight under the demo window,
+ * pinned while the page scrolls: the agent is the horse, Tack the gear. The heading and its intro
+ * hold at the top; each beat brings one part of the plate back in colour, drafting marks close in
+ * on it and its caption rises in, with a command or fact as its proof. On narrow screens and under
+ * reduced motion the beats stack under the plate. The demo's links run down from the window into
+ * the plate like reins and land on the saddle (`story-transition.tsx`): decoration that follows
+ * the demo but never waits for it.
  */
 export function Story() {
   const stage = useRef<HTMLElement>(null);
+  const frame = useRef<HTMLDivElement>(null);
   const beat = useStoryBeat(stage, story.beats.length);
   return (
     <section ref={stage} className="story-stage" data-beat={beat} aria-labelledby="story-title">
-      <div className="story-sticky">
+      <ReinsSeam stage={stage} />
+      <div ref={frame} className="story-sticky">
+        <ReinsFrame frame={frame} />
         <InView className="landing-shell story-head">
           <motion.h2 id="story-title" data-intro="" variants={settle(0, 16)}>
             {story.heading}

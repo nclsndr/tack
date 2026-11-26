@@ -1,0 +1,110 @@
+/* The reins from the hero's demo window into the story plate below it
+   (`components/landing/story-transition.tsx`). Every layer is decoration: out of the flow, hidden
+   from assistive technology, and at rest under reduced motion. */
+
+/* The story frame stacks its own layers: the reins lie over the plate, so they reach the saddle,
+   and under the heading and the captions, so the words always read first. */
+.story-sticky {
+  isolation: isolate;
+}
+
+.story-head,
+.story-caption {
+  z-index: 2;
+}
+
+.story-head {
+  position: relative;
+}
+
+/* The hero stacks above the story, so the reins that reach up into it pass behind the window, and
+   the window's shadow falls across the story's top. */
+.landing-hero {
+  z-index: 1;
+}
+
+/* The seam's part reaches up from the story's top into the space under the window. */
+.transition-seam {
+  position: absolute;
+  top: calc(-1 * var(--hero-tail));
+  left: 0;
+  width: 100%;
+  height: var(--hero-tail);
+  pointer-events: none;
+}
+
+.transition-frame {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.transition-frame svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.rein {
+  fill: none;
+  stroke: rgb(150 196 220 / 0.6);
+  stroke-width: 1;
+}
+
+/* Before the demo makes a link, the reins are the plan: dashed, drifting down toward the saddle. */
+.rein[data-state="planned"] {
+  stroke: rgb(150 196 220 / 0.45);
+  stroke-dasharray: 3 7;
+  animation: rein-plan 2.4s linear infinite;
+}
+
+.rein[data-state="lit"] {
+  stroke: rgb(226 193 160 / 0.9);
+  stroke-width: 1.25;
+  filter: drop-shadow(0 0 4px rgb(243 205 163 / 0.45));
+}
+
+@keyframes rein-plan {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+/* The buckle on the saddle, where the reins land: blue until the demo links, then brass. */
+.rein-buckle {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  margin: -4px 0 0 -4px;
+  border: 1px solid rgb(92 145 173 / 0.7);
+  border-radius: 50%;
+  background: var(--tack-bg);
+}
+
+.rein-buckle[data-made="true"] {
+  border-color: rgb(226 193 160 / 0.85);
+}
+
+.rein-buckle[data-lit="true"] {
+  border-color: transparent;
+  background: var(--tack-accent-strong);
+  box-shadow: 0 0 12px 3px rgb(243 205 163 / 0.4);
+}
+
+/* On narrow screens the heading spans the column, so the reins dim behind it. */
+@media (max-width: 759px) {
+  .transition-frame {
+    mask-image: linear-gradient(
+      to bottom,
+      rgb(0 0 0 / 0.18) var(--head-bottom, 0px),
+      #000 calc(var(--head-bottom, 0px) + 48px)
+    );
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rein[data-state="planned"] {
+    animation: none;
+  }
+}

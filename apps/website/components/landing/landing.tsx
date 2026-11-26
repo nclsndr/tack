@@ -194,37 +194,35 @@ function Hero() {
     <section className="landing-hero" aria-labelledby="hero-title">
       <IntroFallback />
       <HeroPin>
-        <DemoLinksProvider>
-          <HeroSheet />
-          <HeroField />
-          <HeroCopy>
-            <div className="landing-shell landing-hero-grid">
-              <HeroHeadline id="hero-title" text={hero.headline} />
-              <div className="landing-hero-aside">
-                <HeroFollow part="lead">
-                  <p className="landing-lead">{hero.subhead}</p>
-                  <p className="landing-agents">{hero.agents}</p>
-                </HeroFollow>
-                <HeroFollow part="actions">
-                  <div className="landing-actions">
-                    <a href="#get-started" className="landing-button landing-button-primary">
-                      Get started
-                    </a>
-                    <CopyButton text={agentPrompt} label="Copy the agent prompt" />
-                  </div>
-                  <ul className="landing-facts" aria-label="Facts">
-                    {hero.facts.map((fact) => (
-                      <li key={fact}>{fact}</li>
-                    ))}
-                  </ul>
-                </HeroFollow>
-              </div>
+        <HeroSheet />
+        <HeroField />
+        <HeroCopy>
+          <div className="landing-shell landing-hero-grid">
+            <HeroHeadline id="hero-title" text={hero.headline} />
+            <div className="landing-hero-aside">
+              <HeroFollow part="lead">
+                <p className="landing-lead">{hero.subhead}</p>
+                <p className="landing-agents">{hero.agents}</p>
+              </HeroFollow>
+              <HeroFollow part="actions">
+                <div className="landing-actions">
+                  <a href="#get-started" className="landing-button landing-button-primary">
+                    Get started
+                  </a>
+                  <CopyButton text={agentPrompt} label="Copy the agent prompt" />
+                </div>
+                <ul className="landing-facts" aria-label="Facts">
+                  {hero.facts.map((fact) => (
+                    <li key={fact}>{fact}</li>
+                  ))}
+                </ul>
+              </HeroFollow>
             </div>
-          </HeroCopy>
-          <div className="landing-shell">
-            <CliDemo />
           </div>
-        </DemoLinksProvider>
+        </HeroCopy>
+        <div className="landing-shell">
+          <CliDemo />
+        </div>
       </HeroPin>
     </section>
   );
@@ -232,13 +230,14 @@ function Hero() {
 
 /**
  * The two sections after the hero, on one blueprint sheet that carries on from the hero's: the
- * features, one lens each, then the pinned story plate, the metaphor of what they said.
+ * pinned story plate straight under the demo window, the metaphor of what the demo showed, then
+ * the features, one lens each.
  */
 function AfterHero() {
   return (
     <DraftingSheet>
-      <Features />
       <Story />
+      <Features />
     </DraftingSheet>
   );
 }
@@ -384,6 +383,12 @@ ${demo.markdown}
 ${walkthrough}
 \`\`\`
 
+## ${story.heading}
+
+${story.intro}
+
+${metaphor}
+
 ## ${features.heading}
 
 ${features.intro}
@@ -395,12 +400,6 @@ ${featureList}
 ${also}
 
 [${features.more.label}](${features.more.href})
-
-## ${story.heading}
-
-${story.intro}
-
-${metaphor}
 
 ## Get started
 
@@ -436,8 +435,10 @@ export function Landing() {
       </a>
       <Header />
       <main id="main">
-        <Hero />
-        <AfterHero />
+        <DemoLinksProvider>
+          <Hero />
+          <AfterHero />
+        </DemoLinksProvider>
         <GetStarted />
         <Questions />
         <Closing />
