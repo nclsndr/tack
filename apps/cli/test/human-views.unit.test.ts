@@ -218,6 +218,38 @@ it("shows catalog resources by kind with tags, and each issue with the file to f
   expect(text).not.toContain("catalog-partial");
 });
 
+it("tags the user activation a resource resolves to, not the one it declares", () => {
+  const text = renderHuman(
+    mutated("catalog", (envelope) => {
+      const command = envelope.result.resources.find(
+        (resource: { kind: string }) => resource.kind === "command",
+      );
+      const variant = (name: string, userActivation?: string) => ({
+        ...command,
+        address: { ...command.address, name },
+        filePath: `/fx/source/commands/${name}.md`,
+        ...(userActivation === undefined ? {} : { userActivation }),
+      });
+      envelope.result.resources.push(
+        variant("c-plain"),
+        variant("c-userdefault", "default"),
+        variant("c-useroptin", "opt-in"),
+      );
+    }),
+    plainStyle(120),
+  );
+  const row = (name: string) =>
+    linesOf(text)
+      .find((line) => line.startsWith(`  ${name} `))
+      ?.replace(/\s+/g, " ")
+      .trim();
+  // An omitted user-activation is opt-in, so it reads the same as a declared one.
+  expect(row("c-plain")).toBe("c-plain user opt-in Ship it");
+  expect(row("c-useroptin")).toBe("c-useroptin user opt-in Ship it");
+  // A user default that matches the project activation needs no tag.
+  expect(row("c-userdefault")).toBe("c-userdefault Ship it");
+});
+
 it("shows where a context file lives, since context has no description", () => {
   const text = renderHuman(
     mutated("catalog", (envelope) => {
