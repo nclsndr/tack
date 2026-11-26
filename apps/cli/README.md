@@ -279,8 +279,9 @@ The command stays in the foreground until Ctrl+C. A browser opens by default onl
 interactive terminal: stdin and stdout are terminals, `TERM` is set and not `dumb`, `CI` is unset,
 and no coding-agent marker is present. `--open` opens one anyway and `--no-open` never does; the
 two flags conflict. `--port` selects the port, and `0` requests an available one. A successful startup emits one readiness
-envelope with `result: { kind: "reader-session", url, project: { name, root } }`. Engine diagnostics use stderr. Ctrl+C
-closes the watcher and server without another envelope. An unexpected engine stop reports on
+envelope with `result: { kind: "reader-session", url, project: { name, root } }`. Engine diagnostics use stderr. Ctrl+C,
+`SIGTERM` or a closed terminal closes the watcher and server without another envelope and exits
+with code `130`. An unexpected engine stop reports on
 stderr and exits with code `1`.
 
 ## Search attached documents

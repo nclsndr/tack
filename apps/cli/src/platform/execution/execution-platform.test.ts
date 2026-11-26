@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import { ExecutionWorker, RunHistory } from "../../services/execution-platform.ts";
 import type { HistoryRecord, OperatorRunRequest } from "../../domain/execution/execution-schema.ts";
 import { ExecutionPlatformLive, makeRunCancellation } from "./execution-platform.ts";
+import { interruptSignals } from "../process/main-runtime.ts";
 
 const request: OperatorRunRequest = {
   address: {
@@ -246,13 +247,16 @@ describe("production execution adapters", () => {
 
 describe("operator run cancellation", () => {
   it("aborts on the first signal, notifies repeat listeners after it and detaches on close", () => {
-    const sigint = new Set(process.listeners("SIGINT"));
-    const sigterm = new Set(process.listeners("SIGTERM"));
+    const before = interruptSignals.map((signal) => new Set(process.listeners(signal)));
     const cancellation = makeRunCancellation();
-    const [interrupt] = process.listeners("SIGINT").filter((listener) => !sigint.has(listener));
-    const [terminate] = process.listeners("SIGTERM").filter((listener) => !sigterm.has(listener));
+    const added = interruptSignals.flatMap((signal, index) =>
+      process.listeners(signal).filter((listener) => before[index]?.has(listener) === false),
+    );
+    const [interrupt, terminate, hangUp] = added;
     try {
-      expect(interrupt).toBe(terminate);
+      // One listener serves every interrupt signal.
+      expect(added).toHaveLength(interruptSignals.length);
+      expect(new Set(added).size).toBe(1);
       const repeats: string[] = [];
       const unsubscribe = cancellation.onRepeatSignal(() => repeats.push("kept"));
       const removed = cancellation.onRepeatSignal(() => repeats.push("removed"));
@@ -262,18 +266,19 @@ describe("operator run cancellation", () => {
       expect(repeats).toEqual([]);
       terminate?.("SIGTERM");
       expect(repeats).toEqual(["kept"]);
+      hangUp?.("SIGHUP");
+      expect(repeats).toEqual(["kept", "kept"]);
       unsubscribe();
       interrupt?.("SIGINT");
-      expect(repeats).toEqual(["kept"]);
+      expect(repeats).toEqual(["kept", "kept"]);
       cancellation.onRepeatSignal(() => repeats.push("cleared"));
       cancellation.close();
       // Closing forgets every repeat listener too.
       interrupt?.("SIGINT");
-      expect(repeats).toEqual(["kept"]);
+      expect(repeats).toEqual(["kept", "kept"]);
     } finally {
       cancellation.close();
     }
-    expect(new Set(process.listeners("SIGINT"))).toEqual(sigint);
-    expect(new Set(process.listeners("SIGTERM"))).toEqual(sigterm);
+    expect(interruptSignals.map((signal) => new Set(process.listeners(signal)))).toEqual(before);
   });
 });
