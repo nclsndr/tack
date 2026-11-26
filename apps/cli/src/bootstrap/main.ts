@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 
-import { runMain as runEffectMain } from "@effect/platform-node-shared/NodeRuntime";
 import { Effect } from "effect";
 import { runCli } from "../cli/host/run.ts";
+import { runMain as runEffectMain } from "../platform/process/main-runtime.ts";
 import { ApplicationLive } from "./application-layer.ts";
 
 // Coverage skip: the process entrypoint runs only in CLI subprocesses, invisible to parent coverage.

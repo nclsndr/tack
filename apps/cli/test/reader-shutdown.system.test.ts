@@ -73,10 +73,13 @@ async function themes(temporary: string) {
   return (await readdir(temporary)).filter((name) => name.startsWith("tack-reader-theme-"));
 }
 
-/** How a scenario ends the reader: a signal to the CLI, or the engine dying under it. */
+/**
+ * How a scenario ends the reader: a signal to the CLI, the engine dying under it, or the CLI's
+ * terminal closing, which hangs up every process in its foreground group, the engine included.
+ */
 type Stop = {
-  readonly signal: "SIGINT" | "SIGTERM" | "SIGKILL";
-  readonly target: "cli" | "engine";
+  readonly signal: "SIGINT" | "SIGTERM" | "SIGHUP" | "SIGKILL";
+  readonly target: "cli" | "engine" | "terminal";
   readonly edit: boolean;
   readonly exitCode: number;
 };
@@ -85,6 +88,8 @@ it.each<Stop>([
   { signal: "SIGINT", target: "cli", edit: false, exitCode: 130 },
   { signal: "SIGINT", target: "cli", edit: true, exitCode: 130 },
   { signal: "SIGTERM", target: "cli", edit: false, exitCode: 130 },
+  { signal: "SIGHUP", target: "cli", edit: false, exitCode: 130 },
+  { signal: "SIGHUP", target: "terminal", edit: false, exitCode: 130 },
   // A crashed engine runs none of its own cleanup.
   { signal: "SIGKILL", target: "engine", edit: false, exitCode: 1 },
 ])(
@@ -125,28 +130,34 @@ it.each<Stop>([
       expect(result.exitCode, result.stdout + result.stderr).toBe(0);
     }
     const port = await reservePort();
-    // The test signals the live process mid-run, so it keeps its own handle on it.
-    const child = Bun.spawn({
-      cmd: [
-        process.execPath,
-        sourceEntrypoint,
-        "--json",
-        "docs",
-        "serve",
-        "--project",
-        "demo",
-        "--no-open",
-        "--port",
-        String(port),
-      ],
-      cwd: project,
-      env,
-      stdin: "ignore",
-      stdout: "pipe",
-      stderr: "pipe",
-    });
     let stdout = "";
     let stderr = "";
+    // The test signals the live process mid-run, so it keeps its own handle on it.
+    const cmd = [
+      process.execPath,
+      sourceEntrypoint,
+      "--json",
+      "docs",
+      "serve",
+      "--project",
+      "demo",
+      "--no-open",
+      "--port",
+      String(port),
+    ];
+    // A terminal closes through a real session: Python's standard pty module runs the CLI in one on
+    // macOS and Linux CI, then hangs up its foreground job and closes the terminal on request.
+    const child =
+      target === "terminal"
+        ? Bun.spawn({
+            cmd: ["python3", join(import.meta.dirname, "support", "hangup-terminal.py"), ...cmd],
+            cwd: project,
+            env,
+            stdin: "pipe",
+            stdout: "pipe",
+            stderr: "pipe",
+          })
+        : Bun.spawn({ cmd, cwd: project, env, stdin: "ignore", stdout: "pipe", stderr: "pipe" });
     const consume = async (stream: ReadableStream<Uint8Array>, append: (text: string) => void) => {
       for await (const chunk of stream) append(new TextDecoder().decode(chunk));
     };
@@ -195,7 +206,10 @@ it.each<Stop>([
       }
       expect(await themes(temporary)).toHaveLength(1);
       if (target === "cli") child.kill(signal);
-      else {
+      else if (target === "terminal") {
+        await child.stdin?.write("close\n");
+        await child.stdin?.end();
+      } else {
         // The CLI opens no browser here, so its only direct child is the reader engine.
         const [engine, ...others] = directChildren(child.pid);
         expect(others).toEqual([]);

@@ -20,6 +20,7 @@ import {
 import { readRunInput, InputFailure } from "./input.ts";
 import { superviseWorker } from "./supervisor.ts";
 import { SecretFailure } from "./secrets.ts";
+import { interruptSignals } from "../process/main-runtime.ts";
 
 const toError = (error: unknown): ExecutionError => {
   if (error instanceof ExecutionError) return error;
@@ -118,8 +119,7 @@ export const makeRunCancellation = (): RunCancellation => {
     if (controller.signal.aborted === false) controller.abort();
     else for (const listener of repeated) listener();
   };
-  process.on("SIGINT", interrupt);
-  process.on("SIGTERM", interrupt);
+  interruptSignals.forEach((signal) => process.on(signal, interrupt));
   return {
     signal: controller.signal,
     onRepeatSignal: (listener) => {
@@ -129,8 +129,7 @@ export const makeRunCancellation = (): RunCancellation => {
       };
     },
     close: () => {
-      process.off("SIGINT", interrupt);
-      process.off("SIGTERM", interrupt);
+      interruptSignals.forEach((signal) => process.off(signal, interrupt));
       repeated.clear();
     },
   };
