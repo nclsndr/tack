@@ -1,16 +1,17 @@
-import { Effect, Schema } from "effect";
+import { Effect, Schema, Stdio, Stream } from "effect";
 import type { SourceFinding } from "../../../domain/sources/source-check.ts";
 import { emptyState } from "../../../domain/state/state-schema.ts";
 import { checkSource } from "../../../features/sources/source-check.ts";
 import {
-  applyCommand,
   planSourceScaffold,
   refuseScaffoldInsideSources,
   scaffoldLoadsNothing,
   scaffoldPlanJson,
+  SourceAddRequestError,
+  type SourceConfig,
+  type SourceConfigInvalidError,
   writeSourceScaffold,
 } from "../../../features/sources/source-scaffold.ts";
-import type { SourceFolders } from "../../../domain/sources/source-folders.ts";
 import {
   planSourceRegistration,
   prospectiveSourceLabel,
@@ -26,6 +27,7 @@ import {
 } from "../../../services/state-store.ts";
 import { readInvocationSnapshot } from "../../../features/snapshot/command-snapshot.ts";
 import { appliedAs, toJson } from "../outcomes.ts";
+import type { PublicOutcome } from "../public-outcome.ts";
 import { linkingNext } from "../../../features/projects/checkout.ts";
 import { cwdOrCurrent } from "./route.ts";
 
@@ -56,6 +58,14 @@ const placeScaffold = Effect.fnUntraced(function* (
   };
 });
 
+/** Diagnostic details without the ones a finding or an issue leaves out. */
+const definedDetails = (details: Readonly<Record<string, string | number | undefined>>) =>
+  Object.fromEntries(
+    Object.entries(details).filter(
+      (detail): detail is [string, string | number] => detail[1] !== undefined,
+    ),
+  );
+
 /** Each error a source's check finds, as a diagnostic naming its file. */
 const findingProblems = (findings: ReadonlyArray<SourceFinding>) =>
   findings.flatMap((finding) =>
@@ -65,20 +75,59 @@ const findingProblems = (findings: ReadonlyArray<SourceFinding>) =>
             code: finding.code,
             message: finding.message,
             severity: "error" as const,
-            // The file always, and the field when the finding names one.
-            details: Object.fromEntries(
-              Object.entries({ file: finding.file, field: finding.field }).filter(
-                (detail): detail is [string, string] => detail[1] !== undefined,
-              ),
-            ),
+            // The file always, and the field and its line when the finding names them.
+            details: definedDetails({
+              file: finding.file,
+              field: finding.field,
+              line: finding.line,
+            }),
           },
         ]
       : [],
   );
 
-/** Each error an entry of a planned declaration finds, as a diagnostic naming its file. */
+/**
+ * Each error a planned declaration finds, on the declaration as a whole or under one of its
+ * entries, as a diagnostic naming its file.
+ */
 const scaffoldProblems = (plan: Parameters<typeof scaffoldPlanJson>[0]) =>
-  findingProblems(plan.entries.flatMap((entry) => entry.findings));
+  findingProblems([...plan.findings, ...plan.entries.flatMap((entry) => entry.findings)]);
+
+/**
+ * A config that does not validate: one diagnostic per issue, each with the field and the line in
+ * the config it concerns, so every issue can be fixed before the next preview.
+ */
+const invalidConfig = (error: SourceConfigInvalidError): PublicOutcome => ({
+  classification: "invalid-configuration",
+  diagnostics: error.issues.map((issue) => ({
+    code: error.code,
+    message: issue.message,
+    severity: "error",
+    details: definedDetails({ config: error.config, field: issue.field, line: issue.line }),
+  })),
+  next: [["tack", "guide", "tack-yaml"]],
+});
+
+/**
+ * The JSON `source add --config` takes: the flag's value itself, or standard input for `-`. Standard
+ * input that cannot be read is refused with `config-unreadable`. A value is never read as a path.
+ */
+const readConfig = Effect.fnUntraced(function* (config: string) {
+  if (config !== "-") return { text: config, origin: "argument" } satisfies SourceConfig;
+  const stdio = yield* Stdio.Stdio;
+  const text = yield* stdio.stdin.pipe(
+    Stream.decodeText(),
+    Stream.mkString,
+    Effect.mapError(
+      (cause) =>
+        new SourceAddRequestError({
+          code: "config-unreadable",
+          message: `Tack could not read the --config declaration from standard input: ${cause.message}`,
+        }),
+    ),
+  );
+  return { text, origin: "standard-input" } satisfies SourceConfig;
+});
 
 /**
  * What a preview tells about the state its `--apply` initializes, as plain registration would: the
@@ -156,20 +205,33 @@ const previewRegistration = Effect.fnUntraced(function* (
 
 /**
  * Previews registering a source, and registers it with --apply. A source that has its tack.yaml
- * previews its check; for a folder without one, the preview shows the tack.yaml its kind flags
- * declare, and --apply writes it before registering. A tack.yaml that a registered source's
- * declaration reaches is refused before either. A declaration in which every entry has a problem
- * and finds no resource is never written.
+ * previews its check; for a folder without one, the preview shows the tack.yaml its `--config`
+ * declares, and --apply writes it before registering. A config that does not validate reports
+ * each of its issues. A tack.yaml that a registered source's declaration reaches is refused before
+ * either. A declaration in which every entry has a problem and finds no resource is never written.
  */
-export const addSource = Effect.fnUntraced(function* (
+export const addSource = (
   stateOptions: StateOptions,
   invocation: {
     readonly sourcePath: string;
     readonly apply?: boolean;
-    readonly folders: SourceFolders;
+    readonly config?: string;
+  },
+) =>
+  addSourceWith(stateOptions, invocation).pipe(
+    Effect.catchTag("SourceConfigInvalidError", (error) => Effect.succeed(invalidConfig(error))),
+  );
+
+const addSourceWith = Effect.fnUntraced(function* (
+  stateOptions: StateOptions,
+  invocation: {
+    readonly sourcePath: string;
+    readonly apply?: boolean;
+    readonly config?: string;
   },
 ) {
-  const scaffold = yield* planSourceScaffold(invocation.sourcePath, invocation.folders);
+  const config = invocation.config === undefined ? undefined : yield* readConfig(invocation.config);
+  const scaffold = yield* planSourceScaffold(invocation.sourcePath, config);
   if (scaffold === undefined && invocation.apply !== true)
     return yield* previewRegistration(stateOptions, invocation.sourcePath);
   const placed = scaffold === undefined ? undefined : yield* placeScaffold(stateOptions, scaffold);
@@ -188,7 +250,8 @@ export const addSource = Effect.fnUntraced(function* (
             ...problems,
             ...(initializes ? [yield* plannedInitialization(stateOptions)] : []),
           ],
-          next: [applyCommand(plan)],
+          // The JSON is not echoed back: the view says to run the same command with --apply.
+          next: [],
           plan: toJson(scaffoldPlanJson(plan)),
         }
       : {

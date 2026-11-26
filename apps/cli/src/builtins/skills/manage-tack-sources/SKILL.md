@@ -115,18 +115,18 @@ metadata.
 1. Look inside the folder, then ask the person what each folder holds (skills, commands, context,
    docs, scripts) and which ones Tack should serve. `PATH/SKILL.md` makes PATH one skill: offer its
    parent as a skills collection, or `tack import add` for a remote repository.
-2. Without `tack.yaml`: skill folders at the top of PATH take `--skills .`, which writes a skills
-   collection, and each other folder of docs or commands there becomes its own source, such as
-   `tack source add PATH/handbook --docs .`. Otherwise give one repeatable flag per folder, each a
-   path inside the source: `--skills`, `--commands`, `--context` or `--docs`. The preview shows the
-   `tack.yaml`, its `name` made from the folder's, and each entry's resources, count and problems.
-   Show every preview, ask once, then rerun each with `--apply` ([declaration creation](references/tack-yaml.md#declaration-creation)).
-3. Edit `tack.yaml` by hand only for what flags cannot say: patterns, `scripts`, `depends-on`, a
-   docs name other than its folder's, another source `name`. Run `tack check /absolute/path` with
-   any companion source folders until clean: it reads no state and runs no authored code. Errors exit 1.
+2. Without `tack.yaml`: write its declaration as JSON and preview it with
+   `tack source add PATH --config '<json>'`, or `--config -` from standard input. Skill folders at the
+   top make PATH a skills collection, `{"version": 1, "name": "skills", "kind": "skills"}`;
+   otherwise one entry per folder, with patterns, `scripts`, `depends-on` and docs names in the
+   same JSON. `tack guide tack-yaml` lists every key; a bare `source add` suggests a declaration.
+   The preview reports every issue at once with its field and line, then the `tack.yaml` it writes
+   and what each entry finds. Show it, ask once, rerun with `--apply` ([declaration creation](references/tack-yaml.md#declaration-creation)).
+3. Edit an existing `tack.yaml` by hand. Run `tack check /absolute/path` with any companion source
+   folders until clean: it reads no state and runs no authored code. Errors exit 1.
 4. With an existing `tack.yaml`, `tack source add /absolute/path` previews the registration: the
    name the source takes, its counts and issues. `--apply` registers it, and sets up state when Tack
-   has none. A kind flag on such a source fails and writes nothing.
+   has none. `--config` on such a source fails with `declaration-exists` and writes nothing.
 5. Run `tack catalog --details` to verify registration; fix every issue and repeat. `doctor` and
    `status` show health. Deliver the resources with `use-tack`: `tack sync --all`, then `--apply`.
 

@@ -315,31 +315,25 @@ it.layer(LiveTestLayer)("setup hints", (hintIt) => {
     {
       layout: "a skill at its root",
       files: ["SKILL.md"],
-      next: undefined,
-      remedy:
-        "FOLDER holds SKILL.md, so it is one skill, not a folder of skills. Register the folder that holds it, or import it into a source with tack import add.",
+      suggests: undefined,
     },
     {
       layout: "flat skill folders",
       files: ["review/SKILL.md", "notes.md"],
-      next: ".",
-      remedy:
-        "Run tack source add FOLDER --skills . to preview a skills collection, then apply it.",
+      suggests: '{"version":1,"name":"skills-folder","kind":"skills"}',
     },
     {
       layout: "a skills folder",
       files: ["skills/review/SKILL.md"],
-      next: "skills",
-      remedy: "Run tack source add FOLDER --skills skills to preview its tack.yaml, then apply it.",
+      suggests: '{"version":1,"name":"skills-folder","skills":[{"path":"skills"}]}',
     },
     {
       layout: "a skills folder beside a commands folder",
       files: ["skills/review/SKILL.md", "commands/ship.md"],
-      next: "skills --commands commands",
-      remedy:
-        "Run tack source add FOLDER --skills skills --commands commands to preview its tack.yaml, then apply it.",
+      suggests:
+        '{"version":1,"name":"skills-folder","skills":[{"path":"skills"}],"commands":[{"path":"commands"}]}',
     },
-  ])("names what to run for a folder of $layout without tack.yaml", ({ files, next, remedy }) =>
+  ])("names what to run for a folder of $layout without tack.yaml", ({ files, suggests }) =>
     Effect.gen(function* () {
       const { at, json, text } = yield* machine();
       const fileSystem = yield* FileSystem.FileSystem;
@@ -356,31 +350,41 @@ it.layer(LiveTestLayer)("setup hints", (hintIt) => {
             ),
           ),
       );
-      const commands =
-        next === undefined ? [] : [`tack source add ${at("skills-folder")} --skills ${next}`];
-      const checked = yield* json(["check", at("skills-folder")]);
+      const folder = at("skills-folder");
+      const commands = suggests === undefined ? [] : ["tack guide tack-yaml"];
+      const remedy =
+        suggests === undefined
+          ? `${folder} holds SKILL.md, so it is one skill, not a folder of skills. Register the folder that holds it, or import it into a source with tack import add.`
+          : `Write its tack.yaml as JSON and preview it with tack source add ${folder} --config 'JSON', or --config - to read it from standard input; tack guide tack-yaml lists every key. Its layout suggests ${suggests}.`;
+      const checked = yield* json(["check", folder]);
       expect(checked).toMatchObject({
         classification: "success",
         next: commands,
         result: {
-          checks: [{ kind: "source", path: at("skills-folder"), details: [] }],
+          checks: [{ kind: "source", path: folder, details: [] }],
           findings: [
             {
               code: "check-not-a-source",
-              file: at("skills-folder"),
+              file: folder,
               message: "No tack.yaml: this folder is not a Tack source yet.",
-              remedy: remedy.replace("FOLDER", at("skills-folder")),
+              remedy,
               severity: "warning",
             },
           ],
         },
       });
-      expect(hintsIn(yield* text(["check", at("skills-folder")]))).toEqual(commands);
-      // check and a bare source add on the same folder suggest the same flags.
-      if (next !== undefined)
-        expect((yield* json(["source", "add", at("skills-folder"), "--apply"])).next).toEqual(
-          commands,
-        );
+      expect(hintsIn(yield* text(["check", folder]))).toEqual(commands);
+      // check and a bare source add on the same folder give the same advice.
+      if (suggests !== undefined) {
+        const added = yield* json(["source", "add", folder, "--apply"]);
+        expect(added.next).toEqual(commands);
+        expect(added.diagnostics).toEqual([
+          expect.objectContaining({
+            code: "declaration-config-required",
+            message: `${folder} has no tack.yaml. ${remedy}`,
+          }),
+        ]);
+      }
     }),
   );
 

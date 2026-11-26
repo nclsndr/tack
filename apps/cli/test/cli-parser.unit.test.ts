@@ -517,43 +517,26 @@ const sourceRows: Rows = [
   [["source"], { _tag: "source-list" }],
   [["source", "list"], { _tag: "source-list" }],
   [["source", "ls"], { _tag: "source-list" }],
-  [
-    ["source", "add", "/brain"],
-    {
-      _tag: "source-add",
-      sourcePath: "/brain",
-      apply: false,
-      folders: { skills: [], commands: [], context: [], docs: [] },
-    },
-  ],
+  [["source", "add", "/brain"], { _tag: "source-add", sourcePath: "/brain", apply: false }],
   [
     [
       "source",
       "add",
       "/brain",
-      "--skills",
-      "personal/skills",
-      "--docs",
-      "alpha/documents",
-      "--skills",
-      "alpha/skills",
-      "--commands",
-      "prompts",
-      "--context",
-      "notes",
+      "--config",
+      '{"version":1,"name":"brain","kind":"skills"}',
       "--apply",
     ],
     {
       _tag: "source-add",
       sourcePath: "/brain",
       apply: true,
-      folders: {
-        skills: ["personal/skills", "alpha/skills"],
-        commands: ["prompts"],
-        context: ["notes"],
-        docs: ["alpha/documents"],
-      },
+      config: '{"version":1,"name":"brain","kind":"skills"}',
     },
+  ],
+  [
+    ["source", "add", "/brain", "--config", "-"],
+    { _tag: "source-add", sourcePath: "/brain", apply: false, config: "-" },
   ],
   [
     ["source", "relocate", "source-id", "/source"],
@@ -858,6 +841,11 @@ const refusals: ReadonlyArray<readonly [ReadonlyArray<string>, string, string]> 
   [["docs", "serve", "--config", "reader.json"], "invalid-flag", "docs serve"],
   [["docs", "serve", "--no-open", "--no-open"], "invalid-flag", "docs serve"],
   [["docs", "attach"], "missing-argument", "docs attach"],
+  // The kind flags are gone: --config declares a new source.
+  ...(["--skills", "--commands", "--context", "--docs"] as const).map(
+    (flag) => [["source", "add", "/brain", flag, "."], "invalid-flag", "source add"] as const,
+  ),
+  [["source", "add", "/brain", "--config", "{}", "--config", "{}"], "invalid-flag", "source add"],
   [["docs", "attach", "--source", source], "invalid-flag", "docs attach"],
   [["docs", "detach", "--source", source], "invalid-flag", "docs detach"],
   [["docs", "attach", "handbook", "--owner", "team"], "invalid-flag", "docs attach"],

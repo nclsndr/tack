@@ -1,5 +1,6 @@
 import { Effect, FileSystem, Option } from "effect";
 import type { CheckFinding } from "../../domain/check/check-schema.ts";
+import { fieldLine } from "../../domain/sources/field-line.ts";
 
 type LocatedFinding = Omit<CheckFinding, "line"> & {
   readonly line?: number;
@@ -77,7 +78,7 @@ export const dependencyLine = (text: string, position: number) => {
 
 /**
  * Retains exact detector lines, or anchors YAML fields and list entries such as `skills[1]` when
- * their text is available. An entry that cannot be found anchors at its key.
+ * their text is available. An entry that cannot be found anchors at the deepest key found.
  */
 export const locateFinding = Effect.fnUntraced(function* (
   finding: LocatedFinding,
@@ -85,16 +86,11 @@ export const locateFinding = Effect.fnUntraced(function* (
   if (finding.line !== undefined) return { ...finding, line: Math.max(1, finding.line) };
   const fs = yield* FileSystem.FileSystem;
   const text = yield* fs.readFileString(finding.file).pipe(Effect.option);
-  const lines = Option.isSome(text) === true ? text.value.split(/\r?\n/) : [];
   const field =
-    finding.field?.split(/[.[]/)[0] ??
-    (finding.code === "profile-publication-mismatch" ? "name" : undefined);
-  const start = field === undefined ? -1 : lines.findIndex((line) => line.startsWith(`${field}:`));
-  const item = finding.field?.match(/^[^.[]+\[(\d+)\]/)?.[1];
-  const itemLines = item === undefined || start < 0 ? [] : listItemLines(lines, start, 0);
+    finding.field ?? (finding.code === "profile-publication-mismatch" ? "name" : undefined);
   return {
     ...finding,
-    line: Math.max(1, (itemLines[Number(item)] ?? start) + 1),
+    line: Option.isSome(text) === true ? fieldLine(text.value, field) : 1,
     message: finding.message,
     ...(finding.remedy === undefined ? {} : { remedy: finding.remedy }),
   };

@@ -239,7 +239,7 @@ it.layer(LiveTestLayer)("CLI host environment", (test) => {
         "---\nname: review\ndescription: Review a change.\n---\nReview.\n",
       );
       const stateDirectory = path.join(home, ".tack");
-      const words = ["source", "add", folder, "--skills", "skills"];
+      const words = ["source", "add", folder, "--config", JSON.stringify(skillsConfig)];
       const preview = yield* inHome(home, tack(words, false));
       expect(preview).toMatchObject({ classification: "success" });
       expect(preview.diagnostics).toEqual([
@@ -274,7 +274,14 @@ it.layer(LiveTestLayer)("CLI host environment", (test) => {
         path.join(folder, "skills", "review", "SKILL.md"),
         "---\nname: review\ndescription: Review a change.\n---\nReview.\n",
       );
-      const applied = yield* tack(["source", "add", folder, "--skills", "skills", "--apply"]);
+      const applied = yield* tack([
+        "source",
+        "add",
+        folder,
+        "--config",
+        JSON.stringify(skillsConfig),
+        "--apply",
+      ]);
       expect(applied).toMatchObject({
         classification: "invalid-configuration",
         diagnostics: [{ code: "state-not-initialized" }],
@@ -283,6 +290,9 @@ it.layer(LiveTestLayer)("CLI host environment", (test) => {
     }),
   );
 });
+
+/** The declaration both scaffolding tests submit: the skills folder of `agent-setup`. */
+const skillsConfig = { version: 1, name: "agent-setup", skills: [{ path: "skills" }] };
 
 /** Runs a host invocation against the default state under `home`, never the real home. */
 const inHome = <A, E, R>(home: string, effect: Effect.Effect<A, E, R>) =>

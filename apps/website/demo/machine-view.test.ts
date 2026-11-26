@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { makeDemoSession } from "./demo-shell.ts";
+import { sourceDocs, sourceSkills } from "./demo-walkthrough.ts";
 import {
   describeEntry,
   homeRelative,
@@ -41,8 +42,8 @@ describe("machine view", () => {
   it("shows links as leaves with their targets, keeps docs mounts and hides Tack state", async () => {
     const session = makeDemoSession();
     for (const line of [
-      "tack init --adapter claude && tack source add ~/skills --skills . --apply",
-      "tack source add ~/team-docs --docs handbook --commands commands --apply",
+      `tack init --adapter claude && ${sourceSkills} --apply`,
+      `${sourceDocs} --apply`,
       "cd ~/code/app && tack project add app && tack docs attach handbook && tack sync --apply",
     ])
       await session.run(line, 80);

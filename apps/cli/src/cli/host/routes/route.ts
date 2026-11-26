@@ -52,7 +52,8 @@ export type RouteServices =
   | SecureRandom.SecureRandom
   | Scope.Scope
   | Source
-  | StateStore;
+  | StateStore
+  | Stdio.Stdio;
 
 /** How the host runs one invocation kind. */
 export type Route<I extends Invocation> = {

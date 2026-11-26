@@ -5,6 +5,11 @@ description: Register a folder of skills, commands and docs as a Tack source, wi
 
 import { Terminal } from "../../../components/terminal.tsx";
 
+export const sourceConfig =
+  '{"version": 1, "name": "agent-setup", "skills": [{"path": "skills"}], "commands": [{"path": "commands"}], "docs": [{"name": "handbook", "path": "handbook"}]}';
+
+export const sourceAddCommand = `tack source add ~/agent-setup --config '${sourceConfig}'`;
+
 export const previewOutput = [
   "tack source add · ✓ success",
   "",
@@ -30,9 +35,8 @@ export const previewOutput = [
   "docs handbook · 1 docs",
   "  handbook",
   "",
-  "Next",
-  "  tack source add /Users/ada/agent-setup --skills skills --commands commands \\",
-  "    --docs handbook --apply",
+  "Run the same command again with --apply to write tack.yaml and register the",
+  "  source.",
 ].join("\n");
 
 export const applyOutput = [
@@ -107,34 +111,63 @@ Say your folder looks like this:
     └── pr-review/SKILL.md
 ```
 
-Name each folder by what it holds: `--skills`, `--commands`, `--context` or `--docs`, each a path
-inside the source. Tack previews the `tack.yaml` it would write and what each folder holds, and
-changes nothing:
+Write its `tack.yaml` as JSON: the same keys and values. Each entry names a folder inside the
+source by what it holds, and `version` and `name` are required. Here is the declaration:
 
-<Terminal
-  commands={["tack source add ~/agent-setup --skills skills --commands commands --docs handbook"]}
-  output={previewOutput}
-/>
+```json
+{
+  "version": 1,
+  "name": "agent-setup",
+  "skills": [{ "path": "skills" }],
+  "commands": [{ "path": "commands" }],
+  "docs": [{ "name": "handbook", "path": "handbook" }]
+}
+```
+
+Pass it as the value of `--config`, in single quotes so the shell keeps it as one argument. Tack
+checks it as `tack check` would, previews the `tack.yaml` it would write and what each folder
+holds, and changes nothing:
+
+<Terminal commands={[sourceAddCommand]} output={previewOutput} />
 
 Check that every skill, command and docs folder you expect is listed. A file that does not parse is
-left out: the preview then reads `! partial` and lists the file under `Problems`. Then apply it:
-Tack writes the `tack.yaml` and registers the source.
+left out: the preview then reads `! partial` and lists the file under `Problems`. A mistake in the
+JSON, such as an unknown key or a missing `name`, fails the preview: Tack lists every problem at
+once, each with its field and its line in the JSON. Then run the same command with `--apply`:
+Tack reads the JSON again, writes the `tack.yaml` and registers the source. It never writes over a
+`tack.yaml` that exists.
 
-<Terminal
-  commands={[
-    "tack source add ~/agent-setup --skills skills --commands commands --docs handbook --apply",
-  ]}
-  output={applyOutput}
-/>
+<Terminal commands={[`${sourceAddCommand} --apply`]} output={applyOutput} />
 
-Run `tack source add ~/agent-setup` without any flag and Tack refuses with
-`declaration-flags-required`. Its `Next` names `--skills` and `--commands` for the folders it
-recognises by name, here `skills` and `commands`; add `--docs` for a folder of documents yourself.
+A long declaration reads better over several lines. Write `--config -` and pass the JSON on
+standard input, with a heredoc for instance, then pipe the same JSON again with `--apply`:
 
-When the skill folders sit at the top of the folder, such as `~/skills/review/SKILL.md`, write
-`--skills .` instead. Tack previews a skills collection: a `tack.yaml` that holds `kind: skills`
-and nothing else. A folder of commands or docs beside it is then a source of its own, such as
-`tack source add ~/skills/commands --commands .`. Until it is, the preview warns
+```sh
+tack source add ~/agent-setup --config - <<'EOF'
+{
+  "version": 1,
+  "name": "agent-setup",
+  "skills": [{ "path": "skills" }],
+  "commands": [{ "path": "commands" }],
+  "docs": [{ "name": "handbook", "path": "handbook" }]
+}
+EOF
+```
+
+The JSON takes every key a `tack.yaml` takes: scripts, `include` and `exclude` patterns,
+`depends-on`, `maintainers` and the rest, except `imports`. `tack guide tack-yaml` lists them.
+`--config` takes the JSON itself: YAML or a file path fails with `config-not-json`. Tack writes the
+`tack.yaml` from what it read, so the file holds plain YAML whatever the layout of your JSON.
+
+Run `tack source add ~/agent-setup` without `--config` and Tack refuses with
+`declaration-config-required`. It reads the top of the folder and suggests a JSON declaration for
+the folders it recognises by name, here `skills` and `commands`; add the `handbook` docs yourself.
+Its `Next` is `tack guide tack-yaml`.
+
+When the skill folders sit at the top of the folder, such as `~/skills/review/SKILL.md`, declare a
+skills collection instead: `{"version": 1, "name": "skills", "kind": "skills"}`. Its `tack.yaml`
+holds `kind: skills` and the name, nothing else. A folder of commands or docs beside it is then a
+source of its own, with `"kind": "commands"` or `"kind": "docs"`. Until it is, the preview warns
 `collection-folder-not-skill` about that folder and leaves it out; the warning changes nothing
 else.
 
@@ -143,6 +176,7 @@ else.
 A folder with a `tack.yaml` previews like any other: `tack source add ~/code/acme-agent-skills`
 shows the name the source takes and what it holds. Apply it to register the source; registering
 writes nothing into the folder and links nothing. This is how you add a team repository you cloned.
+`--config` on such a folder fails with `declaration-exists`: edit its `tack.yaml` instead.
 
 <Terminal commands={["tack source add ~/code/acme-agent-skills --apply"]} output={teamOutput} />
 
@@ -168,8 +202,8 @@ it after every edit to a `tack.yaml`:
 
 <Terminal commands={["tack check ~/agent-setup"]} output={checkOutput} />
 
-Scripts, `include` and `exclude` patterns and `depends-on` go into `tack.yaml` by hand; the flags
-cannot write them. Your agent's built-in `manage-tack-sources` skill knows the format.
+Once the source is registered, edit its `tack.yaml` directly. Your agent's built-in
+`manage-tack-sources` skill knows the format, and `tack guide tack-yaml` lists every key.
 
 ## Deliver it
 

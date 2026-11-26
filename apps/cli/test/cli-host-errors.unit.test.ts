@@ -484,14 +484,14 @@ const cases: ReadonlyArray<Case> = [
   },
   {
     error: new SourceAddRequestError({
-      code: "declaration-flags-required",
-      message: "/brain has no tack.yaml. Name the folders it holds with --skills.",
-      next: [["tack", "source", "add", "/brain", "--skills", "FOLDER"]],
+      code: "declaration-config-required",
+      message: "/brain has no tack.yaml. Write its tack.yaml as JSON.",
+      next: [["tack", "guide", "tack-yaml"]],
     }),
     classification: "invalid-invocation",
-    code: "declaration-flags-required",
-    message: "/brain has no tack.yaml. Name the folders it holds with --skills.",
-    next: [["tack", "source", "add", "/brain", "--skills", "FOLDER"]],
+    code: "declaration-config-required",
+    message: "/brain has no tack.yaml. Write its tack.yaml as JSON.",
+    next: [["tack", "guide", "tack-yaml"]],
   },
   {
     error: new SourcePathConflictError({

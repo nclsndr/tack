@@ -1,7 +1,7 @@
 import { Argument, Command, Flag } from "effect/cli";
 import { ResourceKindSchema } from "../../domain/resources/kinds.ts";
 import { listAlias } from "./list-alias.ts";
-import { booleanFlag, optionalFlag, repeatableStringFlag } from "./flag-utils.ts";
+import { booleanFlag, optionalFlag, optionalStringFlag } from "./flag-utils.ts";
 import { receive } from "./invocation-receiver.ts";
 import { applyFlag, immediate, previewApply, readOnly } from "./operation-contract.ts";
 
@@ -38,34 +38,22 @@ const sourceAddCommand = Command.make(
   "add",
   {
     sourcePath: sourcePathArgument,
-    skills: repeatableStringFlag(
-      "skills",
-      "Declare this folder of skills, relative to the source, in a new tack.yaml, or . for a skills collection: skills at its top; repeatable",
-    ),
-    commands: repeatableStringFlag(
-      "commands",
-      "Declare this folder or .md file of commands in a new tack.yaml, or . for a commands collection; repeatable",
-    ),
-    context: repeatableStringFlag(
-      "context",
-      "Declare this folder or file of context in a new tack.yaml; repeatable",
-    ),
-    docs: repeatableStringFlag(
-      "docs",
-      "Declare this folder of docs, named after the folder, in a new tack.yaml, or . for a docs collection: the whole source; repeatable",
+    config: optionalStringFlag(
+      "config",
+      "Declare the source in a new tack.yaml from this JSON declaration, or - to read it from standard input; tack guide tack-yaml lists every key",
     ),
     apply: applyFlag,
   },
-  ({ sourcePath, apply, skills, commands, context, docs }) =>
+  ({ sourcePath, apply, config }) =>
     receive({
       _tag: "source-add",
       sourcePath,
       apply,
-      folders: { skills, commands, context, docs },
+      ...(config === undefined ? {} : { config }),
     }),
 ).pipe(
   Command.withDescription(
-    "Preview registering a source: for a folder that has a tack.yaml, what it holds and the name it takes; --apply registers it. For a folder without one, name what it holds with --skills, --commands, --context and --docs, each a path inside it, or one of --skills ., --commands . or --docs . alone to make the folder a collection: source add previews the tack.yaml it would write and what each entry finds, and --apply writes it and registers the source. Kind flags never write over an existing tack.yaml.",
+    "Preview registering a source: for a folder that has a tack.yaml, what it holds and the name it takes; --apply registers it. For a folder without one, give its declaration as JSON with --config '<json>', or --config - to read it from standard input: source add validates it as tack check would, previews the tack.yaml it would write and what each entry finds, and --apply writes it and registers the source. --config never writes over an existing tack.yaml.",
   ),
   Command.withExamples([
     {
@@ -74,16 +62,17 @@ const sourceAddCommand = Command.make(
     },
     { command: "tack source add /path/to/source --apply", description: "Register it" },
     {
-      command: "tack source add ~/brain --skills personal/skills --docs alpha/documents",
-      description: "Preview the tack.yaml for a folder without one",
+      command: `tack source add ~/brain --config '{"version":1,"name":"brain","skills":[{"path":"skills"}]}'`,
+      description: "Preview the tack.yaml a JSON declaration writes for a folder without one",
     },
     {
-      command: "tack source add ~/brain --skills personal/skills --docs alpha/documents --apply",
+      command: `tack source add ~/brain --config '{"version":1,"name":"brain","skills":[{"path":"skills"}]}' --apply`,
       description: "Write the previewed tack.yaml and register the source",
     },
     {
-      command: "tack source add ~/skills --skills .",
-      description: "Preview a skills collection for a folder with skill folders at its top",
+      command: "tack source add ~/skills --config -",
+      description:
+        'Preview the declaration piped to standard input, such as {"version":1,"name":"skills","kind":"skills"} for a skills collection',
     },
   ]),
   previewApply,

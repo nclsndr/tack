@@ -17,39 +17,53 @@ export const checkSource = Effect.fn("sources.checkSource")(function* (sourcePat
     Effect.map((value) => ({ value })),
     Effect.catch((error) => Effect.succeed({ error })),
   );
-  const counts = { skill: 0, command: 0, context: 0, script: 0, docs: 0 };
   if ("error" in source) {
     const error = source.error;
     const root = "sourcePath" in error ? error.sourcePath : path.resolve(sourcePath);
     const file = "path" in error ? error.path : path.join(root, declarationFileName);
+    // A declaration that does not decode reports each of its issues at its own field and line.
+    const issues = ("issues" in error ? error.issues : undefined) ?? [{ message: error.message }];
     return {
       kind: "source-check",
       sourcePath: path.resolve(sourcePath),
-      counts,
-      findings: [{ message: error.message, code: error.code, severity: "error", file }],
+      counts: noResources,
+      findings: issues.map((issue) => ({ ...issue, code: error.code, severity: "error", file })),
     } satisfies SourceCheckReport;
   }
-  const value = source.value;
-  const entries = yield* inspectDeclaration(value.canonicalPath, value.declaration);
+  const { entries, findings } = yield* inspectValidatedSource(source.value);
   return {
     kind: "source-check",
-    sourcePath: value.canonicalPath,
+    sourcePath: source.value.canonicalPath,
     counts: entries.reduce(
       (total, entry) => ({ ...total, [entry.kind]: total[entry.kind] + entry.resources.length }),
-      counts,
+      noResources,
     ),
+    findings: [...findings, ...entries.flatMap((entry) => entry.findings)],
+  } satisfies SourceCheckReport;
+});
+
+const noResources = { skill: 0, command: 0, context: 0, script: 0, docs: 0 };
+
+/**
+ * What a validated declaration holds, as `tack check` reports it: each entry with what it finds,
+ * and the findings of the declaration as a whole: its profile publications and its warnings. The
+ * declaration need not be on disk yet, as for one submitted to `source add --config`.
+ */
+export const inspectValidatedSource = Effect.fnUntraced(function* (
+  value: Effect.Success<ReturnType<Source["Service"]["validate"]>>,
+) {
+  const path = yield* Path.Path;
+  return {
+    entries: yield* inspectDeclaration(value.canonicalPath, value.declaration),
     findings: [
       ...(yield* checkProfilePublications(value.canonicalPath, value.declaration)),
-      ...(("warnings" in value ? value.warnings : undefined) ?? []).map(
-        (warning): SourceFinding => ({
-          ...warning,
-          severity: "warning",
-          file: path.join(value.canonicalPath, declarationFileName),
-        }),
-      ),
-      ...entries.flatMap((entry) => entry.findings),
+      ...(value.warnings ?? []).map((warning): SourceFinding => ({
+        ...warning,
+        severity: "warning",
+        file: path.join(value.canonicalPath, declarationFileName),
+      })),
     ],
-  } satisfies SourceCheckReport;
+  };
 });
 
 /**

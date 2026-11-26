@@ -1,5 +1,5 @@
 import { BundleDigestSchema, BundleFileSchema } from "../bundles/bundle-facts.ts";
-import { Effect, Predicate, Schema } from "effect";
+import { Effect, Predicate, Schema, SchemaIssue } from "effect";
 import { CanonicalPathSchema, PortableNameSchema } from "../identity/identity-schema.ts";
 
 /** The original source version, used for declarations without profiles. */
@@ -99,7 +99,7 @@ const collectionFields = {
  * commands are read at its top only; a docs collection is the whole folder as one docs resource,
  * named by its required `name`, which is also the source label.
  */
-const collectionSchemas = {
+export const collectionSchemas = {
   skills: Schema.Struct({
     ...collectionFields,
     kind: Schema.Literal("skills"),
@@ -128,7 +128,7 @@ export type CollectionDeclaration =
 /** A validated source declaration: the list form or one collection. */
 export type SourceDeclaration = ListDeclaration | CollectionDeclaration;
 
-/** Every shape of `tack.yaml`; decode it with {@link decodeSourceDeclaration} for one message. */
+/** Every shape of `tack.yaml`; decode it with {@link decodeSourceDeclaration} for precise issues. */
 export const SourceDeclarationSchema = Schema.Union([
   ListDeclarationSchema,
   collectionSchemas.skills,
@@ -163,24 +163,98 @@ const CollectionKindSchema = Schema.Struct({
   ),
 });
 
+/** Every issue at once, and no key the shape does not name. */
+const decodeOptions = { onExcessProperty: "error", errors: "all" } as const;
+
 /**
- * Decodes a parsed `tack.yaml`, refusing keys its shape does not name. A document with `kind` is a
- * collection: the kind is read first and then decoded with that collection's schema alone, so a
- * stray key or a wrong kind gets one precise message rather than a union error.
+ * Decodes a parsed `tack.yaml`, refusing keys its shape does not name and reporting every issue at
+ * once. A document with `kind` is a collection: the kind is read first and then decoded with that
+ * collection's schema alone, so a stray key or a wrong kind gets a precise message rather than a
+ * union error.
  */
 export const decodeSourceDeclaration = (parsed: unknown) =>
   Predicate.hasProperty(parsed, "kind") === false
-    ? Schema.decodeUnknownEffect(ListDeclarationSchema, { onExcessProperty: "error" })(parsed).pipe(
-        Effect.map((declaration): SourceDeclaration => declaration),
-      )
+    ? Schema.decodeUnknownEffect(
+        ListDeclarationSchema,
+        decodeOptions,
+      )(parsed).pipe(Effect.map((declaration): SourceDeclaration => declaration))
     : Schema.decodeUnknownEffect(CollectionKindSchema)(parsed).pipe(
         Effect.flatMap(({ kind }) =>
-          Schema.decodeUnknownEffect(collectionSchemas[kind], { onExcessProperty: "error" })(
-            parsed,
-          ),
+          Schema.decodeUnknownEffect(collectionSchemas[kind], decodeOptions)(parsed),
         ),
         Effect.map((declaration): SourceDeclaration => declaration),
       );
+
+/** One reason a parsed declaration does not decode, and the field it concerns when it has one. */
+export type DeclarationIssue = { readonly field?: string; readonly message: string };
+
+/**
+ * The messages the formatter gives the two leaves whose message names their key: it knows the
+ * key only by the path it reports beside the message.
+ */
+const leafMarkers = { unexpected: "\u0000unexpected-key", missing: "\u0000missing-key" } as const;
+
+const formatIssues = SchemaIssue.makeFormatterStandardSchemaV1({
+  leafHook: (issue) =>
+    issue._tag === "UnexpectedKey"
+      ? leafMarkers.unexpected
+      : issue._tag === "MissingKey"
+        ? leafMarkers.missing
+        : SchemaIssue.defaultLeafHook(issue),
+});
+
+/**
+ * A decode path as a field: `["depends-on", 0]` is `depends-on[0]`. The formatter reports each
+ * segment as a plain key, never as a Standard Schema segment object.
+ */
+const fieldOf = (path: ReadonlyArray<unknown>) =>
+  path.reduce<string>(
+    (field, key) =>
+      typeof key === "number"
+        ? `${field}[${key}]`
+        : field === ""
+          ? String(key)
+          : `${field}.${String(key)}`,
+    "",
+  );
+
+/** The shape `parsed` is decoded as, by the words a message names it with, and the keys it takes. */
+const shapeOf = (parsed: unknown) => {
+  const kind = Predicate.hasProperty(parsed, "kind") === true ? parsed.kind : undefined;
+  return typeof kind === "string" && isCollectionKind(kind) === true
+    ? { words: `A ${kind} collection`, keys: Object.keys(collectionSchemas[kind].fields) }
+    : { words: "A list-form tack.yaml", keys: Object.keys(ListDeclarationSchema.fields) };
+};
+
+/**
+ * Each issue of a declaration that {@link decodeSourceDeclaration} refused, in the order the
+ * schema reports them. An unknown key names the keys its shape takes, read from the schema, and a
+ * missing name suggests one from `folderName`.
+ */
+export const declarationIssues = (
+  parsed: unknown,
+  error: Schema.SchemaError,
+  folderName: string,
+): ReadonlyArray<DeclarationIssue> =>
+  formatIssues(error.issue).issues.map(({ path, message }): DeclarationIssue => {
+    // The formatter gives every issue a path, the empty one for the declaration as a whole.
+    const field = fieldOf(path ?? /* v8 ignore next -- @preserve */ []);
+    if (field === "") return { message };
+    if (message === leafMarkers.unexpected) {
+      const shape = shapeOf(parsed);
+      return {
+        field,
+        message: `Unknown key "${field}". ${shape.words} takes: ${shape.keys.join(", ")}.`,
+      };
+    }
+    if (message === leafMarkers.missing)
+      return {
+        field,
+        message:
+          field === "name" ? missingSourceNameMessage(folderName) : `Missing key "${field}".`,
+      };
+    return { field, message: `${field}: ${message}` };
+  });
 
 /**
  * The resource keys of a declaration. `docs` is a resource key, but a source that declares only

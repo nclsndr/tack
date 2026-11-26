@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { makeDemoSession, shellWords } from "./demo-shell.ts";
-import { demoWalkthrough } from "./demo-walkthrough.ts";
+import { demoWalkthrough, sourceSkills } from "./demo-walkthrough.ts";
 
 const escape = String.fromCharCode(27);
 const plain = (text: string) => text.replaceAll(new RegExp(`${escape}\\[[0-9;]*m`, "g"), "");
@@ -133,7 +133,7 @@ describe("demo session", () => {
     expect(await runAll(session, ["ls code/app/.git/missing"])).toMatchObject({ exitCode: 1 });
     await runAll(session, ["cd /home/you/code/app", "ls -al"]);
     const linked = await runAll(session, [
-      "tack init --adapter claude && tack source add ~/skills --skills . --apply",
+      `tack init --adapter claude && ${sourceSkills} --apply`,
       "tack project add app && tack sync --apply",
       "ls -l .claude/skills",
     ]);

@@ -52,11 +52,7 @@ const flagSources: Readonly<Record<string, ValueSource>> = {
   "--name": "free",
   "--into": "free",
   "--skill": "free",
-  // Paths inside the source being added, not from the working directory, so none are offered.
-  "--skills": "free",
-  "--commands": "free",
-  "--context": "free",
-  "--docs": "free",
+  "--config": "paths",
 };
 
 /** Operands by command path and name, as `<path> <name>`. */

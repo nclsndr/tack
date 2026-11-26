@@ -448,7 +448,7 @@ Names that start with `.` or `_` are never resources. A collection takes `name`,
 `depends-on` (skills and commands) and `reader` (docs); no resource keys, patterns or profiles.
 Context and scripts need the list form. A collection declares nothing else, so other content beside
 it is a source of its own with its own `tack.yaml`. A skills collection holds skills only: each
-folder at its top is a skill. `tack source add --skills .` and `tack check` name each folder there
+folder at its top is a skill. `tack source add` and `tack check` name each folder there
 that holds no `SKILL.md` in the warning `collection-folder-not-skill`, and Tack ignores it; the
 warning changes no exit code. Dot, underscore and `node_modules` folders and folders with their own
 `tack.yaml` are not named. A skills collection whose folder holds
@@ -536,8 +536,8 @@ optional frontmatter.
 ```sh
 tack source add /path/to/my-source   # preview registering a source that has tack.yaml
 tack source add /path/to/my-source --apply   # register it
-tack source add /path/to/folder --skills skills --docs handbook   # preview its tack.yaml
-tack source add /path/to/skills --skills .   # skill folders at its top: preview a collection
+tack source add /path/to/skills --config '{"version": 1, "name": "skills", "kind": "skills"}'   # preview the tack.yaml it writes
+tack guide tack-yaml   # every key a tack.yaml takes
 tack source
 tack source relocate <registration-id> /path/to/moved-source
 tack catalog
@@ -564,35 +564,44 @@ tack source remove brain --apply
 
 `tack check /absolute/path` checks the source before registration. Include companion source
 folders to resolve external profile members. Declaration validation errors stop that source's
-inspection, while other explicit inputs continue. Resources, published profiles and source-owned
+inspection, while other explicit inputs continue. A `tack.yaml` that does not decode reports every
+issue at once, each at its field and line; an unknown key names the keys its form takes. Resources, published profiles and source-owned
 docs use one combined file:line report, without state or execution.
 
 `source add` previews registering an existing declaration: the name the source would take, its
 counts and issues, and any state its `--apply` would set up. `--apply` registers it and adds a
-`tack check` hint when the check found issues. For a folder without `tack.yaml`, name what it holds with `--skills`,
-`--commands`, `--context` and `--docs`, each a repeatable path inside the source. It previews the
-`tack.yaml` it would write, one folder entry per flag with docs named after their folder, the name
-the source would take, and what each entry finds: resource names, counts and problems. The written
-`name` comes from the folder's name in lowercase, with hyphens for other characters, such as
-`my-skills` for `My Skills`; a folder whose name leaves nothing usable fails with
-`declaration-name-invalid`. Edit the `name` afterwards to choose another.
-`--skills .`, `--commands .` or `--docs .` alone writes a [collection](#collections) instead; `.`
-with another flag fails with `declaration-flags-conflict` and names the commands that register the
-collection and each other folder as its own source, except a context folder, which needs a folder
-of a source. `--context .` is refused, two `--skills`, `--commands` or `--context` folders that are
-equal or nested fail with `declaration-flags-conflict` before anything is written, and `--skills .`
-on a folder that holds `SKILL.md` fails with `source-is-one-skill`. `--apply` creates the file without overwriting and registers the source
-after state initialization; both name the source as a `SOURCE:NAME` reference types it. A kind flag
-on a source that has `tack.yaml` fails with `declaration-exists`; a bare `source add` on a folder
-without one fails with `declaration-flags-required`, and its next commands read the folder's top:
-`--skills .` when skill folders sit there, with a `commands` or `docs` folder beside them as its own
-source, or else one flag per folder named after a kind, such as `--skills skills --context context`.
-A `tack.yaml` where a registered source's declaration reaches would take
-the folder out of that source, so `source add` refuses it with `declaration-inside-source` until that
-source excludes the folder. When every entry has a problem and finds no resource, the source would
-load nothing: the preview is partial with `declaration-loads-nothing` and offers no `--apply`, and
-`--apply` fails with that code. Scripts, patterns and `depends-on` are written by hand. Run
-`tack check` until clean, then verify `catalog --details`.
+`tack check` hint when the check found issues. For a folder without `tack.yaml`, give its
+declaration as JSON, as the value of `--config '<json>'`, or `--config -` to read it from standard
+input. A value is never read as a path. The JSON takes the keys and values of `tack.yaml`, in any of its forms;
+`tack guide tack-yaml` lists every key, from the schemas `tack check` decodes with, and prints the
+JSON Schema of the whole declaration. YAML or other text fails with `config-not-json`, and the
+`imports` key with `config-imports-not-allowed`, since only `tack import add` writes it.
+
+```sh
+tack source add ~/brain --config - <<'EOF'
+{"version": 1, "name": "brain", "skills": [{"path": "personal/skills", "exclude": ["**/_*/**"]}]}
+EOF
+```
+
+`source add` checks the config with the decoder and catalog discovery `tack check` uses. A config
+that does not decode fails with exit 2 and every issue at once, each with its field and its line in
+the config: an unknown key names the keys its form takes, and a missing `name` suggests one from the
+folder. Otherwise the preview shows the `tack.yaml` that `--apply` writes, normalized to YAML, the
+name the source would take, and what each entry finds: resource names, counts and problems, at
+their line in the config. It never repeats the JSON back as a next command: run the same command
+again with `--apply`. `--apply` reads and checks the config again, creates the file without
+overwriting and registers the source after state initialization; both name the source as a
+`SOURCE:NAME` reference types it. Pipe the same config again for `--config -`. `--config` on a
+source that has `tack.yaml` fails with `declaration-exists`: edit that file by hand. A bare
+`source add` on a folder without one fails with `declaration-config-required` and suggests a
+declaration read from the folder's top: a skills [collection](#collections) when skill folders sit
+there, with a `commands` or `docs` folder beside them as a collection of its own, or else one entry
+per folder named after a kind. A `tack.yaml` where a registered source's declaration reaches would
+take the folder out of that source, so `source add` refuses it with `declaration-inside-source`
+until that source excludes the folder. When every entry has a problem and finds no resource, the
+source would load nothing: the preview is partial with `declaration-loads-nothing` and offers no
+`--apply`, and `--apply` fails with that code. Run `tack check` until clean, then verify
+`catalog --details`.
 
 Registration retains only a stable ID and canonical path. Canonical aliases reuse that ID;
 relocation preserves it. A bad root declaration makes a retained source unhealthy. A bad

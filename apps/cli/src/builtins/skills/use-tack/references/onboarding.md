@@ -100,22 +100,26 @@ For each folder:
    take it from the layout, ask only about a folder it does not explain, and let the preview show
    the rest. Worker: use only what your instructions name.
 2. With `tack.yaml`, `tack source add PATH` previews the registration: the name, counts and
-   problems. Without one, pick the command from the layout; each previews the `tack.yaml` it would
-   write and what each entry finds: names, counts, problems. `--apply` registers either.
+   problems. Without one, write its declaration as JSON and preview it with
+   `tack source add PATH --config '<json>'`, or pipe it to `--config -`. The preview checks it as
+   `tack check` would, then shows the `tack.yaml` it would write and what each entry finds: names,
+   counts, problems. A bare `tack source add PATH` suggests one from the layout, and
+   `tack guide tack-yaml` lists every key. Rerun the same command with `--apply` to register
+   either, piping the same JSON again for `-`.
    - `PATH/SKILL.md`: PATH is one skill. Offer its parent folder as a skills collection, or
      `tack import add` for a remote repository. Ask.
-   - Folders with `SKILL.md` at the top of PATH: `tack source add PATH --skills .`, a skills
-     collection. Each other folder there that holds docs or commands is its own source, such as
-     `tack source add PATH/handbook --docs .`.
-   - Folders that group skills, commands or docs, such as `skills/`, and nothing at the top: one flag
-     per folder, each relative to PATH (`--skills skills`, not an absolute path): `--skills`,
-     `--commands`, `--context` or `--docs`.
-   - Markdown at the top and nothing else: `tack source add PATH --docs .`.
+   - Folders with `SKILL.md` at the top of PATH: a skills collection,
+     `{"version": 1, "name": "skills", "kind": "skills"}`. Each other folder there that holds docs
+     or commands is its own source, such as `{"version": 1, "name": "handbook", "kind": "docs"}`
+     for `PATH/handbook`.
+   - Folders that group skills, commands or docs, such as `skills/`, and nothing at the top: one
+     entry per folder, each relative to PATH, such as
+     `{"version": 1, "name": "team", "skills": [{"path": "skills"}]}`.
+   - Markdown at the top and nothing else: a docs collection, `"kind": "docs"`.
 3. Compare each skills entry's count with `find FOLDER -name SKILL.md`. Scripts, `include` or
-   `exclude` patterns and a docs name other than its folder's are added to `tack.yaml` by hand
-   after it is written, with the `manage-tack-sources` skill, then `tack check PATH`. To keep
-   folders whose name starts with `_`, such as `_archive`, out of a skills entry, add
-   `exclude: ["**/_*/**"]` under it.
+   `exclude` patterns and a docs name other than its folder's go into the same JSON, with the
+   `manage-tack-sources` skill. To keep folders whose name starts with `_`, such as `_archive`,
+   out of a skills entry, add `"exclude": ["**/_*/**"]` to it.
 4. When others use the folder through Git, say that `tack.yaml` is written into it and must be
    committed for them to see it.
 

@@ -6,7 +6,6 @@ import type { TargetSelector } from "../../domain/projects/project-schema.ts";
 import type { AgentAdapterId, AgentCapability } from "../../domain/links/agent-adapter-schema.ts";
 import type { ResourceKind, SelectableKind } from "../../domain/resources/kinds.ts";
 import type { OperatorRunRequest } from "../../domain/execution/execution-schema.ts";
-import type { SourceFolders } from "../../domain/sources/source-folders.ts";
 
 export const invocationErrorCodes = [
   "invalid-command",
@@ -140,8 +139,8 @@ export type Invocation =
       readonly _tag: "source-add";
       readonly sourcePath: string;
       readonly apply?: boolean;
-      /** The folders the kind flags name, which source add declares in a new tack.yaml. */
-      readonly folders: SourceFolders;
+      /** The JSON declaration's file, or `-` for standard input, which a new tack.yaml takes. */
+      readonly config?: string;
     }
   | {
       readonly _tag: "profile-apply";

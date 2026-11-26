@@ -1,6 +1,6 @@
 import { agentPrompt } from "@tackup/harness/prompts/landing";
 import type { DemoSession, ShellResult } from "./demo-shell.ts";
-import { demoWalkthrough } from "./demo-walkthrough.ts";
+import { demoWalkthrough, sourceDocs, sourceSkills } from "./demo-walkthrough.ts";
 
 /**
  * One thing that happens in the agent walkthrough. A shell call runs on the demo machine through
@@ -44,9 +44,6 @@ const stepOf = (command: string, occurrence = 0) => {
   if (index === undefined) throw new Error(`No CLI walkthrough step runs ${command}`);
   return index;
 };
-
-const sourceSkills = "tack source add ~/skills --skills .";
-const sourceDocs = "tack source add ~/team-docs --commands commands --docs handbook";
 
 /**
  * What the recorded session printed for the commands the demo machine cannot run: npm, the guide,
@@ -125,7 +122,7 @@ export const agentWalkthrough: ReadonlyArray<AgentBeat> = [
     events: [
       {
         kind: "user",
-        text: "Yes, run it. Quick. My skills are in ~/skills and the team handbook is in ~/team-docs. Link them into ~/code/app and ~/code/api.",
+        text: "Yes, run it. Quick. My skills are in ~/skills and the team handbook, with one command, is in ~/team-docs. Link them into ~/code/app and ~/code/api.",
       },
       { kind: "thinking" },
       {
@@ -142,7 +139,7 @@ export const agentWalkthrough: ReadonlyArray<AgentBeat> = [
         text: [
           "`tack init` found **Claude Code**, **Codex** and **Cursor**, and left your hand-made `~/.claude/skills/my-notes` alone.",
           "",
-          "**Sources.** Both previews wrote nothing:",
+          "**Sources.** Neither folder has a `tack.yaml`, so I declared each as JSON. Both previews wrote nothing:",
           "- `~/skills` has **2 skills**, `commit` and `review`.",
           "- `~/team-docs` has 1 command, `release`, and the `handbook` docs.",
           "",
@@ -166,8 +163,7 @@ export const agentWalkthrough: ReadonlyArray<AgentBeat> = [
         kind: "tool-call",
         tool: "shell",
         command: `${sourceDocs} --apply`,
-        checkpoint:
-          stepOf("tack source add ~/team-docs --docs handbook --commands commands --apply") + 1,
+        checkpoint: stepOf(`${sourceDocs} --apply`) + 1,
       },
       { kind: "tool-call", tool: "shell", command: "tack check ~/skills" },
       {

@@ -47,6 +47,15 @@ export const initOutput = [
   "  tack source add PATH",
 ].join("\n");
 
+export const sourceConfig =
+  '{"version": 1, "name": "agent-setup", "skills": [{"path": "skills"}], "commands": [{"path": "commands"}]}';
+
+export const sourceCommand = `tack source add ~/agent-setup --config '${sourceConfig}'`;
+
+export const repoSourceConfig = '{"version": 1, "name": "app", "skills": [{"path": ".ai/skills"}]}';
+
+export const repoSourceCommand = `tack source add . --config '${repoSourceConfig}'`;
+
 export const sourceOutput = [
   "tack source add · ✓ success",
   "",
@@ -66,9 +75,8 @@ export const sourceOutput = [
   "commands commands · 1 command",
   "  ship",
   "",
-  "Next",
-  "  tack source add /Users/ada/agent-setup --skills skills --commands commands \\",
-  "    --apply",
+  "Run the same command again with --apply to write tack.yaml and register the",
+  "  source.",
 ].join("\n");
 
 export const userSyncOutput = [
@@ -126,8 +134,8 @@ export const repoSourceOutput = [
   "skills .ai/skills · 1 skill",
   "  app-conventions",
   "",
-  "Next",
-  "  tack source add /Users/ada/code/app --skills .ai/skills --apply",
+  "Run the same command again with --apply to write tack.yaml and register the",
+  "  source.",
 ].join("\n");
 
 export const projectSyncOutput = [
@@ -204,14 +212,14 @@ Commit the folder, and push it to a remote of your own when you want a backup or
 
 ## 3. Register the source
 
-<Terminal
-  commands={["tack source add ~/agent-setup --skills skills --commands commands"]}
-  output={sourceOutput}
-/>
+The folder has no `tack.yaml` yet. Pass one as JSON with `--config`: Tack previews the
+`tack.yaml` it would write and what each folder holds.
 
-```sh
-tack source add ~/agent-setup --skills skills --commands commands --apply
-```
+<Terminal commands={[sourceCommand]} output={sourceOutput} />
+
+Run the same command with `--apply` to write the `tack.yaml` and register the source:
+
+<Terminal commands={[`${sourceCommand} --apply`]} />
 
 ## 4. Link them back for every project
 
@@ -271,13 +279,12 @@ metadata:
 Components live in `src/components`, one per file, with a test beside each.
 ```
 
-Register the repository, from its root:
+Register the repository, from its root, with a `tack.yaml` that declares `.ai/skills`:
 
-<Terminal commands={["tack source add . --skills .ai/skills"]} output={repoSourceOutput} />
+<Terminal commands={[repoSourceCommand]} output={repoSourceOutput} />
 
-Apply it with `tack source add . --skills .ai/skills --apply`, then sync the project. The skill
-comes back in `.claude/skills` as a link, and Cursor gets it too; the user skills are not linked
-twice:
+Apply it by running the same command with `--apply`, then sync the project. The skill comes back
+in `.claude/skills` as a link, and Cursor gets it too; the user skills are not linked twice:
 
 <Terminal commands={["tack sync --project app"]} output={projectSyncOutput} />
 
