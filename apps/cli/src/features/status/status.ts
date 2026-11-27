@@ -65,6 +65,12 @@ import {
   type UserLink,
 } from "../reconciliation/linked-for-user.ts";
 import { Source } from "../sources/source.ts";
+import {
+  observeSourcesSkill,
+  sourcesSkillsFor,
+  withGeneratedSkills,
+  type SourcesSkill,
+} from "../reconciliation/sources-skill.ts";
 import { type SourceInspection } from "../../domain/sources/source-inspection.ts";
 import {
   resolveStateDirectory,
@@ -365,6 +371,7 @@ const statusDestinations = Effect.fnUntraced(function* (
   targets: ReadonlyArray<ManagedLinkTarget>,
   userTarget: string | undefined,
   userLinks: ReadonlyArray<UserLink>,
+  sourcesSkills: ReadonlyArray<SourcesSkill>,
 ): Effect.fn.Return<
   ReadonlyArray<StatusDestination>,
   never,
@@ -378,7 +385,10 @@ const statusDestinations = Effect.fnUntraced(function* (
     ...plannerInputCore({
       adapters: state.data.enabledAdapters,
       catalog,
-      resolutions: namespaces.map(({ namespace, resolution }) => ({ namespace, resolution })),
+      resolutions: withGeneratedSkills(
+        namespaces.map(({ namespace, resolution }) => ({ namespace, resolution })),
+        sourcesSkills,
+      ),
       targets,
     }),
     managedLinks,
@@ -585,6 +595,16 @@ export const statusPartialCauses = (report: StatusReport): ReadonlyArray<Partial
     subject: { cause: pending.cause, destinationPath: pending.evidence.destinationPath },
   })),
   ...destinationCauses(report.destinations),
+  ...(report.sourcesSkills ?? []).flatMap((skill): ReadonlyArray<PartialCause> =>
+    skill.state === "current"
+      ? []
+      : [
+          {
+            code: "sources-skill-stale",
+            subject: { namespace: skill.namespace, path: skill.path },
+          },
+        ],
+  ),
   ...report.imports.problems.map(({ code, ...subject }): PartialCause => ({ code, subject })),
 ];
 
@@ -680,6 +700,15 @@ export const statusFromSnapshot = Effect.fn("status.statusFromSnapshot")(functio
   const pendingRemovals = pendingRemovalsOf(state.data.links).filter((pending) =>
     scopeIncludesTarget(scope, pending.evidence.target),
   );
+  const stateDirectory = yield* resolveStateDirectory(stateOptions);
+  // A sync writes and links the sources skill of each namespace it plans, as status reports them.
+  const sourcesSkills = yield* sourcesSkillsFor({
+    adapters: state.data.enabledAdapters,
+    state,
+    sources: sourceInspections,
+    selections: namespaces.filter((namespace) => namespace.lifecycle === "active"),
+    stateDirectory,
+  });
   const destinations = yield* statusDestinations(
     state,
     catalog,
@@ -688,8 +717,9 @@ export const statusFromSnapshot = Effect.fn("status.statusFromSnapshot")(functio
     linkTargetsOf(selected),
     userTarget,
     userLinks,
+    sourcesSkills.skills,
   );
-  const stateDirectory = yield* resolveStateDirectory(stateOptions);
+  const sourcesSkillReports = yield* Effect.forEach(sourcesSkills.skills, observeSourcesSkill);
   const excludes = userLinkedExcludes(
     userLinks,
     namespaces.flatMap((namespace) => namespace.choices),
@@ -718,6 +748,7 @@ export const statusFromSnapshot = Effect.fn("status.statusFromSnapshot")(functio
     ...(docsPendingRemovals.length === 0 ? {} : { docsPendingRemovals }),
     ...(excludes.length === 0 ? {} : { userLinkedExcludes: excludes }),
     projects,
+    ...(sourcesSkillReports.length === 0 ? {} : { sourcesSkills: sourcesSkillReports }),
     selection: selectionEcho(selected),
     scope,
     sources: sourceStatuses(sourceInspections),

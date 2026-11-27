@@ -5,6 +5,8 @@ import { Effect, FileSystem, Path } from "effect";
 import { ChildProcess } from "effect/process";
 import { stateManagedLinks, statePendingRemovals } from "../src/features/removal/removal-plan.ts";
 import { readState } from "../src/services/state-store.ts";
+import { managedLinkDestinationPath } from "../src/domain/agents/agent-layout.ts";
+import { projectSourcesSkillName } from "../src/domain/generated/sources-skill.ts";
 import { runTack, successfulEnvelope, withTackWorld } from "./support/tack-world.ts";
 
 /** Real SIGKILL during a removal, then journal recovery, then retry: the record rows of one destination. */
@@ -26,8 +28,15 @@ it.layer(LiveTestLayer)("a killed removal recovers and retries", (crashIt) => {
             );
             const link = path.join(fixture.primaryRoot, ".agents", "skills", "valid");
             expect(yield* fileSystem.exists(link)).toBe(true);
+            // The project's skill and its sources skill: the kill lands on the first unlink.
             const owned = stateManagedLinks(yield* readState(fixture.options));
-            expect(owned).toHaveLength(1);
+            expect(owned.map((evidence) => evidence.address.name).sort()).toEqual([
+              projectSourcesSkillName,
+              "valid",
+            ]);
+            const onDisk = Effect.forEach(owned, (evidence) =>
+              fileSystem.exists(managedLinkDestinationPath(evidence)),
+            );
             expect(statePendingRemovals(yield* readState(fixture.options))).toEqual([]);
 
             const crashed = yield* ChildProcess.make(
@@ -53,13 +62,18 @@ it.layer(LiveTestLayer)("a killed removal recovers and retries", (crashIt) => {
             expect(yield* fileSystem.exists(path.join(fixture.stateDirectory, "state.lock"))).toBe(
               true,
             );
-            expect(yield* fileSystem.exists(link)).toBe(crashPoint === "before-unlink");
+            expect((yield* onDisk).filter((exists) => exists === false)).toHaveLength(
+              crashPoint === "before-unlink" ? 0 : 1,
+            );
             const crashedState = yield* readState(fixture.options);
-            expect(crashedState.data.journal?.map((entry) => entry._tag)).toEqual(["remove"]);
-            expect(stateManagedLinks(crashedState)).toEqual(owned);
-            expect(statePendingRemovals(crashedState)).toEqual([
-              { cause: "clean", evidence: owned[0] },
+            expect(crashedState.data.journal?.map((entry) => entry._tag)).toEqual([
+              "remove",
+              "remove",
             ]);
+            expect(stateManagedLinks(crashedState)).toEqual(owned);
+            expect(statePendingRemovals(crashedState)).toEqual(
+              expect.arrayContaining(owned.map((evidence) => ({ cause: "clean", evidence }))),
+            );
 
             const retried = successfulEnvelope(
               yield* runTack(fixture, [
@@ -72,9 +86,20 @@ it.layer(LiveTestLayer)("a killed removal recovers and retries", (crashIt) => {
               ]),
             );
 
-            expect(retried.plan).toMatchObject({ actions: [{ _tag: retryAction }] });
-            expect(retried.applied).toMatchObject({ actions: [{ _tag: "applied" }] });
-            expect(yield* fileSystem.exists(link)).toBe(false);
+            // The link the kill interrupted is retried; the other is removed for the first time.
+            expect(retried.plan).toMatchObject({
+              actions: [expect.anything(), expect.anything()],
+            });
+            expect(retried.plan).toMatchObject({
+              actions: expect.arrayContaining([
+                expect.objectContaining({ _tag: retryAction }),
+                expect.objectContaining({ _tag: "remove" }),
+              ]),
+            });
+            expect(retried.applied).toMatchObject({
+              actions: [{ _tag: "applied" }, { _tag: "applied" }],
+            });
+            expect(yield* onDisk).toEqual([false, false]);
             expect(yield* fileSystem.exists(path.join(fixture.stateDirectory, "state.lock"))).toBe(
               false,
             );

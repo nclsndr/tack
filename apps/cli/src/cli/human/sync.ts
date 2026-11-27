@@ -6,6 +6,8 @@ import { docsSyncPart, type DocsSyncPart } from "./removal-views.ts";
 import type { Style } from "./style.ts";
 import { syncFlagWords } from "./sync-flags.ts";
 import { headerLines, sections } from "./view.ts";
+import { sourcesSkillName } from "../../domain/generated/sources-skill.ts";
+import type { SourcesSkillReport } from "../../domain/generated/sources-skill-schema.ts";
 
 /**
  * The docs sections of a sync. A lone part stands as it is; among several parts, or beside the
@@ -32,6 +34,35 @@ const docsSections = (
   });
 };
 
+/**
+ * The sources skills a sync writes: each that is stale or missing, which a preview will write and an
+ * application wrote. A current one needs no line.
+ */
+const sourcesSkillsSection = (
+  reports: ReadonlyArray<SourcesSkillReport>,
+  applied: boolean,
+  style: Style,
+): ReadonlyArray<ReadonlyArray<string>> => {
+  const written = reports.filter((report) => report.state !== "current");
+  return written.length === 0
+    ? []
+    : [
+        [
+          style.bold("Sources skills"),
+          ...written.map((report) => {
+            const place =
+              report.namespace._tag === "project"
+                ? `project ${report.namespace.projectName}`
+                : "user";
+            // An application says what it did; a preview says why it will write.
+            return applied
+              ? `  wrote  ${sourcesSkillName(report.namespace)}${style.dim(` · ${place}`)}`
+              : `  write  ${sourcesSkillName(report.namespace)}${style.dim(` · ${place} · ${report.state}`)}`;
+          }),
+        ],
+      ];
+};
+
 /** Shows both parts of a sync in one frame, with every docs mount action named. */
 export const renderSync: HumanView<"sync"> = (envelope, payloads, style) => {
   const plan = Option.getOrUndefined(payloads.plan);
@@ -48,7 +79,13 @@ export const renderSync: HumanView<"sync"> = (envelope, payloads, style) => {
       { ...envelope, plan: plan.resources, applied: applied?.resources ?? null },
       style,
       flags,
-      { body: docsSections(parts, true, style), hints },
+      {
+        body: [
+          ...sourcesSkillsSection(plan.sourcesSkills ?? [], applied !== undefined, style),
+          ...docsSections(parts, true, style),
+        ],
+        hints,
+      },
     );
   if (parts.length === 0)
     return sections(headerLines(envelope, "docs only", style), [

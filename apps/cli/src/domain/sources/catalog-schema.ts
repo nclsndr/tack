@@ -156,6 +156,7 @@ export const MetadataCarrierSchema = Schema.StructWithRest(
 /** Stable reasons for excluding one discovered skill from the catalog. */
 export const CatalogQuarantineReasonSchema = Schema.Literals([
   "skill-address-duplicate",
+  "skill-name-reserved",
   "resource-address-duplicate",
   "resource-unreadable",
   "resource-boundary-violation",

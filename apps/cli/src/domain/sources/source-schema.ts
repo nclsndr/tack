@@ -50,6 +50,19 @@ const MaintainerSchema = Schema.String.check(
   ),
 );
 
+/** A string that must hold more than white space, refused with `message` otherwise. */
+const nonBlank = (message: string) =>
+  Schema.String.check(Schema.makeFilter((value) => (value.trim().length === 0 ? [message] : [])));
+
+/**
+ * What a source tells agents about editing it: when the rules apply, and the text that states them.
+ * Tack inlines both in the `tack-sources` skill it generates for each project.
+ */
+export const SourceRulesSchema = Schema.Struct({
+  description: nonBlank("The rules description must not be empty."),
+  body: nonBlank("The rules body must not be empty."),
+});
+
 /**
  * The resource keys of a declaration. `docs` is a resource key, but a source that declares only
  * `docs` still has its resource folders checked.
@@ -116,8 +129,10 @@ export const oneKindAtSourceFolder = Schema.makeFilter(
 export const DeclarationSchema = Schema.Struct({
   version: Schema.Literal(sourceDeclarationVersion),
   name: SourceLabelSchema,
+  description: Schema.optionalKey(nonBlank("A source description must not be empty.")),
   maintainers: Schema.optionalKey(Schema.Array(MaintainerSchema)),
   "depends-on": Schema.optionalKey(Schema.Array(SourceLabelSchema)),
+  rules: Schema.optionalKey(SourceRulesSchema),
   // Resource keys are decoded as unknown here and validated entry by entry by discovery, so one
   // bad entry never makes the whole source unhealthy.
   skills: Schema.optionalKey(Schema.Unknown),
@@ -237,7 +252,10 @@ export const declarationIssues = (
         if (message === leafMarkers.unexpected)
           return {
             field,
-            message: `Unknown key "${field}". A tack.yaml takes: ${Object.keys(DeclarationSchema.fields).join(", ")}.`,
+            message:
+              path?.[0] === "rules" && path.length === 2
+                ? `Unknown key "${field}". rules takes: ${Object.keys(SourceRulesSchema.fields).join(", ")}.`
+                : `Unknown key "${field}". A tack.yaml takes: ${Object.keys(DeclarationSchema.fields).join(", ")}.`,
           };
         if (message === leafMarkers.missing)
           return {
@@ -250,7 +268,13 @@ export const declarationIssues = (
 
 /** A heads-up about a healthy source, which never changes its health or an exit code. */
 export const SourceWarningSchema = Schema.Struct({
-  code: Schema.Literal("source-declares-no-resources"),
+  code: Schema.Literals([
+    "source-declares-no-resources",
+    "source-description-long",
+    "source-rules-long",
+  ]),
+  /** The declaration field the warning concerns, when it concerns one. */
+  field: Schema.optionalKey(Schema.String),
   message: Schema.String,
 });
 

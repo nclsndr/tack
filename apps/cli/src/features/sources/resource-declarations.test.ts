@@ -973,6 +973,55 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
     ),
   );
 
+  test.effect.each([
+    ["tack-sources", "each project"],
+    ["tack-user-sources", "the user"],
+  ] as const)(
+    "quarantines a skill named %s, which Tack reserves for the skill it generates",
+    ([name, owner]) =>
+      withSource(
+        declare("source", "skills: [{ path: skills }]"),
+        {
+          [`skills/${name}/SKILL.md`]: bareSkillText(name),
+          "skills/review/SKILL.md": bareSkillText("review"),
+        },
+        (fixture) =>
+          Effect.gen(function* () {
+            const catalog = yield* catalogOf(fixture);
+            expect(resources(catalog)).toEqual(["skill/review"]);
+            expect(quarantines(catalog)).toEqual(["skill:skill-name-reserved"]);
+            expect(catalog.quarantined[0]?.message).toBe(
+              `Tack reserves the skill name ${name} for the skill it generates for ${owner}. Rename this skill.`,
+            );
+          }),
+      ),
+  );
+
+  test.effect("reports a source's description and rules on its inspection", () =>
+    withSource(
+      declare(
+        "source",
+        "description: The team handbook.",
+        "rules:",
+        "  description: Before any edit.",
+        "  body: Branch first.",
+        "docs: []",
+      ),
+      {},
+      (fixture) =>
+        Effect.gen(function* () {
+          yield* registerSource(fixture.options, { sourcePath: fixture.root });
+          const inspections = yield* inspectSources(yield* readState(fixture.options));
+          expect(
+            inspections.find(({ registration }) => registration.canonicalPath === fixture.root),
+          ).toMatchObject({
+            description: "The team handbook.",
+            rules: { description: "Before any edit.", body: "Branch first." },
+          });
+        }),
+    ),
+  );
+
   test.effect("a source that declares nothing is healthy and warned about", () =>
     withSource(declare("bare"), { "notes/readme.md": "# hi" }, (fixture) =>
       Effect.gen(function* () {

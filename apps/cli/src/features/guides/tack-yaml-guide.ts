@@ -1,6 +1,6 @@
 import { Predicate, Schema } from "effect";
 import { ProfilePublicationSchema } from "../../domain/profiles/profile-schema.ts";
-import { DeclarationSchema } from "../../domain/sources/source-schema.ts";
+import { DeclarationSchema, SourceRulesSchema } from "../../domain/sources/source-schema.ts";
 import { BundleSupportEntrySchema } from "../profiles/bundle-support.ts";
 import { authoringJsonSchema } from "./authoring-schema.ts";
 import { docsEntrySchema } from "../sources/docs-discovery.ts";
@@ -16,9 +16,13 @@ type Described<F extends Fields> = { readonly [K in keyof F]: string };
 const declarationKeys = {
   version: "`1`, the one version Tack reads.",
   name: "The source label: lowercase letters, digits and single hyphens, at most 64 characters. `depends-on` and `source:` references name the source by it on every machine.",
+  description:
+    "One sentence, about 200 characters, that says what the source holds, such as its skills or runbooks. The `tack-sources` skill that sync generates shows it to agents.",
   maintainers:
     "A list of the people or teams to contact about the source, such as `Ada <ada@example.com>`. It grants no permission.",
   "depends-on": "A list of source names whose resources this source's resources may depend on.",
+  rules:
+    "What agents must follow to edit the source: a `description` and a `body`, which the `tack-sources` skill inlines.",
   skills: "A list of folder entries, each a folder of skills or one skill folder.",
   commands: "A list of folder entries, each a folder of `.md` commands or one `.md` file.",
   context: "A list of folder entries, each a folder or one file of context.",
@@ -32,6 +36,16 @@ const declarationKeys = {
 
 /** The entry shapes, each with the declaration keys that take it and what each of its keys takes. */
 const entryShapes = [
+  {
+    title: "Rules",
+    keys: "`rules`",
+    fields: SourceRulesSchema.fields,
+    described: {
+      description:
+        "When the rules apply, in one sentence, such as `Before you edit any skill or runbook of this source.`",
+      body: "The rules, as Markdown addressed to agents, at most about 2 KB: a longer body is not inlined, and `tack check` warns.",
+    } satisfies Described<typeof SourceRulesSchema.fields>,
+  },
   {
     title: "Folder entries",
     keys: "`skills`, `commands` and `context`",
@@ -167,7 +181,7 @@ export const tackYamlGuide = (): string =>
     "",
     "## Entries",
     "",
-    "Each resource key takes a list of entries. A bad entry is quarantined alone: the rest of the source keeps working.",
+    "`rules` takes one mapping, and a bad one makes the source unhealthy. Each resource key takes a list of entries. A bad entry is quarantined alone: the rest of the source keeps working.",
     "",
     ...entryShapes.flatMap((shape) => [
       `### ${shape.title}`,

@@ -1,3 +1,4 @@
+import { generatedSkillRegistrationId } from "../../domain/generated/sources-skill.ts";
 import { Source } from "../sources/source.ts";
 import { Effect, FileSystem, Path } from "effect";
 import { agentAdapterDescriptor } from "../../domain/agents/agent-adapter.ts";
@@ -71,9 +72,11 @@ const observeProfileTarget = Effect.fnUntraced(function* (
       ? target._tag === "user"
       : target._tag === "project-root" && target.projectName === namespace.projectName;
   const builtinIds = new Set(((yield* Source).builtInSources ?? []).map((source) => source.id));
+  // Links to the built-ins and to the skills Tack generates are Tack's own: no profile replaces them.
+  const tackOwned = new Set([...builtinIds, generatedSkillRegistrationId]);
   const relevantLinks = state.data.links.filter(
     (link) =>
-      inNamespace(link.target) && builtinIds.has(link.resource.sourceRegistrationId) === false,
+      inNamespace(link.target) && tackOwned.has(link.resource.sourceRegistrationId) === false,
   );
   const relevantJournal = (state.data.journal ?? []).filter((entry) =>
     inNamespace(entry.link.target),

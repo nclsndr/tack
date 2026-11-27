@@ -13,6 +13,22 @@ import { planReconciliation, reconciliationNamespaces } from "./reconciliation.t
 import { agentAdapterDescriptor } from "../../domain/agents/agent-adapter.ts";
 import type { SkillCatalogEntry } from "../../domain/sources/catalog-schema.ts";
 import { stateOptionsAt } from "../../../test/support/state-fixture.ts";
+import { generatedSkillRegistrationId } from "../../domain/generated/sources-skill.ts";
+
+/** Whether a link, an action or a destination is about the `valid` skill, not the sources skill. */
+const ofSource = (item: {
+  readonly _tag?: string;
+  readonly desired?: ReadonlyArray<{ readonly sourceRegistrationId: string }>;
+  readonly evidence?: { readonly sourceRegistrationId: string };
+  readonly sourceRegistrationId?: string;
+}) =>
+  [...(item.desired ?? []), ...(item.evidence === undefined ? [] : [item.evidence]), item].every(
+    (owner) => owner.sourceRegistrationId !== generatedSkillRegistrationId,
+  );
+
+/** The managed links of the state, without the sources skill's. */
+const sourceLinks = (options: StateOptions) =>
+  readState(options).pipe(Effect.map((state) => managedLinksOf(state.data.links).filter(ofSource)));
 
 /** A temporary user home with one registered source, and its isolated state. */
 const withHome = <A, E, R>(
@@ -85,7 +101,7 @@ it.layer(LiveTestLayer)("agent directory aliases", (aliasIt) => {
 
           const preview = yield* reconcile(options, home, false);
           const creates = preview.plan.units.flatMap((unit) =>
-            unit.actions.map((action) => [unit.adapter, action._tag] as const),
+            unit.actions.filter(ofSource).map((action) => [unit.adapter, action._tag] as const),
           );
           expect(creates).toEqual([["codex", "link-create"]]);
           expect(preview.plan.units.flatMap((unit) => unit.conflicts)).toEqual([]);
@@ -115,7 +131,7 @@ it.layer(LiveTestLayer)("agent directory aliases", (aliasIt) => {
           expect(yield* fileSystem.realPath(path.join(home, ".claude", "skills", "valid"))).toBe(
             skillDirectory,
           );
-          const links = managedLinksOf((yield* readState(options)).data.links);
+          const links = yield* sourceLinks(options);
           expect(links.map((link) => [link.adapter, link.address.name])).toEqual([
             ["codex", "valid"],
           ]);
@@ -123,11 +139,13 @@ it.layer(LiveTestLayer)("agent directory aliases", (aliasIt) => {
           // status agrees with the plan: both logical paths are one healthy install.
           const status = yield* statusOf(options, home);
           expect(
-            status.destinations.map((destination) => [
-              destination.adapter,
-              destination._tag,
-              destination.sharing?.role,
-            ]),
+            status.destinations
+              .filter(ofSource)
+              .map((destination) => [
+                destination.adapter,
+                destination._tag,
+                destination.sharing?.role,
+              ]),
           ).toEqual([
             ["codex", "matching", "writer"],
             ["claude", "matching", "shared"],
@@ -143,7 +161,7 @@ it.layer(LiveTestLayer)("agent directory aliases", (aliasIt) => {
           );
           const rerun = yield* reconcile(options, home, true);
           expect(rerun.partial).toBe(false);
-          expect(managedLinksOf((yield* readState(options)).data.links)).toHaveLength(1);
+          expect(yield* sourceLinks(options)).toHaveLength(1);
         }),
       ),
   );
@@ -162,12 +180,10 @@ it.layer(LiveTestLayer)("agent directory aliases", (aliasIt) => {
         expect(yield* fileSystem.realPath(path.join(home, ".agents", "skills", "valid"))).toBe(
           skillDirectory,
         );
-        expect(
-          managedLinksOf((yield* readState(options)).data.links).map((link) => link.adapter),
-        ).toEqual(["claude"]);
+        expect((yield* sourceLinks(options)).map((link) => link.adapter)).toEqual(["claude"]);
         expect(
           (yield* statusOf(options, home)).destinations.map((destination) => destination._tag),
-        ).toEqual(["matching"]);
+        ).toEqual(["matching", "matching"]);
         expect(
           (yield* reconcile(options, home, false)).plan.units.flatMap((unit) => unit.actions),
         ).toEqual([]);
@@ -190,11 +206,16 @@ it.layer(LiveTestLayer)("agent directory aliases", (aliasIt) => {
         );
         const status = yield* statusOf(options, home);
         expect(
-          status.destinations.map((destination) => [destination.adapter, destination._tag]),
+          status.destinations
+            .filter(ofSource)
+            .map((destination) => [destination.adapter, destination._tag]),
         ).toEqual([
           ["codex", "matching"],
           ["claude", "matching"],
         ]);
+        expect(status.destinations.every((destination) => destination._tag === "matching")).toBe(
+          true,
+        );
       }),
     ),
   );
@@ -345,14 +366,12 @@ it.layer(LiveTestLayer)("agent directory aliases", (aliasIt) => {
           const claudeOff = yield* disableAdapter(options, "claude", { apply: true });
           expect(claudeOff.plan.removal.actions).toEqual([]);
           expect(yield* fileSystem.realPath(physical)).toBe(skillDirectory);
-          expect(
-            managedLinksOf((yield* readState(options)).data.links).map((link) => link.adapter),
-          ).toEqual(["codex"]);
+          expect((yield* sourceLinks(options)).map((link) => link.adapter)).toEqual(["codex"]);
 
           // codex owns the link: its removal is authorized and names the other adapter reaching it.
           yield* enableAdapters(options, ["claude", "codex"]);
           const preview = yield* disableAdapter(options, "codex", { apply: false });
-          expect(preview.plan.removal.actions).toMatchObject([
+          expect(preview.plan.removal.actions.filter(ofSource)).toMatchObject([
             { _tag: "remove", alsoReachedBy: ["claude"], destinationPath: physical },
           ]);
           const applied = yield* disableAdapter(options, "codex", { apply: true });
@@ -364,9 +383,7 @@ it.layer(LiveTestLayer)("agent directory aliases", (aliasIt) => {
           const restored = yield* reconcile(options, home, true);
           expect(restored.partial).toBe(false);
           expect(yield* fileSystem.realPath(physical)).toBe(skillDirectory);
-          expect(
-            managedLinksOf((yield* readState(options)).data.links).map((link) => link.adapter),
-          ).toEqual(["claude"]);
+          expect((yield* sourceLinks(options)).map((link) => link.adapter)).toEqual(["claude"]);
         }),
       ),
   );

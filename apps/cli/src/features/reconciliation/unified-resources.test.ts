@@ -23,6 +23,15 @@ import { runProjectRefreshCommand } from "../refresh/project-refresh.ts";
 import { ManagedLinkEvidenceSchema } from "../../domain/links/managed-link-schema.ts";
 import { applyReconciliationPlan, syncResources } from "../../../test/support/reconciliation.ts";
 import { Git } from "../../services/git.ts";
+import { generatedSkillRegistrationId } from "../../domain/generated/sources-skill.ts";
+import type { ReconciliationAction } from "../../domain/reconciliation/reconciliation-schema.ts";
+
+/** The links an action creates for a resource of a source, not for the sources skill. */
+const sourceLinkCreates = (action: ReconciliationAction) =>
+  action._tag === "link-create" &&
+  action.evidence.sourceRegistrationId !== generatedSkillRegistrationId
+    ? [action.destinationPath]
+    : [];
 
 const fixture = Effect.fnUntraced(function* () {
   const fs = yield* FileSystem.FileSystem;
@@ -114,9 +123,7 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
         const before = yield* f.fs.readFileString(f.statePath);
         const preview = yield* f.reconcile(false);
         expect(
-          preview.plan.units
-            .flatMap((unit) => unit.actions)
-            .filter((action) => action._tag === "link-create"),
+          preview.plan.units.flatMap((unit) => unit.actions).flatMap(sourceLinkCreates),
         ).toHaveLength(4);
         expect(yield* f.fs.readFileString(f.statePath)).toBe(before);
         expect(yield* f.fs.exists(f.path.dirname(f.command))).toBe(false);
@@ -131,7 +138,13 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
         expect(yield* f.fs.exists(f.path.join(f.home, ".codex"))).toBe(false);
         expect(yield* f.fs.exists(f.path.join(f.home, ".claude", "commands"))).toBe(false);
         const status = yield* runStatus(f.options, { cwd: f.home, selector: { _tag: "user" } });
-        expect(status.destinations).toHaveLength(4);
+        expect(
+          status.destinations.filter((destination) =>
+            destination.desired.every(
+              (link) => link.sourceRegistrationId !== generatedSkillRegistrationId,
+            ),
+          ),
+        ).toHaveLength(4);
         expect(status.destinations.every((destination) => destination._tag === "matching")).toBe(
           true,
         );
@@ -434,7 +447,7 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
           preview.plan.units
             .filter((unit) => unit.adapter === "opencode" || unit.adapter === "pi")
             .flatMap((unit) => unit.actions)
-            .flatMap((action) => (action._tag === "link-create" ? [action.destinationPath] : []))
+            .flatMap(sourceLinkCreates)
             .sort(),
         ).toEqual(entries.map((entry) => entry.link).sort());
         expect(yield* f.fs.exists(f.path.join(f.home, ".config"))).toBe(false);
@@ -491,7 +504,7 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
         expect(
           units
             .flatMap((unit) => unit.actions)
-            .flatMap((action) => (action._tag === "link-create" ? [action.destinationPath] : []))
+            .flatMap(sourceLinkCreates)
             .sort(),
         ).toEqual(entries.map((entry) => entry.link).sort());
 

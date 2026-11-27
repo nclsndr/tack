@@ -18,6 +18,10 @@ import {
   type SourceInspection,
 } from "../../domain/sources/source-inspection.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
+import {
+  projectSourcesSkillName,
+  reservedSkillNames,
+} from "../../domain/generated/sources-skill.ts";
 
 export type { Catalog } from "../../domain/sources/catalog-schema.ts";
 
@@ -197,6 +201,28 @@ const quarantineOrder = (left: CatalogQuarantine, right: CatalogQuarantine) =>
     `${right.sourcePath}\0${right.directoryPath}\0${right.code}`,
   );
 
+/**
+ * Quarantines a source skill named like a skill Tack generates: its link would take the place of
+ * the generated one in every agent's skills folder.
+ */
+const reserveGeneratedNames = (
+  candidate: ResourceCandidate,
+  parsed: CatalogEntry | CatalogQuarantine,
+): CatalogEntry | CatalogQuarantine =>
+  "code" in parsed ||
+  parsed.address.kind !== "skill" ||
+  reservedSkillNames.includes(parsed.address.name) === false
+    ? parsed
+    : catalogQuarantine(
+        candidate.source,
+        parsed.directoryPath,
+        "skill-name-reserved",
+        `Tack reserves the skill name ${parsed.address.name} for the skill it generates for ${parsed.address.name === projectSourcesSkillName ? "each project" : "the user"}. Rename this skill.`,
+        parsed.address,
+        undefined,
+        "skill",
+      );
+
 /** Resolves the unified resource catalog for one validated source-inspection snapshot. */
 export const resolveCatalog = Effect.fnUntraced(function* (
   inspections: ReadonlyArray<DeclaredSourceInspection>,
@@ -226,7 +252,7 @@ export const resolveCatalog = Effect.fnUntraced(function* (
     quarantined.push(...docs.quarantined);
     quarantined.push(...discovery.quarantined);
     for (const candidate of discovery.candidates) {
-      const parsed = yield* parseCandidate(candidate);
+      const parsed = reserveGeneratedNames(candidate, yield* parseCandidate(candidate));
       if ("code" in parsed) {
         quarantined.push(parsed);
         candidate.record.problems.push({

@@ -71,14 +71,22 @@ import { linkedForUser, type UserLink } from "./linked-for-user.ts";
 export { ReconciliationPlanSchema } from "../../domain/reconciliation/reconciliation-schema.ts";
 export type { NamespaceDependencyResolution } from "../../domain/reconciliation/reconciliation-schema.ts";
 
+/**
+ * One namespace's dependency resolution, with the skills Tack generates for it: they are linked
+ * into every target of the namespace whatever its selection, as the sources skill is.
+ */
+export type NamespacePlanInput = NamespaceDependencyResolution & {
+  readonly generated?: ReadonlyArray<LinkableCatalogEntry>;
+};
+
 /** One namespace's dependency resolution with the targets that receive its selection. */
-export type ReconciliationNamespace = NamespaceDependencyResolution & {
+export type ReconciliationNamespace = NamespacePlanInput & {
   readonly targets: ReadonlyArray<ManagedLinkTarget>;
 };
 
 /** Gives each namespace resolution the targets that belong to its namespace. */
 export const reconciliationNamespaces = (
-  resolutions: ReadonlyArray<NamespaceDependencyResolution>,
+  resolutions: ReadonlyArray<NamespacePlanInput>,
   targets: ReadonlyArray<ManagedLinkTarget>,
 ): ReadonlyArray<ReconciliationNamespace> =>
   resolutions.map((resolution) => ({
@@ -128,7 +136,7 @@ export type PlanReconciliationInput = {
 export const plannerInputCore = (input: {
   readonly adapters: ReadonlyArray<AgentAdapterId>;
   readonly catalog: Pick<Catalog, "entries" | "quarantined" | "unhealthySources">;
-  readonly resolutions: ReadonlyArray<NamespaceDependencyResolution>;
+  readonly resolutions: ReadonlyArray<NamespacePlanInput>;
   readonly targets: ReadonlyArray<ManagedLinkTarget>;
 }): Pick<
   PlanReconciliationInput,
@@ -527,10 +535,16 @@ const isDirectory = (classified: ClassifiedDirectory) =>
   classified.alias ||
   (classified.observation._tag === "entry" && classified.observation.entryType === "directory");
 
+/** One target with what its namespace selects and the skills Tack generates for it. */
+type TargetInput = {
+  readonly generated: ReadonlyArray<LinkableCatalogEntry>;
+  readonly resolution: DependencyResolution;
+  readonly target: ManagedLinkTarget;
+};
+
 const planKind = Effect.fnUntraced(function* (
   descriptor: AgentAdapterDescriptor,
-  target: ManagedLinkTarget,
-  resolution: DependencyResolution,
+  { generated, resolution, target }: TargetInput,
   input: PlanReconciliationInput,
   kind: LinkableAddress["kind"],
 ): Effect.fn.Return<KindPlan, never, Destination | Path.Path> {
@@ -601,9 +615,13 @@ const planKind = Effect.fnUntraced(function* (
     const blockers = blockersByAddress.get(resourceAddressIdentity(evidence.address));
     return blockers === undefined ? undefined : { _tag: "blocked", blockers };
   };
-  const desired = selectedEntries
-    .filter((entry) => forUserIdentities.has(resourceAddressIdentity(entry.address)) === false)
-    .map((entry) => desiredLink(descriptor, target, linkDirectory, entry, path));
+  // A generated skill is never selected, so it is never linked for the user instead.
+  const desired = [
+    ...selectedEntries.filter(
+      (entry) => forUserIdentities.has(resourceAddressIdentity(entry.address)) === false,
+    ),
+    ...generated.filter((entry) => entry.address.kind === kind),
+  ].map((entry) => desiredLink(descriptor, target, linkDirectory, entry, path));
   const desiredByName = new Map<string, Array<DesiredLink>>();
   for (const link of desired) {
     const group = desiredByName.get(link.entry.address.name);
@@ -815,10 +833,10 @@ const kindDelivery = (
 
 const planUnit = Effect.fnUntraced(function* (
   descriptor: AgentAdapterDescriptor,
-  target: ManagedLinkTarget,
-  resolution: DependencyResolution,
+  targetInput: TargetInput,
   input: PlanReconciliationInput,
 ) {
+  const { target } = targetInput;
   const capability =
     input.requiredCapability === undefined
       ? undefined
@@ -836,8 +854,8 @@ const planUnit = Effect.fnUntraced(function* (
     const empty = { actions: [], collisions: [], conflicts: [] };
     return { unit: { ...base, ...empty, summary: unitSummary(empty, 0) }, destinations: [] };
   }
-  const skills = yield* planKind(descriptor, target, resolution, input, "skill");
-  const commands = yield* planKind(descriptor, target, resolution, input, "command");
+  const skills = yield* planKind(descriptor, targetInput, input, "skill");
+  const commands = yield* planKind(descriptor, targetInput, input, "command");
   const work = {
     actions: sortAndDedupeBy([...skills.actions, ...commands.actions], actionIdentity),
     collisions: [...skills.collisions, ...commands.collisions],
@@ -859,16 +877,15 @@ const planUnit = Effect.fnUntraced(function* (
 
 const planUnits = Effect.fnUntraced(function* (input: PlanReconciliationInput) {
   const targets = sortAndDedupeBy(
-    input.namespaces.flatMap(({ resolution, targets: namespaceTargets }) =>
-      namespaceTargets.map((target) => ({ resolution, target })),
+    input.namespaces.flatMap(
+      ({ generated = [], resolution, targets: namespaceTargets }): ReadonlyArray<TargetInput> =>
+        namespaceTargets.map((target) => ({ generated, resolution, target })),
     ),
     ({ target }) => managedLinkTargetIdentity(target),
   );
   const normalizedAdapters = sortAndDedupeBy(input.adapters, (descriptor) => descriptor.id);
-  const units = yield* Effect.forEach(targets, ({ resolution, target }) =>
-    Effect.forEach(normalizedAdapters, (descriptor) =>
-      planUnit(descriptor, target, resolution, input),
-    ),
+  const units = yield* Effect.forEach(targets, (targetInput) =>
+    Effect.forEach(normalizedAdapters, (descriptor) => planUnit(descriptor, targetInput, input)),
   );
   return units.flat();
 });

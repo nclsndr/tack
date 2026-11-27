@@ -69,6 +69,7 @@ describe("demo session", () => {
       "commit",
       "review",
       "ship",
+      "tack-sources",
     ]);
     expect(volume.readlink("/home/you/code/app/.cursor/skills/ship")).toBe(
       "../../../../skills/ship",
@@ -140,10 +141,10 @@ describe("demo session", () => {
       "ls -l .claude/skills",
     ]);
     expect(linked.output).toBe(
-      "commit -> ../../../../skills/commit\nreview -> ../../../../skills/review\n",
+      "commit -> ../../../../skills/commit\nreview -> ../../../../skills/review\ntack-sources -> ../../../../.tack/generated/projects/app/tack-sources\n",
     );
     expect(await runAll(session, ["ls .claude/skills"])).toMatchObject({
-      output: "commit  review\n",
+      output: "commit  review  tack-sources\n",
     });
     expect(await runAll(session, ["mkdir empty"])).toMatchObject({ exitCode: 127 });
   });

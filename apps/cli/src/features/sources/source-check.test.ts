@@ -83,6 +83,23 @@ it.layer(LiveTestLayer)("source check", (test) => {
     }),
   );
 
+  test.effect("warns at its line about a description or rules body too long to show", () =>
+    Effect.gen(function* () {
+      const { path, root, write } = yield* folders;
+      yield* write(
+        "long/tack.yaml",
+        `version: 1\nname: long\ndescription: ${"d".repeat(201)}\nrules:\n  description: Always.\n  body: ${"b".repeat(2049)}\ndocs: []\n`,
+      );
+      const report = yield* checkSource(path.join(root, "long"));
+      expect(
+        report.findings.filter(({ code }) => code !== "source-declares-no-resources"),
+      ).toMatchObject([
+        { code: "source-description-long", severity: "warning", field: "description" },
+        { code: "source-rules-long", severity: "warning", field: "rules.body" },
+      ]);
+    }),
+  );
+
   test.effect("points each declaration problem at its entry in the declaration", () =>
     Effect.gen(function* () {
       const { path, root, write } = yield* folders;

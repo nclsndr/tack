@@ -1,3 +1,4 @@
+import { declarationWarnings } from "../../domain/sources/source-rules.ts";
 import { RepeatedYamlKeyError, Yaml } from "../../domain/runtime-neutral.ts";
 import { bundleSourceLabel } from "../../domain/bundles/bundle-registration.ts";
 import { bundleIntegrityIssue } from "./bundle-integrity.ts";
@@ -388,11 +389,11 @@ export const validateDeclaration = Effect.fnUntraced(function* (
       sourcePath: canonicalPath,
     });
 
-  return {
-    canonicalPath,
-    declaration,
-    ...(declaresNothing && kindFolders.length === 0 ? { warnings: [noResourcesWarning] } : {}),
-  };
+  const warnings = [
+    ...(declaresNothing && kindFolders.length === 0 ? [noResourcesWarning] : []),
+    ...declarationWarnings(declaration),
+  ];
+  return { canonicalPath, declaration, ...(warnings.length === 0 ? {} : { warnings }) };
 });
 
 type SourceService = {
@@ -666,6 +667,12 @@ export const resolveSourceLabels = (
           : others.length > 0
             ? "clashing"
             : (candidate?.origin ?? "none"),
+      ...(inspection.declaration.description === undefined
+        ? {}
+        : { description: inspection.declaration.description }),
+      ...(inspection.declaration.rules === undefined
+        ? {}
+        : { rules: inspection.declaration.rules }),
       maintainers: inspection.declaration.maintainers ?? [],
       dependsOn:
         ("depends-on" in inspection.declaration ? inspection.declaration["depends-on"] : []) ?? [],

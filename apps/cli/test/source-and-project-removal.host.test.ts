@@ -460,8 +460,13 @@ it.layer(LiveTestLayer)("source and project removal", (removalIt) => {
             },
           });
           const plan = projectPlanOf(preview.envelope.plan);
-          // `tools:lint` is on by default, so the project holds its link beside `brain:review`.
-          expect(plan.removal.actions.map((action) => action._tag)).toEqual(["remove", "remove"]);
+          // `tools:lint` is on by default, so the project holds its link beside `brain:review`, and
+          // the link of its sources skill.
+          expect(plan.removal.actions.map((action) => action._tag)).toEqual([
+            "remove",
+            "remove",
+            "remove",
+          ]);
           expect(yield* readState(options)).toEqual(before);
 
           const applied = yield* run(tack, ["project", "remove", "demo", "--apply"]);

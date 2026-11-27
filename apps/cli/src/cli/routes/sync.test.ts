@@ -4,6 +4,7 @@ import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { profileFixture } from "../../../test/support/profile-fixture.ts";
 import { syncRoutes } from "./sync.ts";
 import { outcomeOf } from "./route.test-support.ts";
+import { projectSourcesSkillName } from "../../domain/generated/sources-skill.ts";
 
 it.layer(LiveTestLayer)("sync routes", (test) => {
   test.effect("classifies a sync whose link action fails as partial", () =>
@@ -31,7 +32,8 @@ it.layer(LiveTestLayer)("sync routes", (test) => {
       );
       expect(outcome).toMatchObject({
         classification: "partial",
-        diagnostics: ["notes", "style"].map((name) => ({
+        // The sources skill fails beside the skills of the source.
+        diagnostics: ["notes", "style", projectSourcesSkillName].map((name) => ({
           code: "link-action-failed",
           details: { subject: { path: world.path.join(skills, name) } },
         })),

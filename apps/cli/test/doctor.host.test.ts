@@ -1,3 +1,4 @@
+import { projectSourcesSkillName } from "../src/domain/generated/sources-skill.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { runDoctor } from "../src/features/doctor/doctor.ts";
@@ -84,8 +85,11 @@ it.layer(LiveTestLayer)("doctor in process", (doctorIt) => {
             yield* hostTack(fixture, ["status", "--project", "workspace"]),
           );
           expect(status.result).toMatchObject({
+            // Each adapter also links the project's sources skill, beside the hand-made folder too.
             destinations: [
-              { _tag: "matching", adapter: "codex" },
+              { _tag: "matching", adapter: "codex", address: { name: projectSourcesSkillName } },
+              { _tag: "matching", adapter: "codex", address: { name: "valid" } },
+              { _tag: "matching", adapter: "claude", address: { name: projectSourcesSkillName } },
               { _tag: "hand-made", adapter: "claude", destinationPath: own },
             ],
           });

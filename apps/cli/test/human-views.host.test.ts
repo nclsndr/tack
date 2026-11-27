@@ -111,7 +111,8 @@ it.layer(LiveTestLayer)("core human views through the CLI host", (hostIt) => {
         true,
       );
       const status = yield* run(["status", "--project", "demo"], interactive);
-      expect(plain(status.stdout)).toContain("1 linked, 0 need attention");
+      // The review skill and the project's sources skill.
+      expect(plain(status.stdout)).toContain("2 linked, 0 need attention");
       expect(plain(status.stdout)).not.toContain("Next");
     }),
   );

@@ -1,3 +1,4 @@
+import { projectSourcesSkillName } from "../src/domain/generated/sources-skill.ts";
 import { skillText } from "./support/source-tree.ts";
 import { encodeBundle, makeBundleManifest } from "../src/domain/bundles/bundle-codec.ts";
 import { registerSource } from "../src/features/sources/source.ts";
@@ -388,7 +389,7 @@ it.layer(LiveTestLayer)("content-only profile bundles", (test) => {
         );
         expect(
           (yield* fs.readDirectory(path.join(request.targetRoots[0], ".agents/skills"))).sort(),
-        ).toEqual(["review", "style"]);
+        ).toEqual(["review", "style", projectSourcesSkillName]);
       }),
   );
 });

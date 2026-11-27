@@ -11,6 +11,11 @@ import { ReconciliationApplyResultSchema } from "./reconciliation-application.ts
 import { registerSource, relocateSource } from "../sources/source.ts";
 import { runStatus } from "../status/status.ts";
 import {
+  generatedSkillRegistrationId,
+  userSourcesSkillName,
+} from "../../domain/generated/sources-skill.ts";
+import type { ReconciliationAction } from "../../domain/reconciliation/reconciliation-schema.ts";
+import {
   initializeState,
   readState,
   StateBusyError,
@@ -132,7 +137,10 @@ it.layer(LiveTestLayer)("reconciliation command lifecycle", (reconcileIt) => {
         });
         const preparedAction = dryRun.plan.units
           .flatMap((unit) => unit.actions)
-          .find((action) => action._tag === "link-create");
+          .find(
+            (action): action is Extract<ReconciliationAction, { readonly _tag: "link-create" }> =>
+              action._tag === "link-create" && action.evidence.address.name === "valid",
+          );
         if (preparedAction === undefined) {
           throw new Error("Expected a planned link creation.");
         }
@@ -151,10 +159,14 @@ it.layer(LiveTestLayer)("reconciliation command lifecycle", (reconcileIt) => {
         });
 
         expect(result.partial).toBe(false);
-        expect(result.plan.units[0]?.actions).toEqual([]);
+        // The recovered link needs nothing more; the sources skill is linked in the same run.
+        expect(sourceActions(result.plan.units)[0]?.actions).toEqual([]);
         const persisted = yield* readState(options);
         expect(persisted.data.journal).toBeUndefined();
-        expect(managedLinksOf(persisted.data.links)).toHaveLength(1);
+        expect(managedLinksOf(persisted.data.links).map((link) => link.address.name)).toEqual([
+          userSourcesSkillName,
+          "valid",
+        ]);
       }),
   );
 
@@ -275,6 +287,16 @@ const validSkillDocument = skillText("valid", {
   body: "",
 });
 
+/** Whether an action concerns a resource of a source rather than the sources skill Tack generates. */
+const ofSource = (action: ReconciliationAction) =>
+  action._tag === "directory-create" ||
+  action.evidence.sourceRegistrationId !== generatedSkillRegistrationId;
+
+/** The plan's units with only the actions on resources of a source. */
+const sourceActions = <Unit extends { readonly actions: ReadonlyArray<ReconciliationAction> }>(
+  units: ReadonlyArray<Unit>,
+) => units.map((unit) => ({ ...unit, actions: unit.actions.filter(ofSource) }));
+
 const userReconciliation = (apply: boolean) =>
   ({
     adapterOverride: ["cursor"],
@@ -359,6 +381,7 @@ it.layer(LiveTestLayer)("reconciliation through operator symlinks", (symlinkIt) 
       withSymlinkedHome(layout, ({ destinationPath, homeDirectory, options, skillDirectory }) =>
         Effect.gen(function* () {
           const fileSystem = yield* FileSystem.FileSystem;
+          const path = yield* Path.Path;
 
           const result = yield* syncResources(options, userReconciliation(true));
 
@@ -379,7 +402,10 @@ it.layer(LiveTestLayer)("reconciliation through operator symlinks", (symlinkIt) 
               destination.destinationPath,
               destination._tag,
             ]),
-          ).toEqual([[destinationPath, "matching"]]);
+          ).toEqual([
+            [path.join(path.dirname(destinationPath), userSourcesSkillName), "matching"],
+            [destinationPath, "matching"],
+          ]);
 
           const replanned = yield* syncResources(options, userReconciliation(false));
           expect(replanned.partial).toBe(false);
@@ -408,6 +434,7 @@ it.layer(LiveTestLayer)("reconciliation through operator symlinks", (symlinkIt) 
           const plan = yield* syncResources(options, userReconciliation(false));
 
           expect(status.destinations).toMatchObject([
+            { _tag: "matching", desired: [{ address: { name: userSourcesSkillName } }] },
             { _tag: "drift", observation: { _tag: "unresolved-relative-link" } },
           ]);
           expect(plan.partial).toBe(true);
@@ -489,7 +516,7 @@ it.layer(LiveTestLayer)(
           const planned = yield* syncResources(options, userReconciliation(false));
 
           expect(planned.partial).toBe(false);
-          expect(planned.plan.units).toMatchObject([
+          expect(sourceActions(planned.plan.units)).toMatchObject([
             {
               actions: [
                 {
@@ -559,7 +586,7 @@ it.layer(LiveTestLayer)(
             const applied = yield* syncResources(options, userReconciliation(true));
 
             expect(applied.partial).toBe(false);
-            expect(applied.plan.units).toMatchObject([
+            expect(sourceActions(applied.plan.units)).toMatchObject([
               {
                 actions: [
                   {
@@ -597,6 +624,8 @@ it.layer(LiveTestLayer)(
             ).toEqual([
               [destination("alpha"), "remove"],
               [destination("beta"), "blocked"],
+              // Cleaning the user's links removes the sources skill Tack linked beside them.
+              [destination(userSourcesSkillName), "remove"],
             ]);
             expect(yield* linkIsAbsent(destination("alpha"))).toBe(true);
             expect(yield* fileSystem.readLink(destination("beta"))).toBe(`./${written}`);

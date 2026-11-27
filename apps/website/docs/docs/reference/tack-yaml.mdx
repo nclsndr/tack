@@ -47,6 +47,8 @@ docs:
 | Key              | Meaning                                                                                                                                                                                                                                                                                                        |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`           | Required. The source label: up to 64 characters of lowercase letters, digits and single hyphens, never shaped like a registration ID. Operators and other sources write it as `quality-tools:review`. `tack` is reserved for the built-in source; generated `bundle-` labels are reserved for profile bundles. |
+| `description`    | One sentence, about 200 characters, that says what the source holds. The generated sources skill shows it to agents. See [Description and rules](#description-and-rules).                                                                                                                                      |
+| `rules`          | `{ description, body }`: when the rules for editing the source apply, and the rules in Markdown, at most about 2 KB. The generated sources skill inlines them. See [Description and rules](#description-and-rules).                                                                                            |
 | `maintainers`    | A list of descriptive contacts. Tack shows it in `tack source` and `tack catalog` and never interprets it: it does not affect identity, selection, delivery, dependencies or editing.                                                                                                                          |
 | `depends-on`     | Labels of the sources whose resources this source's resources may depend on.                                                                                                                                                                                                                                   |
 | `skills`         | Entries with a `path` to a folder, or to one skill, and optional `include` and `exclude` patterns. Every folder below a declared folder that holds `SKILL.md` is a skill.                                                                                                                                      |
@@ -71,6 +73,39 @@ everywhere. A `tack.yaml` without `name` makes the source unhealthy with
 sources with one label cannot qualify a reference until one changes; each stays reachable by
 registration ID. Labels are typed, never stored: state, picks, docs mount paths, reader routes and
 run history use the registration ID.
+
+## Description and rules
+
+Two optional keys tell agents what a source holds and how to edit it. They take effect at the next
+`tack sync`, which writes them into the `tack-sources` skill of every project that links the source
+([The sources skill](./sync#the-sources-skill)).
+
+```yaml
+version: 1
+name: team-handbook
+description: The team handbook - deploy, incident and review skills, and the runbooks.
+rules:
+  description: Before you edit any skill or runbook of this source.
+  body: |
+    1. Create a `handbook/` branch before the first edit, never commit on `main`.
+    2. Add a line to `CHANGELOG.md` for every skill you change.
+maintainers:
+  - platform-team
+skills:
+  - path: skills
+docs:
+  - name: runbooks
+    path: runbooks
+```
+
+`description` is one sentence that names what the source holds, such as its skills or runbooks: an
+agent chooses the source by it. `rules.description` says when the rules apply, in one sentence, and
+`rules.body` holds the rules, in Markdown, addressed to agents. Put first what must happen before the
+first edit. Both keys take plain text, and an empty value makes the source unhealthy with
+`declaration-schema-invalid`. `tack check` warns with `source-description-long` for a description
+over 200 characters, and with `source-rules-long` for a body over 2,048 bytes, which the skill does
+not inline. A Tack release older than these keys refuses a source that uses them with
+`declaration-schema-invalid`.
 
 ## The source folder as one entry
 

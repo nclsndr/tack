@@ -31,7 +31,12 @@ import { selectedDependencyAddresses } from "../../domain/choices/dependency-res
 import { quarantineIssue } from "../../domain/sources/catalog-report.ts";
 import { resolveContextSelection } from "../../domain/profiles/profile-application.ts";
 import { allChoices } from "../../domain/state/state-intent.ts";
-import type { StateOptions } from "../../services/state-store.ts";
+import { resolveStateDirectory, type StateOptions } from "../../services/state-store.ts";
+import {
+  sourcesSkillsFor,
+  withGeneratedSkills,
+  type PlannedSourcesSkills,
+} from "./sources-skill.ts";
 import type { CommandSnapshot } from "../snapshot/command-snapshot.ts";
 import { userLinkedExcludes, userLinksOf } from "./linked-for-user.ts";
 
@@ -51,6 +56,8 @@ export type PreparedReconciliation = {
   readonly plan: ReconciliationPlan;
   readonly projectNames: ReadonlyArray<string>;
   readonly selection: SelectionEcho;
+  /** The sources skill of each planned namespace that links a source, which the plan links. */
+  readonly sourcesSkills: PlannedSourcesSkills;
 };
 
 export const prepareReconciliation = Effect.fnUntraced(function* (
@@ -119,13 +126,21 @@ export const prepareReconciliation = Effect.fnUntraced(function* (
       : [];
   });
   const userLinks = userLinksOf(state, catalog, options.includeOptional);
+  const plannedResolutions = namespaceResolutions.filter(
+    (entry) => blocked.has(choiceNamespaceIdentity(entry.namespace)) === false,
+  );
+  const sourcesSkills = yield* sourcesSkillsFor({
+    adapters: enabledAdapters,
+    state,
+    sources: yield* snapshot.sourceInspections,
+    selections: plannedResolutions,
+    stateDirectory: yield* resolveStateDirectory(stateOptions),
+  });
   const plan = yield* planReconciliation({
     ...plannerInputCore({
       adapters: enabledAdapters,
       catalog,
-      resolutions: namespaceResolutions.filter(
-        (entry) => blocked.has(choiceNamespaceIdentity(entry.namespace)) === false,
-      ),
+      resolutions: withGeneratedSkills(plannedResolutions, sourcesSkills.skills),
       targets,
     }),
     managedLinks: plannedManagedLinks(state, catalog),
@@ -172,5 +187,6 @@ export const prepareReconciliation = Effect.fnUntraced(function* (
     plan,
     projectNames,
     selection: selectionEcho(selection),
+    sourcesSkills,
   } satisfies PreparedReconciliation;
 });

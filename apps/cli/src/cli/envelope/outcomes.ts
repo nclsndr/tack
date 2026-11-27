@@ -272,6 +272,7 @@ export const syncOutcome = (
             : validCommandPlan({ ...plan.resources.plan, selection: plan.resources.selection }),
         docs: docsPlans,
         ...pendingField,
+        ...(plan.sourcesSkills.length === 0 ? {} : { sourcesSkills: plan.sourcesSkills }),
         ...(options === undefined ? {} : { options }),
       }),
     ),

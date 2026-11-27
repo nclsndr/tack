@@ -25,6 +25,9 @@ const builtIns = [
   "write-reader-figures",
 ];
 
+/** What `init` links for each agent: the built-in skills and the user's sources skill. */
+const linkedPerAdapter = builtIns.length + 1;
+
 const planOf = (envelope: PublicEnvelope) =>
   Schema.decodeUnknownSync(InitPlanSchema)(envelope.plan);
 const appliedOf = (envelope: PublicEnvelope) =>
@@ -73,7 +76,7 @@ it.layer(LiveTestLayer)("tack init", (initIt) => {
       const { at, fileSystem, state, text } = yield* machine([".claude/skills/my-own", ".agents"]);
       const output = yield* text(["init"]);
       expect(output.replaceAll(/\s+/g, " ")).toContain(
-        `Created ${state}. Enabled claude, codex. Linked ${builtIns.length * 2} skills at user scope.`,
+        `Created ${state}. Enabled claude, codex. Linked ${linkedPerAdapter * 2} skills at user scope.`,
       );
       expect(output).toContain("applied  create  .claude/skills/use-tack");
       expect(output).toContain("Hand-made, left untouched\n");
@@ -139,8 +142,8 @@ it.layer(LiveTestLayer)("tack init", (initIt) => {
       expect(
         plan.user.resources?.units.map(({ adapter, summary }) => [adapter, summary.create]),
       ).toEqual([
-        ["claude", builtIns.length],
-        ["codex", builtIns.length],
+        ["claude", linkedPerAdapter],
+        ["codex", linkedPerAdapter],
       ]);
       // The guide is a command in `next`, not a path an agent must find outside its project.
       expect(envelope.plan).not.toHaveProperty("guide");

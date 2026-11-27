@@ -1,3 +1,5 @@
+import { generatedSkillRegistrationId } from "../src/domain/generated/sources-skill.ts";
+import type { ReconciliationAction } from "../src/domain/reconciliation/reconciliation-schema.ts";
 import { skillText } from "./support/source-tree.ts";
 import { managedLinksOf } from "../src/domain/links/link-record-schema.ts";
 import { expect, it } from "@effect/vitest";
@@ -28,6 +30,11 @@ const resourceApplication = (payload: unknown) => {
   if (combined.resources === null) throw new Error("Expected a resource application.");
   return Schema.decodeUnknownSync(ReconciliationApplyResultSchema)(combined.resources);
 };
+
+/** Whether a planned action concerns the project's sources skill rather than a source's resource. */
+const isSourcesSkill = (action: ReconciliationAction) =>
+  action._tag !== "directory-create" &&
+  action.evidence.sourceRegistrationId === generatedSkillRegistrationId;
 
 /** Runs Tack's text view, as an operator reads it, against the fixture's isolated state. */
 const runTackText = (fixture: TackWorld, arguments_: ReadonlyArray<string>) =>
@@ -79,11 +86,19 @@ it.layer(LiveTestLayer)("releasing links changed outside Tack", (releaseIt) => {
           const planned = resourcePlan(preview.plan).units.filter(
             (unit) => unit.actions.length > 0 || unit.conflicts.length > 0,
           );
+          // With its only resource excluded, the project links no source, so its sources skill goes.
           expect(
-            planned.map((unit) => [unit.adapter, unit.actions, unit.conflicts, unit.summary]),
+            planned.map((unit) => [
+              unit.adapter,
+              unit.actions.filter((action) => isSourcesSkill(action)),
+              unit.actions.filter((action) => isSourcesSkill(action) === false),
+              unit.conflicts,
+              unit.summary,
+            ]),
           ).toEqual(
             ["claude", "codex", "cursor"].map((adapter, index) => [
               adapter,
+              [expect.objectContaining({ _tag: "link-remove", reason: "deselected" })],
               [
                 expect.objectContaining({
                   _tag: "evidence-retire",
@@ -92,7 +107,7 @@ it.layer(LiveTestLayer)("releasing links changed outside Tack", (releaseIt) => {
                 }),
               ],
               [],
-              expect.objectContaining({ conflict: 0, release: 1, remove: 0, retire: 0 }),
+              expect.objectContaining({ conflict: 0, release: 1, remove: 1, retire: 0 }),
             ]),
           );
           expect(yield* validRecords).toHaveLength(3);
@@ -112,6 +127,7 @@ it.layer(LiveTestLayer)("releasing links changed outside Tack", (releaseIt) => {
           expect(
             resourceApplication(applied.applied)
               .units.flatMap((unit) => unit.actions)
+              .filter((outcome) => isSourcesSkill(outcome.action) === false)
               .map((outcome) => [outcome._tag, outcome.action._tag]),
           ).toEqual(links.map(() => ["applied", "evidence-retire"]));
           expect(yield* validRecords).toEqual([]);

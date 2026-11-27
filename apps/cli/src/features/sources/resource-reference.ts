@@ -3,6 +3,7 @@ import type { ResourceKind } from "../../domain/resources/kinds.ts";
 import type { Catalog, CatalogEntry } from "../../domain/sources/catalog-schema.ts";
 import { SourceRegistrationIdSchema } from "../../domain/sources/source-schema.ts";
 import { NextCommandsSchema } from "../../domain/hints/next-commands.ts";
+import { generatedSkillRegistrationId } from "../../domain/generated/sources-skill.ts";
 
 /** The command that lists every healthy resource a reference can name. */
 export const inspectCatalog = ["tack", "catalog"];
@@ -33,11 +34,15 @@ export type ReferenceSource = {
   readonly labelOrigin?: string;
 };
 
+/** The label that qualifies a skill Tack generates, which no registered source has. */
+const generatedLabel = "generated";
+
 /** Uses an unambiguous source label when available, otherwise the stable registration ID. */
 export const sourceQualifier = (
   catalog: { readonly sources?: ReadonlyArray<ReferenceSource> },
   sourceId: string,
 ): string => {
+  if (sourceId === generatedSkillRegistrationId) return generatedLabel;
   const source = catalog.sources?.find((item) => item.registration.id === sourceId);
   return source?.labelOrigin === "clashing" ? sourceId : (source?.label ?? sourceId);
 };
@@ -54,12 +59,14 @@ export type ReferenceIndex = {
 /**
  * Names a resource without a qualifier only when its kind and name are unique, and with the source
  * qualifier otherwise. An address whose source has no matching resource keeps its qualifier, since
- * the bare name would point at another resource.
+ * the bare name would point at another resource. A skill Tack generates takes a name no source
+ * skill may take, so its name alone names it.
  */
 export const referenceFor = (
   index: ReferenceIndex,
   address: { readonly kind: string; readonly name: string; readonly sourceRegistrationId: string },
 ): string => {
+  if (address.sourceRegistrationId === generatedSkillRegistrationId) return address.name;
   const matches = index.entries.filter(
     (candidate) =>
       candidate.address.kind === address.kind && candidate.address.name === address.name,

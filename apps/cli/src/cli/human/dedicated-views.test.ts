@@ -350,4 +350,42 @@ describe("sync view", () => {
       ),
     ).toBe("tack sync · docs only · ✓ success\n\nNo docs mounts are attached.\n");
   });
+
+  it("names each sources skill a sync writes, and leaves out a current one", () => {
+    const resources = humanFixture("reconcile-apply").plan;
+    const skill = (state: string, projectName: string) => ({
+      namespace: { _tag: "project", projectName },
+      path: `/state/generated/projects/${projectName}/tack-sources/SKILL.md`,
+      inputs: "0123456789abcdef",
+      state,
+    });
+    const plan = {
+      kind: "sync-plan",
+      resources,
+      docs: [],
+      sourcesSkills: [skill("stale", "shop"), skill("current", "blog"), skill("missing", "wiki")],
+    };
+    const preview = flat(renderDedicated(envelopeOf({ command: "sync", plan }), plainStyle) ?? "");
+    expect(preview).toContain(
+      "Sources skills write tack-sources · project shop · stale write tack-sources · project wiki · missing",
+    );
+    expect(preview).not.toContain("project blog");
+    const applied = flat(
+      renderDedicated(
+        envelopeOf({
+          command: "sync",
+          plan,
+          applied: {
+            kind: "sync-application",
+            resources: humanFixture("reconcile-apply").applied,
+            docs: [],
+          },
+        }),
+        plainStyle,
+      ) ?? "",
+    );
+    expect(applied).toContain(
+      "Sources skills wrote tack-sources · project shop wrote tack-sources · project wiki",
+    );
+  });
 });

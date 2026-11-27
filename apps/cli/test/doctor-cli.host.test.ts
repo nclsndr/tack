@@ -26,8 +26,14 @@ const outcomeOf = (report: ReturnType<typeof decodeReport>, id: string) =>
 const snapshot = Effect.fnUntraced(function* (fixture: TackWorld) {
   const fileSystem = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
-  const files = yield* fileSystem.readDirectory(fixture.stateDirectory);
-  return yield* Effect.forEach(files.toSorted(), (name) =>
+  // Every file below the state directory, generated skills included, so a change anywhere shows.
+  const entries = yield* fileSystem.readDirectory(fixture.stateDirectory, { recursive: true });
+  const files = yield* Effect.filter(entries.toSorted(), (name) =>
+    fileSystem
+      .stat(path.join(fixture.stateDirectory, name))
+      .pipe(Effect.map((info) => info.type === "File")),
+  );
+  return yield* Effect.forEach(files, (name) =>
     fileSystem
       .readFileString(path.join(fixture.stateDirectory, name))
       .pipe(Effect.map((text) => [name, text] as const)),
