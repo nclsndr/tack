@@ -77,7 +77,7 @@ const adapterListView = resultView<"adapter-list">(
       ],
       hints: [
         enabled.length === 0 && disabled[0] !== undefined
-          ? commandLine("adapter-set", disabled[0])
+          ? commandLine("adapter-enable", disabled[0])
           : commandLine("status"),
       ],
     };

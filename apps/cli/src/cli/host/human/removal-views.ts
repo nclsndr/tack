@@ -131,11 +131,11 @@ const finalizeLines = (plan: RemovalPlan, style: Style): ReadonlyArray<string> =
       );
 };
 
-// clean, retry, reset
+// state clean, state clean --pending, state reset
 
-type SelectedCommand = "clean" | "reset" | "retry";
+type SelectedCommand = "state-clean" | "state-reset" | "state-clean-pending";
 
-/** The flags that reproduce the selection a `clean` or `retry` echoes. */
+/** The flags that reproduce the selection a `state clean` echoes, with or without `--pending`. */
 const selectionArgs = (selection: (typeof SelectedRemovalPlanSchema.Type)["selection"]) => {
   if (selection === undefined) return [];
   if (selection.selector._tag !== "bare") return selectorFlags(selection.selector);
@@ -148,7 +148,7 @@ const selectedRemovalView = (command: SelectedCommand) =>
     const summary = cleanupSummary(plan, applied);
     const stateDeleted =
       applied !== undefined &&
-      command === "reset" &&
+      command === "state-reset" &&
       applied.pending.length === 0 &&
       (applied.docsPending ?? []).length === 0 &&
       applied.actions.every((outcome) => outcome._tag === "applied");
@@ -185,18 +185,23 @@ const selectedRemovalView = (command: SelectedCommand) =>
           ? [
               ...(removalHasChanges(plan)
                 ? [
-                    command === "reset"
-                      ? commandLine("reset", ...selectionArgs(selection), "--apply")
+                    command === "state-reset"
+                      ? commandLine("state-reset", ...selectionArgs(selection), "--apply")
                       : plan.scope._tag === "retry-targets" || plan.scope._tag === "maintenance"
-                        ? commandLine("retry", "--pending", ...selectionArgs(selection), "--apply")
-                        : commandLine("clean", ...selectionArgs(selection), "--apply"),
+                        ? commandLine(
+                            "state-clean",
+                            "--pending",
+                            ...selectionArgs(selection),
+                            "--apply",
+                          )
+                        : commandLine("state-clean", ...selectionArgs(selection), "--apply"),
                   ]
                 : []),
               ...blockedStatusHints([plan]),
             ]
-          : command === "reset"
+          : command === "state-reset"
             ? applied.actions.some((outcome) => outcome._tag !== "applied")
-              ? [commandLine("reset", "--apply")]
+              ? [commandLine("state-reset", "--apply")]
               : []
             : retryHints([applied]),
       ),
@@ -549,7 +554,7 @@ export const docsSyncPart = (
 
 // history clear
 
-const historyClearView = removalView<"history-clear">(({ plan, applied }, envelope, style) =>
+const historyClearView = removalView<"script-history-clear">(({ plan, applied }, envelope, style) =>
   frameView(envelope, style, {
     body: [
       statementLines(
@@ -573,7 +578,10 @@ const historyClearView = removalView<"history-clear">(({ plan, applied }, envelo
         style,
       ),
     ],
-    hints: applied === undefined && plan.count > 0 ? [commandLine("history-clear", "--apply")] : [],
+    hints:
+      applied === undefined && plan.count > 0
+        ? [commandLine("script-history-clear", "--apply")]
+        : [],
   }),
 );
 
@@ -775,17 +783,17 @@ const projectRefreshView = removalView<"project-refresh">(
   },
 );
 
-const stateCleanView = selectedRemovalView("clean");
+const stateCleanView = selectedRemovalView("state-clean");
 
 /** Dedicated views for the preview/apply operations that remove or reconcile. */
 export const removalViews = {
   "adapter-disable": adapterDisableView,
-  clean: stateCleanView,
-  // `retry` is `state clean --pending`: its envelope names `state clean`, so it shares that view.
-  retry: stateCleanView,
-  "history-clear": historyClearView,
+  "state-clean": stateCleanView,
+  // `state clean --pending`: its envelope names `state clean`, so it shares that view.
+  "state-clean-pending": stateCleanView,
+  "script-history-clear": historyClearView,
   "project-refresh": projectRefreshView,
   "project-remove": projectRemoveView,
   "source-remove": sourceRemoveView,
-  reset: selectedRemovalView("reset"),
+  "state-reset": selectedRemovalView("state-reset"),
 } satisfies HumanViewRegistry;

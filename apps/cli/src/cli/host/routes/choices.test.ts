@@ -58,16 +58,16 @@ it.layer(LiveTestLayer)("pick routes", (test) => {
       const { options } = yield* scene;
       expect(
         yield* routeOutcome(
-          choiceRoutes["choice-set"].run(
-            { _tag: "choice-set", reference: "tools:review", kind: "command", namespace: user },
+          choiceRoutes["pick-include"].run(
+            { _tag: "pick-include", reference: "tools:review", kind: "command", namespace: user },
             options,
           ),
         ),
       ).toMatchObject({ classification: "success" });
       expect(
         yield* routeOutcome(
-          choiceRoutes["choice-exclude"].run(
-            { _tag: "choice-exclude", reference: "more:review", kind: "skill", namespace: user },
+          choiceRoutes["pick-exclude"].run(
+            { _tag: "pick-exclude", reference: "more:review", kind: "skill", namespace: user },
             options,
           ),
         ),
@@ -87,14 +87,14 @@ it.layer(LiveTestLayer)("pick routes", (test) => {
         ["more:review", "skill"],
       ] as const)
         yield* routeOutcome(
-          choiceRoutes["choice-set"].run(
-            { _tag: "choice-set", reference, kind, namespace: user },
+          choiceRoutes["pick-include"].run(
+            { _tag: "pick-include", reference, kind, namespace: user },
             options,
           ),
         );
-      const remove = choiceRoutes["choice-remove"];
+      const remove = choiceRoutes["pick-remove"];
       const error = yield* routeOutcome(
-        remove.run({ _tag: "choice-remove", reference: "review", namespace: user }, options),
+        remove.run({ _tag: "pick-remove", reference: "review", namespace: user }, options),
       ).pipe(Effect.flip);
       const candidates = [
         "tack pick remove tools:review --kind command --user",
@@ -112,7 +112,7 @@ it.layer(LiveTestLayer)("pick routes", (test) => {
       expect(
         yield* routeOutcome(
           remove.run(
-            { _tag: "choice-remove", reference: "review", kind: "command", namespace: user },
+            { _tag: "pick-remove", reference: "review", kind: "command", namespace: user },
             options,
           ),
         ),
@@ -125,8 +125,8 @@ it.layer(LiveTestLayer)("pick routes", (test) => {
     Effect.gen(function* () {
       const { options } = yield* scene;
       const error = yield* routeOutcome(
-        choiceRoutes["choice-remove"].run(
-          { _tag: "choice-remove", reference: "unknown", namespace: user },
+        choiceRoutes["pick-remove"].run(
+          { _tag: "pick-remove", reference: "unknown", namespace: user },
           options,
         ),
       ).pipe(Effect.flip);

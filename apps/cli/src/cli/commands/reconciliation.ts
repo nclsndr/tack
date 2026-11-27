@@ -39,9 +39,9 @@ const adapterSetCommand = Command.make(
   "enable",
   { adapters: adapterArgument.pipe(Argument.variadic()) },
   handle(
-    "adapter-set",
+    "adapter-enable",
     Effect.fnUntraced(function* ({ adapters }) {
-      return { _tag: "adapter-set", adapters: yield* decodeAdapters(adapters) };
+      return { _tag: "adapter-enable", adapters: yield* decodeAdapters(adapters) };
     }),
   ),
 ).pipe(

@@ -117,7 +117,7 @@ const argumentOf = (argument: HelpDoc.ArgDoc): typeof CommandArgumentSchema.Type
   variadic: argument.variadic,
 });
 
-/** The declaration of the command a path selects; `clean` and `retry` share theirs. */
+/** The declaration of the command a path selects; `state-clean` and `state-clean-pending` share theirs. */
 const declarationOf = (commandPath: ReadonlyArray<string>) =>
   Object.values(commandDeclarations).find(({ path }) => samePath(path, commandPath));
 

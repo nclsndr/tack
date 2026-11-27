@@ -17,6 +17,6 @@ export const runViews = {
   "script-run": scriptRunView,
   "script-show": scriptShowView,
   types: typesView,
-  "history-list": historyListView,
-  "history-show": historyShowView,
+  "script-history-list": historyListView,
+  "script-history-show": historyShowView,
 } satisfies HumanViewRegistry;

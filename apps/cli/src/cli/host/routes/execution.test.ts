@@ -251,25 +251,30 @@ it.layer(LiveTestLayer)("script history routes", (test) => {
 
       expect(
         yield* routed(
-          executionRoutes["history-list"].run(
-            { _tag: "history-list", limit: 20, offset: 0 },
+          executionRoutes["script-history-list"].run(
+            { _tag: "script-history-list", limit: 20, offset: 0 },
             options,
           ),
         ),
       ).toMatchObject({ classification: "success", result: { total: 1 } });
       expect(
         yield* routed(
-          executionRoutes["history-show"].run({ _tag: "history-show", runId }, options),
+          executionRoutes["script-history-show"].run(
+            { _tag: "script-history-show", runId },
+            options,
+          ),
         ),
       ).toMatchObject({ classification: "success", result: { runId, status: "complete" } });
 
-      const clear = executionRoutes["history-clear"];
-      const preview = yield* routed(clear.run({ _tag: "history-clear", apply: false }, options));
+      const clear = executionRoutes["script-history-clear"];
+      const preview = yield* routed(
+        clear.run({ _tag: "script-history-clear", apply: false }, options),
+      );
       expect(preview).toMatchObject({ plan: { kind: "history-clear-plan", count: 1 } });
       expect(preview).not.toHaveProperty("applied");
       expect(history.size).toBe(1);
       expect(
-        yield* routed(clear.run({ _tag: "history-clear", apply: true }, options)),
+        yield* routed(clear.run({ _tag: "script-history-clear", apply: true }, options)),
       ).toMatchObject({ applied: { kind: "history-clear-application", removedCount: 1 } });
       expect(history.size).toBe(0);
     }),

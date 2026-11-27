@@ -75,7 +75,7 @@ export const humanViews = {
   "profile-save": renderProfileSave,
   "profile-adopt": renderProfileAdopt,
   help: renderHelp,
-  "machine-init": renderInit,
+  init: renderInit,
   sync: renderSync,
   "upgrade-status": renderUpgradeGuide,
   upgrade: renderUpgradeGuide,

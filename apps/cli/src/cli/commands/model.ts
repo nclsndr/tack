@@ -72,9 +72,9 @@ export type Invocation =
     }
   | { readonly _tag: "script-show"; readonly reference: string }
   | { readonly _tag: "types"; readonly path?: string; readonly apply: boolean }
-  | { readonly _tag: "history-list"; readonly limit: number; readonly offset: number }
-  | { readonly _tag: "history-show"; readonly runId: string }
-  | { readonly _tag: "history-clear"; readonly apply: boolean }
+  | { readonly _tag: "script-history-list"; readonly limit: number; readonly offset: number }
+  | { readonly _tag: "script-history-show"; readonly runId: string }
+  | { readonly _tag: "script-history-clear"; readonly apply: boolean }
   | ({ readonly _tag: "docs-attach" } & DocsResourceChange)
   | ({ readonly _tag: "docs-detach" } & DocsResourceChange)
   | ({ readonly _tag: "docs-list" } & DocsSelection)
@@ -116,9 +116,9 @@ export type Invocation =
       readonly open?: boolean;
       readonly port?: number;
     }
-  | { readonly _tag: "init" }
+  | { readonly _tag: "state-init" }
   | {
-      readonly _tag: "machine-init";
+      readonly _tag: "init";
       /** The adapters `--adapter` named, replacing detection; absent when none was given. */
       readonly adapters?: ReadonlyArray<AgentAdapterId>;
     }
@@ -227,25 +227,25 @@ export type Invocation =
       readonly destination?: ChoiceNamespace;
     }
   | {
-      readonly _tag: "choice-set";
+      readonly _tag: "pick-include";
       readonly reference: string;
       readonly kind?: SelectableKind;
       readonly namespace: ChoiceNamespace;
     }
   | {
-      readonly _tag: "choice-exclude";
+      readonly _tag: "pick-exclude";
       readonly reference: string;
       readonly kind?: SelectableKind;
       readonly namespace: ChoiceNamespace;
     }
   | {
-      readonly _tag: "choice-remove";
+      readonly _tag: "pick-remove";
       readonly reference: string;
       readonly kind?: SelectableKind;
       readonly namespace: ChoiceNamespace;
     }
   | { readonly _tag: "pick-list"; readonly namespace?: ChoiceNamespace }
-  | { readonly _tag: "adapter-set"; readonly adapters: ReadonlyArray<AgentAdapterId> }
+  | { readonly _tag: "adapter-enable"; readonly adapters: ReadonlyArray<AgentAdapterId> }
   | {
       readonly _tag: "adapter-disable";
       readonly adapter: AgentAdapterId;
@@ -260,9 +260,9 @@ export type Invocation =
       readonly details: boolean;
       readonly selector: TargetSelector;
     }
-  | ({ readonly _tag: "clean" } & SelectedRemoval)
-  | ({ readonly _tag: "retry" } & SelectedRemoval)
-  | { readonly _tag: "reset"; readonly apply: boolean; readonly details: boolean }
+  | ({ readonly _tag: "state-clean" } & SelectedRemoval)
+  | ({ readonly _tag: "state-clean-pending" } & SelectedRemoval)
+  | { readonly _tag: "state-reset"; readonly apply: boolean; readonly details: boolean }
   | { readonly _tag: "upgrade-status" }
   | { readonly _tag: "upgrade" }
   | ({ readonly _tag: "sync"; readonly apply: boolean } & ReconcilePlanningRequest);
@@ -301,7 +301,7 @@ const invocationTags: ReadonlyArray<Invocation["_tag"]> = [
   "version",
 ];
 
-/** The invocation each command name names; the first tag declared wins, so `clean` over `retry`. */
+/** The invocation each command name names; the first tag declared wins, so `state-clean` over `state-clean-pending`. */
 const tagsByCommandName: ReadonlyMap<string, Invocation["_tag"]> = new Map(
   invocationTags.toReversed().map((tag) => [commandNameOf(tag), tag]),
 );

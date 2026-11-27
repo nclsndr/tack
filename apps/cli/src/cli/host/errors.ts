@@ -205,7 +205,8 @@ const projectNotFound = {
 const refreshRegistration = (projectName: string) =>
   invocation("project-refresh", "--project", projectName, "--apply");
 
-const enableAdapters = (adapters: ReadonlyArray<string>) => invocation("adapter-set", ...adapters);
+const enableAdapters = (adapters: ReadonlyArray<string>) =>
+  invocation("adapter-enable", ...adapters);
 
 /** Names the adapters a sync was asked to narrow to but that are not enabled, and the fix. */
 const adapterNotEnabledMessage = (adapters: ReadonlyArray<string>) => {

@@ -26,7 +26,7 @@ export const collisionExcludeCommands = (
 ): ReadonlyArray<string> =>
   subject.addresses.map((address) =>
     commandLine(
-      "choice-exclude",
+      "pick-exclude",
       reference(address),
       "--kind",
       address.kind,
@@ -55,5 +55,5 @@ export const userExcludeCommands = (
     .filter((diagnostic) => diagnostic.code === "project-exclude-linked-for-user")
     .flatMap((diagnostic) => Option.toArray(decodeUserLinkedExclude(diagnostic.details)))
     .map(({ subject: { address } }) =>
-      commandLine("choice-exclude", reference(address), "--kind", address.kind, "--user"),
+      commandLine("pick-exclude", reference(address), "--kind", address.kind, "--user"),
     );

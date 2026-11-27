@@ -118,7 +118,7 @@ export const appliedAs =
  * the catalog addresses the operator probably meant.
  */
 export const choiceSetOutcome = (
-  tag: "choice-set" | "choice-exclude",
+  tag: "pick-include" | "pick-exclude",
   applied: SetSkillChoiceResult,
   candidates: ReadonlyArray<SelectableAddress> | undefined,
 ): PublicOutcome => ({
@@ -532,7 +532,7 @@ export const historyListOutcome = (list: HistoryList): PublicOutcome => ({
         ]
       : [],
   ),
-  result: toJson(payloadAs("history-list", "result", list)),
+  result: toJson(payloadAs("script-history-list", "result", list)),
 });
 
 /**

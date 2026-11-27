@@ -26,12 +26,12 @@ const choiceSetCommand = (decision: "include" | "exclude") =>
       ...resourceAddress,
     },
     handle(
-      decision === "include" ? "choice-set" : "choice-exclude",
+      decision === "include" ? "pick-include" : "pick-exclude",
       Effect.fnUntraced(function* ({ kind, reference }) {
         const { projectName, user } = yield* pickRoot;
         const namespace = yield* namespaceFrom({ projectName, user }, true);
         return {
-          _tag: decision === "include" ? "choice-set" : "choice-exclude",
+          _tag: decision === "include" ? "pick-include" : "pick-exclude",
           reference,
           ...(kind === undefined ? {} : { kind }),
           namespace,
@@ -48,12 +48,12 @@ const choiceRemoveCommand = Command.make(
   "remove",
   resourceAddress,
   handle(
-    "choice-remove",
+    "pick-remove",
     Effect.fnUntraced(function* ({ kind, reference }) {
       const { projectName, user } = yield* pickRoot;
       const namespace = yield* namespaceFrom({ projectName, user }, true);
       return {
-        _tag: "choice-remove",
+        _tag: "pick-remove",
         reference,
         ...(kind === undefined ? {} : { kind }),
         namespace,

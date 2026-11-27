@@ -120,7 +120,7 @@ const choiceSet = (
       { address: { kind: "script", name: "reveiw", sourceRegistrationId: registrationId } },
     ],
   };
-  const tag = decision === "exclude" ? "choice-exclude" : "choice-set";
+  const tag = decision === "exclude" ? "pick-exclude" : "pick-include";
   return createPublicEnvelope(
     commandNameOf(tag),
     choiceSetOutcome(tag, result, catalogAddressCandidates(catalog, address)),
@@ -143,7 +143,7 @@ describe("init", () => {
   it.effect("confirms a fresh initialization and points at tack init", () =>
     Effect.gen(function* () {
       const output = view(
-        applied("init", {
+        applied("state-init", {
           alreadyInitialized: false,
           stateDirectory: "/home/me/.tack",
         }),
@@ -157,7 +157,7 @@ describe("init", () => {
 
   it("says an existing state was kept, and still points at tack init", () => {
     const output = view(
-      applied("init", { alreadyInitialized: true, stateDirectory: "/home/me/.tack" }),
+      applied("state-init", { alreadyInitialized: true, stateDirectory: "/home/me/.tack" }),
     );
     expect(lines(output)).toContain(
       "Tack was already initialized in ~/.tack; the existing state was kept.",
@@ -485,7 +485,7 @@ describe("pick include", () => {
 
 describe("pick remove", () => {
   const removal = (removed: boolean, namespace: SetSkillChoiceResult["choice"]["namespace"]) =>
-    applied("choice-remove", { address: review, namespace, removed });
+    applied("pick-remove", { address: review, namespace, removed });
 
   it.effect("confirms the removal and hints at plan", () =>
     Effect.gen(function* () {
@@ -506,7 +506,7 @@ describe("pick remove", () => {
 });
 
 describe("adapter enable", () => {
-  const adapters = (result: SetEnabledAdaptersResult) => applied("adapter-set", result);
+  const adapters = (result: SetEnabledAdaptersResult) => applied("adapter-enable", result);
 
   it.effect("confirms the enabled set and hints at a plan that works outside a project", () =>
     Effect.gen(function* () {
@@ -772,7 +772,7 @@ describe("layout", () => {
       destination: "knowledge/ドキュメント",
       projectName: "demo",
     } satisfies DocsProject),
-    "adapter enable": applied("adapter-set", {
+    "adapter enable": applied("adapter-enable", {
       changed: true,
       enabledAdapters: ["claude", "codex", "cursor"],
     } satisfies SetEnabledAdaptersResult),
@@ -803,17 +803,17 @@ describe("undecodable payloads", () => {
 
   it("registers exactly the immediate mutations", () => {
     expect(Object.keys(mutationViews).toSorted()).toEqual([
-      "adapter-set",
-      "choice-exclude",
-      "choice-remove",
-      "choice-set",
+      "adapter-enable",
       "docs-attach",
       "docs-configure",
       "docs-detach",
-      "init",
+      "pick-exclude",
+      "pick-include",
+      "pick-remove",
       "project-add",
       "source-add",
       "source-relocate",
+      "state-init",
     ]);
   });
 });

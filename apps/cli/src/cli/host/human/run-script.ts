@@ -198,7 +198,7 @@ export const scriptRunView: HumanView<"script-run"> = (envelope, payloads, style
           ],
       [style.bold("Logs"), ...logSummary(result, style)],
     ],
-    hints: saved && isRunId(result.runId) ? [commandLine("history-show", result.runId)] : [],
+    hints: saved && isRunId(result.runId) ? [commandLine("script-history-show", result.runId)] : [],
   });
 };
 

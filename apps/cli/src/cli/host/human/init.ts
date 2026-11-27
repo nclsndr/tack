@@ -90,7 +90,7 @@ const statement = (plan: InitPlan, applied: InitApplication, attention: number, 
 const nextCommands = (plan: InitPlan, applied: InitApplication, attention: number) => {
   const first = applied.state === "created" ? [commandLine("guide", "onboarding")] : [];
   if (plan.adapters.enabled.length === 0 && plan.adapters.toEnable.length === 0)
-    return [...first, commandLine("machine-init", "--adapter", "claude")];
+    return [...first, commandLine("init", "--adapter", "claude")];
   return [
     ...first,
     ...(attention > 0 ? [commandLine("status", "--user")] : []),
@@ -102,7 +102,7 @@ const nextCommands = (plan: InitPlan, applied: InitApplication, attention: numbe
  * `tack init`: what setting up this machine wrote, the agents it found, the user links in the same
  * rows as `sync`, the hand-made entries it leaves alone, and what to run next.
  */
-export const renderInit: HumanView<"machine-init"> = (envelope, payloads, style) => {
+export const renderInit: HumanView<"init"> = (envelope, payloads, style) => {
   if (envelope.plan === null) return withoutPayload(envelope, undefined, style);
   const plan = Option.getOrUndefined(payloads.plan);
   const applied = Option.getOrUndefined(payloads.applied);

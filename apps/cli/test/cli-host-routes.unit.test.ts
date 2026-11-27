@@ -15,9 +15,9 @@ describe("CLI host routes", () => {
   });
 
   it.each([
-    ["adapter enable", "adapter-set"],
+    ["adapter enable", "adapter-enable"],
     ["pick", "pick-list"],
-    ["state clean", "clean"],
+    ["state clean", "state-clean"],
     ["help", "help"],
     ["version", "version"],
   ] as const)("names the invocation of the command name %s", (name, tag) => {

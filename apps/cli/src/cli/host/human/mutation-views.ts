@@ -148,14 +148,14 @@ const mutationView =
       : undefined;
   };
 
-const initView = mutationView<"init">((applied, style) => {
+const initView = mutationView<"state-init">((applied, style) => {
   const directory = style.path(applied.stateDirectory);
   return {
     confirmation: applied.alreadyInitialized
       ? `Tack was already initialized in ${directory}; the existing state was kept.`
       : `Initialized Tack state in ${directory}.`,
     // State alone links nothing: init sets up the agents and their built-in skills.
-    hints: [commandLine("machine-init")],
+    hints: [commandLine("init")],
   };
 });
 
@@ -217,7 +217,7 @@ const warnedCandidates = (envelope: PublicEnvelope) =>
     decodeCandidates,
   );
 
-const choiceSetView = mutationView<"choice-set" | "choice-exclude">(
+const choiceSetView = mutationView<"pick-include" | "pick-exclude">(
   ({ changed, choice }, style, envelope) => {
     const subject = addressText(choice.address, style);
     const where = namespaceText(choice.namespace, "prose");
@@ -243,11 +243,11 @@ const choiceSetView = mutationView<"choice-set" | "choice-exclude">(
           onNone: () => [],
           onSome: (address) => [
             commandLine(
-              choice.decision === "include" ? "choice-set" : "choice-exclude",
+              choice.decision === "include" ? "pick-include" : "pick-exclude",
               ...addressOperands(address, style),
               ...flags,
             ),
-            commandLine("choice-remove", ...addressOperands(choice.address, style), ...flags),
+            commandLine("pick-remove", ...addressOperands(choice.address, style), ...flags),
           ],
         }),
         commandLine("sync", ...flags),
@@ -256,7 +256,7 @@ const choiceSetView = mutationView<"choice-set" | "choice-exclude">(
   },
 );
 
-const choiceRemoveView = mutationView<"choice-remove">((applied, style) => {
+const choiceRemoveView = mutationView<"pick-remove">((applied, style) => {
   const subject = addressText(applied.address, style);
   const where = namespaceText(applied.namespace, "prose");
   return {
@@ -268,7 +268,7 @@ const choiceRemoveView = mutationView<"choice-remove">((applied, style) => {
   };
 });
 
-const adapterSetView = mutationView<"adapter-set">((applied) => ({
+const adapterSetView = mutationView<"adapter-enable">((applied) => ({
   confirmation: applied.changed
     ? `Enabled adapters are now ${adaptersText(applied.enabledAdapters)}.`
     : `Enabled adapters are already ${adaptersText(applied.enabledAdapters)}; nothing changed.`,
@@ -336,14 +336,14 @@ const sourceAddView: HumanView<"source-add"> = (envelope, payloads, style, detai
 
 /** Dedicated views for the immediate mutations. */
 export const mutationViews = {
-  "adapter-set": adapterSetView,
-  "choice-remove": choiceRemoveView,
-  "choice-set": choiceSetView,
-  "choice-exclude": choiceSetView,
+  "adapter-enable": adapterSetView,
+  "pick-remove": choiceRemoveView,
+  "pick-include": choiceSetView,
+  "pick-exclude": choiceSetView,
   "docs-attach": docsAttachView,
   "docs-configure": docsConfigureView,
   "docs-detach": docsDetachView,
-  init: initView,
+  "state-init": initView,
   "project-add": projectAddView,
   "source-add": sourceAddView,
   "source-relocate": sourceRelocateView,

@@ -81,13 +81,15 @@ const sync = (stateOptions: StateOptions, request: ReconcilePlanningRequest, app
 
 /** Enabled adapters and skill reconciliation. */
 export const reconciliationRoutes: RoutesFor<
-  "adapter-disable" | "adapter-list" | "adapter-set" | "sync"
+  "adapter-disable" | "adapter-list" | "adapter-enable" | "sync"
 > = {
-  "adapter-set": {
+  "adapter-enable": {
     needsHome: false,
     // The named adapters replace detection, as `init --adapter` does, when this initializes state.
     run: (invocation, { initialAdapters: _detected, ...stateOptions }) =>
-      enableAdapters(stateOptions, invocation.adapters).pipe(Effect.map(appliedAs("adapter-set"))),
+      enableAdapters(stateOptions, invocation.adapters).pipe(
+        Effect.map(appliedAs("adapter-enable")),
+      ),
   },
   "adapter-list": {
     needsHome: false,

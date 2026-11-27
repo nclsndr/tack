@@ -31,7 +31,7 @@ const sentence = (
     Match.tag(
       "required-excluded",
       () =>
-        `which is excluded. Run ${commandLine("choice-set", referenceOf(dependency), "--kind", dependency.kind, ...selectorFlags(namespace))}.`,
+        `which is excluded. Run ${commandLine("pick-include", referenceOf(dependency), "--kind", dependency.kind, ...selectorFlags(namespace))}.`,
     ),
     Match.tag(
       "required-source-undeclared",

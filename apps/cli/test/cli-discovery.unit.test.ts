@@ -85,7 +85,7 @@ it.effect("parses every documented example as the operation it documents", () =>
         const { invocation } = yield* parseInvocation(argvOf(example));
         expect(invocation["_tag"], example.command).toBe(
           contract.command === "state clean" && example.command.includes("--pending")
-            ? "retry"
+            ? "state-clean-pending"
             : tagOf(contract.commandPath),
         );
       }

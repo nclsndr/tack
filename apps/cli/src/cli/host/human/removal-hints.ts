@@ -30,7 +30,7 @@ export const retryHints = (
     ),
   )
     .filter((target) => target._tag === "user" || !except.includes(target.projectName))
-    .map((target) => commandLine("retry", "--pending", ...selectorFlags(target)));
+    .map((target) => commandLine("state-clean", "--pending", ...selectorFlags(target)));
 
 /** `tack status` hints for the targets holding blocked actions of previews. */
 export const blockedStatusHints = (plans: ReadonlyArray<RemovalPlan>) =>

@@ -73,8 +73,8 @@ const machineInitOutcome = ({ plan, applied }: MachineInitExecution): PublicOutc
 };
 
 /** One machine setup, written at once: state, agents and their user links. */
-export const setupRoutes: RoutesFor<"machine-init"> = {
-  "machine-init": {
+export const setupRoutes: RoutesFor<"init"> = {
+  init: {
     needsHome: true,
     run: (invocation, stateOptions) =>
       cwdOrCurrent(undefined).pipe(

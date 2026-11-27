@@ -98,7 +98,7 @@ const resolveStoredPick = Effect.fnUntraced(function* (
       catalog,
       reference,
       selectableKinds,
-      commandLine("choice-remove"),
+      commandLine("pick-remove"),
       kind,
     ).pipe(Effect.catchTag("ResourceReferenceError", () => Effect.succeed(undefined)));
     if (entry !== undefined && isSelectableAddress(entry.address))
@@ -107,7 +107,7 @@ const resolveStoredPick = Effect.fnUntraced(function* (
   // The reference stays unquoted, as `resolveResourceReference` prints its candidates.
   const candidates = matches.map(
     (choice) =>
-      `${commandLine("choice-remove")} ${sourceQualifier(catalog, choice.address.sourceRegistrationId)}:${choice.address.name} --kind ${choice.address.kind} ${argvLine(selectorFlags(namespace))}`,
+      `${commandLine("pick-remove")} ${sourceQualifier(catalog, choice.address.sourceRegistrationId)}:${choice.address.name} --kind ${choice.address.kind} ${argvLine(selectorFlags(namespace))}`,
   );
   return yield* new ResourceReferenceError({
     code: matches.length === 0 ? "resource-not-found" : "resource-ambiguous",
@@ -132,7 +132,7 @@ const requireVisibleExclude = Effect.fnUntraced(function* (
   if (refused === undefined) return undefined;
   const { address, projectName } = refused;
   const command = commandInvocation(
-    "choice-exclude",
+    "pick-exclude",
     `${sourceQualifier(catalog, address.sourceRegistrationId)}:${address.name}`,
     "--kind",
     address.kind,
@@ -151,7 +151,7 @@ const requireVisibleExclude = Effect.fnUntraced(function* (
 const setPick = (
   stateOptions: StateOptions,
   request: {
-    readonly tag: "choice-set" | "choice-exclude";
+    readonly tag: "pick-include" | "pick-exclude";
     readonly decision: "include" | "exclude";
     readonly kind?: SelectableKind;
     readonly namespace: ChoiceNamespace;
@@ -182,31 +182,31 @@ const setPick = (
 
 /** Persisted include and exclude choices. */
 export const choiceRoutes: RoutesFor<
-  "choice-remove" | "choice-set" | "choice-exclude" | "pick-list"
+  "pick-remove" | "pick-include" | "pick-exclude" | "pick-list"
 > = {
-  "choice-set": {
+  "pick-include": {
     needsHome: false,
     run: (invocation, stateOptions) =>
       setPick(stateOptions, {
-        tag: "choice-set",
+        tag: "pick-include",
         decision: "include",
         namespace: invocation.namespace,
         reference: invocation.reference,
         ...(invocation.kind === undefined ? {} : { kind: invocation.kind }),
       }),
   },
-  "choice-exclude": {
+  "pick-exclude": {
     needsHome: false,
     run: (invocation, stateOptions) =>
       setPick(stateOptions, {
-        tag: "choice-exclude",
+        tag: "pick-exclude",
         decision: "exclude",
         namespace: invocation.namespace,
         reference: invocation.reference,
         ...(invocation.kind === undefined ? {} : { kind: invocation.kind }),
       }),
   },
-  "choice-remove": {
+  "pick-remove": {
     needsHome: false,
     run: (invocation, stateOptions) =>
       withCommandWriter(stateOptions, (writer, snapshot) =>
@@ -220,7 +220,7 @@ export const choiceRoutes: RoutesFor<
             invocation.reference,
             invocation.kind,
           );
-          return appliedAs("choice-remove")(
+          return appliedAs("pick-remove")(
             yield* removeSkillChoice(writer, { address, namespace: invocation.namespace }),
           );
         }),

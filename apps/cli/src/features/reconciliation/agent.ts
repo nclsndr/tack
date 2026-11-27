@@ -26,7 +26,7 @@ export class AgentSelectionValidationError extends Schema.TaggedError<AgentSelec
   },
 ) {}
 
-/** Reports adapter-set changes that conflict with cleanup-aware disablement. */
+/** Reports `adapter enable` changes that conflict with cleanup-aware disablement. */
 export class AgentDisablementRequiredError extends Schema.TaggedError<AgentDisablementRequiredError>()(
   "AgentDisablementRequiredError",
   {

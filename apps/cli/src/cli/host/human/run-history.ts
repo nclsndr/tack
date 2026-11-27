@@ -52,7 +52,7 @@ const pageFlags = (limit: number, offset: number) => [
 ];
 
 /** Retained run summaries newest first, with the paging facts and any skipped record files. */
-export const historyListView: HumanView<"history-list"> = (envelope, { result }, style) => {
+export const historyListView: HumanView<"script-history-list"> = (envelope, { result }, style) => {
   if (envelope.result === null) return withoutPayload(envelope, style);
   if (Option.isNone(result) === true) return undefined;
   const list = result.value;
@@ -69,11 +69,13 @@ export const historyListView: HumanView<"history-list"> = (envelope, { result },
   const previous = Math.max(0, list.offset - list.limit);
   const hints = [
     ...(list.truncated && first !== undefined
-      ? [commandLine("history-list", ...pageFlags(list.limit, next))]
+      ? [commandLine("script-history-list", ...pageFlags(list.limit, next))]
       : []),
-    ...(list.offset > 0 ? [commandLine("history-list", ...pageFlags(list.limit, previous))] : []),
+    ...(list.offset > 0
+      ? [commandLine("script-history-list", ...pageFlags(list.limit, previous))]
+      : []),
     ...(first !== undefined && isRunId(first.runId)
-      ? [commandLine("history-show", first.runId)]
+      ? [commandLine("script-history-show", first.runId)]
       : []),
   ];
 
@@ -101,13 +103,13 @@ export const historyListView: HumanView<"history-list"> = (envelope, { result },
 const decodeTarget = Schema.decodeUnknownOption(RunTargetSchema);
 
 /** One retained run in full; large values are cut to the width with a pointer to `--json`. */
-export const historyShowView: HumanView<"history-show"> = (envelope, payloads, style) => {
+export const historyShowView: HumanView<"script-history-show"> = (envelope, payloads, style) => {
   if (envelope.result === null)
     return withoutPayload(
       envelope,
       style,
       envelope.diagnostics.some((diagnostic) => diagnostic.code === "history-not-found")
-        ? [commandLine("history-list")]
+        ? [commandLine("script-history-list")]
         : [],
     );
   if (Option.isNone(payloads.result) === true) return undefined;

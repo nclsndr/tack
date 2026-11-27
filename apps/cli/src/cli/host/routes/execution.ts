@@ -41,7 +41,11 @@ const scriptTargetFlags = (request: {
 
 /** Supervised runs and retained run history. */
 export const executionRoutes: RoutesFor<
-  "history-clear" | "history-list" | "history-show" | "script-run" | "script-show"
+  | "script-history-clear"
+  | "script-history-list"
+  | "script-history-show"
+  | "script-run"
+  | "script-show"
 > = {
   "script-show": {
     needsHome: false,
@@ -121,19 +125,19 @@ export const executionRoutes: RoutesFor<
         Effect.map(scriptRunOutcome),
       ),
   },
-  "history-list": {
+  "script-history-list": {
     needsHome: false,
     run: (invocation, stateOptions) =>
       listScriptHistory(stateOptions, { limit: invocation.limit, offset: invocation.offset }).pipe(
         Effect.map(historyListOutcome),
       ),
   },
-  "history-show": {
+  "script-history-show": {
     needsHome: false,
     run: (invocation, stateOptions) =>
       showScriptHistory(stateOptions, invocation.runId).pipe(Effect.map(resultOutcome)),
   },
-  "history-clear": {
+  "script-history-clear": {
     needsHome: false,
     run: (invocation, stateOptions) =>
       clearScriptHistory(stateOptions, invocation.apply).pipe(Effect.map(previewOutcome)),

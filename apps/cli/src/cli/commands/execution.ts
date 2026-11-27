@@ -116,7 +116,7 @@ const historyFlags = {
 };
 
 const listHistory = ({ limit, offset }: Command.Command.Config.Infer<typeof historyFlags>) =>
-  receive({ _tag: "history-list", limit, offset });
+  receive({ _tag: "script-history-list", limit, offset });
 
 const historyRoot = Command.make("history", historyFlags, listHistory);
 
@@ -132,7 +132,7 @@ const historyCommand = historyRoot.pipe(
           Argument.withDescription("Run ID from script run or script history"),
         ),
       },
-      ({ runId }) => receive({ _tag: "history-show", runId }),
+      ({ runId }) => receive({ _tag: "script-history-show", runId }),
     ).pipe(
       Command.withDescription("Show one retained run record, including pending records"),
       Command.withExamples([
@@ -140,7 +140,7 @@ const historyCommand = historyRoot.pipe(
       ]),
     ),
     Command.make("clear", { apply: applyFlag }, ({ apply }) =>
-      receive({ _tag: "history-clear", apply }),
+      receive({ _tag: "script-history-clear", apply }),
     ).pipe(
       Command.withDescription(
         "Preview how many retained run records would be deleted; --apply deletes them",

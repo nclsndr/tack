@@ -420,7 +420,7 @@ const nextSteps = (report: StatusPayload, style: Style): ReadonlyArray<string> =
       ...(undelivered
         ? [commandLine("sync", ...flags), commandLine("sync", ...flags, "--apply")]
         : []),
-      ...(obligationCount(report) > 0 ? [commandLine("retry", "--pending", ...flags)] : []),
+      ...(obligationCount(report) > 0 ? [commandLine("state-clean", "--pending", ...flags)] : []),
       ...(report.catalog.quarantined + report.catalog.unavailable > 0
         ? [commandLine("catalog")]
         : []),

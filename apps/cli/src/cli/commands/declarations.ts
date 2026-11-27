@@ -153,7 +153,7 @@ export const modeOf = (declaration: CommandDeclaration): MutationMode =>
       ? "read-only"
       : "immediate");
 
-/** `state clean` plans and applies the same removal whether or not `--pending` selects `retry`. */
+/** `state clean` plans and applies the same removal whether or not `--pending` selects `state-clean-pending`. */
 const stateClean = {
   path: ["state", "clean"],
   plan: SelectedRemovalPlanSchema,
@@ -171,12 +171,12 @@ export const commandDeclarations = {
     applied: AdapterDisablementResultSchema,
   },
   "adapter-list": { path: ["adapter"], result: AdapterListPayloadSchema },
-  "adapter-set": { path: ["adapter", "enable"], applied: AdapterSettingsPayloadSchema },
+  "adapter-enable": { path: ["adapter", "enable"], applied: AdapterSettingsPayloadSchema },
   catalog: { path: ["catalog"], result: CatalogReportSchema },
-  "choice-remove": { path: ["pick", "remove"], applied: ChoiceRemovalPayloadSchema },
-  "choice-set": { path: ["pick", "include"], applied: ChoiceChangePayloadSchema },
-  "choice-exclude": { path: ["pick", "exclude"], applied: ChoiceChangePayloadSchema },
-  clean: stateClean,
+  "pick-remove": { path: ["pick", "remove"], applied: ChoiceRemovalPayloadSchema },
+  "pick-include": { path: ["pick", "include"], applied: ChoiceChangePayloadSchema },
+  "pick-exclude": { path: ["pick", "exclude"], applied: ChoiceChangePayloadSchema },
+  "state-clean": stateClean,
   doctor: { path: ["doctor"], stable: true, result: DoctorReportSchema },
   "docs-attach": { path: ["docs", "attach"], applied: DocsSettingsPayloadSchema },
   check: { path: ["check"], result: CheckReportSchema },
@@ -189,13 +189,13 @@ export const commandDeclarations = {
   "docs-target": { path: ["docs", "target"], result: DocsTargetPayloadSchema },
   explore: { path: ["explore"], mode: "conditional", result: ExploreSessionSchema },
   guide: { path: ["guide"], result: Schema.Union([GuideIndexSchema, GuideSchema]) },
-  "history-clear": {
+  "script-history-clear": {
     path: ["script", "history", "clear"],
     plan: HistoryClearPlanSchema,
     applied: HistoryClearApplicationSchema,
   },
-  "history-list": { path: ["script", "history"], result: HistoryListPayloadSchema },
-  "history-show": { path: ["script", "history", "show"], result: HistoryRecordSchema },
+  "script-history-list": { path: ["script", "history"], result: HistoryListPayloadSchema },
+  "script-history-show": { path: ["script", "history", "show"], result: HistoryRecordSchema },
   "import-add": {
     path: ["import", "add"],
     plan: ImportPlanSchema,
@@ -207,9 +207,9 @@ export const commandDeclarations = {
     plan: ImportRemovalPlanSchema,
     applied: ImportRemovalApplicationSchema,
   },
-  init: { path: ["state", "init"], applied: StateInitializationPayloadSchema },
+  "state-init": { path: ["state", "init"], applied: StateInitializationPayloadSchema },
   // It writes at once and reports what it planned beside what it applied.
-  "machine-init": {
+  init: {
     path: ["init"],
     mode: "immediate",
     stable: true,
@@ -229,8 +229,8 @@ export const commandDeclarations = {
     plan: ProjectRemovalPlanSchema,
     applied: ProjectRemovalResultSchema,
   },
-  reset: { ...stateClean, path: ["state", "reset"] },
-  retry: stateClean,
+  "state-reset": { ...stateClean, path: ["state", "reset"] },
+  "state-clean-pending": stateClean,
   upgrade: { path: ["upgrade"], stable: true, result: UpgradeGuideSchema },
   "script-run": { path: ["script", "run"], mode: "execute", result: ScriptRunPayloadSchema },
   "script-show": { path: ["script", "show"], result: ScriptShowPayloadSchema },

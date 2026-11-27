@@ -92,10 +92,10 @@ const cleanCommand = Command.make(
     details: cleanupDetailsFlag,
   },
   handle(
-    "clean",
+    "state-clean",
     Effect.fnUntraced(function* ({ apply, pending, cwd, all, projectName, user, details }) {
       return {
-        _tag: pending ? "retry" : "clean",
+        _tag: pending ? "state-clean-pending" : "state-clean",
         apply,
         details,
         ...(cwd === undefined ? {} : { cwd }),
@@ -117,7 +117,7 @@ const targetRule =
 const resetCommand = Command.make(
   "reset",
   { apply: applyFlag, details: cleanupDetailsFlag },
-  ({ apply, details }) => receive({ _tag: "reset", apply, details }),
+  ({ apply, details }) => receive({ _tag: "state-reset", apply, details }),
 ).pipe(
   Command.withDescription(
     "Preview removing every managed link and all Tack state; --apply deletes state only after cleanup settles",
@@ -125,7 +125,7 @@ const resetCommand = Command.make(
   Command.withExamples([{ command: "tack state reset" }, { command: "tack state reset --apply" }]),
 );
 
-const initCommand = Command.make("init", {}, () => receive({ _tag: "init" })).pipe(
+const initCommand = Command.make("init", {}, () => receive({ _tag: "state-init" })).pipe(
   Command.withDescription("Initialize Tack state explicitly; safe to repeat"),
   Command.withExamples([{ command: "tack state init" }]),
 );

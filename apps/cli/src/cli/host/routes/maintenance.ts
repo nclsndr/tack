@@ -23,7 +23,9 @@ const cleanupOutcome = (execution: RemovalExecution) =>
   });
 
 /** Read-only status and selected cleanup, retry and reset. */
-export const maintenanceRoutes: RoutesFor<"clean" | "reset" | "retry" | "status"> = {
+export const maintenanceRoutes: RoutesFor<
+  "state-clean" | "state-reset" | "state-clean-pending" | "status"
+> = {
   status: {
     needsHome: onlyUserOrAllSelector,
     run: (invocation, stateOptions) =>
@@ -50,7 +52,7 @@ export const maintenanceRoutes: RoutesFor<"clean" | "reset" | "retry" | "status"
         );
       }),
   },
-  clean: {
+  "state-clean": {
     needsHome: onlyUserOrAllSelector,
     run: (invocation, stateOptions) =>
       cwdOrCurrent(invocation.cwd).pipe(
@@ -64,7 +66,7 @@ export const maintenanceRoutes: RoutesFor<"clean" | "reset" | "retry" | "status"
         Effect.map(cleanupOutcome),
       ),
   },
-  retry: {
+  "state-clean-pending": {
     needsHome: onlyUserOrAllSelector,
     run: (invocation, stateOptions) =>
       cwdOrCurrent(invocation.cwd).pipe(
@@ -85,7 +87,7 @@ export const maintenanceRoutes: RoutesFor<"clean" | "reset" | "retry" | "status"
         ),
       ),
   },
-  reset: {
+  "state-reset": {
     needsHome: false,
     run: (invocation, stateOptions) =>
       resetTack(stateOptions, { apply: invocation.apply }).pipe(Effect.map(cleanupOutcome)),

@@ -12,10 +12,10 @@ export const initCommand = Command.make(
     ),
   },
   handle(
-    "machine-init",
+    "init",
     Effect.fnUntraced(function* ({ adapters }) {
       return {
-        _tag: "machine-init",
+        _tag: "init",
         ...(adapters.length === 0 ? {} : { adapters: yield* decodeAdapters(adapters) }),
       };
     }),

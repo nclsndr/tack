@@ -33,6 +33,6 @@ export const renderUpgradeGuide: HumanView<"upgrade" | "upgrade-status"> = (
       paragraph(guide.message, { width: style.width, indent: 2 }),
     ],
     // A package upgrade leaves the built-in skill links on the old version until init relinks them.
-    hints: guide.command === null ? [] : [guide.command.join(" "), commandLine("machine-init")],
+    hints: guide.command === null ? [] : [guide.command.join(" "), commandLine("init")],
   });
 };

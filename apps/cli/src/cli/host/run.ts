@@ -109,8 +109,8 @@ const stateInitializedNotice = ({
     enabledAdapters === undefined
       ? `Initialized Tack state at ${stateDirectory}.`
       : enabledAdapters.length === 0
-        ? `Initialized Tack state at ${stateDirectory}. No agent folder was found in this home, so no agent is enabled: run \`${commandLine("machine-init")} --adapter <adapter>\` to enable one.`
-        : `Initialized Tack state at ${stateDirectory} and enabled the agents found in this home: ${enabledAdapters.join(", ")}. \`${commandLine("machine-init")}\` also links the built-in skills.`,
+        ? `Initialized Tack state at ${stateDirectory}. No agent folder was found in this home, so no agent is enabled: run \`${commandLine("init")} --adapter <adapter>\` to enable one.`
+        : `Initialized Tack state at ${stateDirectory} and enabled the agents found in this home: ${enabledAdapters.join(", ")}. \`${commandLine("init")}\` also links the built-in skills.`,
   details: {
     stateDirectory,
     ...(enabledAdapters === undefined ? {} : { enabledAdapters: [...enabledAdapters] }),

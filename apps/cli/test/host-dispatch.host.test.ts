@@ -22,7 +22,7 @@ it.effect("redacts malformed host envelopes before they reach stdout", () =>
       diagnostics: [{ code: "unsafe", message: "secret", severity: "invalid" }],
       version: 1,
     });
-    for (const candidate of [undefined, { command: "unsafe" }, { command: "adapter-set" }])
+    for (const candidate of [undefined, { command: "unsafe" }, { command: "adapter-enable" }])
       expect(yield* validatePublicEnvelope(candidate)).toMatchObject({
         classification: "internal",
         command: "unknown",

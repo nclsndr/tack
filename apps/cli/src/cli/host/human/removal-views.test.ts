@@ -190,13 +190,13 @@ const planned = (plan: RemovalPlan) => [plan];
 
 /** The envelope a cleanup route produces, built by the production outcome builder. */
 const cleanupEnvelope = (
-  command: "clean" | "reset" | "retry",
+  command: "state-clean" | "state-reset" | "state-clean-pending",
   plan: RemovalPlan,
   applied?: RemovalResult,
   selection?: object,
 ) =>
   createPublicEnvelope(
-    command === "reset" ? "state reset" : "state clean",
+    command === "state-reset" ? "state reset" : "state clean",
     removalOutcome(
       {
         plan: selection === undefined ? plan : { ...plan, selection },
@@ -260,7 +260,7 @@ const operationsOf = (output: string) => Effect.runPromise(parseHintsIn(output))
 describe("clean", () => {
   it.effect("previews every planned action, states nothing was written and hints --apply", () =>
     Effect.gen(function* () {
-      const output = render(cleanupEnvelope("clean", mixedPlan, undefined, projectSelection));
+      const output = render(cleanupEnvelope("state-clean", mixedPlan, undefined, projectSelection));
       const rows = lines(output);
       expect(rows[0]).toBe("tack state clean · project demo · ! partial");
       expect(statementOf(output)).toBe(
@@ -294,11 +294,11 @@ describe("clean", () => {
     const user = removalPlan({ _tag: "selected-targets", targets: [userTarget] }, [
       removeOf(evidence("review", userTarget)),
     ]);
-    expect(hintsIn(render(cleanupEnvelope("clean", user, undefined, userSelection)))).toEqual([
-      "tack state clean --user --apply",
-    ]);
+    expect(hintsIn(render(cleanupEnvelope("state-clean", user, undefined, userSelection)))).toEqual(
+      ["tack state clean --user --apply"],
+    );
     const bare = removalPlan({ _tag: "selected-targets", targets: [demoRoot] }, [removeOf(review)]);
-    const output = render(cleanupEnvelope("clean", bare, undefined, bareSelection));
+    const output = render(cleanupEnvelope("state-clean", bare, undefined, bareSelection));
     expect(hintsIn(output)).toEqual(["tack state clean --cwd /home/me/demo --apply"]);
     expect(await operationsOf(output)).toEqual(["state clean"]);
     expect(lines(output)[0]).toBe("tack state clean · project demo · ✓ success");
@@ -312,7 +312,7 @@ describe("clean", () => {
       removeOf(evidence("review", userTarget)),
     ]);
     const output = render(
-      cleanupEnvelope("clean", plan, undefined, {
+      cleanupEnvelope("state-clean", plan, undefined, {
         selector: { _tag: "all" },
         targets: [demoRoot, userTarget],
       }),
@@ -355,7 +355,7 @@ describe("clean", () => {
           ].sort((a, b) => compareCodeUnits(a.destinationPath, b.destinationPath)),
         },
       );
-      const envelope = cleanupEnvelope("clean", plan, result, projectSelection);
+      const envelope = cleanupEnvelope("state-clean", plan, result, projectSelection);
       expect(envelope.status).toBe("partial");
       // Wide enough that every action row fits on one line, so each reads back whole.
       const output = render(envelope, 120);
@@ -386,7 +386,7 @@ describe("clean", () => {
     const plan = removalPlan({ _tag: "selected-targets", targets: [demoRoot] }, [removeOf(review)]);
     const output = render(
       cleanupEnvelope(
-        "clean",
+        "state-clean",
         plan,
         removalResult([{ _tag: "applied", action: removeOf(review) }]),
         projectSelection,
@@ -398,10 +398,12 @@ describe("clean", () => {
 
   it("states there is nothing to remove, with no hint", () => {
     const plan = removalPlan({ _tag: "selected-targets", targets: [demoRoot] }, []);
-    const preview = render(cleanupEnvelope("clean", plan, undefined, projectSelection));
+    const preview = render(cleanupEnvelope("state-clean", plan, undefined, projectSelection));
     expect(statementOf(preview)).toBe("Preview only: nothing was written. Nothing to remove.");
     expect(hintsIn(preview)).toEqual([]);
-    const applied = render(cleanupEnvelope("clean", plan, removalResult([]), projectSelection));
+    const applied = render(
+      cleanupEnvelope("state-clean", plan, removalResult([]), projectSelection),
+    );
     expect(statementOf(applied)).toBe("Applied. Nothing to remove.");
   });
 
@@ -412,7 +414,7 @@ describe("clean", () => {
       [removeOf(review)],
       { docsActions: [{ action: "remove", evidence: docs }] },
     );
-    const preview = render(cleanupEnvelope("clean", plan, undefined, projectSelection));
+    const preview = render(cleanupEnvelope("state-clean", plan, undefined, projectSelection));
     expect(lines(preview)).toContain("Docs links");
     expectRow(
       preview,
@@ -421,7 +423,7 @@ describe("clean", () => {
     expect(preview).toContain("1 docs link to remove");
     const applied = render(
       cleanupEnvelope(
-        "clean",
+        "state-clean",
         plan,
         removalResult([{ _tag: "applied", action: removeOf(review) }], {
           docsActions: [{ _tag: "applied", action: { action: "remove", evidence: docs } }],
@@ -448,7 +450,7 @@ describe("clean", () => {
         },
       ],
     });
-    const preview = render(cleanupEnvelope("clean", plan, undefined, projectSelection));
+    const preview = render(cleanupEnvelope("state-clean", plan, undefined, projectSelection));
     expectRow(
       preview,
       `! conflict /home/me/demo/docs/guide docs ${sourceRegistrationId}:guide · project demo`,
@@ -487,15 +489,18 @@ describe("clean", () => {
       removeOf(wide),
       blockedOf(evidence("foreign", wideRoot)),
     ]);
-    expectViewContract(cleanupEnvelope("clean", plan, undefined, projectSelection));
+    expectViewContract(cleanupEnvelope("state-clean", plan, undefined, projectSelection));
     for (const width of [40, 80, 120]) {
-      const output = render(cleanupEnvelope("clean", plan, undefined, projectSelection), width);
+      const output = render(
+        cleanupEnvelope("state-clean", plan, undefined, projectSelection),
+        width,
+      );
       expect(output).toContain("非常长的项目目录名称");
       expect(rowsOf(output).join(" ")).toContain(
         "blocked: The destination is an existing directory.",
       );
     }
-    const narrow = render(cleanupEnvelope("clean", plan, undefined, projectSelection), 40);
+    const narrow = render(cleanupEnvelope("state-clean", plan, undefined, projectSelection), 40);
     expect(lines(narrow)).toEqual(
       expect.arrayContaining([
         "  − remove",
@@ -528,7 +533,7 @@ describe("retry", () => {
         ],
         finalizeProject: true,
       });
-      const output = render(cleanupEnvelope("retry", plan, undefined, bareSelection));
+      const output = render(cleanupEnvelope("state-clean-pending", plan, undefined, bareSelection));
       const rows = lines(output);
       expect(rows[0]).toBe("tack state clean · project demo · ✓ success");
       expect(statementOf(output)).toBe("Preview only: nothing was written. 1 to remove.");
@@ -554,7 +559,7 @@ describe("retry", () => {
       };
       const output = render(
         cleanupEnvelope(
-          "retry",
+          "state-clean-pending",
           plan,
           removalResult([failed], {
             pending: [pendingOf(evidence("review", userTarget), "clean")],
@@ -586,7 +591,7 @@ describe("reset", () => {
 
   it.effect("lists every managed link and pending removal and states nothing was written", () =>
     Effect.gen(function* () {
-      const output = render(cleanupEnvelope("reset", resetPlan));
+      const output = render(cleanupEnvelope("state-reset", resetPlan));
       const rows = lines(output);
       expect(rows[0]).toBe("tack state reset · all managed state · ✓ success");
       expect(statementOf(output)).toBe(
@@ -608,7 +613,7 @@ describe("reset", () => {
   it("states Tack state was deleted after a clean application", () => {
     const output = render(
       cleanupEnvelope(
-        "reset",
+        "state-reset",
         resetPlan,
         removalResult([
           { _tag: "applied", action: removeOf(review) },
@@ -622,14 +627,14 @@ describe("reset", () => {
   });
 
   it("keeps the view contract", () => {
-    expectViewContract(cleanupEnvelope("reset", resetPlan));
+    expectViewContract(cleanupEnvelope("state-reset", resetPlan));
   });
 
   it.effect("keeps the state and hints reset --apply when an action did not settle", () =>
     Effect.gen(function* () {
       const output = render(
         cleanupEnvelope(
-          "reset",
+          "state-reset",
           resetPlan,
           removalResult(
             [
@@ -1818,7 +1823,7 @@ describe("undecodable payloads", () => {
       }
     }
     // A readable plan with an unreadable application is declined too.
-    const cleaned = cleanupEnvelope("clean", mixedPlan, undefined, projectSelection);
+    const cleaned = cleanupEnvelope("state-clean", mixedPlan, undefined, projectSelection);
     expect(
       renderDedicated({ ...cleaned, applied: { kind: "other" } }, styleOf(), removalViews),
     ).toBeUndefined();
@@ -1831,13 +1836,13 @@ describe("registry", () => {
   it("covers exactly the preview/apply removal operations", () => {
     expect(Object.keys(removalViews).sort()).toEqual([
       "adapter-disable",
-      "clean",
-      "history-clear",
       "project-refresh",
       "project-remove",
-      "reset",
-      "retry",
+      "script-history-clear",
       "source-remove",
+      "state-clean",
+      "state-clean-pending",
+      "state-reset",
     ]);
   });
 });

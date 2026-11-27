@@ -13,11 +13,12 @@ import type { RoutesFor } from "./route.ts";
 
 /** State initialization, source registration and the resolved catalog. */
 export const sourceRoutes: RoutesFor<
-  "catalog" | "init" | "source-add" | "source-list" | "source-relocate" | "source-remove"
+  "catalog" | "state-init" | "source-add" | "source-list" | "source-relocate" | "source-remove"
 > = {
-  init: {
+  "state-init": {
     needsHome: false,
-    run: (_, stateOptions) => initializeState(stateOptions).pipe(Effect.map(appliedAs("init"))),
+    run: (_, stateOptions) =>
+      initializeState(stateOptions).pipe(Effect.map(appliedAs("state-init"))),
   },
   "source-add": {
     needsHome: false,
