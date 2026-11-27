@@ -1,0 +1,5 @@
+# Cloudflare Pages redirects. See apps/website/README.md.
+
+# The features page moved into the docs features reference.
+/features /docs/features 301
+/features.md /docs/features.md 301

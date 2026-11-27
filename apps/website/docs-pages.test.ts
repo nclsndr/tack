@@ -1,7 +1,7 @@
 import { agentAdapterDescriptors } from "@tackup/cli/core";
 import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { groundRules, lenses, sharedAgents } from "./components/features-page/content.ts";
+import { groundRules, lenses, sharedAgents } from "./components/features/content.ts";
 import { makeDemoSession, shellWords } from "./demo/demo-shell.ts";
 import config from "./rspress.config.ts";
 
@@ -105,7 +105,7 @@ describe("docs navigation", () => {
 describe("features reference", () => {
   const text = pageText("/docs/features");
 
-  it("has a section for each part of the features page, in its order", () => {
+  it("has a section for each part of the features data, in its order", () => {
     const headings = [...text.matchAll(/^## (.+)$/gmu)].map((match) => match[1]);
     const names: ReadonlyArray<string> = lenses.map((lens) => lens.name);
     expect(headings.filter((heading) => heading !== undefined && names.includes(heading))).toEqual(
@@ -113,7 +113,7 @@ describe("features reference", () => {
     );
   });
 
-  it("lists what Tack does not do yet and does not do, as the features page does", () => {
+  it("lists what Tack does not do yet and does not do, as the features data does", () => {
     const section = (heading: string) =>
       text
         .split(`## ${heading}\n`)[1]

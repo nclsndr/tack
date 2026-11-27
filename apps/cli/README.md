@@ -79,7 +79,7 @@ adapter already fills: `.agents/skills` from the `codex` adapter, or `.claude/sk
 | [Warp](https://docs.warp.dev/agents/capabilities/skills/)                                                            | `.agents/skills` | Project and user, also `.claude/skills`                              |
 | [Zed](https://zed.dev/docs/ai/skills.md)                                                                             | `.agents/skills` | Project and user, project in a trusted worktree                      |
 
-The features page on the website shows the same list. Vendors move these folders often: re-read an
+The website's agent support page shows the same list. Vendors move these folders often: re-read an
 agent's docs before relying on one.
 
 Enable adapters as shown below. `tack sync --adapter claude --user --apply` limits one sync to an

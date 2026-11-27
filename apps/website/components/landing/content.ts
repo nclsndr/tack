@@ -3,7 +3,7 @@
  * it.
  */
 
-import { sharedAgents } from "../features-page/content.ts";
+import { sharedAgents } from "../features/content.ts";
 
 /**
  * What Tack is, in one sentence, word for word wherever a page or package describes it: the site,
@@ -117,22 +117,22 @@ export const demo = {
 } as const;
 
 /**
- * The features, one block per lens, the team first: team, projects, agents, docs, then profiles
- * for a CI runner. Each block has a headline, plain lines and one command as its proof. Text in
- * `backticks` shows as inline code. Commands reach Cline, Cursor, OpenCode and Pi only, and
- * context reaches no agent, so no line here says otherwise.
+ * The features, after the problem they solve, one block per lens, the team first: team, projects,
+ * agents, docs, then profiles for a CI runner. Each block has a headline, plain lines and one
+ * command as its proof. Text in `backticks` shows as inline code. Commands reach Cline, Cursor,
+ * OpenCode and Pi only, and context reaches no agent, so no line here says otherwise.
  */
 export const features = {
   heading: "Share skills like code.",
+  /** The problem: the team's pain, then one developer's, then what both share. */
   intro:
-    "Your skills and your team's live in Git repositories, side by side. A pull brings a teammate's edit. A sync shows what would change before it changes anything.",
+    "A team's skills end up copied into each repository, each worktree and each laptop, and never reach the CI runner. Working alone, you copy the same skills into each project and each new worktree, or write a link script that covers one folder. You fix one copy and the others drift.",
   team: {
     title: "One setup for the whole team.",
     lines: [
       "Keep the team's skills and docs in a Git repository. Each teammate clones it once, adds it beside their own skills, and links both into the agent they use: Claude Code for one, Cursor or Codex for another.",
       "A change goes through review like any code. Edits arrive with `git pull`. New skills wait for your sync preview.",
     ],
-    note: "No account and no registry: Git does the sharing.",
     proof: "tack source add ~/code/acme-agent-skills",
     alt: "Illustration: a blue wireframe horse at a gallop, wearing a leather saddle with brass stirrups.",
   },
@@ -150,7 +150,6 @@ export const features = {
       `One skill folder reaches Claude Code, Codex, Cursor, Copilot CLI, Gemini CLI, Cline, OpenCode and Pi, and ${sharedAgents.rows.length} more agents that read the same folders.`,
       "Turn on a new agent and one sync links every skill you use. Turn it off and only Tack's links go.",
     ],
-    note: "Each agent also gets the `use-tack` skill, so it can run Tack for you.",
     proof: "tack adapter enable codex",
     /**
      * One skill folder, and the link one sync makes to it in a project for each agent, in the CLI's
@@ -203,8 +202,8 @@ export const features = {
       },
     ],
   },
-  /** The way on to the features page, which details every feature by lens. */
-  more: { label: "See every feature, lens by lens →", href: "/features" },
+  /** The way on to the docs features reference, which lists every feature and its command. */
+  more: { label: "Every feature and its command →", href: "/docs/features" },
 } as const;
 
 /** The `tack.yaml` of the getting-started source, as the JSON `tack source add --config` takes. */
@@ -229,7 +228,10 @@ export const getStarted = {
     "Joining a repository that already uses Tack? Its `AGENTS.md` tells your agent what to run.",
 } as const;
 
-/** Questions, from the common objections, the likeliest first. */
+/**
+ * Questions, from the common objections, the likeliest first, and what Tack does not do yet, as
+ * `groundRules.notYet` in `../features/content.ts` lists it.
+ */
 export const questions = [
   {
     question: "I can symlink my skills myself.",
@@ -242,6 +244,11 @@ export const questions = [
       "Not always. With one repository, one machine and agents that all read .agents/skills, commit the folder and use no tool. Tack is for the next step: the same skills in several repositories, a different set for each project, worktrees, a teammate on Claude Code, which reads .claude/skills, and a CI runner.",
   },
   {
+    question: "What doesn't Tack do yet?",
+    answer:
+      "It catalogues context, but no agent receives it yet. Commands reach Cline, Cursor, OpenCode and Pi; Claude Code, Codex, Copilot CLI and Gemini CLI get skills only. Every delivery is a symbolic link, with no copy as a fallback, and Windows is untested.",
+  },
+  {
     question: "Does it work in CI, or for a remote agent?",
     answer:
       "Yes. tack profile export packs a profile your team reviewed into one file with checksums, and tack profile apply-bundle sets it up on a fresh machine without the source and without fetching anything.",
@@ -252,11 +259,6 @@ export const questions = [
       "Commands that change links to your files preview first and write only with --apply; tack init writes at once to set up Tack and link its own skills. Tack writes symlinks, never copies, and never overwrites a file it did not create.",
   },
   {
-    question: "Can I share a setup with my team?",
-    answer:
-      "Yes. Keep the team's skills and docs in a Git repository. Each teammate clones it, registers it with tack source add --apply beside their own sources, and gets edits with git pull. Fixed profiles and portable bundles reproduce an exact setup.",
-  },
-  {
     question: "What if I stop using Tack?",
     answer:
       "Your skills are plain SKILL.md folders in your own directories. tack state reset --apply removes every link Tack created and its state. Your files stay.",
@@ -265,10 +267,6 @@ export const questions = [
     question: "Does it call a model or send data?",
     answer:
       "No. Tack is a local CLI. It calls no model and has no telemetry. Only tack import add reaches the network, to fetch from GitHub.",
-  },
-  {
-    question: "Is Tack open source?",
-    answer: "Yes. Tack is open source under the MIT license.",
   },
 ] as const;
 

@@ -573,6 +573,33 @@ html:has(.landing) {
   font-size: 15px;
 }
 
+/* The facts: short and plain, set off by brass ticks as the drafting marks are. */
+.landing-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--tack-text);
+  font-family: var(--tack-font-mono);
+  font-size: 13px;
+}
+
+.landing-facts li {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.landing-facts li::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-top: 1px solid var(--tack-accent);
+  border-left: 1px solid var(--tack-accent);
+}
+
 .landing-hero-aside .landing-facts {
   margin-top: 20px;
   color: var(--tack-muted);

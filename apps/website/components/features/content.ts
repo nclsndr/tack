@@ -1,10 +1,11 @@
 /**
- * Features page copy: every Tack feature, in six parts a visitor cares about. Each part has a
- * claim, the situation it serves, plain lines, one command as its proof, a small figure, and its
- * features: the first three in view, the rest behind "More". Text in `backticks` shows as inline
- * code. Every `command` and `proof` is a real command path whose flags exist (`content.test.ts`
- * runs each one's help). Commands reach Cline, Cursor, OpenCode and Pi only, and context reaches no agent,
- * so no line here says otherwise.
+ * Every Tack feature, in six parts a visitor cares about, and the figures the landing page draws
+ * for two of them. The docs features reference (`docs/docs/features.mdx`) lists the same parts and
+ * limits, and `docs-pages.test.ts` keeps the two in step. Each part has a claim, the situation it
+ * serves, plain lines, one command as its proof and its features. Every `command` and `proof` is a
+ * real command path whose flags exist (`content.test.ts` runs each one's help). Commands reach
+ * Cline, Cursor, OpenCode and Pi only, and context reaches no agent, so no line here says
+ * otherwise.
  */
 
 /** One feature: a title, a plain line and, when one shows it, a command. */
@@ -14,87 +15,18 @@ export type Detail = {
   readonly command?: string;
 };
 
-/** A part of the page: one thing a visitor cares about, and every feature that serves it. */
+/** A part: one thing a visitor cares about, and every feature that serves it. */
 export type Lens = {
   readonly id: string;
   readonly name: string;
-  /** The situation the part serves, for the index. */
+  /** The situation the part serves. */
   readonly when: string;
   readonly claim: string;
   readonly lines: ReadonlyArray<string>;
   readonly proof: string;
-  /** The features; the first `keyDetails` show at once. */
+  /** The features. */
   readonly details: ReadonlyArray<Detail>;
 };
-
-/** How many features of a part show at once; the rest wait behind "More". */
-export const keyDetails = 3;
-
-/** The page's head. */
-export const intro = {
-  label: "Features",
-  heading: "Everything Tack does, in six parts.",
-  /** The team's pain, then one developer's, then what both share. */
-  problem:
-    "A team's skills end up copied into each repository, each worktree and each laptop, and never reach the CI runner. Working alone, you copy the same skills into each project and each new worktree, or write a link script that covers one folder. You fix one copy and the others drift.",
-  tagline: "One setup, in every agent, project, worktree and CI runner.",
-  facts: [
-    "Preview before every write",
-    "No account, no registry, no telemetry",
-    "Open source, MIT",
-  ],
-  limitsLink: "What Tack does not do yet ↓",
-  indexLabel: "Jump to",
-} as const;
-
-/** How to install Tack: the landing's npm command, then the getting started guide. */
-export const install = {
-  id: "install",
-  heading: "Install Tack.",
-  text: "Tack runs on Node 22.12 or later, or on Bun. Then `tack init` sets up your machine.",
-  commands: ["npm install --global @tackup/cli"],
-  guide: "Get started",
-  guideHref: "/docs/getting-started",
-  docs: "Read the docs",
-} as const;
-
-/** One source with one of each kind, as the README's example shows it. */
-export const sourceFigure = {
-  root: "~/agent-setup",
-  entries: [
-    { path: "tack.yaml", kind: "declares" },
-    { path: "skills/review/SKILL.md", kind: "skill" },
-    { path: "commands/ship.md", kind: "command" },
-    { path: "context/conventions.md", kind: "context · no agent yet" },
-    { path: "docs/handbook/", kind: "docs" },
-    { path: "scripts/report.ts", kind: "script" },
-  ],
-} as const;
-
-/**
- * One skill folder and the links one sync makes from it in a project, and its commands, by the
- * project folders of the CLI's adapters (`apps/cli/src/domain/agents/agent-adapter.ts`).
- */
-export const agentsFigure = {
-  source: "~/agent-setup/skills/review",
-  links: [
-    { path: ".claude/skills/review", agent: "Claude Code" },
-    { path: ".cline/skills/review", agent: "Cline" },
-    { path: ".agents/skills/review", agent: "Codex" },
-    { path: ".github/skills/review", agent: "Copilot CLI" },
-    { path: ".cursor/skills/review", agent: "Cursor" },
-    { path: ".gemini/skills/review", agent: "Gemini CLI" },
-    { path: ".opencode/skills/review", agent: "OpenCode" },
-    { path: ".pi/skills/review", agent: "Pi" },
-  ],
-  commandsLabel: "and the command ship.md, for the agents that take commands",
-  commands: [
-    { path: ".clinerules/workflows/ship.md", agent: "Cline" },
-    { path: ".cursor/commands/ship.md", agent: "Cursor" },
-    { path: ".opencode/commands/ship.md", agent: "OpenCode" },
-    { path: ".pi/prompts/ship.md", agent: "Pi" },
-  ],
-} as const;
 
 /** Where an agent without its own adapter reads skills, by the folder a Tack adapter fills. */
 type SharedAgent = {
@@ -112,9 +44,6 @@ type SharedAgent = {
  * name the folder are listed. They get skills only; commands need an adapter of their own.
  */
 export const sharedAgents = {
-  heading: "More agents, through folders they share",
-  intro:
-    "These agents have no adapter of their own, but read skills from a folder one already fills: `.agents/skills`, from the Codex adapter, or `.claude/skills`, from the Claude Code adapter. They get skills, not commands.",
   rows: [
     {
       agent: "Amp",
@@ -242,8 +171,6 @@ export const sharedAgents = {
     },
   ],
 } as const satisfies {
-  readonly heading: string;
-  readonly intro: string;
   readonly rows: ReadonlyArray<SharedAgent>;
 };
 
@@ -255,23 +182,6 @@ export const projectFigure = {
     { root: "~/code/app", note: "main worktree" },
     { root: "~/code/app-hotfix", note: "worktree" },
     { root: "~/code/app-spike", note: "worktree" },
-  ],
-} as const;
-
-/** A script, as the built-in scripts reference writes one, shortened to fit a phone. */
-export const scriptFigure = {
-  file: "~/agent-setup/scripts/report.ts",
-  code: [
-    "// Tack provides this import at run time.",
-    'import { defineScript } from "@tackup/cli";',
-    "",
-    "export default defineScript({",
-    '  args: { repo: { type: "string" } },',
-    '  secrets: ["GITHUB_TOKEN"],',
-    "  run: async ({ args, secrets, exec }) => {",
-    "    // …",
-    "  },",
-    "});",
   ],
 } as const;
 
@@ -289,37 +199,7 @@ export const profileFigure = {
 } as const;
 
 /**
- * A real sync preview, from the CLI in a throwaway home where Claude Code and Codex were found:
- * one source with the skill `review`, and the project `app`.
- */
-export const previewFigure = {
-  command: "tack sync --project app",
-  output: `tack sync · project app · ✓ success
-
-Nothing was written. 4 changes planned.
-
-claude → app · 1 to link
-  create  .claude/skills/        directory
-  create  .claude/skills/review  skill review
-
-codex → app · 1 to link
-  create  .agents/skills/        directory
-  create  .agents/skills/review  skill review
-
-Preview only: nothing was written. There are no docs links to reconcile.
-
-Next
-  tack sync --project app --apply`,
-  caption: "A real preview, on a machine with Claude Code and Codex.",
-} as const;
-
-/** The docs part's figure: the reader, as the landing page shows it. */
-export const docsFigure = {
-  alt: "Screenshot: the Tack docs reader showing an architecture walkthrough, with its document index, metadata and a figure.",
-} as const;
-
-/**
- * The parts, in the order the page shows them: where the set lives, then what reaches each
+ * The parts, in the order the docs reference shows them: where the set lives, then what reaches each
  * project and agent, the fixed set for a runner, then the docs and scripts the skills need.
  */
 export const lenses = [
@@ -576,9 +456,6 @@ export const lenses = [
     ],
   },
 ] as const satisfies ReadonlyArray<Lens>;
-
-/** A part's id, which is also its anchor on the page. */
-export type LensId = (typeof lenses)[number]["id"];
 
 /**
  * The rules that hold under every part, then what Tack does not do: first what it does not do

@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { useRef, type ReactNode, type RefObject } from "react";
-import { lensFigures } from "../features-page/figures.tsx";
+import { ProfileFigure, ProjectFigure } from "../features/figures.tsx";
 import { features } from "./content.ts";
 import { corners, InView, settle } from "./drafting-sheet.tsx";
 import { Illustration } from "./illustration.tsx";
@@ -199,9 +199,6 @@ function AgentsBlock() {
                 frames={pinned ? reveal(0.7, 0.84) : reveal(0, 1)}
               >
                 <p>{block.lines[1]}</p>
-                <p className="feature-note">
-                  <InlineCode text={block.note} />
-                </p>
                 <Proof text={block.proof} />
               </ScrollPart>
             </div>
@@ -232,7 +229,7 @@ function AgentsBlock() {
 /**
  * Team: the first lens, a free-scrolling spread. The saddled horse runs in from the left at its
  * own, slower pace (parallax), and the words arrive beside it one after another, with shrinking
- * gaps: headline, lines, the supporting line, then the proof.
+ * gaps: headline, lines, then the proof.
  */
 function TeamBlock() {
   const block = useRef<HTMLElement>(null);
@@ -263,9 +260,6 @@ function TeamBlock() {
         </motion.p>
         <motion.p data-intro="" variants={settle(0.17, 10)}>
           <InlineCode text={team.lines[1]} />
-        </motion.p>
-        <motion.p className="feature-note" data-intro="" variants={settle(0.22, 0)}>
-          {team.note}
         </motion.p>
         <motion.div data-intro="" variants={settle(0.26, 0)}>
           <Proof text={team.proof} />
@@ -353,8 +347,7 @@ function DocsBlock() {
 
 /**
  * A lens told in words beside a figure of what it does: the projects lens with one link in each
- * worktree, the profiles lens with the way from a reviewed file to a CI runner. The figures are the
- * features page's, so both pages draw the same thing the same way.
+ * worktree, the profiles lens with the way from a reviewed file to a CI runner.
  */
 function PairBlock({
   id,
@@ -432,12 +425,12 @@ export function Features() {
       <div className="landing-shell">
         <FeaturesHead />
         <TeamBlock />
-        <PairBlock id="projects" block={features.projects} figure={lensFigures.projects} />
+        <PairBlock id="projects" block={features.projects} figure={ProjectFigure} />
       </div>
       <AgentsBlock />
       <div className="landing-shell">
         <DocsBlock />
-        <PairBlock id="profiles" block={features.profiles} figure={lensFigures.profiles} />
+        <PairBlock id="profiles" block={features.profiles} figure={ProfileFigure} />
         <AlsoRow />
       </div>
     </section>

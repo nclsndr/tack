@@ -20,10 +20,10 @@ import { InlineCode } from "./inline-code.tsx";
 import { Mark } from "./mark.tsx";
 import { Story } from "./story.tsx";
 
-export const docsHref = "/docs/";
+const docsHref = "/docs/";
 
-/** The features page, every feature by lens. */
-const featuresHref = "/features";
+/** The landing's features section; the docs features reference lists every feature. */
+const featuresHref = "/#features";
 
 /** Copies text to the clipboard and reports the result in a live region. */
 function CopyButton({ text, label }: { readonly text: string; readonly label: string }) {
@@ -113,9 +113,6 @@ function Tabs({
   );
 }
 
-/** Where the header's Get started sends a visitor by default: the landing's own section. */
-const getStartedHref = "/#get-started";
-
 /**
  * Whether the page has scrolled past `marker`, a strip at its top: the header floats as a card from
  * then on. An observer watches the strip, so nothing runs on each scrolled frame.
@@ -141,17 +138,9 @@ const headerFallback =
 /**
  * The header stays at the top of the screen as the page scrolls, as the docs navigation does. At
  * the top of the page it sits flush on the hero; once the page leaves the top, a card pops out
- * behind it. It is the site header on the landing and on the features page, so its links name
- * their page and work from either one; on the landing they only scroll.
+ * behind it. Its links to the landing's own sections only scroll.
  */
-export function Header({
-  current,
-  startHref = getStartedHref,
-}: {
-  readonly current?: "features";
-  /** Where Get started leads; the landing's own section unless a page has its own. */
-  readonly startHref?: string;
-}) {
+function Header() {
   const marker = useRef<HTMLSpanElement>(null);
   const floating = useScrolledPast(marker);
   return (
@@ -168,12 +157,10 @@ export function Header({
           </a>
           <nav aria-label="Main" className="landing-nav">
             <a href="/#demo">Demo</a>
-            <a href={featuresHref} aria-current={current === "features" ? "page" : undefined}>
-              Features
-            </a>
+            <a href={featuresHref}>Features</a>
             <a href={docsHref}>Docs</a>
           </nav>
-          <a href={startHref} className="landing-button landing-button-primary">
+          <a href="#get-started" className="landing-button landing-button-primary">
             Get started
           </a>
         </div>
@@ -320,8 +307,8 @@ function Closing() {
   );
 }
 
-/** The site footer, on the landing and on the features page. */
-export function Footer() {
+/** The site footer. */
+function Footer() {
   return (
     <footer className="landing-footer">
       <div className="landing-shell landing-footer-row">
@@ -345,10 +332,8 @@ function LandingMarkdown() {
   const lens = (block: {
     readonly title: string;
     readonly lines: ReadonlyArray<string>;
-    readonly note?: string;
     readonly proof: string;
-  }) =>
-    `### ${block.title}\n\n${[...block.lines, ...(block.note === undefined ? [] : [block.note])].join(" ")}\n\n\`\`\`sh\n${block.proof}\n\`\`\``;
+  }) => `### ${block.title}\n\n${block.lines.join(" ")}\n\n\`\`\`sh\n${block.proof}\n\`\`\``;
   // The lenses in the order the page shows them.
   const featureList = [
     features.team,

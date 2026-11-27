@@ -10,16 +10,16 @@ bun run website:build   # static site in apps/website/dist
 
 ## Layout
 
-| Path                       | Content                                                                       |
-| -------------------------- | ----------------------------------------------------------------------------- |
-| `docs/index.tsx`           | The landing page, a custom TSX route without the docs chrome                  |
-| `docs/docs/*.mdx`          | The docs pages                                                                |
-| `docs/public/`             | Static files: illustrations, favicon and the Cloudflare Pages `_headers` file |
-| `components/landing/`      | Landing sections, copy (`content.ts`) and the mark                            |
-| `components/audience.tsx`  | `<Agent>` and `<Human>`                                                       |
-| `components/terminal.tsx`  | `<Terminal>`, a command and its output in a terminal frame                    |
-| `styles/tokens.css`        | Brand tokens: the only file to change for a new palette, type or corners      |
-| `functions/_middleware.ts` | The Cloudflare Pages Function for `Accept: text/markdown`                     |
+| Path                       | Content                                                                                         |
+| -------------------------- | ----------------------------------------------------------------------------------------------- |
+| `docs/index.tsx`           | The landing page, a custom TSX route without the docs chrome                                    |
+| `docs/docs/*.mdx`          | The docs pages                                                                                  |
+| `docs/public/`             | Static files: illustrations, favicon and the Cloudflare Pages `_headers` and `_redirects` files |
+| `components/landing/`      | Landing sections, copy (`content.ts`) and the mark                                              |
+| `components/audience.tsx`  | `<Agent>` and `<Human>`                                                                         |
+| `components/terminal.tsx`  | `<Terminal>`, a command and its output in a terminal frame                                      |
+| `styles/tokens.css`        | Brand tokens: the only file to change for a new palette, type or corners                        |
+| `functions/_middleware.ts` | The Cloudflare Pages Function for `Accept: text/markdown`                                       |
 
 ## Writing docs for people and agents
 
@@ -50,6 +50,8 @@ with `apps/website` as the root directory and `dist` as the output directory, so
 `functions/`.
 
 - `docs/public/_headers` serves `.md` files as `text/markdown` and sets `Vary: Accept`.
+- `docs/public/_redirects` sends links to pages that moved, such as the former features page, to
+  their new place with a 301.
 - `functions/_middleware.ts` answers a request whose `Accept` header names `text/markdown` with the
   page's Markdown twin, so `curl -H 'Accept: text/markdown' https://<site>/docs/getting-started`
   returns Markdown while browsers keep getting HTML.

@@ -2,7 +2,7 @@ import { agentAdapterDescriptors } from "@tackup/cli/core";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { intro, lenses, sharedAgents } from "../features-page/content.ts";
+import { lenses, sharedAgents } from "../features/content.ts";
 import { definingSentence, features, hero, questions } from "./content.ts";
 
 /** A file of the repository, read from its root. */
@@ -29,7 +29,7 @@ describe("the hero", () => {
       expect(hero.agents).toContain(link.agent);
   });
 
-  it("counts the agents reached through a shared folder from the features page's table", () => {
+  it("counts the agents reached through a shared folder from the shared agents table", () => {
     expect(features.agents.lines[0]).toContain(`${sharedAgents.rows.length} more agents`);
   });
 });
@@ -53,11 +53,8 @@ describe("the tagline, lead line and defining sentence", () => {
 });
 
 describe("the problem the site states", () => {
-  /** Every line of copy on the landing page, the features page and the README. */
-  const copy = [
-    JSON.stringify([hero, features, questions, intro, lenses]),
-    folded(repoFile("README.md")),
-  ];
+  /** Every line of copy on the landing page, the features data and the README. */
+  const copy = [JSON.stringify([hero, features, questions, lenses]), folded(repoFile("README.md"))];
 
   it.each(["own folder", "its own place", "wherever your agents look"])(
     "is never that each agent looks in %s",
@@ -80,10 +77,10 @@ describe("the problem the site states", () => {
     }
   });
 
-  it("names the team's pain, then one developer's, on the features page and in the README", () => {
+  it("names the team's pain, then one developer's, on the landing page and in the README", () => {
     const team = "A team's skills end up copied";
     const alone = "Working alone,";
-    for (const text of [intro.problem, folded(repoFile("README.md"))]) {
+    for (const text of [features.intro, folded(repoFile("README.md"))]) {
       expect(text).toContain(team);
       expect(text.indexOf(alone)).toBeGreaterThan(text.indexOf(team));
     }

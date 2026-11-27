@@ -330,11 +330,6 @@
   font-size: 17px;
 }
 
-.landing .feature-note {
-  color: var(--tack-faint);
-  font-size: 15px;
-}
-
 /* Agents: a pinned moment on wide screens, where a sync plays out in the link figure. */
 .agents-track {
   position: relative;
@@ -670,9 +665,104 @@
   }
 }
 
-/* The way on to the features page, after the smaller features. */
+/* The way on to the docs features reference, after the smaller features. */
 .also-more {
   margin-top: 40px !important;
   font-size: 16px;
   font-weight: 600;
+}
+
+/* The projects and profiles figures (`components/features/figures.tsx`): the agents figure's
+   link manner, drawn at rest, with room for longer paths. */
+.fig-links .links-row {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+
+.fig-links .links-row code {
+  min-width: 0;
+}
+
+/* The agents figure draws its spine as the sync plays; these figures draw it at rest. */
+.fig-spine {
+  transform: none;
+}
+
+.fig-root {
+  color: var(--tack-faint);
+}
+
+/* On a phone the label goes under its path, so a path keeps its line. */
+@media (max-width: 639px) {
+  .fig-links .links-agent {
+    flex-basis: 100%;
+    margin-inline-start: 23px;
+    font-size: 12px;
+  }
+
+  .links-figure.fig-links {
+    font-size: 13px;
+  }
+
+  /* A worktree root takes its own line above the link it holds. */
+  .fig-links .fig-root {
+    display: block;
+  }
+}
+
+/* A step's number, in the story captions' brass monospace. */
+.fig-step {
+  color: var(--tack-accent);
+  font-family: var(--tack-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+}
+
+/* The profile figure: three steps down the sheet, each command on the arrow between them. */
+.fig-flow ol {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fig-flow-step {
+  display: grid;
+  justify-items: start;
+}
+
+.fig-flow-box {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 12px 16px 14px;
+  border: 1px solid var(--tack-border-strong);
+  border-radius: var(--tack-radius-xs);
+  background: rgb(3 27 49 / 0.9);
+}
+
+.fig-flow-box code {
+  color: var(--tack-heading);
+}
+
+.fig-flow-how {
+  color: var(--tack-faint);
+  font-family: var(--tack-font-sans);
+  font-size: 13px;
+}
+
+.fig-flow-command {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0 10px 12px;
+  border-inline-start: 1px solid rgb(92 145 173 / 0.6);
+  margin-inline-start: 20px;
+  color: var(--tack-accent);
+  font-size: 13px;
+}
+
+.fig-flow-arrow {
+  color: var(--tack-line);
 }
