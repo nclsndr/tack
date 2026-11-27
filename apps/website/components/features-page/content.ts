@@ -30,19 +30,13 @@ export type Lens = {
 /** How many features of a part show at once; the rest wait behind "More". */
 export const keyDetails = 3;
 
-/** The page's head. */
+/** The page's head: the problem Tack solves, and the way to what it does not do yet. */
 export const intro = {
   label: "Features",
   heading: "Everything Tack does, in six parts.",
   /** The team's pain, then one developer's, then what both share. */
   problem:
     "A team's skills end up copied into each repository, each worktree and each laptop, and never reach the CI runner. Working alone, you copy the same skills into each project and each new worktree, or write a link script that covers one folder. You fix one copy and the others drift.",
-  tagline: "One setup, in every agent, project, worktree and CI runner.",
-  facts: [
-    "Preview before every write",
-    "No account, no registry, no telemetry",
-    "Open source, MIT",
-  ],
   limitsLink: "What Tack does not do yet ↓",
   indexLabel: "Jump to",
 } as const;

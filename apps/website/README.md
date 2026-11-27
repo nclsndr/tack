@@ -34,9 +34,8 @@ Every build writes `llms.txt`, `llms-full.txt` and a Markdown twin beside each H
 
 ## Illustrations
 
-Only optimised web assets are committed: AVIF and WebP at 768, 1280 and 1916 px for the hero, and
-640 and 1024 px for the feature horses. The source PNGs stay outside the repository, and no
-illustration has baked-in text. The one screenshot, `docs-reader` at 640 and 1280 px, is the real
+Only optimised web assets are committed: AVIF and WebP at 768, 1280 and 1916 px for the story
+plate, `hero-saddle`. The source PNGs stay outside the repository, and no illustration has baked-in text. The one screenshot, `docs-reader` at 640 and 1280 px, is the real
 docs reader serving the Atlas example (`bun run reader:example`).
 
 ## Hosting on Cloudflare Pages

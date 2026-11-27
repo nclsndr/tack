@@ -22,7 +22,7 @@ const step = (index: number) => String(index + 1).padStart(2, "0");
 /** The details' delays, so they arrive one after another with shrinking gaps. */
 const detailDelay = (index: number) => 0.04 + Math.min(index, 5) * 0.05;
 
-/** The page's head: the heading, the problem, the tagline, and an index that jumps to each part. */
+/** The page's head: the heading, the problem, the way to the limits, and an index of the parts. */
 function PageHead() {
   return (
     <header className="landing-shell fp-head">
@@ -37,17 +37,9 @@ function PageHead() {
           <motion.p className="fp-problem" data-intro="" variants={settle(0.14, 10)}>
             {intro.problem}
           </motion.p>
-          <motion.p className="landing-lead" data-intro="" variants={settle(0.2, 10)}>
-            {intro.tagline}
+          <motion.p className="fp-limits-link" data-intro="" variants={settle(0.2, 0)}>
+            <a href="#limits">{intro.limitsLink}</a>
           </motion.p>
-          <motion.ul className="fp-facts" data-intro="" variants={settle(0.26, 0)}>
-            {intro.facts.map((fact) => (
-              <li key={fact}>{fact}</li>
-            ))}
-            <li>
-              <a href="#limits">{intro.limitsLink}</a>
-            </li>
-          </motion.ul>
         </div>
       </InView>
       <nav aria-label={intro.indexLabel} className="fp-index-frame">
@@ -314,9 +306,9 @@ function FeaturesMarkdown() {
     <>
       {`# ${intro.heading}
 
-${intro.problem} ${intro.tagline}
+${intro.problem}
 
-${intro.facts.join(" · ")}
+[${intro.limitsLink}](#limits)
 
 ${lenses.map(lensText).join("\n\n")}
 

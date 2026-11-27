@@ -1,5 +1,6 @@
-/* The sections after the hero: the story plate and the features, on one blueprint sheet that
-   carries on from the hero's (`components/landing/drafting-sheet.tsx`). */
+/* The sections after the hero: the story plate and the features strip, on one blueprint sheet that
+   carries on from the hero's (`components/landing/drafting-sheet.tsx`). The link figure here is
+   drawn by the features page (`components/features-page/figures.tsx`). */
 
 /* The sheet: the hero's drafting grid, its columns laid from the content edge, fading in where
    the hero's sheet fades out and toward the page's sides. */
@@ -94,16 +95,18 @@
   color: var(--tack-faint);
 }
 
-/* A word of a proof stays whole; the proof wraps at its spaces. */
+/* A word of a proof stays whole; the proof wraps at its spaces. A quoted argument wraps anywhere. */
 .proof-word {
   white-space: nowrap;
 }
 
-/* The horses in the sheet's blue line work. A filter, not a blend: the pinned frames are stacking
-   contexts of their own, so a blend would see no sheet behind them. */
-.story-plate > picture img,
-.agents-art img,
-.team-art img {
+.proof-data {
+  overflow-wrap: anywhere;
+}
+
+/* The horse in the sheet's blue line work. A filter, not a blend: the pinned frame is a stacking
+   context of its own, so a blend would see no sheet behind it. */
+.story-plate > picture img {
   filter: grayscale(1) sepia(0.6) hue-rotate(170deg) saturate(2.2) brightness(0.85) contrast(1.2);
 }
 
@@ -274,7 +277,7 @@
   }
 }
 
-/* The features: one lens each, in a varied rhythm. */
+/* The features: a strip of six parts, each a link to its section of the features page. */
 
 .features.landing-section {
   border-top: 0;
@@ -308,83 +311,103 @@
   }
 }
 
-/* The lenses' headlines: larger than a card title, smaller than the section heading. */
-.landing .agents-words h3,
-.landing .team-words h3,
-.landing .docs-words h3,
-.landing .pair-words h3 {
-  max-width: 18ch;
-  font-size: clamp(30px, 3.2vw, 44px);
-  line-height: 1.1;
-  letter-spacing: -0.03em;
+.features-strip {
+  margin-top: clamp(40px, 6vw, 64px);
+  padding-top: 32px;
+  border-top: 1px solid var(--tack-border-strong);
 }
 
-.feature-lead p,
-.feature-after p,
-.team-words p,
-.docs-lines p,
-.pair-words p {
-  max-width: 34em;
-  margin-top: 16px !important;
-  color: var(--tack-muted);
-  font-size: 17px;
-}
-
-.landing .feature-note {
-  color: var(--tack-faint);
-  font-size: 15px;
-}
-
-/* Agents: a pinned moment on wide screens, where a sync plays out in the link figure. */
-.agents-track {
-  position: relative;
-  margin-top: clamp(64px, 10vw, 120px);
-}
-
-.agents-grid {
+.features-parts {
   display: grid;
-  gap: 48px;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.agents-art img {
-  display: block;
-  width: 100%;
-  height: auto;
+.features-parts > li {
+  display: grid;
+  min-width: 0;
+}
+
+.landing a.features-part {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 20px 22px 22px;
+  border: 1px solid var(--tack-border);
+  border-radius: var(--tack-radius-sm);
+  background: rgb(1 20 34 / 0.55);
+  color: var(--tack-muted);
+  text-decoration: none;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.landing a.features-part:hover,
+.landing a.features-part:focus-visible {
+  border-color: var(--tack-border-strong);
+  background: rgb(1 20 34 / 0.8);
+}
+
+.features-part-name {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  color: var(--tack-heading);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.features-part-name::after {
+  content: "→";
+  margin-inline-start: auto;
+  color: var(--tack-faint);
+  font-weight: 400;
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.landing a.features-part:hover .features-part-name::after,
+.landing a.features-part:focus-visible .features-part-name::after {
+  color: var(--tack-accent);
+  transform: translateX(3px);
+}
+
+.features-part-step {
+  color: var(--tack-accent);
+  font-family: var(--tack-font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+}
+
+.features-part-line {
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+@media (min-width: 720px) {
+  .features-parts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (min-width: 1024px) {
-  .agents-grid {
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    align-items: center;
+  .features-parts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
   }
 }
 
-@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
-  /* The pinned frame centres its content in the screen, which already leaves room above it. */
-  .agents-track {
-    height: 260vh;
-    margin-top: 0;
-  }
-
-  .agents-pin {
-    position: sticky;
-    top: var(--landing-header-height);
-    display: flex;
-    align-items: center;
-    height: calc(100vh - var(--landing-header-height));
-  }
-
-  .agents-pin > .agents-grid {
-    width: min(1200px, 100% - 2 * 48px);
-  }
-}
-
-.feature-after {
-  margin-top: 8px;
-}
-
-.feature-after .proof {
-  margin-top: 20px;
+/* The way on to the features page, after the strip. */
+.features-more {
+  margin-top: 32px !important;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 /* The link figure: one folder, a spine, and a row per agent link. */
@@ -453,27 +476,15 @@
   background: rgb(92 145 173 / 0.6);
 }
 
-.links-mark,
-.links-mark-lit {
-  width: 11px;
-  height: 11px;
-  background:
-    linear-gradient(currentcolor, currentcolor) center / 100% 1px no-repeat,
-    linear-gradient(currentcolor, currentcolor) center / 1px 100% no-repeat;
-}
-
 .links-mark {
   position: relative;
   flex: none;
+  width: 11px;
+  height: 11px;
   color: rgb(144 194 218 / 0.9);
-}
-
-.links-mark-lit {
-  position: absolute;
-  inset: 0;
-  color: var(--tack-accent-strong);
-  filter: drop-shadow(0 0 4px rgb(243 205 163 / 0.8));
-  opacity: 0;
+  background:
+    linear-gradient(currentcolor, currentcolor) center / 100% 1px no-repeat,
+    linear-gradient(currentcolor, currentcolor) center / 1px 100% no-repeat;
 }
 
 .links-row code {
@@ -488,191 +499,9 @@
   white-space: nowrap;
 }
 
-/* Team: a spread, the horse wide on the left and moving at its own pace. */
-.team {
-  display: grid;
-  gap: 32px;
-  align-items: center;
-  padding-block: clamp(96px, 14vw, 180px) clamp(48px, 8vw, 96px);
-}
-
-.team-art img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-.team-words {
-  display: grid;
-  justify-items: start;
-}
-
-.team-words .proof {
-  margin-top: 20px;
-}
-
-/* On one column the words lead, as in the other lenses, so two horses never stack. */
-@media (max-width: 1023px) {
-  .team-words {
-    order: -1;
-  }
-}
-
 .story-caption code:not(.proof),
 .features code:not(.proof) {
   color: var(--tack-agent);
   font-family: var(--tack-font-mono);
   font-size: 0.86em;
-}
-
-@media (min-width: 1024px) {
-  .team {
-    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-    gap: 56px;
-  }
-
-  .team-art {
-    margin-inline-start: -6%;
-  }
-}
-
-/* Docs: the words, then the reader's window standing up on the sheet. */
-.docs {
-  padding-block: clamp(64px, 10vw, 120px);
-}
-
-.docs-words {
-  display: grid;
-  gap: 8px 56px;
-}
-
-.docs-lines {
-  display: grid;
-  justify-items: start;
-}
-
-.docs-lines p:first-child {
-  margin-top: 0 !important;
-}
-
-.docs-lines .proof {
-  margin-top: 20px;
-}
-
-@media (min-width: 1024px) {
-  .docs-words {
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    align-items: start;
-  }
-}
-
-.docs-stage {
-  position: relative;
-  max-width: 1080px;
-  margin: 64px auto 0;
-  perspective: 1800px;
-}
-
-.docs-window {
-  transform-origin: 50% 0;
-}
-
-.docs-window img {
-  display: block;
-  width: 100%;
-  height: auto;
-  border: 1px solid var(--tack-border-strong);
-  border-radius: var(--tack-radius-lg);
-  box-shadow: 0 40px 80px -40px rgb(1 10 20 / 0.9);
-}
-
-.docs-mark {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-/* A lens beside its figure: the worktrees of a project, the way to a CI runner. */
-.pair {
-  padding-block: clamp(48px, 8vw, 96px);
-}
-
-.pair-grid {
-  display: grid;
-  gap: 32px 56px;
-}
-
-.pair-words {
-  display: grid;
-  justify-items: start;
-}
-
-.pair-words .proof {
-  margin-top: 20px;
-}
-
-.pair-figure .links-figure {
-  margin-top: 0;
-}
-
-@media (min-width: 1024px) {
-  .pair-grid {
-    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
-    align-items: center;
-  }
-}
-
-/* Also in Tack: a quiet row, ruled off the sheet. */
-.also {
-  padding-top: 40px;
-  border-top: 1px solid var(--tack-border-strong);
-}
-
-.landing .also-heading {
-  color: var(--tack-muted);
-  font-size: 18px;
-}
-
-.also-items {
-  display: grid;
-  gap: 32px;
-  margin-top: 24px;
-}
-
-.also-item {
-  display: grid;
-  justify-items: start;
-  align-content: start;
-  gap: 8px;
-}
-
-.also-item h4 {
-  margin: 0;
-  color: var(--tack-heading);
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 1.35;
-}
-
-.also-item p {
-  color: var(--tack-muted);
-  font-size: 16px;
-}
-
-.also-item .proof {
-  margin-top: 4px;
-  font-size: 13px;
-}
-
-@media (min-width: 800px) {
-  .also-items {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-/* The way on to the features page, after the smaller features. */
-.also-more {
-  margin-top: 40px !important;
-  font-size: 16px;
-  font-weight: 600;
 }

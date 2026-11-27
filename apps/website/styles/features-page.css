@@ -8,7 +8,7 @@
   text-wrap: balance;
 }
 
-/* The head: the heading, the problem and the tagline, a line of facts, then the index. */
+/* The head: the heading, the problem and the way to the limits, then the index. */
 .fp-head {
   padding-block: clamp(48px, 8vw, 96px) clamp(40px, 6vw, 72px);
 }
@@ -33,13 +33,14 @@
   line-height: 1.55;
 }
 
-.fp-head .landing-lead {
-  max-width: 30em;
-  margin-top: 12px !important;
+/* The way to the limits, in the facts' monospace. */
+.fp-limits-link {
+  margin-top: 20px !important;
+  font-family: var(--tack-font-mono);
+  font-size: 13px;
 }
 
 /* The facts: short and plain, set off by brass ticks as the drafting marks are. */
-.fp-facts,
 .landing-facts {
   display: flex;
   flex-wrap: wrap;
@@ -52,14 +53,12 @@
   font-size: 13px;
 }
 
-.fp-facts li,
 .landing-facts li {
   display: inline-flex;
   align-items: center;
   gap: 10px;
 }
 
-.fp-facts li::before,
 .landing-facts li::before {
   content: "";
   width: 7px;
@@ -446,6 +445,7 @@
 
 .fp-detail {
   display: grid;
+  min-width: 0;
   justify-items: start;
   align-content: start;
   gap: 8px;

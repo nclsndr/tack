@@ -1,8 +1,7 @@
-import { agentAdapterDescriptors } from "@tackup/cli/core";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { intro, lenses, sharedAgents } from "../features-page/content.ts";
+import { agentsFigure, intro, lenses, sharedAgents } from "../features-page/content.ts";
 import { definingSentence, features, hero, questions } from "./content.ts";
 
 /** A file of the repository, read from its root. */
@@ -12,25 +11,30 @@ const repoFile = (path: string) =>
 /** Text with its line breaks and runs of spaces folded into single spaces. */
 const folded = (text: string) => text.replaceAll(/\s+/gu, " ");
 
-describe("features.agents.links", () => {
-  it("shows one project skill link per CLI adapter, at the adapter's own folder", () => {
-    // The landing page cannot import the CLI eagerly, so its figure repeats the adapter table and
-    // this test keeps the two in step.
-    const skill = features.agents.links.source.split("/").at(-1);
-    expect(features.agents.links.destinations.map((link) => link.path)).toEqual(
-      agentAdapterDescriptors.map((adapter) => [...adapter.projectSkillDirectory, skill].join("/")),
-    );
-  });
-});
+/** The agent of every CLI adapter, from the features page's figure, which its test checks. */
+const adapterAgents = agentsFigure.links.map((link) => link.agent);
 
 describe("the hero", () => {
   it("names the agent of every CLI adapter under the lead line", () => {
-    for (const link of features.agents.links.destinations)
-      expect(hero.agents).toContain(link.agent);
+    for (const agent of adapterAgents) expect(hero.agents).toContain(agent);
+  });
+});
+
+describe("the features strip", () => {
+  it("leads to each part of the features page, in its order and by its name", () => {
+    expect(features.parts.map((part) => [part.id, part.name])).toEqual(
+      lenses.map((lens) => [lens.id, lens.name]),
+    );
+  });
+
+  it("names the agent of every CLI adapter in the Agents part", () => {
+    const agents = features.parts.find((part) => part.id === "agents");
+    for (const agent of adapterAgents) expect(agents?.line).toContain(agent);
   });
 
   it("counts the agents reached through a shared folder from the features page's table", () => {
-    expect(features.agents.lines[0]).toContain(`${sharedAgents.rows.length} more agents`);
+    const agents = features.parts.find((part) => part.id === "agents");
+    expect(agents?.line).toContain(`${sharedAgents.rows.length} more agents`);
   });
 });
 

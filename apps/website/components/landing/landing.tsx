@@ -231,7 +231,7 @@ function Hero() {
 /**
  * The two sections after the hero, on one blueprint sheet that carries on from the hero's: the
  * pinned story plate straight under the demo window, the metaphor of what the demo showed, then
- * the features, one lens each.
+ * the features, one line per part, each leading to its section of the features page.
  */
 function AfterHero() {
   return (
@@ -342,25 +342,8 @@ function LandingMarkdown() {
   const metaphor = story.beats
     .map((beat) => `- **${beat.title}** ${beat.text} \`${beat.proof}\``)
     .join("\n");
-  const lens = (block: {
-    readonly title: string;
-    readonly lines: ReadonlyArray<string>;
-    readonly note?: string;
-    readonly proof: string;
-  }) =>
-    `### ${block.title}\n\n${[...block.lines, ...(block.note === undefined ? [] : [block.note])].join(" ")}\n\n\`\`\`sh\n${block.proof}\n\`\`\``;
-  // The lenses in the order the page shows them.
-  const featureList = [
-    features.team,
-    features.projects,
-    features.agents,
-    features.docs,
-    features.profiles,
-  ]
-    .map(lens)
-    .join("\n\n");
-  const also = features.also.items
-    .map((item) => `- **${item.title}** ${item.text} \`${item.proof}\``)
+  const parts = features.parts
+    .map((part) => `- **[${part.name}](${features.more.href}#${part.id})** ${part.line}`)
     .join("\n");
   const answers = questions.map((item) => `- **${item.question}** ${item.answer}`).join("\n");
   return (
@@ -393,11 +376,7 @@ ${metaphor}
 
 ${features.intro}
 
-${featureList}
-
-### ${features.also.heading}
-
-${also}
+${parts}
 
 [${features.more.label}](${features.more.href})
 
