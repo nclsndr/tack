@@ -14,6 +14,9 @@ describe("visual URL state without a window", () => {
   it("reads every visual in its initial state", async () => {
     expect(typeof globalThis.window).toBe("undefined");
     const markdown = await renderToMarkdownString(createElement(StateProbe, { id: "walk" }));
+    // React subscribes in a passive effect that its scheduler runs on a later turn; wait for it,
+    // so the subscription without a window runs on every machine, not only on a fast one.
+    await new Promise((resolve) => setImmediate(resolve));
     expect(markdown).toBe("state: {}\n\n");
   });
 });

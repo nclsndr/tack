@@ -971,12 +971,15 @@ describe("live Shell output bounds and termination", () => {
 
   it("keeps the first MiB of each stream and marks both as truncated", () =>
     fixture(async (directory) => {
+      // Each stream fills its MiB first, then writes again later, so a chunk always arrives once
+      // the kept output is already full, however the pipe splits the first write.
       const result = await Effect.runPromise(
         shellIn(directory).execute({
           executable: process.execPath,
           args: [
             "-e",
-            "process.stdout.write('a'.repeat(1200000));process.stderr.write('b'.repeat(1200000))",
+            "const fs=require('fs');fs.writeSync(1,'a'.repeat(1048576));fs.writeSync(2,'b'.repeat(1048576));" +
+              "setTimeout(()=>{fs.writeSync(1,'a'.repeat(150000));fs.writeSync(2,'b'.repeat(150000))},100)",
           ],
         }),
       );
