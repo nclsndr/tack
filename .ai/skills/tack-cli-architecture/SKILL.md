@@ -1,6 +1,6 @@
 ---
-name: tack-architecture
-description: Where code goes in the Tack CLI - its layers, the path of one command, the domain language and the decisions behind them. Use before adding a command, feature or domain concept to `apps/cli`, or moving code between layers.
+name: tack-cli-architecture
+description: Where code goes in the CLI app, `apps/cli` - its layers, the path of one command, the domain language and the decisions behind them. Use before adding a command, feature or domain concept to `apps/cli`, or moving code between its layers. Not for `packages/*`.
 ---
 
 # Tack CLI architecture

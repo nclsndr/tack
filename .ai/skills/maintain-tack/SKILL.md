@@ -11,7 +11,7 @@ makes agents run removed flags, miss new rules and teach operators behavior that
 **Change the skills in the same PR as the behavior.** A PR that alters what a skill describes is not
 done until the skill says the new thing.
 
-To place the code of a new command, feature or domain concept, use the `tack-architecture` skill.
+To place the code of a new command, feature or domain concept, use the `tack-cli-architecture` skill.
 
 ## What to update
 
