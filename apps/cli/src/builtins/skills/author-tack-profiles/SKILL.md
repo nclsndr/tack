@@ -38,8 +38,9 @@ profiles:
 3. Write the separately versioned file. Only `version`, `name`, `depends-on` and `members` are
    accepted. The file's name must match its publication. Paths are source-relative regular files
    inside the source, with no dot or parent segments. A profile file inside a declared skills,
-   commands or context folder, or on a script, overlaps that entry, and both are refused with
-   `declaration-path-overlap` until the folder entry excludes the file or the file moves.
+   commands, context or docs folder, or on a script, overlaps that entry, and both are refused
+   with `declaration-path-overlap` until the folder entry excludes the file or the file moves. A
+   docs entry takes no exclude, so a profile inside a docs folder must move.
 
 ```yaml
 # profiles/ci.yaml

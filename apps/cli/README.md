@@ -476,10 +476,11 @@ and exists with the right type: a folder for `skills`, a folder or file for `com
 `context`, a `.ts` file for `scripts`, a folder for `docs`. A declared path may be a symlink to a
 place inside the source. Everything found inside a declared folder must resolve inside that folder,
 or it is refused with `resource-boundary-violation`; to use content elsewhere in the source,
-declare that path. Declarations of skills, commands, context and scripts may not overlap, so each
-file belongs to at most one declaration: equal or nested paths overlap, a profile publication
-counts as a file entry, and only an `exclude` on the outer folder entry that prunes the inner path
-ends an overlap. Docs paths are exempt. A declaration that breaks a rule is
+declare that path. Declarations of skills, commands, context, scripts and docs may not overlap,
+so each file belongs to at most one declaration: equal or nested paths overlap, a profile
+publication counts as a file entry, and only an `exclude` on the outer folder entry that prunes the
+inner path ends an overlap. A docs entry takes no `exclude`, so nothing ends an overlap where docs
+hold another entry. A declaration that breaks a rule is
 quarantined with its own reason code (`declaration-entry-invalid`, `declaration-path-invalid`,
 `declaration-path-outside-source`, `declaration-path-missing`, `declaration-path-wrong-type`,
 `declaration-path-overlap`, `declaration-reaches-source`) and the other entries still load.

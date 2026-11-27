@@ -132,7 +132,7 @@ it.layer(LiveTestLayer)("source check", (test) => {
           "  - name: handbook",
           "    path: knowledge",
           "  - name: manual",
-          "    path: knowledge",
+          "    path: manual",
           "  - name: gone",
           "    path: missing",
           "",
@@ -154,6 +154,7 @@ it.layer(LiveTestLayer)("source check", (test) => {
         "context/skip.txt": "x",
         "tools/report.ts": "export {}",
         "knowledge/readme.md": "x",
+        "manual/readme.md": "x",
       }))
         yield* write(file, text);
       const source = yield* (yield* Source).validate(root);
@@ -220,6 +221,44 @@ it.layer(LiveTestLayer)("source check", (test) => {
         row.findings.map((finding) => ({ ...finding, file: path.join(root, finding.file) })),
       );
       expect(report.counts.context).toBe(row.context);
+    }),
+  );
+
+  test.effect("a profile file inside a docs folder refuses both", () =>
+    Effect.gen(function* () {
+      const { path, root, write } = yield* folders;
+      yield* write(
+        "tack.yaml",
+        [
+          "version: 2",
+          "name: fixture",
+          "docs:",
+          "  - name: kb",
+          "    path: kb",
+          "profiles:",
+          "  - name: ci",
+          "    path: kb/ci.yaml",
+          "",
+        ].join("\n"),
+      );
+      yield* write("kb/notes.md", "notes");
+      yield* write("kb/ci.yaml", "version: 1\nname: ci\nmembers: []\n");
+      const report = yield* checkSource(root);
+      const overlap =
+        "Each file may belong to one declaration, so none of them loads until the overlap is removed. Keep one of them.";
+      expect(report.findings.map(({ code, file, message }) => ({ code, file, message }))).toEqual([
+        {
+          code: "declaration-path-overlap",
+          file: path.join(root, "kb/ci.yaml"),
+          message: `The profiles entry "ci" overlaps the docs entry "kb". ${overlap}`,
+        },
+        {
+          code: "declaration-path-overlap",
+          file: path.join(root, "tack.yaml"),
+          message: `The docs entry "kb" overlaps the profiles entry "ci". ${overlap}`,
+        },
+      ]);
+      expect(report.counts.docs).toBe(0);
     }),
   );
 
