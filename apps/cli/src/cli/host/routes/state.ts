@@ -5,7 +5,8 @@ import {
   retrySelectedPendingRemovals,
 } from "../../../features/removal/selected-removal.ts";
 import type { RemovalExecution } from "../../../features/removal/removal.ts";
-import { removalOutcome, withOutsidePendingDiagnostic } from "../outcomes.ts";
+import { initializeState } from "../../../services/state-store.ts";
+import { appliedAs, removalOutcome, withOutsidePendingDiagnostic } from "../outcomes.ts";
 import { cwdOrCurrent, type RoutesFor, onlyUserOrAllSelector } from "./route.ts";
 
 const cleanupOutcome = (execution: RemovalExecution) =>
@@ -14,8 +15,15 @@ const cleanupOutcome = (execution: RemovalExecution) =>
     applied: execution.applied === undefined ? undefined : [execution.applied],
   });
 
-/** Selected cleanup, its pending-only retry, and the full reset. */
-export const stateRoutes: RoutesFor<"state-clean" | "state-reset" | "state-clean-pending"> = {
+/** State initialization, selected cleanup, its pending-only retry, and the full reset. */
+export const stateRoutes: RoutesFor<
+  "state-init" | "state-clean" | "state-reset" | "state-clean-pending"
+> = {
+  "state-init": {
+    needsHome: false,
+    run: (_, stateOptions) =>
+      initializeState(stateOptions).pipe(Effect.map(appliedAs("state-init"))),
+  },
   "state-clean": {
     needsHome: onlyUserOrAllSelector,
     run: (invocation, stateOptions) =>

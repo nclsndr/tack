@@ -6,14 +6,14 @@ import { docsRoutes } from "./docs.ts";
 import { docsReaderRoutes } from "./docs-reader.ts";
 import { doctorRoutes } from "./doctor.ts";
 import { exploreRoutes } from "./explore.ts";
-import { guideRoutes } from "./guides.ts";
+import { guideRoutes } from "./guide.ts";
 import { importRoutes } from "./imports.ts";
+import { initRoutes } from "./init.ts";
 import { pickRoutes } from "./pick.ts";
 import { profileRoutes } from "./profiles.ts";
 import { projectRoutes } from "./projects.ts";
 import type { RoutesFor } from "./route.ts";
 import { scriptRoutes } from "./script.ts";
-import { setupRoutes } from "./setup.ts";
 import { sourceRoutes } from "./sources.ts";
 import { stateRoutes } from "./state.ts";
 import { statusRoutes } from "./status.ts";
@@ -37,11 +37,11 @@ export const routes: RoutesFor<Invocation["_tag"]> = {
   ...exploreRoutes,
   ...guideRoutes,
   ...importRoutes,
+  ...initRoutes,
   ...pickRoutes,
   ...profileRoutes,
   ...projectRoutes,
   ...scriptRoutes,
-  ...setupRoutes,
   ...sourceRoutes,
   ...stateRoutes,
   ...statusRoutes,

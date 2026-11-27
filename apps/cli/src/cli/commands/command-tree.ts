@@ -16,7 +16,7 @@ import { syncCommand } from "./sync.ts";
 import { upgradeCommand } from "./upgrade.ts";
 import { rootCommand } from "./root-command.ts";
 import { sourceCommands } from "./sources.ts";
-import { initCommand } from "./setup.ts";
+import { initCommand } from "./init.ts";
 import { profileCommand } from "./profiles.ts";
 
 /**

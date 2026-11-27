@@ -5,21 +5,15 @@ import {
 } from "../../../features/imports/import-display.ts";
 import { catalogReport } from "../../../domain/sources/catalog-report.ts";
 import { relocateSource } from "../../../features/sources/source.ts";
-import { initializeState } from "../../../services/state-store.ts";
 import { removeSource } from "../../../features/removal/source-removal.ts";
 import { addSource } from "./source-add.ts";
 import { appliedAs, catalogOutcome, removalOutcome, sourcesOutcome } from "../outcomes.ts";
 import type { RoutesFor } from "./route.ts";
 
-/** State initialization, source registration and the resolved catalog. */
+/** Source registration and the resolved catalog. */
 export const sourceRoutes: RoutesFor<
-  "catalog" | "state-init" | "source-add" | "source-list" | "source-relocate" | "source-remove"
+  "catalog" | "source-add" | "source-list" | "source-relocate" | "source-remove"
 > = {
-  "state-init": {
-    needsHome: false,
-    run: (_, stateOptions) =>
-      initializeState(stateOptions).pipe(Effect.map(appliedAs("state-init"))),
-  },
   "source-add": {
     needsHome: false,
     run: (invocation, stateOptions) => addSource(stateOptions, invocation),
