@@ -1,0 +1,283 @@
+---
+title: Docs and the reader
+description: How a source declares docs, how projects attach and mount them, what tack docs serve, tack docs search and tack check do, and the reader settings, icons, components and modules a docs author can use.
+---
+
+# Docs and the reader
+
+A source declares folders of Markdown as docs. A project attaches them, every worktree gets a mount
+at `.tack/docs`, and `tack docs serve` and `tack docs search` read them.
+[Link docs into a project](../guides/link-docs) and [Add a document](../guides/write-a-document)
+are the step-by-step versions.
+
+## Declare docs
+
+A declaration can be as small as:
+
+```yaml
+version: 1
+name: team-knowledge
+docs:
+  - name: handbook
+    path: knowledge
+```
+
+`path` names any directory inside the source. A docs resource is identified by its source and its
+name, so the same name in two sources stays distinct. [Reader settings](#reader-settings) tune it.
+
+## Attach and mount
+
+After `tack source add` and `tack project add`, attach the resource by name. Write `source:name`,
+with the source's label or registration ID, only when several registered sources declare that name:
+
+```sh
+tack docs attach handbook --project demo
+tack docs attach product-docs:handbook --project demo   # only when another source also has "handbook"
+tack docs configure --project demo --default handbook
+tack sync --no-adapters --project demo
+tack sync --no-adapters --project demo --apply
+tack docs --project demo
+tack docs target --project demo
+```
+
+Attach, detach and configure take effect at once and write no link. `tack sync --no-adapters`
+previews the mounts; `--apply` writes them. Every active worktree of the project gets its own
+relative symbolic link at `.tack/docs/SOURCE_ID/NAME`, and all of them point at the same registered
+source folder. `tack docs configure --project demo --destination knowledge` changes the relative
+base; sync afterwards to move the links. Existing directories and links Tack has no record of are
+conflicts and are never adopted or overwritten.
+
+`tack docs` reports the attachments, the searchable `documents` count, the `mounts` with their
+health, and whether the corpus is `complete`.
+
+## Write into docs
+
+The default writing resource belongs to the project. `tack docs target` returns its physical source
+folder and its verified mount. Choose another attached resource with `--name REFERENCE`, using
+`source:name` when the name is ambiguous. The command refuses an absent, redirected or unmanaged
+mount. Agents and editors create and edit documents through that mount. Tack does not create
+documents, change their lifecycle or manage their Git history.
+
+## Detach
+
+Detach with `tack docs detach handbook --project demo`, then sync with `--apply`. Detaching the
+writing default clears it, as `tack docs configure --clear-default` does. Cleanup removes only
+mounts Tack recorded and keeps the source content. Removing a project or the whole state includes
+its mounts.
+
+A mount that cannot be removed safely (the destination was replaced, a parent is no longer an
+ordinary directory, or the unlink failed) stays on disk as a pending removal with its cause and last
+result, like an agent link: the removal finishes, `tack status`, `tack sync` and `tack doctor`
+report what is owed, and `tack state clean --pending` retries it. `tack project refresh` previews
+and updates the mounts of changed worktrees; a docs conflict after the roots change is a partial
+result with the applied changes. `tack source relocate` keeps the registration ID; sync docs
+afterwards to update the mounts. A mount whose parent is no longer an ordinary directory blocks only
+its own destination, and sync reports it as skipped until the parent is repaired.
+
+## Read in the browser
+
+```sh
+tack docs serve --project demo
+tack docs serve --cwd /path/to/registered/worktree --no-open --port 0
+tack docs serve --project demo --open
+```
+
+The reader needs initialized state, a registered project and registered sources for its
+attachments. `--cwd` defaults to the current directory; `--project` names a registered project. The
+reader shows every attached resource of the project in one view, with a separate root per source and
+one shared search.
+
+The command stays in the foreground until Ctrl+C. A browser opens by default only at an interactive
+terminal: stdin and stdout are terminals, `TERM` is set and not `dumb`, `CI` is unset, and no coding
+agent is detected. `--open` opens one anyway and `--no-open` never does; the two conflict. `--port`
+picks the port, and `0` asks for a free one. A successful start prints one envelope with
+`result: { kind: "reader-session", url, project: { name, root } }`. Ctrl+C, `SIGTERM` or a closed
+terminal stops the reader without another envelope and exits with code `130`. An unexpected stop
+reports on standard error and exits with code `1`.
+
+Saved edits in every source folder reload the open page, including resources that are broken.
+Inline settings, linked YAML files and their edits reload without a restart. Changing the project,
+its attachments or the catalog needs a new `tack docs serve`.
+
+The reader lists skipped documents and unavailable resources in one place, the issue popover at the
+bottom right, while healthy documents stay open. Every document, search hit and copy names its
+source.
+
+## Search
+
+```sh
+tack docs search "source ownership" --project demo --limit 5
+tack docs search "selection" --cwd /path/to/worktree --type spec --status active --tag skills
+```
+
+Search reads the same resources with the same rules as the browser, without starting a server. It
+takes `--project`, `--cwd`, `--type`, `--status`, `--tag` and `--limit`, and refuses the
+reader-only `--port` and `--no-open`. Query words match case-insensitively, all of them, across saved
+content and paths. Metadata filters are exact. The default limit is 10, from 1 to 50. The query
+needs text and holds at most 512 characters. Results rank by matches in the title, then headings,
+then body.
+
+The result has `kind: "reader-search"` with `project`, `complete`, `issues`, `query`, `limit`,
+`total`, `truncated` and `hits`. A project with no attached docs is an incomplete setup: `complete`
+is `false` and a `setup` object names the `no-docs-attached` gap and the `tack docs attach` command
+that closes it. Each hit names its source registration, source path, docs name, file, path inside the
+resource, title, route and metadata. Matching blocks carry the saved-file version, the source line
+range, contributors and an excerpt. A hit has at most three blocks and each excerpt at most 400
+characters; full files are not returned, so read the cited files before editing.
+
+Failures stay isolated. A broken document yields its own `document-load` issue with its `path` and
+cause, while every healthy sibling stays searchable. Invalid reader settings yield one
+`resource-load` issue and make only that resource unavailable. Either way `complete` is `false`.
+Search reads plain Markdown and never compiles custom modules, so a broken component hides no hit;
+`tack docs serve` still reports it. A complete search with no match succeeds with exit code `0`. An
+invalid invocation or a missing registration exits `2`; a partial result exits `1`. Neither the
+reader nor search reads folders that are not registered.
+
+## Author a docs resource
+
+A docs folder needs no reader file. The reader passes over entries whose name starts with `.` or
+`_`, `node_modules`, and folders that hold a `tack.yaml` (another source); `tack check` walks docs
+the same way. It reads `.md` and `.mdx` files, accepts ordinary frontmatter, and takes a title from
+the first heading or the file name.
+
+Frontmatter `title`, `type`, `status`, `tags` and `layout` have checked shapes; other keys are
+accepted but not shown as metadata. Tags come from each document and fill the reader's filters; no
+setting has to declare them. Without a metadata vocabulary, the type and status values found also
+fill the filters. A metadata preset or an explicit type and status vocabulary restricts those two.
+
+Plain Markdown stays Markdown: literal `{expressions}`, comparisons and code stay text, and HTML
+follows normal HTML rules. MDX is there when a document needs imports, expressions or components.
+
+The reader's route for a document is `/docs/SOURCE_ID/NAME/PATH`, with the extension removed, so two
+sources can both publish `architecture.md` without mixing navigation, search hits, citations or
+components.
+
+### Reader settings
+
+An optional `reader` mapping on a docs entry refines it. Settings merge with the defaults, so a
+component module alone is enough:
+
+```yaml
+version: 1
+name: team-knowledge
+docs:
+  - name: handbook
+    path: docs
+    reader:
+      components:
+        module: docs/reader-components.tsx
+```
+
+For more settings, point `reader` at a `.yaml` or `.yml` file in the source:
+
+```yaml
+version: 1
+name: team-knowledge
+docs:
+  - name: handbook
+    path: docs
+    reader: reader/handbook.yaml
+```
+
+The file holds the same settings as the inline mapping:
+
+```yaml
+content:
+  - root: docs
+    include: ["**/*.md", "**/*.mdx"]
+    exclude: ["drafts/**"]
+navigation:
+  preset: folders
+  archive: [docs/archive]
+components:
+  module: docs/reader-components.tsx
+```
+
+Every path in both forms resolves from the source root, also in a linked file stored in a subfolder.
+Settings may carry `version: 1`, the default. JSON files are not supported, and a linked file never
+links another.
+
+`content` roots and `archive` folders stay inside the docs resource. They need not exist yet: an
+absent one counts as empty and its documents appear once the folder exists, so folders such as
+`archive` or `decisions` never have to be made up front. A path that exists but is not a directory,
+a dangling link, or one that escapes the resource is an error. Settings, component modules, local
+imports and their dependencies stay inside the registered source, so a docs folder can use the
+source's support files.
+
+### Icons
+
+An `.mdx` document draws a Lucide icon inline with `<Icon name="database" />`, at the size and
+color of the text around it; `label="..."` names a meaningful one for assistive technology. Names
+come from a curated set of a few hundred Lucide icons by category. Write each name as a plain string,
+in MDX and in components, so the reader bundles it.
+
+```sh
+tack docs icons database
+tack docs icons
+```
+
+`tack docs icons` needs no project. It lists the set by category with the Lucide version it comes
+from; a word keeps the icons whose name or old Lucide name contains it, or whose category has it as a
+word. A word that matches nothing is a `docs-icons-none` warning. A component checks names with the
+`DocsIconName` type: `import { Icon, type DocsIconName } from "@tackup/reader"`.
+
+### Components
+
+Every `.mdx` document can use:
+
+| Component        | Use                                                                                     |
+| ---------------- | --------------------------------------------------------------------------------------- |
+| `Callout`        | `kind` note, tip, warning or decision, with an optional `title` and `icon`.             |
+| `Tabs` and `Tab` | Alternatives, each `Tab` with a `label`. Copy carries every tab.                        |
+| `Term`           | A defined word, with its definition in `title`; the definition also stays in the text.  |
+| Figures          | `ArchitectureMap`, `System`, `Schema`, `FileTree`, `Walkthrough`, `Chart` and `Figure`. |
+
+A fenced block with the language `tree` draws a `FileTree` in `.md` and `.mdx` documents. Figures
+take meaning, never positions, except `Figure`, which places boxes, links, bands, badges, notes and
+labels at explicit positions in the same frame. The built-in `write-reader-figures` skill teaches
+how to write each of them.
+
+### Source modules
+
+A resource can supply `Navigation`, named `layouts` and MDX `components` from modules in its source.
+The reader provides React, React DOM, `@tackup/reader` and Rspress to those modules, and picks the
+exports of the current document's resource, so one source cannot affect another that uses the same
+docs name.
+
+```tsx
+import "./callout.css";
+import { label } from "./copy.ts";
+
+export function Callout() {
+  return <strong className="callout">{label}</strong>;
+}
+export const components = { Callout };
+```
+
+The reader checks configured modules and direct MDX imports before it serves them. A syntax error,
+an import it cannot resolve, or a dependency outside the source makes only that resource
+unavailable; a saved repair reloads it. CSS and local asset imports are checked too. A module that
+only fails in the browser is not run while documents load, so it stays searchable; the reader shows
+its error in place while other documents stay usable.
+
+A source's modules and MDX are not scanned for Tailwind classes. The reader styles a published list
+of token classes instead: the color utilities `bg-`, `text-`, `border-`, `fill-` and `stroke-` with
+`paper`, `sheet`, `rule`, `ink`, `muted`, `pen`, `red` and their variants, `font-mono`, `font-sans`,
+the grounds and the figure tints. Any other class needs the source's own CSS.
+
+## Check docs
+
+`tack check PATH` on a document, a docs folder or a source reads its docs without a browser and
+without running any page or component:
+
+- Figures follow the reader's static rules, following literal data into local modules: `figure-issues`
+  is an error, and props computed at run time give `figure-not-checked` warnings.
+- Every `<Icon name="...">` is checked against the icon set. An unknown name is an `icon-unknown`
+  finding by line, with the closest names in the set, or Lucide's current name for an old one, and
+  exits `1`.
+- `Callout`, `Tabs`, `Tab` and `Term` misuse is a `component-issue` finding by line, and exits `1`:
+  an unknown `kind`, a `Tab` without a label, outside `Tabs` or labelled twice, `Tabs` with fewer
+  than two tabs, a `Term` without `title`.
+
+Like the reader, it skips dot, underscore and `node_modules` entries and the folders of another
+source. [Source format](./tack-yaml#check-a-source) covers the rest of `tack check`.

@@ -67,7 +67,7 @@ export type CommandContract = {
 /** The flags every command accepts, or that the root answers before it reads a command. */
 const rootFlags: ReadonlyArray<string> = ["json", "state-dir", "help", "version"];
 
-/** The bare read parents that also accept `list` and `ls`, as the CLI README documents. */
+/** The bare read parents that also accept `list` and `ls`, as the selection reference documents. */
 const listAliasParents: ReadonlyArray<string> = ["source", "project", "pick", "adapter", "docs"];
 
 /** Reports whether a word stands for a value the reader supplies, such as `PROJECT` or `<command>`. */

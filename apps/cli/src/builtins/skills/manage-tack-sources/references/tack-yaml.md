@@ -114,8 +114,8 @@ scripts import; Tack never installs them, and `catalog` never imports a script, 
 `script run` finds a broken one. Scripts are run by reference, never selected.
 
 **Docs** are folders of Markdown that need no frontmatter or configuration. A `reader` key, an
-inline mapping or a source-relative `.yaml` file, tunes navigation and components (reader author
-guide: `packages/reader/README.md` in the Tack repository). A component module imports `Icon`,
+inline mapping or a source-relative `.yaml` file, tunes navigation and components (reader settings:
+https://tackup.dev/docs/reference/docs#reader-settings). A component module imports `Icon`,
 `Callout`, `Tabs`, `Tab` and `Term` from `@tackup/reader`; `Icon` names are typed, and written
 literally so the reader bundles them. Writing the pages themselves is `write-reader-figures`.
 Projects attach docs with `use-tack`.

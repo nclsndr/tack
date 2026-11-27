@@ -1,0 +1,144 @@
+---
+title: Automation
+description: The text view and the JSON envelope, which payloads are stable, the status and classification of a result, diagnostic codes, exit codes, help, the version payload and TACK_DEBUG.
+---
+
+# Automation
+
+Tack prints a compact text view by default, in terminals, pipes, CI and agent shells. Agents read it
+and follow its `Next` block; they do not pass `--json` for ordinary work. Text views serve people
+and change in any build: do not parse them. Pass `--json` only when a program parses the result.
+
+## Stable payloads
+
+The payload inside the JSON envelope is a stable, schema-backed contract only for the commands
+programs parse: `tack status`, `tack sync` and `tack init` (preview and apply), `tack doctor`,
+`tack upgrade` (with `tack upgrade status`) and `tack --version`. Every other command still prints
+JSON with `--json`, but its payload has no schema and no stability promise: do not build automation
+on it.
+
+`tack init` publishes an `init-plan`, whose `user` is the `sync-plan` of `tack sync --user`, and an
+`init-application`, whose `user` is the `sync-application`. The `check-report` of `tack check` is
+unversioned and not part of the contract.
+
+`--json` asks for the version 1 envelope, also for help and invalid invocations. `--format` fails
+with a replacement hint, and `TACK_FORMAT` has no effect. Terminal and agent detection still control
+color and interactive features.
+
+## The envelope
+
+The envelope has fixed keys:
+
+```json
+{
+  "version": 1,
+  "command": "sync",
+  "status": "success",
+  "classification": "success",
+  "diagnostics": [],
+  "next": [],
+  "plan": null,
+  "applied": null,
+  "result": null
+}
+```
+
+A non-null payload is an object whose `kind` names its family, such as `initialization`,
+`source-registration`, `project-registration`, `choice-change`, `choice-removal`, `choices`,
+`adapter-settings`, `adapters`, `docs-settings`, `docs-list`, `docs-target`, `run-history`,
+`script-run`, `reader-session`, `reader-search` or `version`. `tack script history show` returns the
+kept record without a `kind`. For example, `tack pick` returns
+`{ "kind": "choices", "choices": [...] }`, `tack adapter` returns
+`{ "kind": "adapters", "enabledAdapters": [...] }`, and `tack docs search` uses the envelope command
+`docs search`. Dispatch on `kind`, not on the payload's shape. A `kind` is stable only
+for the commands above.
+
+`next` lists the commands the text view prints under `Next`, as exact command strings with source
+labels, never registration IDs; it is empty when nothing is suggested. Run them as written.
+`tack doctor` gives each check its own `next` as an argv array.
+
+`status` is `success`, `partial` or `failure`. `partial` means the command ran and something needs
+attention, so it exits `1` without being a Tack failure. `classification` gives the cause:
+`success`, `partial`, `invalid-invocation`, `invalid-configuration`, `domain`, `persistence`,
+`internal` or `interruption`.
+
+## Exit codes
+
+| Code  | Meaning                                 |
+| ----- | --------------------------------------- |
+| `0`   | Success.                                |
+| `1`   | A partial result or a domain failure.   |
+| `2`   | An invalid invocation or configuration. |
+| `3`   | A persistence or internal failure.      |
+| `130` | Interrupted.                            |
+
+An `internal` failure keeps its cause out of the envelope and names one next step: the same command
+with `TACK_DEBUG=1` before it. With `TACK_DEBUG=1` set, Tack writes the full cause, with the use case
+that failed, to standard error before the output; the envelope is the same either way.
+
+## The status payload
+
+`tack status` publishes a trimmed payload: `catalog` holds only the counts `resources`,
+`quarantined` and `unavailable` (run `tack catalog` for the resources), and each destination names
+its resource once as `address` (`candidates` for a `selection-conflict`) and carries `observed`, what
+is on disk, only when it is not `matching`. A healthy link has `_tag: "matching"`; every other `_tag`
+needs attention, and `expected-absent` means a link is expected and missing. The payload schemas
+describe each of these values.
+
+## Diagnostics
+
+Each partial or warning diagnostic has a kebab-case `code`, such as `no-adapters-enabled`,
+`root-missing` or `destination-foreign-entry`, and names what it concerns in `details.subject`.
+Script run outcome codes are snake_case: see [Scripts](./scripts#target).
+
+**Docs mounts still owed.** `tack status` and the `tack sync` plan and result carry
+`docsPendingRemovals`, present only when a removal is owed, in destination order. Each entry holds
+the `cause`, the docs link record (project, root, resource, destination, source directory and link
+text) and, once attempted, its `lastResult` (`blocked`, `filesystem-failure` or `interrupted`, with a
+`message`). Sync reports only the projects it covers. Each owed docs removal is also a
+`pending-removal` partial diagnostic in status and sync, and the `links` check of `tack doctor`
+counts it and names `tack state clean --pending`. A removal result carries the same array beside
+`pendingRemovals` for agent links, and `docsActions` reports each mount's outcome, with the `blocked`
+tag when the mount stays owed.
+
+**Docs links that cannot proceed.** A planned docs link that cannot proceed is a `partial`
+diagnostic, in preview and apply alike, with the link's `resource` and `destinationPath` in
+`details.subject`:
+
+| Code                        | Cause                                                                      |
+| --------------------------- | -------------------------------------------------------------------------- |
+| `docs-destination-occupied` | An entry sits where the link would go; it is never adopted or overwritten. |
+| `docs-destination-modified` | The recorded link was changed, so Tack may not remove it.                  |
+| `docs-parent-not-directory` | A parent of the destination is not an ordinary directory.                  |
+| `docs-parent-redirected`    | A parent of the destination has been redirected.                           |
+| `docs-parent-unreadable`    | A parent could not be inspected.                                           |
+| `docs-root-moved`           | The registered project root has moved.                                     |
+| `docs-destination-escape`   | The destination is outside its registered root.                            |
+
+**Sources that cannot supply resources.** An unhealthy source carries its code, such as
+`declaration-resources-undeclared`, in `issue.code` of `tack status` and `tack source`, in the
+`sources` check of `tack doctor`, and as the cause beside each removal a sync preview plans for it
+(`source-unhealthy`). A declaration entry Tack cannot use is a quarantined candidate whose code names
+the reason; [Source format](./tack-yaml#declared-paths) lists them. A healthy source that declares no
+resources and no docs carries the warning `source-declares-no-resources` in the `warnings` of its
+entry in `tack source` and `tack status`, and in the `sources` check of `tack doctor`. A warning
+changes no exit code.
+
+## Help
+
+`--help` after a command path, such as `tack docs search`, returns the grammar of that command:
+usage, arguments, flags, whether it writes, examples and direct subcommands. There is no `help`
+word. Bare `tack --help` is the operation map: every operation once, grouped by task, with its mode
+(`read`, `now`, `plan`, `run` or `conditional`), its target rule and its output rule. The help of
+`tack status` also says what each link state means and what to run. Help works before `tack init`
+and reads no state.
+
+## Version
+
+`tack --version` reports the running version before `tack init`, with no state and no home
+directory. With `--json` it returns `{ "kind": "version", "version", "commit", "stamp",
+"sourceRun", "stateFormat" }`. Every package in the repository shares one SemVer `0.y.z` version. A
+run from a checkout reports `0.y.z+dev` with a `null` commit. A built release stamps its commit as
+`0.y.z+gCOMMIT` and, when it was ahead of `origin/main`, `0.y.z+gCOMMIT.ahead.N`. Build metadata does
+not affect version order. This version is separate from the envelope `version`, the state format and
+the script contract version, which keep their own numbers.

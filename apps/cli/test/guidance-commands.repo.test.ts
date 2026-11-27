@@ -34,6 +34,11 @@ const skills = filesUnder(join(repository, "apps/cli/src/builtins"), ".md").map(
   relative(repository, path),
 );
 
+/** The reference pages of the docs site, where the operator and author documentation lives. */
+const referencePages = filesUnder(join(repository, "apps/website/docs/docs/reference"), ".mdx").map(
+  (path) => relative(repository, path),
+);
+
 const { commands: published } = await readContracts();
 
 it("keeps every command and flag a skill names in the executable's own contracts", () => {
@@ -70,15 +75,19 @@ it("recognizes unknown commands and flags, list aliases and placeholders", () =>
   expect(scan("Run `tack docs icons database` and `tack check FILE`.")).toEqual([]);
 });
 
-/** Diagnostic codes are string literals in the executable's source, never computed. */
-const codeCorpus = filesUnder(join(repository, "apps/cli/src"), ".ts")
+/**
+ * Diagnostic codes are string literals in the executable's source, never computed. The reader is
+ * part of the executable and defines the issue codes of `tack docs search`.
+ */
+const codeCorpus = ["apps/cli/src", "packages/reader/src"]
+  .flatMap((directory) => filesUnder(join(repository, directory), ".ts"))
   .filter((path) => path.endsWith(".test.ts") === false)
   .map((path) => readFileSync(path, "utf8"))
   .join("\n");
 
-it("keeps every diagnostic code a skill names defined by the executable", () => {
+it("keeps every diagnostic code a skill or reference page names defined by the executable", () => {
   const known = (code: string) => codeCorpus.includes(`"${code}"`);
-  const hits = skills.flatMap((file) => scanCodes(file, read(file), known));
+  const hits = [...skills, ...referencePages].flatMap((file) => scanCodes(file, read(file), known));
   expect(describeDrift(hits)).toBe("");
   expect(
     scanCodes("skill.md", "Fix `declaration-path-gone` and `declaration-path-missing`.", known),
@@ -173,9 +182,7 @@ it("keeps every tack.yaml example in the guidance a valid declaration", () => {
   const files = [
     "README.md",
     "CONTEXT.md",
-    "apps/cli/README.md",
-    "packages/core/README.md",
-    "packages/reader/README.md",
+    ...referencePages,
     ...filesUnder(join(repository, ".ai/skills"), ".md").map((path) => relative(repository, path)),
     ...skills,
   ].filter((file, index, all) => all.indexOf(file) === index);
@@ -185,8 +192,8 @@ it("keeps every tack.yaml example in the guidance a valid declaration", () => {
   const workedExample =
     "apps/cli/src/builtins/skills/manage-tack-sources/references/worked-source.md";
   expect(examples.filter(({ file }) => file === workedExample).length).toBeGreaterThanOrEqual(3);
-  // The declaration skill, the README and the docs example hold several; finding fewer means the
-  // extractor stopped matching.
+  // The declaration skill and the website's source and docs references hold several; finding fewer
+  // means the extractor stopped matching.
   expect(examples.length).toBeGreaterThanOrEqual(4);
   for (const { file, example } of examples) {
     const parsed: unknown = Bun.YAML.parse(example);
@@ -220,7 +227,7 @@ it("keeps every tack.yaml example in the guidance a valid declaration", () => {
 });
 
 it("decodes every worked skill frontmatter example through the resource parser", () => {
-  const files = ["apps/cli/README.md", ...skills];
+  const files = [...referencePages, ...skills];
   const examples = files.flatMap((file) =>
     [...read(file).matchAll(/```(?:markdown|yaml)\n(---\n[\s\S]*?)```/g)].map((match) => ({
       file,

@@ -1,0 +1,201 @@
+---
+title: Projects and selection
+description: How Tack registers projects and their worktrees, how a reference names one resource, how picks, selectors and name clashes work, and what tack catalog and tack explore show.
+---
+
+# Projects and selection
+
+A registered project gets the skills, commands and context its selection holds, and you get yours
+at user scope. This page is the full set of rules. [Choose what each project gets](../guides/choose-skills)
+is the step-by-step version.
+
+## Projects
+
+Projects are Git repositories. Registering a project records its Git anchor and every reachable
+non-bare worktree root, so project commands keep a stable name from any directory.
+
+```sh
+tack project add tack
+tack project
+```
+
+`tack project add` registers at once; there is no preview. It writes no link, and
+`tack project remove` undoes it. It also lists the hand-made entries in the project's agent
+folders: the files, folders and links in the skill and command folders of the enabled agents, in
+every worktree, that Tack has no record of. They are information only. Tack leaves them where they
+are, and one named like a skill Tack links shows up as `hand-made` in `tack status` after a sync.
+`tack project refresh` lists them for the worktrees it adds or brings back. In JSON both are under
+`handMade`.
+
+Pass `--repository-cwd PATH` to register a repository from another directory. Refresh the
+registration after worktrees change:
+
+```sh
+tack project refresh                 # preview this project's worktrees
+tack project refresh --apply
+tack project refresh --all           # preview every registered project
+tack project refresh --project tack --apply
+```
+
+Retire a whole project with `tack project remove`. The preview lists every agent link and docs mount
+in the project's roots, its picks, its docs attachments and its fixed profile application.
+`--apply` removes the links and docs mounts, then the project with all of its intent. When a link
+cannot be removed safely, the project stays as `removal requested` until a second
+`tack project remove --apply` or `tack state clean --pending --project NAME --apply` settles it. The
+worktrees are never touched. A single worktree that went away leaves through
+`tack project refresh --apply`.
+
+```sh
+tack project remove tack             # preview
+tack project remove tack --apply
+```
+
+## References
+
+A choice names one resource by a reference: `name`, or `source:name` where the source is a label or
+a registration ID. A bare name works when exactly one healthy resource of the accepted kinds has it.
+Otherwise the command fails, changes nothing and lists every candidate with the exact command that
+names it. `--kind` (`skill`, `command` or `context`) is needed only when one name exists in several
+kinds. A failed reference keeps `--project` or `--user` in every command it suggests.
+
+## Picks
+
+Selections are independent for each project and for the user.
+
+```sh
+tack pick include review --project tack
+tack pick include review --kind command --project tack
+tack pick include notes.md --project tack
+tack pick include quality-tools:review --kind skill --project tack
+tack pick exclude audit-tools:review --user
+tack pick --project tack
+tack pick remove review --user
+```
+
+A new choice stores the exact resource: namespace, source registration, kind, name and decision. It
+never stores the label, so renaming a source breaks no choice. `tack pick include`,
+`tack pick exclude` and `tack pick remove` accept registered resources only and need exactly one
+namespace: `--project NAME` or `--user`. `tack pick remove` resolves its reference against the
+stored choices, so it also works for a resource that has left the catalog; it takes `source:name`,
+or a bare name that matches one stored pick, with `--kind` when kinds clash. `tack pick` without a
+namespace lists the choices of every namespace. The user namespace links into your own agent
+folders.
+
+A project exclude of a resource the user namespace links is refused with `project-exclude-refused`:
+every project's agent also loads the user's resources.
+
+Which resources a namespace gets without a pick depends on their metadata: see
+[skill metadata](./tack-yaml#skill-metadata).
+
+## Selectors
+
+For `tack sync`, `tack status` and `tack state clean`, `--project NAME` selects that project's
+active worktrees and pending removals, and `--user` selects the user target. Without a selector,
+these commands select only the project that contains the current directory, or `--cwd`. A bare
+command fails outside a registered active root. `tack project refresh` also finds a registered
+project from the Git directory of a new worktree. `--all` selects every project and the user target,
+except that refresh has no user target. `--cwd` cannot be combined with a selector.
+
+Agents prefer `--project` or `--user`, and never add `--all` to recover from a failed bare
+selection. Plans and status echo the selection as `selection: { selector, containingRoot?, targets }`,
+where `containingRoot` names the project and root found for a bare request.
+
+## Name clashes
+
+The same kind and name in two sources are two healthy resources: a name clash. Every human view
+prints the shortest unambiguous reference, the bare name, or `source:name` when another resource of
+that kind has it. A bare reference to a clashing name fails and lists the commands that name each
+candidate.
+
+If two sources both provide a default-activated skill with one name, neither is delivered until you
+run `tack pick include SOURCE:NAME` for the one you want, which wins over its default-activated
+twin, or `tack pick exclude SOURCE:NAME` for the one you do not. Including both still collides.
+`tack status` and `tack sync` report a collision as the same `selection-collision` diagnostic, and
+name the exclude command for each candidate, with the namespace flag of the colliding target.
+
+## The catalog
+
+`tack catalog` reports skills, commands, context, scripts and declared docs. Choices cover skills,
+commands and context. Skills and commands share activation metadata and dependency resolution;
+context is opt-in. Every adapter links skills, and Cline, Cursor, OpenCode and Pi also link commands.
+`tack status` reports a selected resource no adapter delivers as undelivered. Context has no
+delivery adapter yet. Scripts are run by reference, not selected: see [Scripts](./scripts). Docs are
+attached: see [Docs and the reader](./docs).
+
+`tack catalog` returns `resources`, `issues` and `complete`. Each resource carries its `kind`, and
+a skill or command carries its description. `--details` adds the complete authored frontmatter and
+each resource's `declaredPath`, the path of the `tack.yaml` entry that put it in the catalog. Each
+issue names its `subject`: a rejected candidate, with its address when one is known, or an
+unavailable source. `complete` is false whenever an issue kept something out, so an empty incomplete
+catalog never proves absence. `tack catalog --kind KIND` scopes the same report to one kind (`skill`,
+`command`, `context`, `script` or `docs`), keeping only the issues that can concern it.
+`tack catalog` only reports; `tack explore` edits.
+
+The bare read commands `tack source`, `tack project`, `tack pick`, `tack adapter`, `tack docs` and
+`tack script history` also accept `list` and `ls`.
+
+## The explorer
+
+`tack explore` opens the explorer in an interactive terminal and refuses with `terminal-required`
+elsewhere, including under an agent. Agents use `tack catalog`, `tack pick` and `tack status`.
+Without a flag it opens the selection of the project that contains the current directory, or else
+the destination chooser. `--project NAME` and `--user` open that selection.
+
+Inside the window, `d` opens the destination chooser. It lists `Browse only`, then three groups:
+"Daily selections" (you and each project), "Profiles" (each published profile and a new profile per
+source) and "Save selection as profile". `Browse only`, and Esc on the opening chooser, leave the
+window read-only.
+
+In a selection, the explorer stages, previews and applies choices and docs attachments. Each row
+shows whether that destination gets the resource and why:
+
+| Mark                       | Meaning                                           |
+| -------------------------- | ------------------------------------------------- |
+| `● default`                | Selected by its metadata.                         |
+| `● included`               | Selected by a pick.                               |
+| `● dependency`             | Selected because a selected resource requires it. |
+| `○ excluded`               | Kept out by a pick.                               |
+| `○ opt-in`                 | Selected only by a pick.                          |
+| `○ other project`          | Its `projects` metadata names other projects.     |
+| `○ superseded`             | Another resource of that name wins.               |
+| `✗ blocked`                | A required dependency is missing.                 |
+| `locked`                   | A built-in skill.                                 |
+| `● attached`, `○ detached` | Docs.                                             |
+
+A project row ends with `· via user` when the user scope delivers the resource: every project's
+agent also loads the user's resources, and sync does not link one the project selects too. A row
+shows what `tack sync` would deliver, not the links on disk. A staged change follows the state, such
+as `● default → include`; an include of an active resource saves an explicit pick and changes no
+link.
+
+A project that a fixed profile owns opens read-only: its header says `fixed by SOURCE/PROFILE`, its
+rows show `● member`, `● required` or `○ not a member`, and the staging keys say to edit the profile
+instead. A profile destination's rows use the same three words.
+
+The detail pane shows `activation` for both scopes, such as `project default · user opt-in`, then
+the resource's state in three groups: `user`, `projects` and, when a source publishes a profile,
+`profiles`. `›` marks the edited destination. After each state it says where the state comes from:
+`pick`, `fixed by SOURCE/PROFILE`, `loads in every project` (user), `loaded through user` (a project
+the user scope covers) or `applied to PROJECT` (a profile).
+
+| Key | On a resource row                               | On a source or folder row                      |
+| --- | ----------------------------------------------- | ---------------------------------------------- |
+| `i` | Include it.                                     | Include every descendant that is not included. |
+| `x` | Exclude it.                                     | Exclude every descendant that is not excluded. |
+| `a` | Attach or detach docs.                          | Attach or detach every docs descendant.        |
+| `u` | Unstage the row.                                | Unstage every descendant.                      |
+| `r` | Stage the removal of its saved pick.            | Stage the removal of every descendant's pick.  |
+| `c` | Review each child's change before confirmation. | The same.                                      |
+
+Each key toggles: pressing the key that staged a change again unstages it, and the detail pane and
+footer name what each key does next. On a group already saved one way, `i` or `x` resets its
+choices to declarations and `a` detaches its docs. Folder actions cover folded and filtered-out
+descendants, skip built-in skills and incompatible resources, and show all, some or none counts
+from the staged state. Leaving with `q` and confirming discards the staged changes. In a profile or
+save-selection destination, `i` includes members and `x` excludes them; built-in skills are never
+members.
+
+## Next
+
+- [Sync and status](./sync): what a sync writes and how status reads it.
+- [Source format](./tack-yaml): how resources get into the catalog.

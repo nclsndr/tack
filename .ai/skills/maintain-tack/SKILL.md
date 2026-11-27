@@ -1,6 +1,6 @@
 ---
 name: maintain-tack
-description: Keep the built-in skills in step with the code. Use before opening a PR that changes the Tack CLI (commands, flags, aliases, output, diagnostic codes, adapters, release or upgrade) the source format (tack.yaml, discovery, skill metadata, dependencies) or the reader's figure components, when writing tests or fixing a test warning, and when naming a new package; names what to update and compare.
+description: Keep the built-in skills and the website docs in step with the code. Use before opening a PR that changes the Tack CLI (commands, flags, aliases, output, diagnostic codes, adapters, release or upgrade) the source format (tack.yaml, discovery, skill metadata, dependencies) or the reader's figure components, when writing tests or fixing a test warning, and when naming a new package; names what to update and compare.
 ---
 
 # Maintain Tack's guidance
@@ -9,7 +9,8 @@ Tack ships five built-in skills in `apps/cli/src/builtins/skills`. Agents on eve
 to operate Tack and to author sources, and nothing else tells them what changed. A skill left behind
 makes agents run removed flags, miss new rules and teach operators behavior that is gone.
 **Change the skills in the same PR as the behavior.** A PR that alters what a skill describes is not
-done until the skill says the new thing.
+done until the skill says the new thing. The same holds for the website docs, the one home of the
+user documentation: see [Docs and READMEs](#docs-and-readmes).
 
 To place the code of a new command, feature or domain concept, use the `tack-cli-architecture` skill.
 
@@ -32,10 +33,25 @@ To place the code of a new command, feature or domain concept, use the `tack-cli
 | `apps/cli/src/builtins/skills/manage-tack-sources/references/scripts.md`         | Writing a script with `defineScript`: arguments, secrets, the run context, outcome codes and dependencies.                                                                                                        |
 | `apps/cli/src/builtins/skills/prepare-tack-checkout/SKILL.md`                    | Linking a repository's skills at the start of work in a new clone or worktree, and the approval its section gives.                                                                                                |
 | `apps/cli/src/builtins/skills/write-reader-figures/SKILL.md`                     | Writing figures in docs: when to draw, which component, the rules, `tack check`. Update it with the reader's figure catalog. Its `references/figure-components.md` is generated: run `bun run figures:reference`. |
-| `apps/cli/README.md`, `packages/*/README.md`, `CONTEXT.md`                       | Operator and author documentation, and the glossary. Skills summarize them; they must agree.                                                                                                                      |
+| `apps/website/docs/docs`                                                         | Every user use case and reference, for people and agents: guides for tasks, `reference/` pages for every command, flag, file format, code and payload. Skills summarize them; they must agree.                     |
+| `CONTEXT.md`                                                                     | The glossary.                                                                                                                                                                                                     |
+| `README.md`, `apps/*/README.md`, `packages/*/README.md`                          | Short pages that point to the website docs. A package README holds only its local setup (run, build, test) and its layout.                                                                                        |
 
 The built-in `tack.yaml` (`apps/cli/src/builtins/tack.yaml`) declares the built-in skills. Add a
 skill there only on purpose: every built-in skill is installed for the user by default.
+
+## Docs and READMEs
+
+The website docs at `apps/website/docs/docs`, published on https://tackup.dev/docs/, are the single
+home for what a user of Tack needs, human or agent: each task gets a guide, and each command, flag,
+file format, diagnostic code and payload is in a `reference/` page. A change that adds or alters
+user-facing behavior updates the page that owns it, in the same PR, and adds a page to the sidebar in
+`apps/website/rspress.config.ts` when no page fits.
+
+READMEs stay short and never restate the docs. The root README says what Tack is, how to install it
+and links to tackup.dev pages. A package README says what the package is, how to run, build and test
+it locally and where its code lives, then links to the docs. Product or reference text found in a
+README moves to the docs page that owns it.
 
 ## What to compare
 
@@ -55,7 +71,7 @@ Run these against your change and read the code, not the skill, to decide what i
 | Source or project health, `doctor` checks                     | `features/doctor`, `source-schema.ts` warnings, and the catalog issue table in `manage-tack-sources`.                                                                                           |
 | Profiles, fixed profile application, the `profile` commands   | `domain/profiles`, `features/profiles/profile-*.ts`, `cli/commands/profiles.ts`, and both `author-tack-profiles` files.                                                                         |
 | Profile bundles: format, export, check, apply, retention      | `domain/bundles`, `features/profiles/bundle-*.ts`, and `author-tack-profiles/references/bundles.md`.                                                                                            |
-| Install, upgrade, release, state format, built-in skills      | `domain/self/upgrade-guide.ts`, `release.ts` (built-in copies), `apps/cli/README.md`, and the install and upgrade parts of both `use-tack` files.                                               |
+| Install, upgrade, release, state format, built-in skills      | `domain/self/upgrade-guide.ts`, `release.ts` (built-in copies), `apps/website/docs/docs/reference/setup.mdx`, and the install and upgrade parts of both `use-tack` files.                                               |
 | Script API or declaration                                     | `packages/core/src/script-api.ts`, `script-api-adapter.ts`, `resource-declarations.ts`, `scripts.md`, and the script parts of both skills. After an API change, run `bun run script-api:types`. |
 | A figure component, its props, its budget or the figure check | `packages/reader/src/figures/reference.ts` (the contracts the skill's reference is generated from) and the `write-reader-figures` decision table.                                               |
 
@@ -64,7 +80,7 @@ Run these against your change and read the code, not the skill, to decide what i
 1. List what the change makes true, false or new for an agent or an author. Include removed behavior:
    deleted flags, renamed codes, retired layouts.
 2. Search the files above for every name involved: `grep -rn "NAME" apps/cli/src/builtins .ai/skills
-apps/cli/README.md CONTEXT.md`. Fix each hit, and add what is new where the skill that owns the
+apps/website/docs/docs CONTEXT.md`. Fix each hit, and add what is new where the skill that owns the
    topic teaches it.
 3. Exercise the claim, do not trust the prose. Use a throwaway `HOME` and an explicit
    `--state-dir` under `mktemp -d`, a source built from the skill's own example, and run the command

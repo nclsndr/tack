@@ -120,38 +120,31 @@ describe("features page limits", () => {
         .toSorted(),
     );
   });
-
-  it("lists the same limits in the README as on the page", () => {
-    const readme = readFileSync(new URL("../../../../README.md", import.meta.url), "utf8");
-    const section = readme.slice(readme.indexOf(`## ${groundRules.notYetHeading}`));
-    const bullets = section
-      .slice(0, section.indexOf("\n## ", 1))
-      .split("\n- ")
-      .slice(1)
-      .map((bullet) => bullet.replaceAll(/\s+/gu, " ").trim());
-    expect(bullets).toEqual(groundRules.notYet.map((limit) => `**${limit.title}** ${limit.text}`));
-  });
 });
 
 describe("features page shared agents", () => {
-  const readme = readFileSync(new URL("../../../cli/README.md", import.meta.url), "utf8");
-  const section = readme.slice(readme.indexOf("### Agents reached through a shared folder"));
-  /** The table rows of the README section, as agent, link, folder and the scopes cell. */
+  const docsPage = readFileSync(
+    new URL("../../docs/docs/agent-support.mdx", import.meta.url),
+    "utf8",
+  );
+  const section = docsPage.slice(docsPage.indexOf("## Agents reached through a shared folder"));
+  /** The table rows of the docs section, as agent, link, project folder, user folder and notes. */
   const tableRows = section
     .split("\n")
     .filter((line) => line.startsWith("| ["))
     .map((line) => {
       const cells = line.split("|").map((cell) => cell.trim());
       const link = /^\[(.+)\]\((.+)\)$/u.exec(cells[1] ?? "");
-      return [link?.[1], link?.[2], cells[2], cells[3]];
+      return [link?.[1], link?.[2], cells[2], cells[3], cells[4]];
     });
 
-  it("lists the same agents, folders and scopes in the CLI guide as on the page", () => {
+  it("lists the same agents, folders and scopes on the agent support page as on the page", () => {
     expect(tableRows).toEqual(
       sharedAgents.rows.map((row) => [
         row.agent,
         row.href,
-        `\`${row.folder}\``,
+        row.scope === "User only" ? "-" : `\`${row.folder}\``,
+        row.scope === "Project only" ? "-" : `\`~/${row.folder}\``,
         `${row.scope}${"note" in row ? `, ${row.note}` : ""}`,
       ]),
     );

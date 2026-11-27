@@ -6,14 +6,14 @@ import { readContracts } from "./support/contracts.ts";
 
 const repository = resolve(import.meta.dirname, "../../..");
 
-const markdownUnder = (directory: string): ReadonlyArray<string> =>
+const markdownUnder = (directory: string, suffix = ".md"): ReadonlyArray<string> =>
   readdirSync(directory).flatMap((name) => {
     const path = join(directory, name);
     return statSync(path).isDirectory()
       ? name === "node_modules"
         ? []
-        : markdownUnder(path)
-      : name.endsWith(".md")
+        : markdownUnder(path, suffix)
+      : name.endsWith(suffix)
         ? [path]
         : [];
   });
@@ -27,6 +27,9 @@ const guidance = [
   "apps/cli/README.md",
   "packages/reader/README.md",
   "packages/core/README.md",
+  ...markdownUnder(join(repository, "apps/website/docs/docs/reference"), ".mdx").map((path) =>
+    relative(repository, path),
+  ),
   ...markdownUnder(join(repository, ".ai/skills")).map((path) => relative(repository, path)),
   ...markdownUnder(join(repository, "apps/cli/src/builtins")).map((path) =>
     relative(repository, path),

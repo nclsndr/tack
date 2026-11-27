@@ -52,7 +52,7 @@ export const install = {
   docs: "Read the docs",
 } as const;
 
-/** One source hosting one resource of each kind, as the README's example shows it. */
+/** One source hosting one resource of each kind. */
 export const sourceFigure = {
   root: "~/agent-setup",
   entries: [
