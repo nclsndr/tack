@@ -22,7 +22,7 @@ it.layer(LiveTestLayer)("content-only profile bundles", (test) => {
         const { fs, path, root, options, write } = yield* profileFixture;
         yield* write(
           "source/tack.yaml",
-          "version: 2\nname: tools\ncontext: [{path: context}]\nprofiles: [{name: ci, path: ci.yaml}]\nbundle-support: [{kind: context, name: nested/guide.md, complete: true, files: [context/nested/support.md], prerequisites: []}]\n",
+          "version: 1\nname: tools\ncontext: [{path: context}]\nprofiles: [{name: ci, path: ci.yaml}]\nbundle-support: [{kind: context, name: nested/guide.md, complete: true, files: [context/nested/support.md], prerequisites: []}]\n",
         );
         yield* write(
           "source/ci.yaml",
@@ -186,7 +186,7 @@ it.layer(LiveTestLayer)("content-only profile bundles", (test) => {
     () =>
       Effect.gen(function* () {
         const { fs, path, root, options, request, run, write, sourceId } = yield* profileFixture;
-        yield* write("team/tack.yaml", "version: 2\nname: team\nskills: [{path: skills}]\n");
+        yield* write("team/tack.yaml", "version: 1\nname: team\nskills: [{path: skills}]\n");
         yield* write(
           "team/skills/lint/SKILL.md",
           skillText("lint", { description: "Exported lint", body: "Frozen lint" }),
@@ -194,7 +194,7 @@ it.layer(LiveTestLayer)("content-only profile bundles", (test) => {
         yield* registerSource(options, { sourcePath: path.join(root, "team") });
         yield* write(
           "source/tack.yaml",
-          "version: 2\nname: tools\ndepends-on: [team]\nskills: [{path: skills}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
+          "version: 1\nname: tools\ndepends-on: [team]\nskills: [{path: skills}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
         );
         yield* write(
           "source/skills/review/SKILL.md",
@@ -261,7 +261,7 @@ it.layer(LiveTestLayer)("content-only profile bundles", (test) => {
       const { fs, path, root, options, request, run, write } = yield* profileFixture;
       yield* write(
         "source/tack.yaml",
-        "version: 2\nname: tools\ncontext: [{path: context.md}]\nscripts: [{name: danger, path: danger.ts, description: Never run}]\ndocs: [{name: guide, path: docs, reader: {components: {module: component.tsx}}}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
+        "version: 1\nname: tools\ncontext: [{path: context.md}]\nscripts: [{name: danger, path: danger.ts, description: Never run}]\ndocs: [{name: guide, path: docs, reader: {components: {module: component.tsx}}}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
       );
       yield* write(
         "source/ci.yaml",

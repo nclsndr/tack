@@ -73,7 +73,7 @@ it.layer(LiveTestLayer)("browse destinations", (test) => {
         const sourcePath = path.join(root, "source");
         yield* fs.writeFileString(
           path.join(sourcePath, "tack.yaml"),
-          "version: 2\nname: tools\nskills: [{path: skills}]\ncommands: [{path: lint.md}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
+          "version: 1\nname: tools\nskills: [{path: skills}]\ncommands: [{path: lint.md}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
         );
         yield* fs.writeFileString(
           path.join(sourcePath, "ci.yaml"),

@@ -35,7 +35,7 @@ export const readRegisteredProfile = Effect.fnUntraced(function* (
         ...published.findings,
         {
           code: "profile-unpublished",
-          message: `${reference} is not published. Repair its version-2 source declaration.`,
+          message: `${reference} is not published. Publish it in the profiles list of its tack.yaml.`,
         },
       ],
     };

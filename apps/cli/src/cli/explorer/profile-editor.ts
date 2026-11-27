@@ -295,7 +295,7 @@ export const makeExplorerDestinations = Effect.fnUntraced(function* (options: {
             "+++ after",
             ...Yaml.stringify(staged(pending)).trimEnd().split(/\r?\n/),
             publication === undefined
-              ? `Publication: add ${destination.profileName} → profiles/${destination.profileName}.yaml to tack.yaml (source version 2)`
+              ? `Publication: add ${destination.profileName} → profiles/${destination.profileName}.yaml to tack.yaml`
               : "Publication unchanged; explicit membership edit.",
             "",
             "Save writes only this profile and its publication. No picks, registration or delivery changes.",

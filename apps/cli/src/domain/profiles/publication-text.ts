@@ -3,10 +3,7 @@ import { Schema } from "effect";
 import { deepStrictEqual } from "../identity/portable.ts";
 import { isMap, isScalar, isSeq, parseDocument, stringify } from "yaml";
 import type { ProfilePublication } from "./profile-schema.ts";
-import {
-  applyDeclarationTextEdits,
-  type DeclarationTextEdit,
-} from "../sources/declaration-text.ts";
+import { applyDeclarationTextEdit, type DeclarationTextEdit } from "../sources/declaration-text.ts";
 import { DeclarationSchema } from "../sources/source-schema.ts";
 
 /** Edits YAML node ranges, preserving unrelated authored bytes and validating the complete result. */
@@ -26,11 +23,6 @@ export const publishProfileText = (
       document.contents.flow === true
     )
       return { error: "Use a block mapping for tack.yaml before publishing a profile." };
-    const version = document.get("version", true);
-    if (isScalar(version) === false || version.range === undefined || version.range === null)
-      return {
-        error: "Use an explicit version: 1 or version: 2 value before publishing a profile.",
-      };
     const newline = text.includes("\r\n") === true ? "\r\n" : "\n";
     const existing = document.get("profiles", true);
     const key = document.contents.items.find(
@@ -69,12 +61,9 @@ export const publishProfileText = (
             end: text.length,
             text: `${text.endsWith(newline) === true ? newline : newline + newline}${section}`,
           };
-    const edited = applyDeclarationTextEdits(text, [
-      { start: version.range[0], end: version.range[1], text: "2" },
-      profilesEdit,
-    ]);
+    const edited = applyDeclarationTextEdit(text, profilesEdit);
     const after = decode(Yaml.parse(edited));
-    if (deepStrictEqual(after, { ...before, version: 2, profiles: publications }) === false)
+    if (deepStrictEqual(after, { ...before, profiles: publications }) === false)
       return {
         error:
           "Publishing would change unrelated declaration values. Review tack.yaml before saving.",

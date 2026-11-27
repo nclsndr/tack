@@ -20,7 +20,7 @@ const task: EvalTask = {
   },
 };
 export const suite: TaskSuite = {
-  contractVersion: 2,
+  contractVersion: 1,
   families: [{ id: "quick", limits: { wallSeconds: 120, outputBytes: 1024, toolCalls: 12 } }],
   tasks: [task, { ...task, taskId: "task-b", tags: ["full"] }],
 };

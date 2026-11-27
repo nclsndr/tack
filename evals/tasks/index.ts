@@ -6,7 +6,7 @@ import { reportVersion } from "./example/report-version.ts";
  * neutral example task that exercises the harness; the study scenarios come later.
  */
 export const suite: TaskSuite = {
-  contractVersion: 2,
+  contractVersion: 1,
   families: [
     {
       id: "example",

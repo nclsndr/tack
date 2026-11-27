@@ -55,7 +55,7 @@ const scene = (
     );
     yield* fs.writeFileString(
       path.join(source, "tack.yaml"),
-      "version: 2\nname: tools\nskills: [{path: skills}]\nscripts: [{name: hello, path: hello.ts, description: Says hello}]\n",
+      "version: 1\nname: tools\nskills: [{path: skills}]\nscripts: [{name: hello, path: hello.ts, description: Says hello}]\n",
     );
     yield* fs.writeFileString(path.join(source, "hello.ts"), "export default {};\n");
     yield* fs.makeDirectory(path.join(source, "skills", "hello"), { recursive: true });
@@ -176,7 +176,7 @@ it.layer(LiveTestLayer)("script run route", (test) => {
       yield* fs.makeDirectory(`${root}/more`);
       yield* fs.writeFileString(
         `${root}/more/tack.yaml`,
-        "version: 2\nname: more\nscripts: [{name: hello, path: hello.ts, description: Also hello}]\n",
+        "version: 1\nname: more\nscripts: [{name: hello, path: hello.ts, description: Also hello}]\n",
       );
       yield* fs.writeFileString(`${root}/more/hello.ts`, "export default {};\n");
       yield* registerSource(options, { sourcePath: `${root}/more` });

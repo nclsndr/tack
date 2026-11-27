@@ -23,7 +23,7 @@ const fixture = Effect.gen(function* () {
   // The profile lives under `profiles/`, so this source does not start from the standard tree.
   yield* seedSource(path.join(root, "owner"), {
     "tack.yaml":
-      "version: 2\nname: owner\nskills:\n  - path: skills\ncommands:\n  - path: commands\nprofiles:\n  - name: ci\n    path: profiles/ci.yaml\n",
+      "version: 1\nname: owner\nskills:\n  - path: skills\ncommands:\n  - path: commands\nprofiles:\n  - name: ci\n    path: profiles/ci.yaml\n",
     "skills/review/SKILL.md": bareSkillText("review", {
       description: "Review",
       tack: [
@@ -116,7 +116,7 @@ it.layer(LiveTestLayer)("fixed profile authoring", (test) => {
       expect((yield* check()).summary.errors).toBeGreaterThan(0);
       yield* write(
         "owner/tack.yaml",
-        "version: 2\nname: owner\nskills: []\ncommands: []\nprofiles: [42]\n",
+        "version: 1\nname: owner\nskills: []\ncommands: []\nprofiles: [42]\n",
       );
       expect(
         (yield* saveProfile(options, {
@@ -289,7 +289,7 @@ it.layer(LiveTestLayer)("fixed profile authoring", (test) => {
         for (const [section, code] of declarations) {
           yield* write(
             "owner/tack.yaml",
-            `version: 2\nname: owner\nskills: [{path: skills}]\n${section}\n`,
+            `version: 1\nname: owner\nskills: [{path: skills}]\n${section}\n`,
           );
           const report = yield* checkSource(path.join(root, "owner"));
           expect(report.counts.skill).toBe(1);
@@ -299,7 +299,7 @@ it.layer(LiveTestLayer)("fixed profile authoring", (test) => {
         }
         yield* write(
           "owner/tack.yaml",
-          "version: 2\nname: owner\nskills: [{path: skills}]\nprofiles: [{name: ci, path: profiles/ci.yaml}]\n",
+          "version: 1\nname: owner\nskills: [{path: skills}]\nprofiles: [{name: ci, path: profiles/ci.yaml}]\n",
         );
         for (const content of [
           "version: [",
@@ -368,7 +368,7 @@ it.layer(LiveTestLayer)("fixed profile authoring", (test) => {
         yield* write("owner/commands/new-default.md", "Default");
         yield* write(
           "owner/tack.yaml",
-          "version: 2\nname: owner\ncommands: [{path: commands}]\nscripts: [{name: danger, path: danger.ts, description: Never execute}]\ndocs: [{name: guide, path: docs}]\nprofiles: [{name: ci, path: profiles/ci.yaml}]\n",
+          "version: 1\nname: owner\ncommands: [{path: commands}]\nscripts: [{name: danger, path: danger.ts, description: Never execute}]\ndocs: [{name: guide, path: docs}]\nprofiles: [{name: ci, path: profiles/ci.yaml}]\n",
         );
         yield* write("owner/danger.ts", "throw new Error('profile check executed supplied code');");
         yield* write("owner/docs/index.md", "# Guide\n");
@@ -589,7 +589,7 @@ it.layer(LiveTestLayer)("fixed profile authoring", (test) => {
         for (const [index, key] of ["profiles", '"profiles"'].entries()) {
           yield* f.write(
             "owner/tack.yaml",
-            `"version": 2\nname: owner\n# keep resource bytes\nskills: [{path: skills}]\ncommands: [{path: commands}]\n${key}:\n- name: ci\n# keep publication note\n  path: profiles/ci.yaml\n`,
+            `"version": 1\nname: owner\n# keep resource bytes\nskills: [{path: skills}]\ncommands: [{path: commands}]\n${key}:\n- name: ci\n# keep publication note\n  path: profiles/ci.yaml\n`,
           );
           const ci = yield* f.fs.readFileString(f.path.join(sourcePath, "profiles/ci.yaml"));
           const saved = yield* saveProfile(f.options, {
@@ -602,7 +602,7 @@ it.layer(LiveTestLayer)("fixed profile authoring", (test) => {
           expect(yield* f.fs.readFileString(declarationFile)).toContain("# keep publication note");
         }
         const alias =
-          "version: 2\nname: owner\nskills: []\ncommands: []\nimports: &publications []\nprofiles: *publications\n";
+          "version: 1\nname: owner\nskills: []\ncommands: []\nimports: &publications []\nprofiles: *publications\n";
         yield* f.write("owner/tack.yaml", alias);
         const refused = yield* saveProfile(f.options, {
           sourcePath,
@@ -622,7 +622,7 @@ it("decodes profile publications separately from resources", () => {
   expect(profilePublications("/source", { version: 1, name: "source" }).publications).toEqual([]);
   expect(
     profilePublications("/source", {
-      version: 2,
+      version: 1,
       name: "source",
       profiles: [{ name: "ci", path: "ci.yaml" }, 42],
     }),

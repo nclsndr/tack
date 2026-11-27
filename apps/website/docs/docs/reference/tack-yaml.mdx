@@ -15,7 +15,7 @@ with the built-in `manage-tack-sources` skill.
 
 ## tack.yaml
 
-A `tack.yaml` declares version 1 or 2. Version 2 adds profile publications and bundle support.
+A `tack.yaml` declares version 1, the only version Tack reads. Any other version is refused.
 
 ```yaml
 version: 1
@@ -53,8 +53,8 @@ docs:
 | `commands`       | Entries with a `path` to a folder or one `.md` file, and optional patterns. Every `.md` file below a declared folder is a command.                                                                                                                                                                             |
 | `context`        | Entries with a `path` to a folder or one file, and optional patterns. Every regular file below a declared folder is a context item.                                                                                                                                                                            |
 | `scripts`        | Entries with a `name`, a `path` to one `.ts` file and a `description`. See [Scripts](./scripts).                                                                                                                                                                                                               |
-| `profiles`       | Version 2. `{ name, path }` publications of fixed profiles. See [Profiles and bundles](./profiles).                                                                                                                                                                                                            |
-| `bundle-support` | Version 2. Support files and folders, a complete closure and non-secret runtime prerequisites per resource. See [Profiles and bundles](./profiles#bundle-support).                                                                                                                                             |
+| `profiles`       | `{ name, path }` publications of fixed profiles. See [Profiles and bundles](./profiles).                                                                                                                                                                                                                       |
+| `bundle-support` | Support files and folders, a complete closure and non-secret runtime prerequisites per resource. See [Profiles and bundles](./profiles#bundle-support).                                                                                                                                                        |
 | `docs`           | Entries with a `name`, a `path` to a folder and optional `reader` settings. Names are unique within the source. See [Docs and the reader](./docs).                                                                                                                                                             |
 
 Each resource key is an optional list, and an empty list such as `skills: []` is valid. An unknown
@@ -289,8 +289,8 @@ against a source missing from the check, which could still make it ambiguous at 
 
 Profile linkage and dependency edges use only the source folders passed in the same check, plus the
 built-in skills. Pass companion sources together. `tack check` never reads state, fetches a source,
-registers anything or runs authored code. A profile file passed directly needs an owning version-2
-source that publishes it.
+registers anything or runs authored code. A profile file passed directly needs an owning source
+that publishes it.
 
 One combined report gives file:line findings. Overlapping paths are checked once. Errors exit `1`,
 warnings exit `0`; an unavailable input is `check-path-unavailable` and an unsupported file is

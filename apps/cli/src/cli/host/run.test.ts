@@ -27,7 +27,7 @@ const world = Effect.gen(function* () {
   );
   yield* fs.writeFileString(
     path.join(source, "tack.yaml"),
-    "version: 2\nname: tools\ndocs: [{name: handbook, path: docs}]\n",
+    "version: 1\nname: tools\ndocs: [{name: handbook, path: docs}]\n",
   );
   yield* fs.writeFileString(path.join(source, "docs", "index.md"), "# Handbook\n");
   const git = fakeGit(anchor, [{ path: project }]);

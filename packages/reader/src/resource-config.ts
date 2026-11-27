@@ -44,7 +44,7 @@ const partialConfig = z.strictObject({
 });
 
 const sourceDeclaration = z.object({
-  version: z.union([z.literal(1), z.literal(2)]),
+  version: z.literal(1),
   docs: z.array(z.unknown()),
 });
 const docsDeclaration = z.object({ name: z.string(), reader: z.unknown().optional() });

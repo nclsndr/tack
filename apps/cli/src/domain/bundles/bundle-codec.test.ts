@@ -17,7 +17,7 @@ const entries: ArchiveEntry[] = [
     path: "sources/source-0/tack.yaml",
     kind: "file",
     mode: 0o644,
-    bytes: text.encode("version: 2\nprofiles: [{name: ci, path: ci.yaml}]\n"),
+    bytes: text.encode("version: 1\nprofiles: [{name: ci, path: ci.yaml}]\n"),
   },
   {
     path: "sources/source-0/ci.yaml",
@@ -65,7 +65,7 @@ it("validates a readable independently versioned manifest and deterministic byte
 it("rejects unsupported versions, unknown authority, altered identity and mismatched digests", () => {
   const manifest = makeBundleManifest(content);
   for (const bad of [
-    { ...manifest, version: 2 },
+    { ...manifest, version: 99 },
     { ...manifest, senderOwnership: [] },
     { ...manifest, identity: "0".repeat(64) },
     makeBundleManifest({

@@ -11,7 +11,11 @@ import {
   resourceAddressIdentity,
   type Catalog,
 } from "../../domain/sources/catalog-schema.ts";
-import { sourceFolderPath, type SourceDeclaration } from "../../domain/sources/source-schema.ts";
+import {
+  sourceDeclarationVersion,
+  sourceFolderPath,
+  type SourceDeclaration,
+} from "../../domain/sources/source-schema.ts";
 import { marksSourceEdge } from "@tackup/reader/source-edges";
 import type { BundleContent } from "../../domain/bundles/bundle-schema.ts";
 import { bundleDigest } from "../../domain/bundles/bundle-codec.ts";
@@ -254,7 +258,7 @@ export const collectBundleSource = Effect.fnUntraced(function* (request: {
   }
   const dependsOn = ("depends-on" in authored ? authored["depends-on"] : undefined) ?? [];
   const declaration: SourceDeclaration = {
-    version: 2,
+    version: sourceDeclarationVersion,
     name: authored.name,
     "depends-on": dependsOn.filter(
       (name) => bindings[name] !== undefined || ambientSources.has(name) === true,

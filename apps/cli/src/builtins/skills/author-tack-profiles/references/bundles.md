@@ -27,13 +27,13 @@ refuse even when declared as support, including `.git-credentials`. Ordinary aut
 
 ## Declare support before claiming completeness
 
-A script or docs resource needs an explicit `bundle-support` entry in source version 2. Commands,
+A script or docs resource needs an explicit `bundle-support` entry in its source's `tack.yaml`. Commands,
 context and skills can also declare required support. Every entry names one existing resource and
 uses `complete: true`, `files` and non-secret `prerequisites`. Files/directories are source-relative.
 No tool discovers closure by executing content.
 
 ```yaml
-version: 2
+version: 1
 name: tools
 scripts:
   - name: report

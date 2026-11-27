@@ -30,7 +30,7 @@ it.layer(LiveTestLayer)("bundle export findings", (test) => {
         const f = yield* profileFixture;
         yield* f.write(
           "source/tack.yaml",
-          "version: 2\nname: tools\nskills: [{path: skills}]\nprofiles: [{name: ci, path: ci.yaml}]\nbundle-support: [{kind: skill, name: review}]\n",
+          "version: 1\nname: tools\nskills: [{path: skills}]\nprofiles: [{name: ci, path: ci.yaml}]\nbundle-support: [{kind: skill, name: review}]\n",
         );
         expect(yield* exportCi(f, "support")).toMatchObject({
           exported: false,
@@ -53,7 +53,7 @@ it.layer(LiveTestLayer)("bundle export findings", (test) => {
         const f = yield* profileFixture;
         yield* f.write(
           "source/tack.yaml",
-          "version: 2\nname: tools\nscripts: [{name: pack, path: pack.ts, description: Pack}]\nprofiles: [{name: ci, path: ci.yaml}]\nbundle-support: [{kind: script, name: pack, complete: true, files: [], prerequisites: ['token: abc']}]\n",
+          "version: 1\nname: tools\nscripts: [{name: pack, path: pack.ts, description: Pack}]\nprofiles: [{name: ci, path: ci.yaml}]\nbundle-support: [{kind: script, name: pack, complete: true, files: [], prerequisites: ['token: abc']}]\n",
         );
         yield* f.write("source/ci.yaml", "version: 1\nname: ci\nmembers: [pack]\n");
         yield* f.write("source/pack.ts", "console.log('never run');\n");
@@ -103,7 +103,7 @@ it.layer(LiveTestLayer)("bundle export findings", (test) => {
         const f = yield* profileFixture;
         yield* f.write(
           "source/tack.yaml",
-          "version: 2\nname: tools\ncommands: [{path: commands}]\ndocs: [{name: guide, path: docs, reader: guide.reader.yaml}]\nprofiles: [{name: ci, path: ci.yaml}]\nbundle-support: [{kind: docs, name: guide, complete: true, files: [], prerequisites: []}]\n",
+          "version: 1\nname: tools\ncommands: [{path: commands}]\ndocs: [{name: guide, path: docs, reader: guide.reader.yaml}]\nprofiles: [{name: ci, path: ci.yaml}]\nbundle-support: [{kind: docs, name: guide, complete: true, files: [], prerequisites: []}]\n",
         );
         yield* f.write("source/ci.yaml", "version: 1\nname: ci\nmembers: [lint, guide]\n");
         yield* f.write("source/commands/lint.md", "---\ndescription: Lint\n---\nLint it.\n");
@@ -160,7 +160,7 @@ it.layer(LiveTestLayer)("bundle export findings", (test) => {
         yield* registerSource(f.options, { sourcePath: f.path.join(f.root, "notes") });
         yield* f.write(
           "source/tack.yaml",
-          "version: 2\nname: tools\ndepends-on: [notes]\nskills: [{path: skills}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
+          "version: 1\nname: tools\ndepends-on: [notes]\nskills: [{path: skills}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
         );
         yield* f.write(
           "source/ci.yaml",
@@ -195,7 +195,7 @@ it.layer(LiveTestLayer)("bundle export findings", (test) => {
         const declaration = archive.entries.find((entry) => entry.path === `${prefix}tack.yaml`);
         expect(new TextDecoder().decode(declaration?.bytes)).toBe(
           [
-            "version: 2",
+            "version: 1",
             "name: notes",
             "depends-on: []",
             "docs:",
@@ -213,7 +213,7 @@ it.layer(LiveTestLayer)("bundle export findings", (test) => {
       const f = yield* profileFixture;
       yield* f.write(
         "source/tack.yaml",
-        "version: 2\nname: source\nskills: [{path: skills}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
+        "version: 1\nname: source\nskills: [{path: skills}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
       );
       const output = f.path.join(f.root, "named.tar.gz");
       const result = yield* runBundleExport(f.options, {

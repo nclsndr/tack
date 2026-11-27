@@ -1,4 +1,4 @@
-import { Schema } from "effect";
+import { Predicate, Schema } from "effect";
 import { ProfilePublicationSchema } from "../../domain/profiles/profile-schema.ts";
 import { DeclarationSchema } from "../../domain/sources/source-schema.ts";
 import { BundleSupportEntrySchema } from "../profiles/bundle-support.ts";
@@ -14,7 +14,7 @@ type Described<F extends Fields> = { readonly [K in keyof F]: string };
 
 /** What the keys of a declaration take. */
 const declarationKeys = {
-  version: "`1`. A `tack.yaml` that declares `profiles` or `bundle-support` takes `2`.",
+  version: "`1`, the one version Tack reads.",
   name: "The source label: lowercase letters, digits and single hyphens, at most 64 characters. `depends-on` and `source:` references name the source by it on every machine.",
   maintainers:
     "A list of the people or teams to contact about the source, such as `Ada <ada@example.com>`. It grants no permission.",
@@ -24,9 +24,8 @@ const declarationKeys = {
   context: "A list of folder entries, each a folder or one file of context.",
   scripts: "A list of script entries, each one `.ts` module.",
   docs: "A list of docs entries, each a folder of Markdown.",
-  profiles: "A list of profile publications. Needs version 2.",
-  "bundle-support":
-    "A list of the support a profile bundle carries for one resource. Needs version 2.",
+  profiles: "A list of profile publications.",
+  "bundle-support": "A list of the support a profile bundle carries for one resource.",
   imports:
     "The records `tack import add` writes, one per imported skill. Never write it: `source add --config` refuses it.",
 } satisfies Described<typeof DeclarationSchema.fields>;
@@ -108,20 +107,18 @@ const jsonWidth = 100;
 
 /**
  * `value` as indented JSON that keeps each value short enough on one line, so a JSON Schema stays
- * readable without one line per bracket.
+ * readable without one line per bracket. Only objects split: the schema's arrays, its `required`
+ * key lists, stay on one line.
  */
 const compactJson = (value: unknown, indent = ""): string => {
   const inline = JSON.stringify(value);
-  if (indent.length + inline.length <= jsonWidth || typeof value !== "object" || value === null)
+  if (indent.length + inline.length <= jsonWidth || Predicate.isObject(value) === false)
     return inline;
   const inner = `${indent}  `;
-  const items = Array.isArray(value)
-    ? value.map((item: unknown) => `${inner}${compactJson(item, inner)}`)
-    : Object.entries(value).map(
-        ([key, item]) => `${inner}${JSON.stringify(key)}: ${compactJson(item, inner)}`,
-      );
-  const [open, close] = Array.isArray(value) ? ["[", "]"] : ["{", "}"];
-  return `${open}\n${items.join(",\n")}\n${indent}${close}`;
+  const items = Object.entries(value).map(
+    ([key, item]) => `${inner}${JSON.stringify(key)}: ${compactJson(item, inner)}`,
+  );
+  return `{\n${items.join(",\n")}\n${indent}}`;
 };
 
 /** A declaration that uses each kind of entry, as `source add --config` takes it. */

@@ -12,7 +12,7 @@ is the step-by-step version, and the built-in `author-tack-profiles` skill holds
 
 ## The profile file
 
-A version-2 `tack.yaml` publishes each profile with a `{ name, path }` entry in `profiles`. Each
+A `tack.yaml` publishes each profile with a `{ name, path }` entry in `profiles`. Each
 profile file has its own version-1 schema: a `name`, optional `depends-on` source labels and at least
 one entry in `members`. A bare member resolves only in the owning source; a member of another source
 is written `{ name, source, kind? }`. Required dependencies of members are added; defaults, picks and
@@ -82,7 +82,7 @@ reach other projects.
 
 ### Bundle support
 
-Scripts and docs in a bundle need version-2 `bundle-support` entries in the source's `tack.yaml`,
+Scripts and docs in a bundle need `bundle-support` entries in the source's `tack.yaml`,
 each with the resource's `kind` and `name`, `complete: true`, `files` and `prerequisites`. A script
 that imports no package declares `package: none`; one that does needs its package and lock files
 included and its setup stated. An unknown helper, reader module or asset, or a computed import,

@@ -1,4 +1,4 @@
-# Task and grader contract, version 2
+# Task and grader contract, version 1
 
 The executable contract is `src/contract.ts`. A suite exports `suite: TaskSuite` from `evals/tasks/index.ts`: its task families and its tasks. That suite holds one neutral example task, `report-version`. Task code must not import provider or runner internals.
 

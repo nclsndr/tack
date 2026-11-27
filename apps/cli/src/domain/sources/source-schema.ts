@@ -3,10 +3,8 @@ import { Predicate, Schema, SchemaIssue } from "effect";
 import { CanonicalPathSchema, PortableNameSchema } from "../identity/identity-schema.ts";
 import { Yaml } from "../runtime-neutral.ts";
 
-/** The original source version, used for declarations without profiles. */
+/** The one source declaration version Tack reads and writes. */
 export const sourceDeclarationVersion = 1 as const;
-/** Profile publications require this source version, so older readers refuse them. */
-export const profileSourceDeclarationVersion = 2 as const;
 
 /** The identity Tack gives one registration: a version-4 UUID. */
 export const SourceRegistrationIdSchema = Schema.String.check(Schema.isUUID(4));
@@ -116,7 +114,7 @@ export const oneKindAtSourceFolder = Schema.makeFilter(
  * resources, where `.` names the source folder itself.
  */
 export const DeclarationSchema = Schema.Struct({
-  version: Schema.Literals([sourceDeclarationVersion, profileSourceDeclarationVersion]),
+  version: Schema.Literal(sourceDeclarationVersion),
   name: SourceLabelSchema,
   maintainers: Schema.optionalKey(Schema.Array(MaintainerSchema)),
   "depends-on": Schema.optionalKey(Schema.Array(SourceLabelSchema)),
@@ -133,14 +131,7 @@ export const DeclarationSchema = Schema.Struct({
   // unknown here, and only the import commands decode it strictly, so a bad record never makes
   // the source unhealthy for a release that knows the key.
   imports: Schema.optionalKey(Schema.Unknown),
-}).check(
-  Schema.makeFilter((value) =>
-    value.version === 1 && (value.profiles !== undefined || value["bundle-support"] !== undefined)
-      ? ["The profiles and bundle-support keys require source declaration version 2."]
-      : [],
-  ),
-  oneKindAtSourceFolder,
-);
+}).check(oneKindAtSourceFolder);
 
 /** A validated source declaration. */
 export type SourceDeclaration = typeof DeclarationSchema.Type;

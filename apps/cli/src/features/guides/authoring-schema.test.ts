@@ -118,19 +118,16 @@ const matrix: ReadonlyArray<readonly [string, unknown]> = [
     "a docs entry with a bad name",
     { version: 1, name: "tools", docs: [{ name: "KB", path: "kb" }] },
   ],
-  ["profiles under version 1", { version: 1, name: "tools", profiles: [] }],
-  [
-    "profiles under version 2",
-    { version: 2, name: "tools", profiles: [{ name: "ci", path: "ci.yaml" }] },
-  ],
+  ["an empty profiles list", { version: 1, name: "tools", profiles: [] }],
+  ["profiles", { version: 1, name: "tools", profiles: [{ name: "ci", path: "ci.yaml" }] }],
   [
     "a profile with an extra key",
-    { version: 2, name: "tools", profiles: [{ name: "ci", path: "ci.yaml", x: 1 }] },
+    { version: 1, name: "tools", profiles: [{ name: "ci", path: "ci.yaml", x: 1 }] },
   ],
   [
     "bundle support",
     {
-      version: 2,
+      version: 1,
       name: "tools",
       "bundle-support": [
         {
@@ -147,7 +144,7 @@ const matrix: ReadonlyArray<readonly [string, unknown]> = [
   [
     "incomplete bundle support",
     {
-      version: 2,
+      version: 1,
       name: "tools",
       "bundle-support": [
         { kind: "script", name: "run", complete: false, files: [], prerequisites: [] },
@@ -169,9 +166,9 @@ const matrix: ReadonlyArray<readonly [string, unknown]> = [
     { version: 1, name: "skills", skills: [{ path: "." }], commands: [] },
   ],
   [
-    "a docs entry at . beside scripts, under version 2",
+    "a docs entry at . beside scripts",
     {
-      version: 2,
+      version: 1,
       name: "notes",
       docs: [{ name: "notes", path: "." }],
       scripts: [{ name: "run", path: "run.ts", description: "Run" }],

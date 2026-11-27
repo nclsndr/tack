@@ -203,7 +203,7 @@ it.layer(LiveTestLayer)("source check", (test) => {
       yield* write(
         "tack.yaml",
         [
-          "version: 2",
+          "version: 1",
           "name: fixture",
           "context:",
           "  - path: ctx",
@@ -230,7 +230,7 @@ it.layer(LiveTestLayer)("source check", (test) => {
       yield* write(
         "tack.yaml",
         [
-          "version: 2",
+          "version: 1",
           "name: fixture",
           "docs:",
           "  - name: kb",

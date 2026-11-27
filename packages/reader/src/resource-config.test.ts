@@ -85,12 +85,12 @@ describe("source-owned YAML reader configuration", () => {
     ]);
   });
 
-  it("reads profile-bearing version-2 source settings without loading their modules", async () => {
+  it("reads source settings beside profile publications without loading their modules", async () => {
     const { input, path } = await fixture(selection);
     await writeFile(
       path,
       stringify({
-        version: 2,
+        version: 1,
         profiles: [{ name: "ci", path: "ci.yaml" }],
         docs: [{ name: "handbook", path: "docs", reader: selection }],
       }),
@@ -135,7 +135,7 @@ describe("source-owned YAML reader configuration", () => {
     3,
     [],
     { typo: true },
-    { version: 2 },
+    { version: 99 },
     { components: { module: "" } },
     { content: [{ root: "../outside" }] },
     { navigation: { archive: ["../outside"] } },

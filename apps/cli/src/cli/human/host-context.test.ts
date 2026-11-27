@@ -37,7 +37,7 @@ it.layer(LiveTestLayer)("reference index", (test) => {
       yield* fs.makeDirectory(path.join(source, "skills", "review"), { recursive: true });
       yield* fs.writeFileString(
         path.join(source, "tack.yaml"),
-        "version: 2\nname: tools\nskills: [{path: skills}]\n",
+        "version: 1\nname: tools\nskills: [{path: skills}]\n",
       );
       yield* fs.writeFileString(
         path.join(source, "skills", "review", "SKILL.md"),

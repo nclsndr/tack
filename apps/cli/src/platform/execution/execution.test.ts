@@ -117,7 +117,7 @@ describe("operator private framing", () => {
     const partial = new FrameDecoder();
     partial.push(bytes.subarray(0, 5));
     expect(() => partial.end()).toThrow();
-    const invalid = Buffer.from('{"version":2}');
+    const invalid = Buffer.from('{"version":99}');
     const head = Buffer.alloc(4);
     head.writeUInt32BE(invalid.length);
     expect(() => new FrameDecoder().push(Buffer.concat([head, invalid]))).toThrow();

@@ -148,7 +148,7 @@ it.layer(LiveTestLayer)("a filesystem failure in a command", (test) => {
       const fs = yield* FileSystem.FileSystem;
       const path = yield* Path.Path;
       const root = yield* fs.realPath(yield* fs.makeTempDirectoryScoped());
-      yield* fs.writeFileString(path.join(root, "tack.yaml"), "version: 2\nname: tools\n");
+      yield* fs.writeFileString(path.join(root, "tack.yaml"), "version: 1\nname: tools\n");
       const stub = path.join(root, "tack-env.d.ts");
       yield* fs.writeFileString(stub, "// stale\n");
       const error = yield* Effect.flip(

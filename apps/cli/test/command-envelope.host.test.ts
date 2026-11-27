@@ -1112,7 +1112,7 @@ it.layer(LiveTestLayer)("command envelope", (cliIt) => {
       ),
   );
   cliIt.effect(
-    "refuses flat version 2 state before initialization, inspection, mutation, and reset without losing evidence",
+    "refuses state of an unsupported version before initialization, inspection, mutation, and reset without losing evidence",
     () =>
       withFixture((fixture) =>
         Effect.gen(function* () {

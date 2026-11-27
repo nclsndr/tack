@@ -19,14 +19,14 @@ const scene = Effect.gen(function* () {
   const write = writeUnder(root);
   yield* write(
     "tools/tack.yaml",
-    "version: 2\nname: tools\nskills: [{path: skills}]\ncommands: [{path: review.md}]\n",
+    "version: 1\nname: tools\nskills: [{path: skills}]\ncommands: [{path: review.md}]\n",
   );
   yield* write("tools/review.md", "Review the change");
   yield* write(
     "tools/skills/review/SKILL.md",
     skillText("review", { description: "Review", body: "" }),
   );
-  yield* write("more/tack.yaml", "version: 2\nname: more\nskills: [{path: skills}]\n");
+  yield* write("more/tack.yaml", "version: 1\nname: more\nskills: [{path: skills}]\n");
   yield* write(
     "more/skills/review/SKILL.md",
     skillText("review", { description: "Review", body: "" }),

@@ -110,7 +110,7 @@ it.layer(LiveTestLayer)("profile routes", (test) => {
       const world = yield* profileFixture;
       yield* world.write(
         "source/tack.yaml",
-        "version: 2\nname: tools\nskills: [{path: skills}]\ncommands: [{path: commands}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
+        "version: 1\nname: tools\nskills: [{path: skills}]\ncommands: [{path: commands}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
       );
       yield* world.write("source/commands/ship.md", "---\ndescription: Ship it\n---\nShip.\n");
       yield* world.write("source/ci.yaml", "version: 1\nname: ci\nmembers: [notes, ship]\n");
@@ -152,7 +152,7 @@ it.layer(LiveTestLayer)("profile routes", (test) => {
       const world = yield* profileFixture;
       yield* world.write(
         "source/tack.yaml",
-        "version: 2\nname: tools\nskills: [{path: skills}]\ndocs: [{name: handbook, path: docs}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
+        "version: 1\nname: tools\nskills: [{path: skills}]\ndocs: [{name: handbook, path: docs}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
       );
       yield* world.write("source/docs/index.md", "# Guide");
       yield* world.write("source/ci.yaml", "version: 1\nname: ci\nmembers: [review, handbook]\n");

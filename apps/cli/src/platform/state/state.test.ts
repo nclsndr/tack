@@ -218,7 +218,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
         const options = stateOptionsAt(stateDirectory);
         const statePath = path.join(stateDirectory, stateFileName);
         const validState = JSON.stringify(yield* encodeState(emptyState()));
-        yield* fileSystem.writeFileString(statePath, JSON.stringify({ data: {}, version: 2 }));
+        yield* fileSystem.writeFileString(statePath, JSON.stringify({ data: {}, version: 99 }));
 
         const readError = yield* Effect.flip(readState(options));
 

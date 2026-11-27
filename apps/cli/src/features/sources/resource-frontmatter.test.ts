@@ -28,7 +28,7 @@ it.effect.each([
   ["---\n- scalar\n---", "command-frontmatter-invalid"],
   ["---\nmetadata: invalid\n---", "command-metadata-invalid"],
   ["---\nmetadata:\n  tack: 2\n---", "command-metadata-invalid"],
-  ["---\nmetadata:\n  tack: |\n    version: 2\n---", "command-metadata-invalid"],
+  ["---\nmetadata:\n  tack: |\n    version: 99\n---", "command-metadata-invalid"],
 ] as const)("quarantines invalid supplied command metadata %s", ([encoded, code]) =>
   Effect.gen(function* () {
     expect(yield* Effect.flip(parseCommandDocument(encoded))).toMatchObject({ code });

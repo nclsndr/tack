@@ -23,9 +23,8 @@ const resourceLists = {
   docs: Schema.optionalKey(Schema.Array(entries.docs)),
 };
 
-/** The keys every version takes, as the runtime decoder reads them. */
+/** The keys an author writes, as the runtime decoder reads them. */
 const sharedFields = Struct.omit(DeclarationSchema.fields, [
-  "version",
   "profiles",
   "bundle-support",
   "imports",
@@ -39,20 +38,12 @@ const sharedFields = Struct.omit(DeclarationSchema.fields, [
  * entry's one-kind rule is checked here as the runtime checks it, though a JSON Schema cannot
  * state it.
  */
-export const AuthoringDeclarationSchema = Schema.Union([
-  Schema.Struct({ version: Schema.Literal(1), ...sharedFields, ...resourceLists })
-    .check(oneKindAtSourceFolder)
-    .annotate({ title: "Version 1" }),
-  Schema.Struct({
-    version: Schema.Literal(2),
-    ...sharedFields,
-    ...resourceLists,
-    profiles: Schema.optionalKey(Schema.Array(entries.profile)),
-    "bundle-support": Schema.optionalKey(Schema.Array(entries.bundle)),
-  })
-    .check(oneKindAtSourceFolder)
-    .annotate({ title: "Version 2: profiles and bundle-support" }),
-]);
+export const AuthoringDeclarationSchema = Schema.Struct({
+  ...sharedFields,
+  ...resourceLists,
+  profiles: Schema.optionalKey(Schema.Array(entries.profile)),
+  "bundle-support": Schema.optionalKey(Schema.Array(entries.bundle)),
+}).check(oneKindAtSourceFolder);
 
 /**
  * The JSON Schema of {@link AuthoringDeclarationSchema}, draft 2020-12: it refuses keys a form does
