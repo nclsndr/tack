@@ -1,6 +1,6 @@
 import { ProfileDeliverySchema } from "../profiles/profile-delivery.ts";
 import { ProfileApplicationSchema } from "../profiles/profile-application.ts";
-import { Schema } from "effect";
+import { Schema, Struct } from "effect";
 import { AgentAdapterIdSchema, EnabledAdaptersSchema } from "../links/agent-adapter-schema.ts";
 import {
   ChoiceNamespaceSchema,
@@ -32,6 +32,7 @@ import {
 } from "../projects/project-schema.ts";
 import { InitialSelectionSchema } from "../choices/selection.ts";
 import { CatalogReportSchema } from "../sources/catalog-report.ts";
+import { sourceLabelFacts } from "../sources/source-inspection.ts";
 import { SelectableAddressSchema, resourceAddressIdentity } from "../sources/catalog-schema.ts";
 import {
   SourceIssueCodeSchema,
@@ -54,13 +55,15 @@ const StatusIssueSchema = Schema.Struct({
   message: Schema.String,
 });
 
+/** The label of a source and where it came from, as `status` reports them. */
+const statusLabelFacts = Struct.pick(sourceLabelFacts, ["label", "labelOrigin"]);
+
 /** The current health of one retained source registration. */
 const StatusSourceSchema = Schema.Union([
   Schema.Struct({
     registration: SourceRegistrationSchema,
     status: Schema.Literal("healthy"),
-    label: Schema.optionalKey(Schema.String),
-    labelOrigin: Schema.optionalKey(Schema.Literals(["declared", "derived", "none", "clashing"])),
+    ...statusLabelFacts,
     /** Heads-ups that never change health or an exit code, such as a source that declares nothing. */
     warnings: Schema.optionalKey(Schema.Array(SourceWarningSchema)),
   }),
@@ -68,8 +71,7 @@ const StatusSourceSchema = Schema.Union([
     issue: Schema.Struct({ code: SourceIssueCodeSchema, message: Schema.String }),
     registration: SourceRegistrationSchema,
     status: Schema.Literal("unhealthy"),
-    label: Schema.optionalKey(Schema.String),
-    labelOrigin: Schema.optionalKey(Schema.Literals(["declared", "derived", "none", "clashing"])),
+    ...statusLabelFacts,
   }),
 ]);
 

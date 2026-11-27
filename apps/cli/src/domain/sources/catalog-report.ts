@@ -16,10 +16,9 @@ import {
   type CatalogEntryOf,
   type CatalogQuarantine,
 } from "./catalog-schema.ts";
+import { sourceLabelFacts, sourceOrigin } from "./source-inspection.ts";
 import {
   SourceRegistrationIdSchema,
-  SourceLabelIssueSchema,
-  SourceWarningSchema,
   SourceIssueSchema,
   SourceRegistrationSchema,
 } from "./source-schema.ts";
@@ -28,14 +27,9 @@ import {
 const CatalogSourceSchema = Schema.Struct({
   registration: SourceRegistrationSchema,
   status: Schema.Literals(["healthy", "unhealthy"]),
-  origin: Schema.optionalKey(Schema.Literals(["builtin", "bundle"])),
+  ...sourceOrigin,
   issue: Schema.optionalKey(SourceIssueSchema),
-  label: Schema.optionalKey(Schema.String),
-  labelOrigin: Schema.optionalKey(Schema.Literals(["declared", "derived", "none", "clashing"])),
-  maintainers: Schema.optionalKey(Schema.Array(Schema.String)),
-  dependsOn: Schema.optionalKey(Schema.Array(Schema.String)),
-  labelIssues: Schema.optionalKey(Schema.Array(SourceLabelIssueSchema)),
-  warnings: Schema.optionalKey(Schema.Array(SourceWarningSchema)),
+  ...sourceLabelFacts,
 });
 
 /**
