@@ -1,0 +1,107 @@
+---
+title: Profiles and bundles
+description: The profile file format, how a fixed profile is applied, saved and adopted, what a bundle holds and needs, and the limits and checks a bundle goes through.
+---
+
+# Profiles and bundles
+
+A profile is a file in a source that lists the exact resources a project gets. Applied to a project,
+it fixes that project's set: picks cannot change it. A bundle packs a profile's files into one
+archive for a machine without the sources. [Share a fixed set with a profile](../guides/profiles)
+is the step-by-step version, and the built-in `author-tack-profiles` skill holds worked examples.
+
+## The profile file
+
+A version-2 `tack.yaml` publishes each profile with a `{ name, path }` entry in `profiles`. Each
+profile file has its own version-1 schema: a `name`, optional `depends-on` source labels and at least
+one entry in `members`. A bare member resolves only in the owning source; a member of another source
+is written `{ name, source, kind? }`. Required dependencies of members are added; defaults, picks and
+optional dependencies are not.
+
+`tack check SOURCE_PATH [COMPANION_SOURCE...]` checks every profile of the source; a profile file can
+also be passed directly. It reads only the files passed and reports structure, linkage, and the
+direct and required members apart. In `tack explore`, press `d` and choose a profile under
+Profiles, or a new one. Saving writes only the profile and its publication; pending edits must be
+saved, discarded or cancelled before you change destinations.
+
+Built-in skills are always delivered and locked. Saved selections leave them out and say so in the
+preview. A hand-written profile may still name them: `tack check` warns with
+`profile-builtin-omitted`, and adopt and apply skip those members with a note. A resource with the
+same name in another source stays an ordinary member.
+
+## Apply a profile
+
+`tack profile apply SOURCE:PROFILE --project PROJECT --target-root ROOT` applies a profile; repeat
+`--target-root` for every root of the project. The preview writes nothing; `--apply` records the
+exact intent, then links. A project that already has intent or links Tack made needs `--force`,
+also after an empty or incomplete application. `--force` never allows partial roots, unsafe parent
+links or replacing content Tack did not make. For a user target, give the matching home with
+`--target-home` and an explicit state directory inside that home.
+
+Sync keeps the applied set, refuses a changed dependency closure, and `tack status` and
+`tack doctor` show the fixed intent. Picks in a fixed project are refused. A member an enabled
+adapter cannot take, such as a command with Claude Code, is skipped for that adapter
+(`delivery.skipped` in the apply plan) and still reaches every adapter that takes it; apply and sync
+stay successful, and doctor notes the skip. With no enabled adapter, delivery stays partial on retry,
+sync and status, and fails doctor. Context and scripts keep their roles: catalogued, and run by
+reference.
+
+## Save and adopt
+
+`tack profile save SOURCE_PATH NAME --project PROJECT` copies daily choices into a profile: by
+default the user's and one project's, or only one with `--input user` or `--input project`. The
+preview shows where each member comes from and the changes to the profile file and its publication;
+`--apply` saves only the profile. An existing profile needs `--edit`. In `tack explore`, choose a
+save input in the destination chooser, adjust the members, choose the source and name, then review
+the change.
+
+`tack profile adopt SOURCE:PROFILE --project PROJECT`, or `--user`, previews a one-time copy into
+ordinary include picks and project docs attachments. `--apply` writes the intent without syncing,
+keeps unrelated picks and the writing default, and reports what still blocks. Docs for the user and
+fixed projects are refused. Scripts stay run by reference. Saving and adopting create no
+subscription: later changes on either side leave the other side unchanged.
+
+## Bundles
+
+`tack profile export SOURCE:PROFILE OUTPUT.tar.gz` previews a snapshot of the direct and required
+members: their exact files, integrity facts, the provenance of imported skills and non-secret setup.
+`--apply` creates the archive and never overwrites an existing path.
+
+`tack profile inspect-bundle FILE` lists what a bundle holds. `tack check FILE` checks it offline,
+without state or the original sources: archive safety, manifest integrity and the profile it
+carries. A profile's docs use the same set for mounts, `tack docs`, search, serve and
+`tack docs target`.
+
+`tack profile apply-bundle FILE --project NAME --target-root ROOT` previews the same complete-target
+contract as `tack profile apply`. `--apply` keeps the content under the explicit state directory,
+registers the sources the bundle provides and applies the profile. A fresh machine needs no original
+source, no earlier sync and no `--force`. Existing intent, even an empty or incomplete one, still
+needs `--force`, and files Tack did not make stay protected. The original sources, even newer ones
+with the same names, stay independent: a bundle never falls back to them, and its defaults never
+reach other projects.
+
+### Bundle support
+
+Scripts and docs in a bundle need version-2 `bundle-support` entries in the source's `tack.yaml`,
+each with the resource's `kind` and `name`, `complete: true`, `files` and `prerequisites`. A script
+that imports no package declares `package: none`; one that does needs its package and lock files
+included and its setup stated. An unknown helper, reader module or asset, or a computed import,
+refuses a complete export. The built-in `author-tack-profiles` skill has worked examples.
+
+### Format and limits
+
+Bundle version 1 is a POSIX ustar archive of regular files and directories in gzip: at most 8 MiB
+compressed, 32 MiB expanded, 8 MiB per file and 5,000 entries. Traversal, absolute paths, paths that
+differ only by case or Unicode form, duplicates, unsafe parents, links, special files, unsupported
+versions and wrong facts or digests are refused before anything changes. Known configuration,
+credential, `.env` and history paths are left out or refused; other authored text is not certified
+free of secrets. Checksums prove integrity, not who published the bundle. No script, module, reader
+component, hook, installer or fetch from the bundle runs while it is checked or applied, and carrying
+the content does not guarantee a script can run offline.
+
+Applying the same bundle again reuses only matching, verified registrations and content; `--force`
+is still needed when the project has intent. A changed mapping or file, a duplicate key or a
+foreign payload path is a repairable identity conflict, never an overwrite. Kept bundle content
+cannot be edited or relocated as a source. Different revisions stay separate, and their content
+stays for ownership and recovery even after an incomplete delivery. `tack status` and `tack doctor`
+report a kept bundle whose integrity fails as `source-bundle-changed`.

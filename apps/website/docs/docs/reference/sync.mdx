@@ -1,0 +1,222 @@
+---
+title: Sync and status
+description: What tack sync plans and writes, why it removes or skips a link, how it adopts and releases links, how adapters are turned on and off, and what tack status, tack doctor and state cleanup report.
+---
+
+# Sync and status
+
+`tack sync` turns the selection into links and docs mounts. `tack status` and `tack doctor` read
+what is on disk against that plan. This page is the full set of rules;
+[Check health](../guides/check-health) is the short version.
+
+## Preview and apply
+
+`tack sync` previews the selected resource links and the attached docs mounts together. `--no-docs`
+leaves the mounts out; `--no-adapters` plans only the docs mounts of a project. The plan's `options`
+echoes `--adapter`, `--require-capability`, `--include-optional` and `--no-docs` when given, and the
+`Next` command repeats them, with `--no-adapters`, so applying it writes exactly what the preview
+showed. Add `--apply` to plan again and write; the response carries the plan it applied together
+with the outcome of each action.
+
+```sh
+# Preview one project explicitly.
+tack sync --project tack
+
+# From a registered active worktree, sync its project.
+tack sync
+tack sync --apply
+
+# Preview every project and the user target.
+tack sync --all
+
+# Limit the target or the adapters.
+tack sync --project tack --apply
+tack sync --user --apply
+tack sync --adapter claude --adapter codex --adapter cursor --apply
+
+# Include optional dependencies, or plan without adapters or docs.
+tack sync --include-optional
+tack sync --project tack --no-adapters
+tack sync --project tack --no-docs
+```
+
+These also preview before they write: `tack project refresh`, `tack project remove`,
+`tack source remove`, `tack adapter disable`, `tack state clean`, `tack state clean --pending` and
+`tack state reset`. Registering a source that has a `tack.yaml`, picks, adapter settings and docs
+attachments and settings take effect at once.
+
+[Projects and selection](./selection#selectors) describes which targets a sync covers.
+`tack sync --adapter claude --user --apply` limits one sync to an enabled adapter; sync refuses an
+adapter that is not enabled and names `tack adapter enable`.
+
+`--require-capability command-links` blocks every unit whose adapter cannot link commands; such a
+unit plans no work and reports `capability: { _tag: "blocked" }`. Each plan unit also states which
+kinds its adapter delivers, such as `delivery: { skill: "delivered", command: "unsupported" }`; a
+selected resource of an unsupported kind is not linked for that adapter.
+
+## How links are written
+
+Each link is relative text computed from the real directory that contains it, which is where the
+operating system resolves it. An agent folder or home reached through a symbolic link, such as
+dotfiles managed by stow or chezmoi, still links to the source. `tack status` and planning observe
+links the same way, so a link that only resolves lexically is reported as drift.
+
+An alias between agent folders inside a root, such as `.claude/skills -> ../.agents/skills`, is
+recognized when it is a relative link to a real directory inside the same target. Adapters that
+reach one physical directory share one link: one adapter writes it and holds its record, the others
+report it as `matching` with a `sharing` entry, and a plan unit lists the alias under
+`directoryAliases`. A dangling alias, an alias to a file, an absolute alias, and an alias that leaves
+the target stay `destination-directory-conflict`. Two resources with one name in the shared
+directory stay a collision. Cleanup and `tack adapter disable` remove a link only with a record,
+and a removal preview names the other adapters that reach the directory in `alsoReachedBy`; the
+next sync restores any link that is still selected.
+
+A project does not link a skill or command that the same adapter links for the user: agents in the
+project load it from the user's folder, so they list it once. The plan unit names such resources in
+`linkedForUser`, and the text view shows each as `skip … linked for the user`. A project link made
+before the user pick is removed with the reason `linked-for-user`, and `tack status` lists the
+resource as undelivered with that reason. After the user pick is removed, the next project sync
+links the resource into the project again. A resource of another source with the same name is not
+affected.
+
+## Why a link is removed
+
+A `link-remove` action names why the link goes in `reason`, which the text view prints beside the
+resource:
+
+| Reason             | Meaning                                                                                                |
+| ------------------ | ------------------------------------------------------------------------------------------------------ |
+| `deselected`       | The choices no longer select the resource.                                                             |
+| `source-unhealthy` | Still chosen, but its source cannot be read, such as a `tack.yaml` with an unknown key.                |
+| `quarantined`      | Still chosen, but the catalog quarantined the resource, such as a `SKILL.md` that no longer validates. |
+| `blocked`          | A required dependency is blocked; the action names its `blockers`.                                     |
+| `collision`        | Another selected resource has the same name.                                                           |
+| `linked-for-user`  | The same adapter links it for the user.                                                                |
+| `source-missing`   | The recorded source was deleted or moved, so the link no longer resolves.                              |
+| `replace`          | The link is rewritten for the same name, followed by its `link-create`.                                |
+
+Fix the source or the file and the next sync links a `source-unhealthy` or `quarantined` resource
+again.
+
+A link whose recorded source was deleted or moved still belongs to Tack when its text is exactly the
+text Tack writes for its record. A sync then replaces it if the resource is still selected, or
+removes it with `source-missing`; `tack state clean` and `tack state clean --pending` remove it too.
+A dangling link with any other text is not Tack's and is never removed.
+
+## Links changed outside Tack
+
+A recorded link that was changed outside Tack, such as one pointed at a copy of the skill inside the
+repository, is left in place. While its resource is selected, sync reports it as
+`managed-link-drift`. Once the resource is deselected or gone from its source, sync releases it: the
+plan carries an `evidence-retire` action with reason `released`, counted under `release`, the text
+view notes it once as `release PATH … changed outside Tack, no longer managed`, and applying it
+forgets the record without touching the link. A dangling link with foreign text is released the
+same way. Until then `tack status` reports the destination as `evidence-changed`. A changed link
+whose name two selected resources collide on stays `managed-link-drift` until the collision is
+resolved. A recorded link that is absent is retired with reason `absent`.
+
+## Links Tack adopts
+
+A link Tack has no record of that is exactly the link Tack would write, with identical text that
+resolves to the selected source, is adopted. A link committed to a repository arrives this way in
+every other clone. The plan carries a `link-adopt` action, counted under `adopt`, the text view
+shows it as `adopt PATH … already linked, record only`, and applying it records the link without
+touching it. `tack status` reports it as `unrecorded` until then; afterwards it is like any link
+Tack created.
+
+Any other entry in the way, such as a link with other text, a file or a folder, stays a
+`foreign-destination` conflict: Tack never replaces it. The conflict names what is there and, in
+`expectedTarget`, the link text Tack would write. `git rm` the entry when the repository commits it,
+or move it away, and ignore Tack's links in `.gitignore`; then sync.
+
+## Adapters
+
+Turn adapters on and off independently. `tack adapter enable` never removes an adapter; removing
+one goes through `tack adapter disable` and its cleanup:
+
+```sh
+tack adapter enable claude codex cursor
+tack adapter
+tack adapter disable cursor       # preview cleanup and disablement
+tack adapter disable cursor --apply
+```
+
+`tack adapter` lists the enabled adapters, not every known one. An adapter is machine-wide, so the
+disable preview covers every project and the user target. Like every cleanup view (`tack state
+clean`, `tack state reset`, `tack source remove`, `tack project remove`, `tack project refresh`), it
+counts the actions per adapter and target, such as `cursor → user · 5 to remove` and
+`cursor → app (3 roots) · 36 to remove`, then lists the first 10 actions; `--details` lists them
+all. After a settled `--apply`, its `Next` is `tack status --all`.
+
+[Agent support](../agent-support) lists every adapter's folders and what each agent reads.
+
+## Status
+
+`tack status` reports source, project, selection, delivery, destination and pending-removal health
+for the selected scope.
+
+```sh
+tack status
+tack status --project tack
+tack status --user
+```
+
+Status classifies each destination by the decision sync would make for the same scope, so after a
+successful `tack sync --apply` every destination reports `matching`. Pass `--include-optional` to
+inspect what `tack sync --include-optional` delivers; without it, optional links report drift
+because a plain sync would remove them. Status covers the same targets and links sync acts on: a
+missing or unhealthy project root is reported on its project (`root-missing`, `root-unhealthy`) and
+lists no destinations, and the built-in skill links of a user target with a fixed profile, which
+sync leaves as they are, are not listed. The help of `tack status` says what each link state means
+and what to run.
+
+## Doctor
+
+`tack doctor` is the one read-only health report. It is machine-wide, works before `tack init`,
+never prompts, fetches or repairs, and changes no file. It runs one check per area: `release`,
+`state`, `adapters`, `sources`, `imports`, `profiles`, `profile-definitions`,
+`unregistered-dependency-source`, `projects`, `links` and `docs`.
+
+- **`sources`** groups quarantined candidates per source, telling declaration problems from other
+  ones, and names `tack catalog` as the next command.
+- **`projects`** reads where doctor runs: with no project registered, a Git repository there is a
+  warning that names `tack project add NAME`; a worktree of a registered project that refresh has
+  not added is a warning that names `tack project refresh --project NAME`, because that worktree has
+  no links.
+- **`links`** fails on drift, foreign entries and pending removals, and only warns on a hand-made
+  entry: a file or folder that was at a destination before Tack linked there, which `tack status`
+  tags `hand-made` (`destination-hand-made`). Tack keeps it and links everything else. The warning
+  names `tack pick exclude SOURCE:NAME --kind KIND --project NAME` to keep yours on purpose, which
+  unlinks Tack's resource for every agent of that project.
+
+Each check has an outcome of `ok`, `warning`, `failed` or `skipped`, a message and, when a cause is
+known, the exact command that addresses it, as a preview unless the operation is immediate. It never
+guesses `--all`, and carries `--state-dir` when you chose the state directory.
+
+Warnings and skipped checks exit `0`. A failed check exits `1` and still carries the whole report,
+plus one `doctor-check-failed` diagnostic per failed check. A missing state is a warning with
+`tack init` as its next step, and the checks that need state are skipped. A state with no enabled
+adapter is an `adapters` warning that also names `tack init`. A state written by a newer Tack fails
+the `state` check. An unreadable or corrupt state is a persistence failure that exits `3`, because
+the report could not be trusted. `tack status` stays the report of one selection; its problems and
+repair hints agree with doctor.
+
+## Clean up
+
+`tack state clean` removes the links Tack manages from a selected target. `tack state clean --pending`
+retries pending removals, agent links and docs mounts alike. Both need `--apply` to change files.
+
+```sh
+tack state clean --project tack
+tack state clean --project tack --apply
+tack state clean --pending --user --apply
+```
+
+`tack state reset` plans the removal of every managed link and state record. With `--apply` it runs
+that cleanup and deletes the state only after the cleanup settles.
+[Remove a source, a project or Tack](../guides/remove) walks through each removal.
+
+## Next
+
+- [Automation](./automation): the JSON envelope, diagnostic codes and exit codes.
+- [Projects and selection](./selection): what a sync delivers.

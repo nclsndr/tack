@@ -1,0 +1,117 @@
+---
+title: Scripts
+description: How tack script run picks its target, passes arguments and secrets, reports outcomes and keeps a run history, and what tack types and tack script show do.
+---
+
+# Scripts
+
+Tack runs trusted local scripts declared by a registered source. Each declared `.ts` file
+default-exports a `defineScript` definition imported from `@tackup/cli`, which the running Tack
+provides: a source never installs it. A source needs a root `package.json` only for the packages its
+scripts import; Tack checks they are installed and never installs them. Listing scripts never
+imports them. [Run a script](../guides/run-a-script) is the step-by-step version, and the built-in
+`manage-tack-sources` skill holds the script API for authors.
+
+```sh
+tack catalog --kind script
+tack script show report
+tack script run report --project demo -- --name Ada --times 2
+tack script run report --project demo --input-json '{"name":"Ada"}'
+tack script run nested-report --root /path/to/registered/worktree --input-file input.json
+tack script run quality-tools:report --user --input-stdin --timeout 30000 --quiet < input.json
+```
+
+A script is named by the `name` its source declares in the `scripts` list of its `tack.yaml`,
+written `source:name` when another source declares the same one. Quarantined, duplicate and
+undeclared scripts cannot run.
+
+## Editor types and inspection
+
+`tack types [PATH] --apply` writes `tack-env.d.ts` into a source folder, the current one by default:
+the script API's types as an ambient `@tackup/cli` module, from the running Tack. It also writes a
+`tsconfig.json` when the folder has none, and otherwise warns with `types-stub-out-of-scope` when the
+existing one does not include the file. Without `--apply` it previews. A folder without `tack.yaml`
+is refused with `types-not-a-source`.
+
+`tack script show REFERENCE` loads the script in a fresh worker, without running it, and prints its
+description, file, arguments with their types, defaults, choices and descriptions, and its secrets.
+A module that is no script fails with the code a run would report.
+
+## Target
+
+A run has exactly one target:
+
+- `--user` runs in your home directory.
+- `--project NAME` needs that project to have exactly one active registered root.
+- `--root PATH` picks an exact registered root, in a project with several.
+
+These flags exclude each other. Without them, the current directory must be inside an active
+registered root, and the deepest such root is used, even when it is also the home directory. `--cwd
+PATH` changes the directory looked up. This differs from the project scope of a bare `tack sync` or
+`tack status`. The target is the working directory of the script and of its shell commands.
+
+Run outcome codes use snake_case, unlike the kebab-case codes of other diagnostics. A target that
+cannot be resolved names the input to change, and the outcome `details` carry it:
+
+| Code                         | Cause                                                                | Details                                         |
+| ---------------------------- | -------------------------------------------------------------------- | ----------------------------------------------- |
+| `state_not_initialized`      | The state directory has no state; run `tack state init` first.       | `stateDirectory`                                |
+| `run_project_not_registered` | `--project NAME` names no registered project.                        | `projectName`                                   |
+| `run_cwd_not_registered`     | The current directory or `--cwd` is outside every active root.       | `cwd`                                           |
+| `run_cwd_unavailable`        | The current directory or `--cwd` is not an accessible directory.     | `cwd`                                           |
+| `run_root_not_registered`    | `--root PATH` is not exactly a registered active root.               | `root`, and `containingRoot` when nested in one |
+| `run_root_unavailable`       | `--root PATH` is not an accessible directory.                        | `root`                                          |
+| `run_target_not_unique`      | The project has several active roots; choose one with `--root PATH`. | `projectName`, `roots`                          |
+| `run_target_unavailable`     | The project has no active registered root.                           | `projectName`                                   |
+
+## Arguments
+
+Pass the script's arguments after `--`: `--name value`, `--name=value`, a boolean as `--flag` or
+`--no-flag`, a list argument repeated. A camel-case name also answers to its kebab spelling. Words
+before `--` that Tack does not know are refused. Or give one JSON input: `--input-json JSON`,
+`--input-file FILE` or `--input-stdin`, never together with words. With none, Tack passes `{}`.
+Every argument problem is reported at once as `invalid_args`, one per line. History keeps the words
+as `originalWords`, or the JSON as `originalInput`.
+
+`--timeout` is a positive number of milliseconds. The first signal or timeout aborts the script's
+`signal` and waits for its cleanup; a second signal, or the end of the grace period, can force the
+worker to stop. The result keeps the reason and whether cleanup completed.
+
+## Secrets
+
+Each run gets a fresh worker and only the secrets the script declares. Put a declared secret's value
+under `TACK_NAME`, such as `TACK_API_TOKEN`, in the state directory's `.env` or in the environment
+of the command. An environment value wins, including an empty one, which makes the secret missing.
+Secret values travel as private data, never as worker environment variables, and Tack replaces each
+value with `<redacted>` in logs, results and messages. A value a script writes to a file or passes to
+a command is its author's responsibility. `exec` takes an executable and an argument list without
+shell parsing, and throws on a non-zero exit unless the script passes `allowFailure`.
+
+## Output
+
+Standard output holds one JSON envelope. The script's captured output, logs and `exec` output are
+mirrored to standard error in the order they came, within bounds. `--quiet` stops the mirroring and
+keeps the logs, and any truncation, in the result and history. Outcomes name their stage and code:
+arguments, expected failures, secrets, cleanup, timeout, worker or history. A script's thrown error
+shows its message with secrets removed; other defects are sanitized. A cleanup failure keeps the
+primary result and makes the run unsuccessful.
+
+## History
+
+```sh
+tack script history
+tack script history show RUN_ID
+tack script history clear
+tack script history clear --apply
+```
+
+Tack reads the state before it writes history, so a run against a directory without state returns
+`state_not_initialized` and creates no file. Otherwise every run creates a pending history record
+before it resolves the target and the script, reads input or imports the module. If that first write
+fails, the script does not run. If the final write fails, the pending record stays visibly
+incomplete and the run reports the failure beside its outcome. History stores the original input
+within bounds, the encoded values when available, logs, the outcome and its cleanup. Records stay
+until `tack script history clear --apply`, which the preview counts, or a completed
+`tack state reset`. Records name the source registration and the script name. With `--json`,
+`tack script history` returns `kind: "run-history"` with its `runs`, `total`, `offset`, `limit`,
+`truncated` and `issues`.

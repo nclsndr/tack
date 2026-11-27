@@ -11,8 +11,8 @@ with two entrypoints:
   `defineScript({ contract: 1, ... })` is internal: a source script that default-exports one fails
   with `invalid_definition`, and the CLI adapts each script-API definition onto this runner.
 
-The [CLI guide](../../apps/cli/README.md#run-tack-scripts) covers registration, run targets,
-secrets, history and operator execution.
+The [scripts reference](https://tackup.dev/docs/reference/scripts) on the website covers run
+targets, arguments, secrets, outcomes and history.
 
 ## Runner API
 

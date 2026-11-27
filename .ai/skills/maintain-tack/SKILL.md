@@ -32,7 +32,7 @@ To place the code of a new command, feature or domain concept, use the `tack-cli
 | `apps/cli/src/builtins/skills/manage-tack-sources/references/scripts.md`         | Writing a script with `defineScript`: arguments, secrets, the run context, outcome codes and dependencies.                                                                                                        |
 | `apps/cli/src/builtins/skills/prepare-tack-checkout/SKILL.md`                    | Linking a repository's skills at the start of work in a new clone or worktree, and the approval its section gives.                                                                                                |
 | `apps/cli/src/builtins/skills/write-reader-figures/SKILL.md`                     | Writing figures in docs: when to draw, which component, the rules, `tack check`. Update it with the reader's figure catalog. Its `references/figure-components.md` is generated: run `bun run figures:reference`. |
-| `apps/cli/README.md`, `packages/*/README.md`, `CONTEXT.md`                       | Operator and author documentation, and the glossary. Skills summarize them; they must agree.                                                                                                                      |
+| `apps/website/docs/docs`, `CONTEXT.md`                                           | Operator and author documentation (guides and `reference/` pages), and the glossary. Skills summarize them; they must agree.                                                                                       |
 
 The built-in `tack.yaml` (`apps/cli/src/builtins/tack.yaml`) declares the built-in skills. Add a
 skill there only on purpose: every built-in skill is installed for the user by default.
@@ -55,7 +55,7 @@ Run these against your change and read the code, not the skill, to decide what i
 | Source or project health, `doctor` checks                     | `features/doctor`, `source-schema.ts` warnings, and the catalog issue table in `manage-tack-sources`.                                                                                           |
 | Profiles, fixed profile application, the `profile` commands   | `domain/profiles`, `features/profiles/profile-*.ts`, `cli/commands/profiles.ts`, and both `author-tack-profiles` files.                                                                         |
 | Profile bundles: format, export, check, apply, retention      | `domain/bundles`, `features/profiles/bundle-*.ts`, and `author-tack-profiles/references/bundles.md`.                                                                                            |
-| Install, upgrade, release, state format, built-in skills      | `domain/self/upgrade-guide.ts`, `release.ts` (built-in copies), `apps/cli/README.md`, and the install and upgrade parts of both `use-tack` files.                                               |
+| Install, upgrade, release, state format, built-in skills      | `domain/self/upgrade-guide.ts`, `release.ts` (built-in copies), `apps/website/docs/docs/reference/setup.mdx`, and the install and upgrade parts of both `use-tack` files.                                               |
 | Script API or declaration                                     | `packages/core/src/script-api.ts`, `script-api-adapter.ts`, `resource-declarations.ts`, `scripts.md`, and the script parts of both skills. After an API change, run `bun run script-api:types`. |
 | A figure component, its props, its budget or the figure check | `packages/reader/src/figures/reference.ts` (the contracts the skill's reference is generated from) and the `write-reader-figures` decision table.                                               |
 
@@ -64,7 +64,7 @@ Run these against your change and read the code, not the skill, to decide what i
 1. List what the change makes true, false or new for an agent or an author. Include removed behavior:
    deleted flags, renamed codes, retired layouts.
 2. Search the files above for every name involved: `grep -rn "NAME" apps/cli/src/builtins .ai/skills
-apps/cli/README.md CONTEXT.md`. Fix each hit, and add what is new where the skill that owns the
+apps/website/docs/docs CONTEXT.md`. Fix each hit, and add what is new where the skill that owns the
    topic teaches it.
 3. Exercise the claim, do not trust the prose. Use a throwaway `HOME` and an explicit
    `--state-dir` under `mktemp -d`, a source built from the skill's own example, and run the command

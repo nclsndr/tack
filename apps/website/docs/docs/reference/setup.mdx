@@ -1,0 +1,143 @@
+---
+title: Setup, state and upgrades
+description: What tack init does step by step, where Tack keeps its state, the guides it prints for agents, the built-in skills it always links, and how to upgrade it.
+---
+
+# Setup, state and upgrades
+
+This page covers the machine itself: setting Tack up, where it keeps its state, the skills it ships
+and how to upgrade it. [Get started](../getting-started) walks through the same steps for a first
+run.
+
+## Set up a machine
+
+`tack init` writes at once and has no `--apply`:
+
+```sh
+tack init
+```
+
+It plans the whole setup, then applies it:
+
+1. **State.** It creates the state and its `.env` when they are absent and keeps them otherwise. A
+   state this release cannot read fails the command before anything is planned.
+2. **Agents.** It enables the agents whose home folder exists: `claude` from `~/.claude`, `cline`
+   from `~/.cline` or `~/Documents/Cline`, `codex` from `~/.codex` or `~/.agents`, `copilot` from
+   `~/.copilot`, `cursor` from `~/.cursor`, `gemini` from `~/.gemini`, `opencode` from
+   `~/.config/opencode`, `pi` from `~/.pi`. The output lists each one as found or not found.
+   `--adapter ID`, repeatable, names the agents instead. It only adds adapters and never disables
+   one.
+3. **User links.** It applies the plan `tack sync --user` makes once those agents are enabled. On a
+   new machine that links the built-in skills; after an upgrade it points them at the new version.
+4. **Hand-made entries.** It lists the files, folders and links in those agents' user skill and
+   command folders that Tack has no record of, and leaves them untouched. One at a built-in skill's
+   path is that link's `foreign-destination` conflict; everything else still applies.
+
+It creates the state when absent, then, under one writer lock, enables the agents and applies the
+user sync. It prints what it created, enabled, linked and removed, with every link action. It never
+touches sources, projects or picks. On a machine that is set up it writes nothing and says so, so
+`tack init` is also the one step after an upgrade. With no agent home found and no `--adapter`, it
+sets up the state only and is partial with `agent-home-not-found`. Its `Next` names what to run; on
+a first run, `tack guide onboarding` comes first.
+
+[Agent support](../agent-support) lists the folders each adapter links into.
+
+## Where the state lives
+
+Tack stores its state in `~/.tack` by default. Set `TACK_STATE_DIR`, or put `--state-dir PATH`
+before the command, to use another location. The flag takes precedence over `TACK_STATE_DIR`. The
+state directory must be on a local machine: writer lock recovery uses process IDs and does not
+support a home directory shared across machines.
+
+`tack state init` creates the state directory, a `state.json` file and an operator-owned `.env`
+file, and nothing else; `tack init` runs it first. It never overwrites existing state or `.env`
+files.
+
+On a machine without state, the first command that registers something, such as `tack source add`
+or `tack project add`, initializes the default state itself and enables the agents it finds in the
+home, as `tack init` does. Its `state-initialized` note names them. It links nothing, so run
+`tack init` to link the built-in skills. A `tack source add` preview writes nothing and says what
+its `--apply` initializes. `tack adapter enable` enables only the adapters it names. With
+`--state-dir` or `TACK_STATE_DIR`, absent state is refused with `state-not-initialized`, so a
+mistyped directory is never created.
+
+State is written as format 1, under the key `format` as the file's first field. This release reads
+and writes format 1 only. A format above 1 fails with `state-format-unsupported`; anything else
+fails with `state-corrupt`. Every pick names its source registration: there is no pick without a
+source. `tack source relocate` changes the registration at once, while existing links keep their
+recorded source until the next sync replaces them. If a release rejects valid state because it cannot read its format or
+does not support a recorded adapter, use a compatible release. Do not reset valid state or remove
+ownership evidence to make an older release accept it.
+
+## Versions
+
+`tack --version` prints the running version. It takes no command and combines only with `--json`
+and `--state-dir`; it works before `tack init` and reads no state. [Automation](./automation#version)
+describes its JSON payload and the version format.
+
+## Guides for agents
+
+`tack guide onboarding` prints the onboarding guide of the running version: how an agent sets up
+Tack on a machine with a person, or unattended, asking before each change. It is the same Markdown
+the built-in `use-tack` skill reads, printed byte for byte after a header that names the version.
+`tack guide` lists every guide: `onboarding`, `agent-instructions` (the Tack section for a project's
+`AGENTS.md`), `day-two` (what to run for a new project, worktree, source or skill) and `tack-yaml`
+(every key a `tack.yaml` takes). It needs no state and writes nothing, so it works before
+`tack init`. An unknown topic fails with `guide-topic-unknown` and the list of guides.
+
+## Built-in skills
+
+Tack includes a built-in source, labelled `tack`, with five skills:
+
+| Skill                   | What it teaches an agent                                              |
+| ----------------------- | --------------------------------------------------------------------- |
+| `use-tack`              | Operating Tack.                                                       |
+| `manage-tack-sources`   | Creating and maintaining a source.                                    |
+| `author-tack-profiles`  | Writing and checking fixed profiles.                                  |
+| `write-reader-figures`  | Writing figures in docs.                                              |
+| `prepare-tack-checkout` | Linking a repository's skills at the start of work in a new checkout. |
+
+`tack catalog` and `tack source` report this source without a registration. Its resources have
+`origin: "builtin"`; resources from sources a profile bundle provides have `origin: "bundle"`, and
+resources from other registered sources have `origin: "registered"`.
+
+The source belongs to the running Tack. An npm package copies it once per version into
+`~/.tack/builtins/VERSION/`, so agent links never point into npm's folder, which npm may replace.
+`TACK_BUILTINS_DIR` moves that folder; `--state-dir` and `TACK_STATE_DIR` never do, so several
+states share the copies. Agent folders hold symbolic links to those files.
+
+Built-in skills are always delivered at user scope: `tack sync --user --apply` links each one into
+the user skill folder of every enabled adapter, such as `~/.claude/skills`. Tack needs them to
+work, so no pick or setting removes them. After an upgrade, the next sync, or `tack init`, relinks
+them to the new version's copy. When an installed package applies a sync, it then removes the copies
+under `~/.tack/builtins` that are neither the running version, nor the newest older one, nor the
+target of a link in the user home or a registered project root of that state. The newest older copy
+stays for another state that still links it, until that state syncs.
+
+Each agent decides when to load the instructions. A project sync does not install another copy.
+Built-in skills are locked in `tack explore`, at both user and project scope, and `tack pick
+include`, `tack pick exclude` and `tack pick remove` refuse them with `builtin-skill-locked`.
+
+A registered source that provides a skill with a built-in skill's name is a name clash: both stay
+healthy, and you name the built-in one with the `tack` label, such as `tack:use-tack`. Source
+registration cannot adopt the built-in source, and relocation cannot move it.
+
+## Upgrade Tack
+
+Tack never upgrades itself: the package manager that installed it does. `tack upgrade` and
+`tack upgrade status` report the same thing, without network and without changing anything: the
+running version, how Tack was installed (`npm`, `bun` or `source`) and the command that upgrades it.
+
+| Installed with | Upgrade command                           |
+| -------------- | ----------------------------------------- |
+| npm            | `npm install --global @tackup/cli@latest` |
+| Bun            | `bun add --global @tackup/cli@latest`     |
+| A checkout     | none: pull it and run `bun install`       |
+
+After a package upgrade, run `tack init` to point the built-in skills at the new version. For a
+package install, `tack upgrade` names both commands under `Next`.
+
+## Next
+
+- [Projects and selection](./selection): register projects and choose what each one gets.
+- [Check health](../guides/check-health): what `tack doctor` reports.

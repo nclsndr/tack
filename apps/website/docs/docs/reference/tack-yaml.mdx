@@ -1,0 +1,368 @@
+---
+title: Source format
+description: Every key of a source's tack.yaml, the rules for declared paths, names, patterns and nested sources, skill metadata and dependencies, and how tack source add, tack source remove and tack check treat a source.
+---
+
+# Source format
+
+A source is a folder with a `tack.yaml` at its top. That file is the only thing that puts resources
+in the catalog: it lists where each kind of resource lives, anywhere inside the source. Tack reads
+nothing by convention, so a folder named `skills/` means nothing until a declaration names it. A
+source is the only grouping of resources: a resource is identified by its source, its kind and its
+name. [Add a source](../guides/add-a-source) is the step-by-step version; `tack guide tack-yaml`
+prints every key with the JSON Schema of the whole declaration. Agents create and change sources
+with the built-in `manage-tack-sources` skill.
+
+## tack.yaml
+
+A `tack.yaml` declares version 1 or 2. Version 2 adds profile publications and bundle support.
+
+```yaml
+version: 1
+name: quality-tools
+maintainers:
+  - docs-contact
+depends-on:
+  - base-skills
+skills:
+  - path: skills # a declared folder: every skill below it
+    exclude: ["**/_*/**"] # skip archived and work-in-progress folders
+  - path: vendor/skills # a second declared folder
+  - path: labs/one-off # a folder that holds SKILL.md is one skill
+commands:
+  - path: commands
+  - path: prompts/review.md # one command
+context:
+  - path: context
+    include: ["**/*.md"]
+scripts:
+  - name: report
+    path: tools/report.ts
+    description: Generate the report.
+docs:
+  - name: handbook
+    path: knowledge
+```
+
+| Key              | Meaning                                                                                                                                                                                                                                                                                                        |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`           | Required. The source label: up to 64 characters of lowercase letters, digits and single hyphens, never shaped like a registration ID. Operators and other sources write it as `quality-tools:review`. `tack` is reserved for the built-in source; generated `bundle-` labels are reserved for profile bundles. |
+| `maintainers`    | A list of descriptive contacts. Tack shows it in `tack source` and `tack catalog` and never interprets it: it does not affect identity, selection, delivery, dependencies or editing.                                                                                                                          |
+| `depends-on`     | Labels of the sources whose resources this source's resources may depend on.                                                                                                                                                                                                                                   |
+| `skills`         | Entries with a `path` to a folder, or to one skill, and optional `include` and `exclude` patterns. Every folder below a declared folder that holds `SKILL.md` is a skill.                                                                                                                                      |
+| `commands`       | Entries with a `path` to a folder or one `.md` file, and optional patterns. Every `.md` file below a declared folder is a command.                                                                                                                                                                             |
+| `context`        | Entries with a `path` to a folder or one file, and optional patterns. Every regular file below a declared folder is a context item.                                                                                                                                                                            |
+| `scripts`        | Entries with a `name`, a `path` to one `.ts` file and a `description`. See [Scripts](./scripts).                                                                                                                                                                                                               |
+| `profiles`       | Version 2. `{ name, path }` publications of fixed profiles. See [Profiles and bundles](./profiles).                                                                                                                                                                                                            |
+| `bundle-support` | Version 2. Support files and folders, a complete closure and non-secret runtime prerequisites per resource. See [Profiles and bundles](./profiles#bundle-support).                                                                                                                                             |
+| `docs`           | Entries with a `name`, a `path` to a folder and optional `reader` settings. Names are unique within the source. See [Docs and the reader](./docs).                                                                                                                                                             |
+
+Each resource key is an optional list, and an empty list such as `skills: []` is valid. An unknown
+top-level key makes the source unhealthy; a bad entry is quarantined alone and the rest of the
+source keeps working. The resource keys are decoded one entry at a time, so a typo in one entry
+never hides the others. `kind` is no key of a `tack.yaml`: `tack check` refuses it with
+`declaration-schema-invalid` and prints the `tack.yaml` to write instead. A key that one mapping
+names twice is refused with `declaration-malformed`, which names the key and both of its lines.
+
+Every `tack.yaml` declares its `name`. The label never comes from the folder, which can be called
+differently on each machine, so `depends-on` and `source:name` references resolve the same
+everywhere. A `tack.yaml` without `name` makes the source unhealthy with
+`declaration-schema-invalid`, and the message suggests a name made from the folder's. Two registered
+sources with one label cannot qualify a reference until one changes; each stays reachable by
+registration ID. Labels are typed, never stored: state, picks, docs mount paths, reader routes and
+run history use the registration ID.
+
+## The source folder as one entry
+
+A folder that holds only skill folders, only `.md` commands, or only docs declares itself with the
+path `.`, which names the folder that holds the `tack.yaml`:
+
+```yaml
+version: 1
+name: review-skills
+skills:
+  - path: .
+```
+
+| Key        | What a `.` entry holds                                                                        |
+| ---------- | --------------------------------------------------------------------------------------------- |
+| `skills`   | Each folder below the source folder that holds `SKILL.md`, as for any skills folder.          |
+| `commands` | Each `.md` file below the source folder whose name is a command name.                         |
+| `docs`     | The whole source folder, as one docs resource named by the entry's `name`. `reader` tunes it. |
+
+A `.` entry walks the source folder like any declared folder, with `include` and `exclude`, and
+passes over dot, underscore and `node_modules` names and the folders of other sources, as a docs
+walk does. A `tack.yaml` with a `.` entry declares that one kind: another resource key would read
+the same files, so it is refused with `declaration-schema-invalid` at that key. To hold several
+kinds, list each folder under its kind, with a skill folder at the top as an entry of its own:
+`skills: [{ path: deploy-service }, { path: rollback }]` beside
+`docs: [{ name: handbook, path: handbook }]`. A `context` entry is never `.`, since context would
+take every file: it is refused with `declaration-path-invalid`. A source with a skills entry `.`
+whose folder holds `SKILL.md` is one skill, and the source is unhealthy with `source-is-one-skill`.
+
+## Declared paths
+
+Every `path`, docs included, is `.` for the source folder, or non-empty, relative and
+`/`-separated, with no `.`, `..`, empty segment or backslash. It resolves, after symbolic links, to
+a place inside the source and exists with the right type: a folder for `skills`, a folder or file for
+`commands` and `context`, a `.ts` file for `scripts`, a folder for `docs`. A declared path may be a
+symbolic link to a place inside the source. Everything found inside a declared folder must resolve
+inside that folder, or it is refused with `resource-boundary-violation`; to use content elsewhere in
+the source, declare that path.
+
+Declarations may not overlap, so each file belongs to at most one declaration: equal or nested paths
+overlap, a profile publication counts as a file entry, and only an `exclude` on the outer folder
+entry that prunes the inner path ends an overlap. A docs entry takes no `exclude`, so nothing ends an
+overlap where docs hold another entry.
+
+A declaration that breaks a rule is quarantined with its own reason, and the other entries still
+load:
+
+| Code                              | Cause                                                            |
+| --------------------------------- | ---------------------------------------------------------------- |
+| `declaration-entry-invalid`       | The entry does not decode, or has patterns on a single resource. |
+| `declaration-path-invalid`        | The path breaks the syntax rules.                                |
+| `declaration-path-outside-source` | The path resolves outside the source.                            |
+| `declaration-path-missing`        | Nothing is at the path.                                          |
+| `declaration-path-wrong-type`     | The path is a file where a folder is needed, or the reverse.     |
+| `declaration-path-overlap`        | The path overlaps another declaration.                           |
+| `declaration-reaches-source`      | The path is, or lies inside, another source's folder.            |
+
+## Nested sources
+
+A source has one `tack.yaml`, at its top, that declares every folder. A subfolder with a
+`tack.yaml` of its own is an edge case, such as a vendored repository that is a source already. Each
+`tack.yaml` marks the edge of a source, as a nested repository does in Git. Below a source's root, a
+folder that holds `tack.yaml` and no `SKILL.md` belongs to another source, registered or not, and the
+parent never reads it; configurations never merge or inherit. A declared path that is or lies inside
+such a folder is refused with `declaration-reaches-source`. A skills, commands or context folder
+whose walk meets one skips that folder and reports it with the same code; `exclude: ["vendor/**"]`
+on the entry says the nesting is intended. A docs folder passes over another source without a
+finding. A `tack.yaml` inside a skill folder is the skill's content.
+
+## Names
+
+- A skill is named by its own folder, which must match the frontmatter `name`, and has a
+  description.
+- A command is named by its file name without `.md`.
+- A context item is named by its path relative to the declared folder, extension included, so
+  `context/notes.md` is `notes.md`; a single declared file is named by its file name.
+- A script is named by its declared `name`.
+
+Group folders never change a name. Two resources of one kind and name in one source are both
+quarantined, whichever declarations found them.
+
+A folder that holds `SKILL.md` is one skill, and Tack never looks inside it for more skills; a
+`SKILL.md` below it is content, delivered with the skill. Tack still checks that nothing inside
+leaves the declared folder.
+
+## Patterns
+
+`include` and `exclude` use the glob dialect of the docs reader's `content` setting and match a
+resource's path relative to the declared folder: a skill's folder path, a command's or context
+item's file path. A resource is contributed when it matches an `include` pattern (every path when
+`include` is absent) and no `exclude` pattern. A folder whose relative path followed by `/` matches
+an `exclude` pattern is not entered, so nothing inside it is read or reported. Patterns need a
+declared folder: on a single skill, command or file the entry is quarantined. Folders whose name
+starts with an underscore mean nothing unless a pattern says so; `exclude: ["**/_*/**"]` skips them
+at any depth.
+
+## Sources that load nothing
+
+A `tack.yaml` with none of `skills`, `commands`, `context` or `scripts` (`docs` does not count) whose
+root holds a folder named `skills`, `commands`, `context` or `scripts` makes the source unhealthy
+with `declaration-resources-undeclared`. Its message names each folder and the entry that declares
+it. Tack writes nothing: edit `tack.yaml`, or write `skills: []` when a folder is ordinary content. A
+sync preview shows `source-unhealthy` with that code beside each removal the unhealthy source would
+cause; nothing is removed until `--apply`.
+
+A healthy source that declares no resources, no docs, and has no folder named for a resource kind
+carries the warning `source-declares-no-resources` in `tack source`, `tack status` and
+`tack doctor`. It names `manage-tack-sources` and the keys to add, and changes no exit code. A source
+whose every declaration has a problem and finds no resource loads nothing: `tack source` marks it
+broken, with the warning `source-loads-nothing`, a partial outcome and a `tack check` hint.
+
+## Register a source
+
+```sh
+tack source add /path/to/my-source   # preview registering a source that has tack.yaml
+tack source add /path/to/my-source --apply   # register it
+tack source add /path/to/skills --config '{"version": 1, "name": "skills", "skills": [{"path": "."}]}'   # preview the tack.yaml it writes
+tack guide tack-yaml   # every key a tack.yaml takes
+tack source
+tack source relocate REGISTRATION_ID /path/to/moved-source
+tack catalog
+```
+
+`tack source add` previews registering an existing declaration: the name the source would take, its
+counts and issues, and any state its `--apply` would set up. `--apply` registers it and adds a
+`tack check` hint when the check found issues.
+
+For a folder without `tack.yaml`, give its declaration as JSON, as the value of `--config`, or
+`--config -` to read it from standard input. A value is never read as a path. The JSON takes the
+keys and values of `tack.yaml`, in any of its forms. YAML or other text fails with `config-not-json`,
+and the `imports` key with `config-imports-not-allowed`, since only `tack import add` writes it.
+
+```sh
+tack source add ~/brain --config - <<'EOF'
+{"version": 1, "name": "brain", "skills": [{"path": "personal/skills", "exclude": ["**/_*/**"]}]}
+EOF
+```
+
+`tack source add` checks the config with the decoder and discovery `tack check` uses. A config that
+does not decode fails with exit `2` and every issue at once, each with its field and its line in the
+config: an unknown key names the keys its form takes, and a missing `name` suggests one from the
+folder. Otherwise the preview shows the `tack.yaml` that `--apply` writes, normalized to YAML, the
+name the source would take, and what each entry finds, at its line in the config. Run the same
+command again with `--apply`, piping the same config again for `--config -`. `--apply` reads and
+checks the config again, creates the file without overwriting, and registers the source.
+
+- `--config` on a source that has `tack.yaml` fails with `declaration-exists`: edit that file.
+- A bare `tack source add` on a folder without one fails with `declaration-config-required` and
+  suggests a declaration read from the folder's top: a skills entry `.` when skill folders sit
+  there, with a `commands` or `docs` folder beside them as a source of its own, or else one entry per
+  folder named after a kind.
+- A `tack.yaml` inside a registered source's declared folder would take the folder out of that
+  source, so `tack source add` refuses it with `declaration-inside-source` until that source
+  excludes the folder.
+- When every entry has a problem and finds no resource, the preview is partial with
+  `declaration-loads-nothing` and offers no `--apply`, and `--apply` fails with that code.
+
+Registration keeps only a stable ID and the canonical path. Another path to the same folder reuses
+that ID, and `tack source relocate` keeps it. A bad root declaration makes a registered source
+unhealthy; a bad entry quarantines only itself. Errors recover after repair without registering
+again. A link never crosses kinds: a skill is linked as a skill, a command as a command.
+
+`tack source` lists each healthy source's declarations, grouped by kind and in file order: the
+declared path, its `include` and `exclude` patterns, how many resources the catalog holds because of
+it, and its problems with their codes. A declaration that finds nothing shows `0 resources` and is
+not an issue, such as an empty folder before an import. `tack catalog --details` and the explorer
+show which declaration found each resource. With `--json`, each healthy source carries the same facts
+as `declarations` (`kind`, `path`, `name`, `include`, `exclude`, `resources`, `problems`), with no
+stable schema. Cataloguing never imports a source's modules or checks
+whether their dependencies are ready.
+
+### Remove a source
+
+`tack source remove` names the source by label or registration ID; a source whose folder is gone has
+no label, so use its ID from `tack source`. The preview lists every agent link and docs mount Tack
+made for the source's resources, in every project and for the user, the picks and docs attachments
+that name the source, the fixed profile applications it affects, and the registered sources that
+still refer to it.
+
+```sh
+tack source remove brain             # preview
+tack source remove brain --apply
+```
+
+`--apply` removes those links and mounts, then the registration, the picks and the docs
+attachments. A fixed profile application the source publishes is dropped, so its project returns to
+daily selection on its next sync. An application that only holds members of the source keeps them
+as unresolved members. A source that names the removed one in `depends-on` is reported, because its
+resources that require the removed source's resources become blocked. A link that cannot be removed
+safely stays as a pending removal for `tack state clean --pending`. The built-in source and
+bundle-provided sources cannot be removed, and the source folder is never touched.
+
+## Check a source
+
+Write files, run `tack check PATH...`, and repeat until clean. With no path it checks the current
+folder.
+
+```sh
+tack check
+tack check /sources/tools /sources/helpers
+tack check /sources/tools/profiles/ci.yaml /sources/helpers
+tack check docs/architecture.mdx docs /artifacts/ci.tar.gz
+```
+
+Each path is detected as a source folder (or its `tack.yaml`), a profile file, a profile bundle, or
+Markdown docs. A source check covers its declaration and resources, the dependency edges of its
+skills and commands, its published profiles and its docs. A `tack.yaml` that does not decode reports
+every issue at once, each at its field and line; an unknown key names the keys its form takes.
+
+A dependency edge that names no single resource is reported at its line: `dependency-missing`,
+`dependency-quarantined`, `dependency-source-undeclared` and `dependency-ambiguous` are errors, or
+warnings on an optional edge. An edge that resolves nowhere while a declared source is missing from
+the check is the warning `dependency-source-unchecked`, which names that source, and while a passed
+source cannot be read it is `dependency-source-unhealthy`. An edge that resolves is not checked
+against a source missing from the check, which could still make it ambiguous at sync.
+
+Profile linkage and dependency edges use only the source folders passed in the same check, plus the
+built-in skills. Pass companion sources together. `tack check` never reads state, fetches a source,
+registers anything or runs authored code. A profile file passed directly needs an owning version-2
+source that publishes it.
+
+One combined report gives file:line findings. Overlapping paths are checked once. Errors exit `1`,
+warnings exit `0`; an unavailable input is `check-path-unavailable` and an unsupported file is
+`check-path-unsupported`. [Docs and the reader](./docs#check-docs) lists what a docs check reads.
+
+## Skill metadata
+
+`SKILL.md` and command files can add Tack metadata in the frontmatter's `metadata.tack` YAML string.
+For example, a skill:
+
+```markdown
+---
+name: review
+description: Review a change for correctness and maintainability.
+metadata:
+  tack: |
+    version: 1
+    activation: opt-in
+    user-activation: opt-in
+    projects: [tack]
+    dependencies:
+      - kind: skill
+        name: git
+      - kind: skill
+        name: security
+        source: base-skills
+        optional: true
+---
+```
+
+The two activation settings are independent:
+
+| Namespace | Setting           | Default when omitted | `projects`                     |
+| --------- | ----------------- | -------------------- | ------------------------------ |
+| Project   | `activation`      | `default`            | Filters the default selection. |
+| User      | `user-activation` | `opt-in`             | Does not restrict selection.   |
+
+Both settings accept `default` and `opt-in`. An explicit include or exclude wins in its own
+namespace. Required dependencies can select an opt-in skill; excluding that dependency blocks the
+requester. Removing a pick restores that namespace's metadata policy. The built-in `use-tack`
+declares `activation: opt-in` and `user-activation: default`.
+
+## Dependencies
+
+Dependencies may name skills or commands. An edge names a `kind` and a `name`, and an optional
+`source` label. It resolves by these rules:
+
+1. A resource may depend on a resource in its own source.
+2. It may depend on another source's resource only if its own source lists that source's label in
+   `depends-on`.
+3. An edge without `source` looks in the requester's source first, then in the declared sources. One
+   match is used. Several matches block the requester as ambiguous; add `source` to the edge.
+4. An edge with `source` must name the requester's own source or a declared source; otherwise the
+   requester is blocked as undeclared.
+5. A declared source that is not registered or not healthy blocks a required edge and skips an
+   optional one, and `tack doctor` names `tack source add`.
+6. Each dependency's own edges resolve by its own source's rules.
+
+Required edges extend the selection, optional edges apply only with `--include-optional`, and cycles
+form one group. Excluding a required dependency blocks its requester. Command dependencies join the
+same closure; their delivery follows adapter support.
+
+A blocked requester is reported as `dependency-blocked`. The text view names each blocker and the
+step that lifts it, such as adding a source to `depends-on`, registering a source, or including an
+excluded dependency; the JSON diagnostic carries the same blockers by reason. A dependency whose
+source label names no readable source while a registered source is unhealthy is
+`required-source-unhealthy`, not `required-source-unregistered`: the unhealthy source's label is
+unknown, so the blocker lists its path in `unhealthySources` and the text view names `tack check`
+for it.
+
+## Next
+
+- [Write a skill](../guides/write-a-skill): a skill from an empty file to a link.
+- The built-in `manage-tack-sources` skill holds a worked source with several declared folders, two
+  docs resources, a script, dependencies and each kind of name clash.

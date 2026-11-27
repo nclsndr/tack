@@ -1,0 +1,102 @@
+---
+title: Skill imports
+description: The locations tack import add accepts, which skills it can copy, where it writes them, what it records in tack.yaml, how it reports their reach, and how tack import remove works.
+---
+
+# Skill imports
+
+`tack import add` copies chosen skills from a GitHub location into a source you own. The copy is an
+ordinary skill of that source from the moment it is written: you edit it, and sync delivers it like
+any skill there. Tack records where it came from in the source's own `tack.yaml`, so it can tell
+later whether the copy was edited. It previews by default; `--apply` writes into the source and
+never into state, and nothing is delivered until the next sync.
+[Import skills from GitHub](../guides/import-skills) is the step-by-step version.
+
+```sh
+tack import add github:org/repo                            # what the location offers
+tack import add github:org/repo --skill pdf --into my-skills   # preview the copy and its reach
+tack import add github:org/repo --skill pdf --into my-skills --apply
+tack import add github:org/repo --all --into my-skills:vendor/skills --apply
+tack import                                                # imported skills and their local state
+tack import remove my-skills:pdf --apply
+tack sync --all
+```
+
+## Locations
+
+A location names its provider: `github:org/repo`, `github:org/repo/folder` and `github:org/repo#REF`
+(a branch, a tag or a full 40-character commit). A URL names its host, so it is accepted too:
+`https://github.com/org/repo`, `.../tree/REF/folder`, `.../blob/REF/.../SKILL.md` and
+`git@github.com:org/repo.git`. The preview prints the canonical `github:` form beside what you typed,
+and every `Next` command uses it. `github` is the only provider today.
+
+| Refusal                     | Input                                                                          |
+| --------------------------- | ------------------------------------------------------------------------------ |
+| `location-provider-missing` | A bare `org/repo`. The refusal prints the `github:` text and the full command. |
+| `location-provider-unknown` | An unknown prefix.                                                             |
+| `location-other-provider`   | A URL on a host no provider serves.                                            |
+
+These codes are the `reason` of the `import-location-invalid` diagnostic; with `--json`, the
+corrected text is in `details.suggestion`. `@` (write `#v1`, not
+`github:org/repo@v1`), abbreviated commit IDs, local paths, other hosts and URLs that carry
+credentials are refused.
+
+Private repositories use your Git credentials, such as `gh auth setup-git` or an SSH key; Tack reads
+no token. Tack runs a hardened `git` only to fetch the remote, never in the destination, and the
+destination need not be a Git repository.
+
+Candidates are the skill folders under `skills/`, the project skill folders of the
+[adapters](../agent-support), or the named folder, to three levels, or five with `--full-depth`.
+Folders whose name starts with `_` are skipped. Symbolic links and other non-regular files are never
+copied.
+
+## Choosing skills
+
+One candidate needs no flag; otherwise pass `--skill NAME`, repeatable, or `--all`. A candidate is
+importable when the destination's catalog would load it: a valid name and metadata, a name the
+destination does not already have in any declared skills folder, and a path its declaration selects.
+The preview lists each verdict with its reason.
+
+## Destination
+
+`--apply` needs `--into SOURCE`, a label or a registration ID, not the built-in source. `SOURCE` uses
+the source's only declared skills folder; several, or none, are refused with the `--into
+SOURCE:FOLDER` choices or the `skills` entry to add. `SOURCE:FOLDER` names a declared folder, or a
+group folder inside one that the import creates. On a source whose skills entry is `.`,
+`--into SOURCE` writes into its top. Import never adds or edits a declaration.
+
+## What it writes
+
+It writes `FOLDER/NAME/` byte for byte, executable bits included, and one record per skill in a
+top-level `imports` section of the destination's `tack.yaml`. Tack edits only that block, as text:
+every other byte of the file, comments and line endings included, is unchanged. An `imports` key in a
+form it cannot own (flow style, an anchor, indented, repeated) is refused with its line number.
+
+A record holds the folder, location, ref, resolved revision, upstream folder and tree, import time,
+and the SHA-256 and executable bit of each file. The location is written with its provider prefix,
+such as `github:org/repo`. With it, `tack import` tells whether the copy was edited, offline.
+
+The write goes through `.tack-import-staging/` at the source root under the state writer lock, so an
+interrupted run leaves either the old or the new folder and a whole `tack.yaml`; the next
+`tack import add` or `tack import remove` with `--apply` for that source finishes or rolls it back.
+A source with an `imports` section is unhealthy for releases that predate import.
+
+## Reach
+
+The preview says where the skill will be delivered at the next sync, from the destination's normal
+activation: the projects that receive it and those that do not and why, the user namespace, a
+same-name skill from another source (both load, and sync plans a `collision` exactly as for two
+registered sources), old picks that would select nothing, and dependencies on sources the
+destination does not declare. A skill without Tack metadata reaches every registered project. A
+project a fixed profile holds is listed apart as not delivered (`fixedProfileProjects` in JSON), with the profile and the
+`tack profile apply` command, with `--force`, that delivers the skill once the profile names it.
+
+## Remove
+
+`tack import remove [SOURCE:]NAME` deletes the folder and its record. A locally changed folder needs
+`--force`, and the preview then lists every change that is lost; Tack keeps no copy. The next sync
+removes the links.
+
+`tack import`, `tack import remove`, `tack source`, `tack catalog`, `tack status` and `tack doctor`
+work offline; only `tack import add` uses the network. Import payloads are not part of the
+[stable JSON contract](./automation).

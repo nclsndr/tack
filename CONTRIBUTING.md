@@ -112,11 +112,12 @@ else; a new commit needs no bump. `bun run check` fails when a manifest or the l
 
 | Path                           | Content                                                                                     |
 | ------------------------------ | ------------------------------------------------------------------------------------------- |
-| `README.md`                    | What Tack is, how to install it, and links to the guides.                                   |
-| `apps/cli/README.md`           | The CLI guide: setup, sources, selection, sync, docs, scripts and the automation contract.  |
-| `packages/reader/README.md`    | The reader author guide: docs resources, configuration and customization.                   |
-| `packages/core/README.md`      | The script API and runner.                                                                  |
+| `README.md`                    | What Tack is, how to install it, and links to the docs on [tackup.dev](https://tackup.dev). |
+| `apps/website/docs/docs`       | The user docs: get started, guides and the reference for every command and file format.     |
 | `apps/website`                 | The landing page and public docs; its [README](apps/website/README.md) explains the layout. |
+| `apps/cli/README.md`           | The CLI package: how to run, build and test it, and where its code lives.                   |
+| `packages/reader/README.md`    | The docs reader's internals: routes, figures, icons, the browser reader and search.         |
+| `packages/core/README.md`      | The script API and runner.                                                                  |
 | `apps/cli/src/builtins/skills` | The built-in skills that ship with Tack and teach agents to use it.                         |
 | `.ai/skills`                   | Skills for agents that work on this repository.                                             |
 | `STRATEGY.md`                  | The vision: read it before a product or design decision.                                    |
