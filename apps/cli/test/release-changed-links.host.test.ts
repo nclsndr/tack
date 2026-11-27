@@ -103,7 +103,7 @@ it.layer(LiveTestLayer)("releasing links changed outside Tack", (releaseIt) => {
           expect(flat.match(/changed outside Tack, no longer managed/g)).toHaveLength(3);
           for (const directory of [".claude", ".agents", ".cursor"])
             expect(flat).toContain(
-              `release ${directory}/skills/valid skill valid · changed outside Tack, no longer managed`,
+              `release ${directory}/skills/valid skill source:valid · changed outside Tack, no longer managed`,
             );
 
           const applied = successfulEnvelope(

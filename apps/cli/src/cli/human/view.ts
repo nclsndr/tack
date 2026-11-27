@@ -5,7 +5,7 @@ import { argvLine } from "../../domain/hints/next-commands.ts";
 import type { PublicEnvelope } from "../envelope/public-outcome.ts";
 import { dependencyBlockerSentences } from "./dependency-blockers.ts";
 import type { ReferenceAddress, Style } from "./style.ts";
-import { cell, flow, paragraph, wrapText, type Cell } from "./text.ts";
+import { cell, displayWidth, flow, paragraph, wrapText, type Cell } from "./text.ts";
 
 type Diagnostic = PublicEnvelope["diagnostics"][number];
 
@@ -20,6 +20,13 @@ export const addressText = (
   style: Style,
 ) =>
   `${address.kind} ${address.sourceRegistrationId === undefined ? address.name : style.reference({ ...address, sourceRegistrationId: address.sourceRegistrationId })}`;
+
+/**
+ * Names the resource of a link row with its source, always, as `skill team-handbook:deploy-service`:
+ * a link row says where the link comes from, so the bare name does not do even when it is unique.
+ */
+export const linkAddressText = (address: ReferenceAddress, style: Style) =>
+  `${address.kind} ${style.source(address.sourceRegistrationId)}:${address.name}`;
 
 /**
  * Names a namespace of picks. A `label` stands alone in a heading, a title or a table cell, as
@@ -304,7 +311,10 @@ export const withoutPayload = (
 /** One labelled fact: the label and the cells of its value, each cell painted on every line. */
 export type FactRow = readonly [label: string, value: ReadonlyArray<Cell>];
 
-/** A key and value row: `Adapters  claude, codex`, with the value wrapping under itself. */
+/**
+ * A key and value row: `Adapters  claude, codex`, with the value wrapping under itself. A path too
+ * wide to sit beside the key starts on the line below it, whole.
+ */
 export const factRows = (rows: ReadonlyArray<FactRow>, style: Style): ReadonlyArray<string> => {
   const keyWidth = Math.max(0, ...rows.map(([key]) => key.length)) + 2;
   return rows.flatMap(([key, value]) => {
@@ -320,6 +330,7 @@ export const factRows = (rows: ReadonlyArray<FactRow>, style: Style): ReadonlyAr
       hang: 2 + keyWidth,
     });
     const [first = "", ...rest] = lines;
+    if (displayWidth(first) > style.width) return [`  ${style.dim(key)}`, ...lines];
     return [
       `  ${style.dim(key)}${" ".repeat(keyWidth - key.length)}${first.slice(2 + keyWidth)}`.trimEnd(),
       ...rest,

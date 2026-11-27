@@ -48,12 +48,21 @@ describe("wrapText", () => {
     expect(lines.join("").replace(/ /g, "")).toBe("日本語の説明がここにありますとても長い説明");
   });
 
-  it("breaks an overlong token at path separators before cutting characters", () => {
-    const path = "/a/very/long/directory/name/with/many/segments/SKILL.md";
-    const lines = wrapText(path, 20);
+  it("puts a path that does not fit on its own line, whole", () => {
+    const path = "~/a/very/long/directory/name/with/many/segments/SKILL.md";
+    expect(wrapText(`read ${path} first`, 20)).toEqual(["read", path, "first"]);
+    expect(wrapText(`skill demo:.claude/skills/${"x".repeat(30)}`, 20)).toEqual([
+      "skill",
+      `demo:.claude/skills/${"x".repeat(30)}`,
+    ]);
+  });
+
+  it("breaks an overlong token that is not a path at separators before cutting characters", () => {
+    const name = "a-very-long-hyphenated-resource-name-with-many-parts";
+    const lines = wrapText(name, 20);
     expect(widest(lines)).toBeLessThanOrEqual(20);
-    expect(lines.join("")).toBe(path);
-    expect(lines.every((line) => line.endsWith("/") || line === lines.at(-1))).toBe(true);
+    expect(lines.join("")).toBe(name);
+    expect(lines.every((line) => line.endsWith("-") || line === lines.at(-1))).toBe(true);
     const unbroken = "x".repeat(50);
     expect(widest(wrapText(unbroken, 16))).toBeLessThanOrEqual(16);
     expect(wrapText(unbroken, 16).join("")).toBe(unbroken);
@@ -92,12 +101,30 @@ describe("flow", () => {
     expect(lines).toEqual([red("aaaa"), red("bbbb")]);
   });
 
-  it("wraps a single cell wider than the line", () => {
-    const lines = flow([cell("/very/long/path/that/never/fits/in/one/line")], {
+  it("cuts a single cell wider than the line when it holds no path", () => {
+    const lines = flow([cell("a-very-long-name-that-never-fits-in-one-line")], {
       width: 16,
       indent: 2,
     });
     expect(widest(lines)).toBeLessThanOrEqual(16);
+  });
+
+  it("puts a path cell wider than the line on its own line, whole", () => {
+    const path = "/very/long/path/that/never/fits/in/one/line";
+    expect(flow([cell("at"), cell(path), cell("now")], { width: 16, indent: 2 })).toEqual([
+      "  at",
+      `  ${path}`,
+      "  now",
+    ]);
+  });
+
+  it("wraps a wide cell at its spaces and keeps the path in it whole", () => {
+    const path = "~/.agents/skills/a-long-skill-folder";
+    expect(flow([cell(`alias ${path} is shared`)], { width: 24, indent: 2, hang: 4 })).toEqual([
+      "  alias",
+      `    ${path}`,
+      "    is shared",
+    ]);
   });
 });
 
@@ -149,6 +176,32 @@ describe("table", () => {
       "日本語",
     ]);
     expect(groups.flat()).toEqual(table(rows, { width }));
+  });
+
+  it("stacks rather than break a path in a leading column", () => {
+    const path = "~/app/.claude/skills/review";
+    const lines = table([[cell("linked"), cell(path), cell("skill team:review")]], { width: 40 });
+    expect(lines).toContain(`  linked  ${path}`);
+    expect(lines).toContain("    skill team:review");
+  });
+
+  it("puts a path wider than the last column on its own line, below the leading cells", () => {
+    const path = "~/code/app/.claude/skills/a-rather-long-skill-name";
+    expect(
+      table(
+        [
+          [cell("source"), cell(`cloned at ${path}`)],
+          [cell("docs"), cell(`${path} is shared`)],
+        ],
+        { width: 40 },
+      ),
+    ).toEqual([
+      "  source  cloned at",
+      `          ${path}`,
+      "  docs",
+      `          ${path}`,
+      "          is shared",
+    ]);
   });
 
   it("wraps a long flexible cell under its own column", () => {
