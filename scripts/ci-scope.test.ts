@@ -15,6 +15,7 @@ const guidanceOnly = [
   { label: "a repository skill change", paths: [".ai/skills/tack-git/SKILL.md"] },
   { label: "a pull request template change", paths: [".github/pull_request_template.md"] },
   { label: "a workflows readme change", paths: [".github/workflows/README.md"] },
+  { label: "a strategy document change", paths: ["STRATEGY.md"] },
 ];
 
 /** Changes that reach the CLI, its package, or CI itself: the suite and the gates both run. */

@@ -34,8 +34,8 @@ branch, and classifies the changed files:
 | Anything else, no changed file, or a manual run                    | true    | true    | Everything                                                           |
 
 The guidance documents are `AGENTS.md`, `CONTRIBUTING.md`, `CONTEXT.md`, `README.md`, `SECURITY.md`,
-`.github/pull_request_template.md`, this file and everything under `.ai/`. A path matches only at that
-exact place: `apps/cli/README.md` or `packages/core/AGENTS.md` runs everything.
+`STRATEGY.md`, `.github/pull_request_template.md`, this file and everything under `.ai/`. A path matches
+only at that exact place: `apps/cli/README.md` or `packages/core/AGENTS.md` runs everything.
 
 They do not skip every check: `test:repo` (the `apps/cli/test/*.repo.test.ts` files) checks that
 the guides and skills name only real commands and flags and use current wording. That is why a
