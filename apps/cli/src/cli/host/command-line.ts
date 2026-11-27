@@ -1,7 +1,7 @@
-import { invocationCommandPaths } from "../commands/model.ts";
+import { commandDeclarations } from "../commands/declarations.ts";
 
 /** An operation a printed command can name: every invocation the command tree declares. */
-export type CommandName = keyof typeof invocationCommandPaths;
+export type CommandName = keyof typeof commandDeclarations;
 
 /** `tack sync --project demo`; a word is quoted only when a shell would otherwise split or expand it. */
 export const shellWord = (word: string): string =>
@@ -17,7 +17,7 @@ export const argvLine = (argv: ReadonlyArray<string>): string => argv.map(shellW
 export const invocation = (
   command: CommandName,
   ...words: ReadonlyArray<string>
-): ReadonlyArray<string> => ["tack", ...invocationCommandPaths[command], ...words];
+): ReadonlyArray<string> => ["tack", ...commandDeclarations[command].path, ...words];
 
 /**
  * The `tack` command line that runs one operation: its command path from the command model, then

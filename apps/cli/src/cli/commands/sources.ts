@@ -3,7 +3,7 @@ import { ResourceKindSchema } from "../../domain/resources/kinds.ts";
 import { listAlias } from "./list-alias.ts";
 import { booleanFlag, cleanupDetailsFlag, optionalFlag, optionalStringFlag } from "./flag-utils.ts";
 import { receive } from "./invocation-receiver.ts";
-import { applyFlag, immediate, previewApply, readOnly } from "./operation-contract.ts";
+import { applyFlag } from "./operation-contract.ts";
 
 /** Adds each catalog resource's complete authored frontmatter to `catalog`. */
 const detailsFlag = booleanFlag("details", "Include each resource's complete authored frontmatter");
@@ -32,7 +32,6 @@ const catalogCommand = Command.make(
     { command: "tack catalog --details", description: "Include authored frontmatter" },
     { command: "tack catalog --kind script", description: "List declared scripts only" },
   ]),
-  readOnly,
 );
 const sourceAddCommand = Command.make(
   "add",
@@ -75,7 +74,6 @@ const sourceAddCommand = Command.make(
         'Preview the declaration piped to standard input, such as {"version":1,"name":"skills","skills":[{"path":"."}]} for a folder of skills',
     },
   ]),
-  previewApply,
 );
 const sourceRelocateCommand = Command.make(
   "relocate",
@@ -96,7 +94,6 @@ const sourceRelocateCommand = Command.make(
       command: "tack source relocate 00000000-0000-4000-8000-000000000001 /path/to/moved-source",
     },
   ]),
-  immediate,
 );
 const sourceRemoveCommand = Command.make(
   "remove",
@@ -118,7 +115,6 @@ const sourceRemoveCommand = Command.make(
     { command: "tack source remove brain" },
     { command: "tack source remove 00000000-0000-4000-8000-000000000001 --apply" },
   ]),
-  previewApply,
 );
 const sourceCommand = Command.make("source", {}, () => receive({ _tag: "source-list" })).pipe(
   Command.withSubcommands([
@@ -131,7 +127,6 @@ const sourceCommand = Command.make("source", {}, () => receive({ _tag: "source-l
     "Register, relocate and remove sources; bare `source` inspects every registered source, its health and what each of its declarations contributes",
   ),
   Command.withExamples([{ command: "tack source" }]),
-  readOnly,
 );
 
 /** Commands owned by source registration and catalog discovery. */

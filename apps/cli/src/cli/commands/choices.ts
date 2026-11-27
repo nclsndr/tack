@@ -4,7 +4,6 @@ import { selectableKinds } from "../../domain/resources/kinds.ts";
 import { listAlias } from "./list-alias.ts";
 import { optionalFlag } from "./flag-utils.ts";
 import { handle } from "./invocation-receiver.ts";
-import { immediate, readOnly } from "./operation-contract.ts";
 import { namespaceFrom, projectFlag, userFlag } from "./target-selector.ts";
 
 /** A single resource reference and a kind only when kinds share a name. */
@@ -44,7 +43,6 @@ const choiceSetCommand = (decision: "include" | "exclude") =>
       "Persist one include or exclude choice in exactly one namespace: --project or --user; built-in skills are locked",
     ),
     Command.withExamples([{ command: `tack pick ${decision} review --project demo` }]),
-    immediate,
   );
 const choiceRemoveCommand = Command.make(
   "remove",
@@ -67,7 +65,6 @@ const choiceRemoveCommand = Command.make(
     "Remove one persisted choice from exactly one namespace: --project or --user; built-in skills are locked",
   ),
   Command.withExamples([{ command: "tack pick remove review --user" }]),
-  immediate,
 );
 const listPicks = handle(
   "pick-list",
@@ -96,5 +93,4 @@ export const pickCommand = pickRoot.pipe(
     "List persisted choices in every namespace, or only in --project or --user; include, exclude and remove change them",
   ),
   Command.withExamples([{ command: "tack pick" }, { command: "tack pick --project demo" }]),
-  readOnly,
 );

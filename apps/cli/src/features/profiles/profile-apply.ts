@@ -8,6 +8,8 @@ import {
   type ProfileApplication,
 } from "../../domain/state/profile-application-schema.ts";
 import { ProfilePlanFindingSchema } from "../../domain/profiles/profile-schema.ts";
+import { DocsLinkApplicationSchema } from "../../domain/docs/docs-schema.ts";
+import { ReconciliationApplyResultSchema } from "../../domain/reconciliation/reconciliation-application-schema.ts";
 import {
   profileDelivery,
   ProfileDeliverySkipSchema,
@@ -71,6 +73,15 @@ export const ProfileApplyPlanSchema = Schema.Struct({
  * applies; the payload publishes that plan as it is.
  */
 export type ProfileApplyPlan = typeof ProfileApplyPlanSchema.Type & { readonly sync?: SyncPlan };
+
+/**
+ * The sync a profile application applied, as its payload publishes it. A profile always plans its
+ * agent links, since it never narrows them away as `sync --no-adapters` does.
+ */
+export const ProfileDeliveryApplicationSchema = Schema.Struct({
+  resources: ReconciliationApplyResultSchema,
+  docs: Schema.Array(DocsLinkApplicationSchema),
+});
 
 /** A fixed profile application's plan, and what its delivery did once applied. */
 export type ProfileApplyExecution<Plan extends { readonly sync?: SyncPlan } = ProfileApplyPlan> = {

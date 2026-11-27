@@ -1,7 +1,6 @@
 import { Effect } from "effect";
 import { Command } from "effect/cli";
 import { handle } from "./invocation-receiver.ts";
-import { operationContract } from "./operation-contract.ts";
 import { decodeAdapters, repeatableAdapterFlag } from "./reconciliation.ts";
 
 /** One repeatable machine setup, written at once: state, agents and their user links. */
@@ -29,6 +28,4 @@ export const initCommand = Command.make(
     { command: "tack init" },
     { command: "tack init --adapter claude --adapter cursor" },
   ]),
-  // It writes at once and reports what it planned beside what it applied.
-  operationContract({ mutation: "immediate", slots: ["plan", "applied"] }),
 );

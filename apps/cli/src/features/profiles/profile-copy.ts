@@ -109,6 +109,12 @@ export const ProfileAdoptPlanSchema = Schema.Struct({
 });
 type ProfileAdoptPlan = typeof ProfileAdoptPlanSchema.Type;
 
+/** The `profile save` application payload: the profile file was written. */
+export const ProfileSavedSchema = Schema.Struct({ saved: Schema.Literal(true) });
+
+/** The `profile adopt` application payload: the selection now holds the profile's content. */
+export const ProfileAdoptedSchema = Schema.Struct({ adopted: Schema.Literal(true) });
+
 /**
  * Each identity that keeps a selection from copying whole, with why: a pick of a resource no source
  * provides, or a member whose required dependency is blocked.

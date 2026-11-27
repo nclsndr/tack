@@ -10,7 +10,7 @@ import { listAlias } from "./list-alias.ts";
 import { InvocationIssue, type ReconcilePlanningRequest } from "./model.ts";
 import { booleanFlag, cleanupDetailsFlag, optionalFlag } from "./flag-utils.ts";
 import { handle, invalid, receive } from "./invocation-receiver.ts";
-import { applyFlag, immediate, previewApply, readOnly } from "./operation-contract.ts";
+import { applyFlag } from "./operation-contract.ts";
 import { allFlag, cwdFlag, projectFlag, selectorFrom, userFlag } from "./target-selector.ts";
 
 /** Decodes, deduplicates, and canonically orders adapter arguments. */
@@ -49,7 +49,6 @@ const adapterSetCommand = Command.make(
     "Enable these adapters in addition to the enabled ones; removing one requires adapter disable",
   ),
   Command.withExamples([{ command: "tack adapter enable claude codex cursor" }]),
-  immediate,
 );
 const adapterDisableCommand = Command.make(
   "disable",
@@ -63,7 +62,6 @@ const adapterDisableCommand = Command.make(
     { command: "tack adapter disable cursor" },
     { command: "tack adapter disable cursor --apply" },
   ]),
-  previewApply,
 );
 const adapterCommand = Command.make("adapter", {}, () => receive({ _tag: "adapter-list" })).pipe(
   Command.withSubcommands([
@@ -75,7 +73,6 @@ const adapterCommand = Command.make("adapter", {}, () => receive({ _tag: "adapte
     "Enable and disable the coding-agent adapters that receive links; bare `adapter` lists the enabled ones",
   ),
   Command.withExamples([{ command: "tack adapter" }]),
-  readOnly,
 );
 
 /** A repeatable `--adapter ID` flag, documented as optional, that yields the IDs it was given. */
@@ -156,7 +153,6 @@ const syncCommand = Command.make(
     { command: "tack sync --project demo --no-adapters --apply" },
     { command: "tack sync --user --apply" },
   ]),
-  previewApply,
 );
 
 /** Commands owned by adapter selection and reconciliation. */

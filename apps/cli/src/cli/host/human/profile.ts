@@ -2,7 +2,10 @@ import { Option, Schema } from "effect";
 import type { ProfileCheckReport } from "../../../domain/profiles/profile-schema.ts";
 import type { Style } from "./style.ts";
 import type { HumanView } from "./render.ts";
-import { ProfileApplyPlanSchema } from "../../../features/profiles/profile-apply.ts";
+import {
+  ProfileApplyPlanSchema,
+  ProfileDeliveryApplicationSchema,
+} from "../../../features/profiles/profile-apply.ts";
 import { BundleApplyPlanSchema } from "../../../features/profiles/bundle-apply.ts";
 import {
   deliveryMemberName,
@@ -11,8 +14,7 @@ import {
 } from "../../../domain/profiles/profile-delivery.ts";
 import type { ResourceAddress } from "../../../domain/sources/catalog-schema.ts";
 import { bundleSourceLabel } from "../../../domain/bundles/bundle-registration.ts";
-import { DocsLinkApplicationSchema, DocsLinkPlanSchema } from "../../../domain/docs/docs-schema.ts";
-import { ReconciliationApplyResultSchema } from "../../../domain/reconciliation/reconciliation-application-schema.ts";
+import { DocsLinkPlanSchema } from "../../../domain/docs/docs-schema.ts";
 import {
   ReconciliationPlanSchema,
   ReconciliationSelectionSchema,
@@ -77,8 +79,7 @@ const decodeApplyPlan = Schema.decodeUnknownOption(
 
 /**
  * The sync plan a profile application carries and the sync it applied, as its payload publishes
- * them. A profile always plans its agent links, since it never narrows them away as
- * `sync --no-adapters` does; a refused application carries no sync plan.
+ * them. A refused application carries no sync plan.
  */
 const decodeDelivery = Schema.decodeUnknownOption(
   Schema.Struct({
@@ -91,12 +92,7 @@ const decodeDelivery = Schema.decodeUnknownOption(
         docs: Schema.Array(DocsLinkPlanSchema),
       }),
     }),
-    applied: Schema.optionalKey(
-      Schema.Struct({
-        resources: ReconciliationApplyResultSchema,
-        docs: Schema.Array(DocsLinkApplicationSchema),
-      }),
-    ),
+    applied: Schema.optionalKey(ProfileDeliveryApplicationSchema),
   }),
 );
 

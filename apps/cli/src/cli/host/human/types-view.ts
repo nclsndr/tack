@@ -1,4 +1,5 @@
 import { Option, Schema } from "effect";
+import { TypesPlanSchema } from "../../../features/execution/script-types.ts";
 import { commandLine } from "../command-line.ts";
 import { frameView } from "./frame.ts";
 import type { HumanView } from "./render.ts";
@@ -6,15 +7,6 @@ import { withoutPayload } from "./run-text.ts";
 import { cell, table } from "./text.ts";
 import { factRows } from "./view.ts";
 
-const TypesPlanSchema = Schema.Struct({
-  directory: Schema.String,
-  files: Schema.Array(
-    Schema.Struct({
-      path: Schema.String,
-      action: Schema.Literals(["create", "update", "unchanged", "keep"]),
-    }),
-  ),
-});
 const decodePlan = Schema.decodeUnknownOption(TypesPlanSchema);
 type Action = (typeof TypesPlanSchema.Type)["files"][number]["action"];
 

@@ -1,6 +1,5 @@
 import { Argument, Command } from "effect/cli";
 import { receive } from "./invocation-receiver.ts";
-import { readOnly } from "./operation-contract.ts";
 
 /** One stateless authoring loop for sources, profile files, content bundles and docs. */
 export const checkCommand = Command.make(
@@ -26,5 +25,4 @@ export const checkCommand = Command.make(
         "tack check /sources/tools/profiles/ci.yaml /sources/helpers docs/architecture.mdx /artifacts/ci.tar.gz",
     },
   ]),
-  readOnly,
 );

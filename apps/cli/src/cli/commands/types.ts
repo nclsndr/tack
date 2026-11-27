@@ -1,6 +1,6 @@
 import { Argument, Command } from "effect/cli";
 import { receive } from "./invocation-receiver.ts";
-import { applyFlag, previewApply } from "./operation-contract.ts";
+import { applyFlag } from "./operation-contract.ts";
 
 /** Editor types for a source's scripts, generated from the running Tack. */
 export const typesCommand = Command.make(
@@ -28,5 +28,4 @@ export const typesCommand = Command.make(
     { command: "tack types /sources/tools" },
     { command: "tack types --apply" },
   ]),
-  previewApply,
 );

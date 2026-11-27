@@ -1,5 +1,6 @@
 import { Schema } from "effect";
 import { NextCommandsSchema } from "../../domain/hints/next-commands.ts";
+import { commandDeclarations } from "./declarations.ts";
 import type { DocsResourceRequest } from "../../domain/docs/docs-schema.ts";
 import type { ChoiceNamespace } from "../../domain/choices/choice-schema.ts";
 import type { TargetSelector } from "../../domain/projects/project-schema.ts";
@@ -278,74 +279,12 @@ export type ParsedInvocation = {
  * The invocation kinds that `--help` and `--version` select. They have no command word, so the
  * command tree does not declare them and `schema` publishes no contract for them.
  */
-type FlagRequestTag = "help" | "version";
+export type FlagRequestTag = "help" | "version";
 
 /** The envelope command names of {@link FlagRequestTag} invocations. */
 const flagRequestCommandNames = { help: "help", version: "version" } as const satisfies Record<
   FlagRequestTag,
   string
->;
-
-/**
- * The words after `tack` that select each invocation the command tree declares. Envelope command
- * names derive only from this table, and parser tests keep it in agreement with the tree.
- */
-export const invocationCommandPaths = {
-  "adapter-disable": ["adapter", "disable"],
-  "adapter-list": ["adapter"],
-  "adapter-set": ["adapter", "enable"],
-  catalog: ["catalog"],
-  "choice-remove": ["pick", "remove"],
-  "choice-set": ["pick", "include"],
-  "choice-exclude": ["pick", "exclude"],
-  clean: ["state", "clean"],
-  doctor: ["doctor"],
-  "docs-attach": ["docs", "attach"],
-  check: ["check"],
-  "docs-icons": ["docs", "icons"],
-  "docs-configure": ["docs", "configure"],
-  "docs-detach": ["docs", "detach"],
-  "docs-list": ["docs"],
-  "docs-search": ["docs", "search"],
-  "docs-serve": ["docs", "serve"],
-  "docs-target": ["docs", "target"],
-  explore: ["explore"],
-  guide: ["guide"],
-  "history-clear": ["script", "history", "clear"],
-  "history-list": ["script", "history"],
-  "history-show": ["script", "history", "show"],
-  "import-add": ["import", "add"],
-  "import-list": ["import"],
-  "import-remove": ["import", "remove"],
-  init: ["state", "init"],
-  "machine-init": ["init"],
-  "pick-list": ["pick"],
-  "project-add": ["project", "add"],
-  "project-list": ["project"],
-  "project-refresh": ["project", "refresh"],
-  "project-remove": ["project", "remove"],
-  reset: ["state", "reset"],
-  retry: ["state", "clean"],
-  upgrade: ["upgrade"],
-  "script-run": ["script", "run"],
-  "script-show": ["script", "show"],
-  types: ["types"],
-  "source-add": ["source", "add"],
-  "profile-apply": ["profile", "apply"],
-  "profile-save": ["profile", "save"],
-  "profile-adopt": ["profile", "adopt"],
-  "profile-export": ["profile", "export"],
-  "profile-inspect-bundle": ["profile", "inspect-bundle"],
-  "profile-apply-bundle": ["profile", "apply-bundle"],
-  "source-list": ["source"],
-  "source-relocate": ["source", "relocate"],
-  "source-remove": ["source", "remove"],
-  status: ["status"],
-  sync: ["sync"],
-  "upgrade-status": ["upgrade", "status"],
-} as const satisfies Record<
-  Exclude<Invocation["_tag"], FlagRequestTag>,
-  readonly [string, ...Array<string>]
 >;
 
 /** The envelope command name used when no executable operation can be identified. */
@@ -355,14 +294,14 @@ export const unknownCommandName = "unknown";
 export const commandNameOf = (tag: Invocation["_tag"]): string =>
   tag === "help" || tag === "version"
     ? flagRequestCommandNames[tag]
-    : invocationCommandPaths[tag].join(" ");
+    : commandDeclarations[tag].path.join(" ");
 
 /** The words after `tack` that select one invocation; the flag requests are selected by no word. */
 export const commandPathOf = (tag: Invocation["_tag"]): ReadonlyArray<string> =>
-  tag === "help" || tag === "version" ? [] : invocationCommandPaths[tag];
+  tag === "help" || tag === "version" ? [] : commandDeclarations[tag].path;
 
 const commandNames: ReadonlySet<string> = new Set([
-  ...Object.values(invocationCommandPaths).map((path) => path.join(" ")),
+  ...Object.values(commandDeclarations).map(({ path }) => path.join(" ")),
   ...Object.values(flagRequestCommandNames),
 ]);
 

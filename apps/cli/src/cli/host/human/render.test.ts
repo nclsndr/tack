@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { commandNameOf, invocationCommandPaths, isCommandName } from "../../commands/index.ts";
+import { commandNameOf, commandDeclarations, isCommandName } from "../../commands/index.ts";
 import { createPublicEnvelope } from "../public-outcome.ts";
 import {
   envelopeOf,
@@ -12,7 +12,7 @@ import { humanViews, renderHuman } from "./render.ts";
 
 /** Every public operation: the command paths of the tree and the two flag requests. */
 const operations = [
-  ...Object.values(invocationCommandPaths).map((path) => path.join(" ")),
+  ...Object.values(commandDeclarations).map(({ path }) => path.join(" ")),
   commandNameOf("help"),
   commandNameOf("version"),
 ];

@@ -8,7 +8,6 @@ import {
 import { docsRoot, docsSelection } from "./docs-root.ts";
 import { booleanFlag, optionalFlag, optionalIntegerFlag } from "./flag-utils.ts";
 import { handle, invalid, receive } from "./invocation-receiver.ts";
-import { readOnly } from "./operation-contract.ts";
 
 const portFlag = optionalIntegerFlag(
   "port",
@@ -69,7 +68,6 @@ export const docsSearchCommand = Command.make(
     { command: "tack docs search ownership --project demo --limit 5" },
     { command: "tack docs search selection --cwd /path/to/worktree --type spec --tag skills" },
   ]),
-  readOnly,
 );
 
 /** Looks up the Lucide icons docs may use, without a project or registered state. */
@@ -95,7 +93,6 @@ export const docsIconsCommand = Command.make(
     "List the Lucide icons a document may draw with <Icon name>, by category, with the Lucide version they come from. Use it to pick a name instead of recalling one",
   ),
   Command.withExamples([{ command: "tack docs icons database" }, { command: "tack docs icons" }]),
-  readOnly,
 );
 
 /** Serves one registered project's attached documents in the foreground. */
@@ -133,5 +130,4 @@ export const docsServeCommand = Command.make(
     { command: "tack docs serve --cwd /path/to/worktree --no-open --port 0" },
     { command: "tack docs serve --project demo --open" },
   ]),
-  readOnly,
 );

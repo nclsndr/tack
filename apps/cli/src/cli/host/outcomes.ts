@@ -1,6 +1,7 @@
 import { Schema } from "effect";
 import {
   HistoryListPayloadSchema,
+  ScriptRunPayloadSchema,
   type HistoryList,
   type OperatorRunResult,
 } from "../../domain/execution/execution-schema.ts";
@@ -515,7 +516,7 @@ export const scriptRunOutcome = (result: OperatorRunResult): PublicOutcome => ({
             },
           },
         ],
-  result: toJson(kinded("script-run", result)),
+  result: toJson(payloadAs(ScriptRunPayloadSchema, result)),
 });
 
 /** Presents one history page, partial when some retained records could not be read. */

@@ -5,7 +5,6 @@ import { docsIconsCommand, docsSearchCommand, docsServeCommand } from "./docs-re
 import { listAlias } from "./list-alias.ts";
 import { booleanFlag, optionalStringFlag } from "./flag-utils.ts";
 import { handle, invalid, receive } from "./invocation-receiver.ts";
-import { immediate, readOnly } from "./operation-contract.ts";
 
 const requested = (reference: string) => ({ reference });
 const named = (operation: "attach" | "detach") =>
@@ -89,7 +88,6 @@ export const docsCommand = docsRoot.pipe(
         { command: "tack docs attach handbook" },
         { command: `tack docs attach ${sourceId}:handbook --project demo` },
       ]),
-      immediate,
     ),
     named("detach").pipe(
       Command.withDescription(
@@ -99,7 +97,6 @@ export const docsCommand = docsRoot.pipe(
         { command: "tack docs detach handbook --project demo" },
         { command: `tack docs detach ${sourceId}:handbook --project demo` },
       ]),
-      immediate,
     ),
     listAlias({}, () => docsRoot.pipe(Effect.flatMap(listDocs))),
     docsSearchCommand,
@@ -115,7 +112,6 @@ export const docsCommand = docsRoot.pipe(
         { command: `tack docs configure --project demo --default ${sourceId}:handbook` },
         { command: "tack docs configure --project demo --clear-default" },
       ]),
-      immediate,
     ),
     target.pipe(
       Command.withDescription(
@@ -126,7 +122,6 @@ export const docsCommand = docsRoot.pipe(
         { command: "tack docs target --name handbook" },
         { command: `tack docs target --project demo --name ${sourceId}:handbook` },
       ]),
-      readOnly,
     ),
   ]),
   Command.withDescription(
@@ -136,5 +131,4 @@ export const docsCommand = docsRoot.pipe(
     { command: "tack docs --project demo" },
     { command: "tack docs --cwd /path/to/worktree" },
   ]),
-  readOnly,
 );

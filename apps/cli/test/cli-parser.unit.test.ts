@@ -3,7 +3,7 @@ import { describe, expect, it } from "@effect/vitest";
 import { Effect, Record } from "effect";
 import {
   InvocationError,
-  invocationCommandPaths,
+  commandDeclarations,
   type Invocation,
   parseInvocation as parseInvocationEffect,
 } from "../src/cli/commands/index.ts";
@@ -1300,7 +1300,7 @@ it.effect("keeps every public command path in agreement with the declared comman
     >;
 
     for (const tag of Record.keys(operands)) {
-      const path = invocationCommandPaths[tag];
+      const path = commandDeclarations[tag].path;
       const { invocation } = yield* parseInvocation([...path, ...operands[tag]]);
       expect(invocation["_tag"], path.join(" ")).toBe(tag);
     }

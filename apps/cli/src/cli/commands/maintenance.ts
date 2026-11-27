@@ -3,7 +3,7 @@ import { Command } from "effect/cli";
 import { booleanFlag, cleanupDetailsFlag } from "./flag-utils.ts";
 import { helpNotes } from "./help-notes.ts";
 import { handle, receive } from "./invocation-receiver.ts";
-import { applyFlag, immediate, previewApply, readOnly } from "./operation-contract.ts";
+import { applyFlag } from "./operation-contract.ts";
 import { allFlag, cwdFlag, projectFlag, selectorFrom, userFlag } from "./target-selector.ts";
 
 const statusCommand = Command.make(
@@ -79,7 +79,6 @@ const statusCommand = Command.make(
       ],
     },
   ]),
-  readOnly,
 );
 const cleanCommand = Command.make(
   "clean",
@@ -112,7 +111,6 @@ const cleanCommand = Command.make(
     { command: "tack state clean --project demo" },
     { command: "tack state clean --pending --user --apply" },
   ]),
-  previewApply,
 );
 const targetRule =
   "Bare selects the containing project; --all selects every project and the user target.";
@@ -125,13 +123,11 @@ const resetCommand = Command.make(
     "Preview removing every managed link and all Tack state; --apply deletes state only after cleanup settles",
   ),
   Command.withExamples([{ command: "tack state reset" }, { command: "tack state reset --apply" }]),
-  previewApply,
 );
 
 const initCommand = Command.make("init", {}, () => receive({ _tag: "init" })).pipe(
   Command.withDescription("Initialize Tack state explicitly; safe to repeat"),
   Command.withExamples([{ command: "tack state init" }]),
-  immediate,
 );
 
 /** Explicit state setup, scoped cleanup, and full reset. */

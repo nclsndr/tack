@@ -1,11 +1,11 @@
 import { describe, expect, it } from "@effect/vitest";
-import { commandNameOf, invocationCommandPaths } from "../src/cli/commands/index.ts";
+import { commandNameOf, commandDeclarations } from "../src/cli/commands/index.ts";
 import { routes } from "../src/cli/host/routes/index.ts";
 
 describe("CLI host routes", () => {
   it("routes exactly the invocations that have a command path", () => {
     expect(Object.keys(routes).toSorted()).toEqual(
-      [...Object.keys(invocationCommandPaths), "help", "version"].toSorted(),
+      [...Object.keys(commandDeclarations), "help", "version"].toSorted(),
     );
   });
 

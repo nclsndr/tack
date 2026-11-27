@@ -144,6 +144,13 @@ export const RunResultSchema = Schema.Struct({
   ),
 });
 export type OperatorRunResult = typeof RunResultSchema.Type;
+
+/** The `script run` result: one run's result, led by its `kind`. */
+export const ScriptRunPayloadSchema = Schema.Struct({
+  kind: Schema.Literal("script-run"),
+  ...RunResultSchema.fields,
+});
+
 /** One exact operator run; input-source conflicts are recorded as attempts. */
 export type OperatorRunRequest = {
   readonly address: typeof ScriptAddressSchema.Type;

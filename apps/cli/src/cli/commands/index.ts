@@ -6,10 +6,10 @@ import {
   commandNameOfPath,
   commandPathOf,
   InvocationError,
-  invocationCommandPaths,
   type ParsedInvocation,
   unknownCommandName,
 } from "./model.ts";
+import { commandDeclarations } from "./declarations.ts";
 import { InvocationReceiver } from "./invocation-receiver.ts";
 import { readVersionRequest } from "./version-request.ts";
 import { tackVersion } from "../../version.ts";
@@ -18,12 +18,13 @@ export {
   commandNameOf,
   commandPathOf,
   InvocationError,
-  invocationCommandPaths,
   isCommandName,
   type Invocation,
   unknownCommandName,
 } from "./model.ts";
-export { describeHelp, HelpPayloadSchema } from "./manifest.ts";
+export { commandDeclarations } from "./declarations.ts";
+export { describeHelp } from "./manifest.ts";
+export { HelpPayloadSchema } from "./command-payloads.ts";
 
 const parserConsole: Console.Console = Object.create(globalThis.console);
 parserConsole.log = () => undefined;
@@ -68,7 +69,7 @@ const invocationErrorFromCli = (error: CliError.CliError): InvocationError => {
     return new InvocationError({ code: "missing-argument", command, message: cause.message });
   }
   if (cause._tag === "InvalidValue" && cause.option === "project") {
-    const listProjects = ["tack", ...invocationCommandPaths["project-list"]];
+    const listProjects = ["tack", ...commandDeclarations["project-list"].path];
     return new InvocationError({
       code: "invalid-selector",
       command,

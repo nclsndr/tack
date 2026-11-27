@@ -4,7 +4,7 @@ import { historyListBounds, isHistoryRunId } from "../../domain/execution/execut
 import { listAlias } from "./list-alias.ts";
 import { booleanFlag, optionalIntegerFlag, optionalStringFlag } from "./flag-utils.ts";
 import { handle, receive } from "./invocation-receiver.ts";
-import { applyFlag, operationContract, previewApply, readOnly } from "./operation-contract.ts";
+import { applyFlag } from "./operation-contract.ts";
 import { cwdFlag, projectFlag, selectorOf, userFlag } from "./target-selector.ts";
 
 const scriptRun = Command.make(
@@ -76,7 +76,6 @@ const scriptRun = Command.make(
     { command: "tack script run brain:nested-report --root /path/to/worktree --quiet" },
     { command: "tack script run report --user --input-stdin --timeout 30000" },
   ]),
-  operationContract({ mutation: "execute", slots: ["result"] }),
 );
 
 const scriptShow = Command.make(
@@ -92,7 +91,6 @@ const scriptShow = Command.make(
     "Show one declared script: its description, file, arguments and secrets. Tack loads the script to read them but never runs it",
   ),
   Command.withExamples([{ command: "tack script show report" }]),
-  readOnly,
 );
 
 const historyIntegerFlag = (
@@ -140,7 +138,6 @@ const historyCommand = historyRoot.pipe(
       Command.withExamples([
         { command: "tack script history show 00000000-0000-4000-8000-000000000001" },
       ]),
-      readOnly,
     ),
     Command.make("clear", { apply: applyFlag }, ({ apply }) =>
       receive({ _tag: "history-clear", apply }),
@@ -152,12 +149,10 @@ const historyCommand = historyRoot.pipe(
         { command: "tack script history clear" },
         { command: "tack script history clear --apply" },
       ]),
-      previewApply,
     ),
   ]),
   Command.withDescription("Inspect and clear retained script run history"),
   Command.withExamples([{ command: "tack script history --limit 50 --offset 20" }]),
-  readOnly,
 );
 
 /** Script execution and retained history. */

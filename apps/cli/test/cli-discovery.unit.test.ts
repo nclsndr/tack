@@ -7,7 +7,7 @@ import { isListAlias } from "../src/cli/commands/list-alias.ts";
 import {
   describeHelp,
   HelpPayloadSchema,
-  invocationCommandPaths,
+  commandDeclarations,
   parseInvocation as parseInvocationEffect,
 } from "../src/cli/commands/index.ts";
 import type { CommandContract } from "../src/cli/commands/manifest.ts";
@@ -44,14 +44,16 @@ const flagArguments = (flag: CommandContract["flags"][number]): ReadonlyArray<st
 
 const tagOf = (commandPath: ReadonlyArray<string>) => {
   const name = commandPath.join(" ");
-  const tag = Record.keys(invocationCommandPaths).find(
-    (candidate) => invocationCommandPaths[candidate].join(" ") === name,
+  const tag = Record.keys(commandDeclarations).find(
+    (candidate) => commandDeclarations[candidate].path.join(" ") === name,
   );
   expect(tag, name).toBeDefined();
   return tag;
 };
 
-const operationNames = new Set(Object.values(invocationCommandPaths).map((path) => path.join(" ")));
+const operationNames = new Set(
+  Object.values(commandDeclarations).map(({ path }) => path.join(" ")),
+);
 
 const isUnrecognizedFlag = (result: Result.Result<unknown, { readonly message: string }>) =>
   Result.isFailure(result) && result.failure.message.startsWith("Unrecognized flag");
@@ -66,7 +68,7 @@ it.effect("publishes exactly the executable operations the parser dispatches", (
   Effect.gen(function* () {
     const { commands } = decodeContracts(yield* contracts());
     expect(commands.map(({ command }) => command).toSorted()).toEqual(
-      [...new Set(Object.values(invocationCommandPaths).map((path) => path.join(" ")))].toSorted(),
+      [...new Set(Object.values(commandDeclarations).map(({ path }) => path.join(" ")))].toSorted(),
     );
     for (const contract of commands) {
       expect(contract.command).toBe(contract.commandPath.join(" "));
@@ -203,7 +205,7 @@ it.effect("describes the root and every group with subcommands that resolve", ()
       );
     const visited = yield* visit([]);
     // The root, every group and every executable operation have their own help.
-    expect(visited).toBeGreaterThan(Object.keys(invocationCommandPaths).length);
+    expect(visited).toBeGreaterThan(Object.keys(commandDeclarations).length);
   }),
 );
 
@@ -411,7 +413,7 @@ it.effect("accepts list and ls as spellings of the bare parents without publishi
         });
       }
     }
-    expect(Object.values(invocationCommandPaths).map((path) => path.join(" "))).not.toContain(
+    expect(Object.values(commandDeclarations).map(({ path }) => path.join(" "))).not.toContain(
       "source list",
     );
   }),
