@@ -33,11 +33,9 @@ afterEach(async () => {
 it("lists a layout engine that fails as a layout issue and keeps the rest of the figure", async () => {
   engine.load.mockRejectedValue(new Error("no engine"));
   await act(async () => root.render(createElement(System, capturePath)));
-  await vi.waitFor(() => {
-    expect(container.querySelector(".tack-figure-pending")?.textContent).toBe(
-      "The figure could not be laid out.",
-    );
-  });
+  expect(container.querySelector(".tack-figure-pending")?.textContent).toBe(
+    "The figure could not be laid out.",
+  );
   const figure = container.querySelector<HTMLElement>("figure");
   expect(JSON.parse(figure?.dataset["figureIssues"] ?? "[]")).toEqual([
     "layout: the layout engine failed: no engine",
@@ -58,11 +56,9 @@ it("says it is laying out until the engine answers, and names a failure that is 
     "Laying out the figure…",
   );
   await act(async () => fail("busy"));
-  await vi.waitFor(() => {
-    expect(container.querySelector("figure")?.dataset["figureIssues"]).toContain(
-      "the layout engine failed: busy",
-    );
-  });
+  expect(container.querySelector("figure")?.dataset["figureIssues"]).toContain(
+    "the layout engine failed: busy",
+  );
 });
 
 it("drops a layout that arrives after the figure is gone", async () => {
@@ -82,11 +78,9 @@ it("drops a layout that arrives after the figure is gone", async () => {
 it("lists a layout engine that fails a Schema as a layout issue and keeps its text", async () => {
   engine.load.mockRejectedValue(new Error("no engine"));
   await act(async () => root.render(createElement(Schema, domainModel)));
-  await vi.waitFor(() => {
-    expect(container.querySelector(".tack-figure-pending")?.textContent).toBe(
-      "The figure could not be laid out.",
-    );
-  });
+  expect(container.querySelector(".tack-figure-pending")?.textContent).toBe(
+    "The figure could not be laid out.",
+  );
   const figure = container.querySelector<HTMLElement>("figure");
   expect(JSON.parse(figure?.dataset["figureIssues"] ?? "[]")).toEqual([
     "layout: the layout engine failed: no engine",
