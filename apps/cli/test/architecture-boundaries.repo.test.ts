@@ -243,6 +243,44 @@ describe("CLI architecture boundaries", () => {
     expect(violations).toEqual([]);
   });
 
+  it("adds no throw: a failure goes through the Effect error channel", () => {
+    // Each file that throws today, and how often. The script worker and its protocol run outside
+    // Effect, and the bundle codec, the YAML reader and the release facts are plain functions. Lower
+    // a count when a throw goes; a new one needs a reason to throw rather than fail an Effect.
+    const allowed = {
+      "cli/host/human/explorer/profile-editor.ts": 2,
+      "domain/agents/agent-layout.ts": 1,
+      "domain/bundles/bundle-codec.ts": 4,
+      "domain/bundles/bundle-path.ts": 3,
+      "domain/bundles/bundle-registration.ts": 2,
+      "domain/bundles/tar.ts": 2,
+      "domain/links/link-record-schema.ts": 1,
+      "domain/runtime-neutral.ts": 2,
+      "platform/execution/execution-platform.ts": 7,
+      "platform/execution/history.ts": 10,
+      "platform/execution/input.ts": 9,
+      "platform/execution/protocol.ts": 8,
+      "platform/execution/script-api-adapter.ts": 3,
+      "platform/execution/script-api-hooks.ts": 1,
+      "platform/execution/script-api-loader.ts": 1,
+      "platform/execution/secrets.ts": 4,
+      "platform/execution/shell.ts": 2,
+      "platform/execution/supervisor.ts": 3,
+      "platform/execution/worker.ts": 3,
+      "release.ts": 1,
+      "version.ts": 2,
+    };
+    const throws = productionSourceFiles().flatMap((path) => {
+      const count = readFileSync(path, "utf8")
+        .split("\n")
+        .filter((line) => !/^\s*(?:\/\/|\/\*|\*)/.test(line))
+        .reduce((total, line) => total + (line.match(/\bthrow\b/g)?.length ?? 0), 0);
+      return count === 0 ? [] : [[modulePath(path), count] as const];
+    });
+
+    expect(Object.fromEntries(throws)).toEqual(allowed);
+  });
+
   it("names every service identifier after the path of its declaring module", () => {
     const identifiers = productionSourceFiles().flatMap((path) =>
       [...readFileSync(path, "utf8").matchAll(/["'](tack\/cli\/[^"']+)["']/g)].map((match) => ({
