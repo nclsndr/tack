@@ -121,7 +121,7 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
       // The source publishes the profile that other is fixed to, and one with no file, left out.
       yield* write(
         path.join(source, "tack.yaml"),
-        "version: 2\nname: source\nskills:\n  - path: skills\ndocs:\n  - name: handbook\n    path: knowledge\nprofiles:\n  - name: team\n    path: profiles/team.yaml\n  - name: broken\n    path: profiles/broken.yaml\n",
+        "version: 1\nname: source\nskills:\n  - path: skills\ndocs:\n  - name: handbook\n    path: knowledge\nprofiles:\n  - name: team\n    path: profiles/team.yaml\n  - name: broken\n    path: profiles/broken.yaml\n",
       );
       yield* write(
         path.join(source, "profiles", "team.yaml"),

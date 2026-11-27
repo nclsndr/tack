@@ -18,7 +18,7 @@ it.layer(LiveTestLayer)("profile files through check CLI", (test) => {
         );
         yield* fs.writeFileString(
           path.join(root, "tack.yaml"),
-          "version: 2\nname: tools\ncommands:\n  - path: run.md\nprofiles:\n  - name: ci\n    path: ci.yaml\n",
+          "version: 1\nname: tools\ncommands:\n  - path: run.md\nprofiles:\n  - name: ci\n    path: ci.yaml\n",
         );
         yield* fs.writeFileString(path.join(root, "run.md"), "Run");
         yield* fs.writeFileString(

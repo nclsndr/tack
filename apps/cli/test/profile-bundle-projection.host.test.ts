@@ -85,7 +85,7 @@ it.layer(LiveTestLayer)("bundle projection check", (test) => {
       const error = yield* refusal(
         tamper(archive, {
           "tack.yaml":
-            "version: 2\nname: tools\nskills: [{path: skills/review}, {path: skills/style}, {path: skills/broken}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
+            "version: 1\nname: tools\nskills: [{path: skills/review}, {path: skills/style}, {path: skills/broken}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
           "skills/broken/SKILL.md": "---\nname: [broken\n---\n",
         }),
       );
@@ -103,7 +103,7 @@ it.layer(LiveTestLayer)("bundle projection check", (test) => {
       const error = yield* refusal(
         tamper(archive, {
           "tack.yaml":
-            "version: 2\nname: tools\nskills: [{path: skills/review}, {path: skills/style}, {path: skills/extra}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
+            "version: 1\nname: tools\nskills: [{path: skills/review}, {path: skills/style}, {path: skills/extra}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
           "skills/extra/SKILL.md": skillText("extra", { description: "Extra", body: "" }),
         }),
       );

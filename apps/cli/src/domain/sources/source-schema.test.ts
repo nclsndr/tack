@@ -10,17 +10,17 @@ import {
 it.each([
   ["profiles", { profiles: [] }],
   ["bundle-support", { "bundle-support": {} }],
-])("refuses the %s key in a version 1 declaration", (_key, change) => {
+])("takes the %s key in a version 1 declaration", (_key, change) => {
   expect(
-    Schema.decodeUnknownSync(DeclarationSchema)({ version: 2, name: "tools", ...change }),
-  ).toEqual({
-    version: 2,
-    name: "tools",
-    ...change,
-  });
-  expect(() =>
     Schema.decodeUnknownSync(DeclarationSchema)({ version: 1, name: "tools", ...change }),
-  ).toThrow("The profiles and bundle-support keys require source declaration version 2.");
+  ).toEqual({ version: 1, name: "tools", ...change });
+});
+
+it("refuses any declaration version other than 1", () => {
+  expect(() =>
+    Schema.decodeUnknownSync(DeclarationSchema)({ version: 2, name: "tools", profiles: [] }),
+  ).toThrow(`Expected 1
+  at ["version"]`);
 });
 
 const decode = (value: unknown) =>
@@ -42,7 +42,7 @@ it.each([
       { name: "kb", path: "." },
     ],
   },
-  { version: 2, name: "personal", skills: [{ path: "." }], profiles: [] },
+  { version: 1, name: "personal", skills: [{ path: "." }], profiles: [] },
   { version: 1, name: "personal", skills: [{ path: "." }, { path: "vendor" }] },
 ])("decodes a declaration whose . entries declare one kind: %j", (value) => {
   expect(decode(value)).toEqual({ declaration: value });
@@ -189,8 +189,6 @@ it("names a missing key other than the name", () => {
   ]);
 });
 
-it("reports a rule over the whole declaration without a field", () => {
-  expect(issuesOf({ version: 1, name: "brain", profiles: [] })).toEqual([
-    { message: "The profiles and bundle-support keys require source declaration version 2." },
-  ]);
+it("reports an issue with the whole declaration without a field", () => {
+  expect(issuesOf("brain")).toEqual([{ message: expect.stringContaining("Expected object") }]);
 });

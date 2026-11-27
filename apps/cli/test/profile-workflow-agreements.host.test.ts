@@ -28,7 +28,7 @@ it.layer(LiveTestLayer)("profile workflow agreements", (test) => {
           yield* f.fs.makeDirectory(f.path.join(f.root, "git"));
           yield* f.write(
             "source/tack.yaml",
-            "version: 2\nname: tools\nskills: []\ndocs: [{name: guide, path: docs}]\nprofiles: [{name: ci, path: ci.yaml}]\nbundle-support: [{kind: docs, name: guide, complete: true, files: [], prerequisites: []}]\n",
+            "version: 1\nname: tools\nskills: []\ndocs: [{name: guide, path: docs}]\nprofiles: [{name: ci, path: ci.yaml}]\nbundle-support: [{kind: docs, name: guide, complete: true, files: [], prerequisites: []}]\n",
           );
           yield* f.write(
             "source/ci.yaml",
@@ -103,7 +103,7 @@ it.layer(LiveTestLayer)("profile workflow agreements", (test) => {
         yield* f.fs.makeDirectory(f.path.join(f.root, "git"));
         yield* f.write(
           "source/tack.yaml",
-          "version: 2\nname: tools\nskills: [{path: skills}]\ncommands: [{path: audit.md}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
+          "version: 1\nname: tools\nskills: [{path: skills}]\ncommands: [{path: audit.md}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
         );
         yield* f.write("source/audit.md", "Audit\n");
         yield* f.write(

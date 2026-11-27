@@ -342,7 +342,7 @@ it.layer(LiveTestLayer)("import recovery", (test) => {
         expect(yield* recoverStaging(root)).toEqual(scratch);
         expect(yield* exists(staging)).toBe(false);
         yield* fileSystem.makeDirectory(staging);
-        yield* fileSystem.writeFileString(`${staging}/intent.json`, '{"version":2}');
+        yield* fileSystem.writeFileString(`${staging}/intent.json`, '{"version":99}');
         expect(yield* recoverStaging(root)).toEqual(scratch);
         expect(yield* exists(staging)).toBe(false);
       }),

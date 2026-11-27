@@ -37,7 +37,7 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
           run,
           request: applyRequest,
         } = yield* profileFixture;
-        yield* write("team/tack.yaml", "version: 2\nname: team\ncommands: [{path: audit.md}]\n");
+        yield* write("team/tack.yaml", "version: 1\nname: team\ncommands: [{path: audit.md}]\n");
         yield* write("team/audit.md", "Audit");
         const external = yield* registerSource(options, {
           sourcePath: path.join(root, "team"),
@@ -84,7 +84,7 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
           )).plan.refused,
         ).toBe(false);
         // A source without a name is unhealthy, so its members are missing rather than unnamed.
-        yield* write("team/tack.yaml", "version: 2\ncommands: [{path: audit.md}]\n");
+        yield* write("team/tack.yaml", "version: 1\ncommands: [{path: audit.md}]\n");
         expect(
           (yield* runProfileSaveSelection(options, { ...request, name: "unnamed" })).plan.findings,
         ).toEqual(
@@ -111,7 +111,7 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
             }),
           )).plan.refused,
         ).toBe(true);
-        yield* write("team/tack.yaml", "version: 2\nname: team\ncommands: [{path: audit.md}]\n");
+        yield* write("team/tack.yaml", "version: 1\nname: team\ncommands: [{path: audit.md}]\n");
         yield* fs.rename(path.join(root, "team"), path.join(root, "different-checkout"));
         yield* mutateStateFixture(options, (state) => ({
           ...state,
@@ -142,7 +142,7 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
         yield* write("source/audit.md", "A different audit");
         yield* write(
           "source/tack.yaml",
-          "version: 2\nname: tools\ncommands: [{path: audit.md}]\nprofiles: [{name: portable, path: profiles/portable.yaml}]\n",
+          "version: 1\nname: tools\ncommands: [{path: audit.md}]\nprofiles: [{name: portable, path: profiles/portable.yaml}]\n",
         );
         const checked = yield* checkPaths([path.join(source, "profiles/portable.yaml")]);
         expect(checked.checks.flatMap((item) => item.details)).toContain("Direct members (0)");
@@ -154,7 +154,7 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
       const { options, request, run, write, sourceId, project } = yield* profileFixture;
       yield* write(
         "source/tack.yaml",
-        "version: 2\nname: tools\ncontext: [{path: context.md}]\ndocs: [{name: handbook, path: docs}]\nscripts: [{name: deploy, path: deploy.ts, description: Deploy}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
+        "version: 1\nname: tools\ncontext: [{path: context.md}]\ndocs: [{name: handbook, path: docs}]\nscripts: [{name: deploy, path: deploy.ts, description: Deploy}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
       );
       yield* write("source/context.md", "Context");
       yield* write("source/docs/intro.md", "# Intro");
@@ -341,7 +341,7 @@ it.layer(LiveTestLayer)("independent profile copies", (test) => {
         );
         expect(adopted.adopted).toBe(true);
         expect(adopted.plan.blockers.length).toBeGreaterThan(0);
-        yield* write("other/tack.yaml", "version: 2\nname: other\nskills: [{path: skills}]\n");
+        yield* write("other/tack.yaml", "version: 1\nname: other\nskills: [{path: skills}]\n");
         yield* write(
           "other/skills/notes/SKILL.md",
           skillText("notes", { description: "Other", body: "" }),

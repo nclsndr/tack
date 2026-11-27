@@ -297,7 +297,7 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
   test.effect.each([
     "version: [",
     "version: 1\nname: shared\nextra: true",
-    "version: 2\nname: shared",
+    "version: 99\nname: shared",
     "- scalar",
     "version: 1\n---\nversion: 1",
   ])("makes a malformed root declaration unhealthy: %s", (encoded) =>

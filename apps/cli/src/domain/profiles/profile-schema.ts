@@ -24,7 +24,7 @@ export const ProfileSchema = Schema.Struct({
 });
 export type Profile = typeof ProfileSchema.Type;
 
-/** Explicit publication of one profile file by a version-2 source declaration. */
+/** Explicit publication of one profile file by a source declaration. */
 export const ProfilePublicationSchema = Schema.Struct({
   name: PortableNameSchema,
   path: Schema.String,

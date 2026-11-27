@@ -376,7 +376,7 @@ it.layer(LiveTestLayer)("exact profile application", (test) => {
         const { fs, path, project, options, request, run, write } = yield* fixture;
         yield* write(
           "source/tack.yaml",
-          "version: 2\nname: tools\nskills: [{path: skills}]\ncommands: [{path: audit.md}]\ncontext: [{path: guide.md}]\nscripts: [{name: danger, path: danger.ts, description: Never execute}]\ndocs: [{name: handbook, path: docs}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
+          "version: 1\nname: tools\nskills: [{path: skills}]\ncommands: [{path: audit.md}]\ncontext: [{path: guide.md}]\nscripts: [{name: danger, path: danger.ts, description: Never execute}]\ndocs: [{name: handbook, path: docs}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
         );
         yield* write("source/audit.md", "Audit");
         yield* write("source/guide.md", "Guide");

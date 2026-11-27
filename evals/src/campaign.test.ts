@@ -22,7 +22,7 @@ const task: EvalTask = {
   oracle: async () => ({ commands: [], finalAnswer: "correct" }),
 };
 const suite: TaskSuite = {
-  contractVersion: 2,
+  contractVersion: 1,
   families: [{ id: "quick", limits: { wallSeconds: 120, toolCalls: 12, outputBytes: 1024 } }],
   tasks: [task],
 };

@@ -23,9 +23,9 @@ _Avoid_: source declaration, resource identity
 
 **Source declaration**:
 A versioned document authored within a source. It describes source content independently of the
-operator's local registration. The `tack.yaml` at the top of a source supports versions 1 and 2.
-Both carry a source label, maintainers, source dependencies and the resource declarations that say
-where each kind of resource lives; version 2 also publishes profiles and bundle support. Source, profile, bundle and local-state
+operator's local registration. The `tack.yaml` at the top of a source is version 1.
+It carries a source label, maintainers, source dependencies and the resource declarations that say
+where each kind of resource lives, and may also publish profiles and bundle support. Source, profile, bundle and local-state
 formats are independent. Nothing is a resource unless a declaration covers it. Each `tack.yaml`
 marks the edge of one source: below a source's root, a folder that holds `tack.yaml` and no
 `SKILL.md` belongs to another source, and declarations never merge or inherit across that edge.
@@ -561,7 +561,7 @@ _Avoid_: catalog, general application logs, proof that an interrupted run comple
 ### Profiles
 
 **Profile**:
-A separately versioned, fixed list of resources to include, published by a version-2 source through
+A separately versioned, fixed list of resources to include, published by a source through
 `profiles: [{ name, path }]`. It references source-owned resources and adds no resource kind. A bare
 member name stays within the publishing source, an external member keeps a portable source
 qualifier, and required closure follows resource dependency rules. Authoring or checking a profile

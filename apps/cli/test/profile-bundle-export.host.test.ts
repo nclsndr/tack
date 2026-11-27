@@ -31,7 +31,7 @@ it.layer(LiveTestLayer)("bundle export completeness", (test) => {
   ])("numbers source keys by source name when state lists $order", ({ ids }) =>
     Effect.gen(function* () {
       const f = yield* profileFixture;
-      yield* f.write("team/tack.yaml", "version: 2\nname: team\nskills: [{path: skills}]\n");
+      yield* f.write("team/tack.yaml", "version: 1\nname: team\nskills: [{path: skills}]\n");
       yield* f.write(
         "team/skills/lint/SKILL.md",
         skillText("lint", { description: "Lint", body: "" }),
@@ -39,7 +39,7 @@ it.layer(LiveTestLayer)("bundle export completeness", (test) => {
       yield* registerSource(f.options, { sourcePath: f.path.join(f.root, "team") });
       yield* f.write(
         "source/tack.yaml",
-        "version: 2\nname: tools\ndepends-on: [team]\nskills: [{path: skills}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
+        "version: 1\nname: tools\ndepends-on: [team]\nskills: [{path: skills}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
       );
       yield* f.write(
         "source/ci.yaml",
@@ -135,7 +135,7 @@ it.layer(LiveTestLayer)("bundle export completeness", (test) => {
         const { path, root, options, write } = yield* profileFixture;
         yield* write(
           "source/tack.yaml",
-          "version: 2\nname: tools\nscripts: [{name: pack, path: pack.ts, description: Pack}]\nprofiles: [{name: ci, path: ci.yaml}]\nbundle-support: [{kind: script, name: pack, complete: true, files: [package.json, bun.lock], prerequisites: [Install fixture-tool 1.0.0 explicitly]}]\n",
+          "version: 1\nname: tools\nscripts: [{name: pack, path: pack.ts, description: Pack}]\nprofiles: [{name: ci, path: ci.yaml}]\nbundle-support: [{kind: script, name: pack, complete: true, files: [package.json, bun.lock], prerequisites: [Install fixture-tool 1.0.0 explicitly]}]\n",
         );
         yield* write("source/ci.yaml", "version: 1\nname: ci\nmembers: [pack]\n");
         yield* write("source/pack.ts", "import 'fixture-tool'; throw new Error('never import');");
@@ -197,7 +197,7 @@ it.layer(LiveTestLayer)("bundle export completeness", (test) => {
         yield* write(
           "source/tack.yaml",
           Bun.YAML.stringify({
-            version: 2,
+            version: 1,
             name: "tools",
             skills: [{ path: "skills" }],
             profiles: [{ name: "ci", path: "ci.yaml" }],
@@ -257,7 +257,7 @@ it.layer(LiveTestLayer)("bundle export completeness", (test) => {
         const f = yield* profileFixture;
         yield* f.write(
           "source/tack.yaml",
-          "version: 2\nname: tools\nskills: []\nscripts: [{name: report, path: report.ts, description: Report}]\ndocs: [{name: guide, path: docs}]\nprofiles: [{name: ci, path: ci.yaml}]\nbundle-support: [{kind: script, name: report, complete: true, files: [], prerequisites: [], package: none}, {kind: docs, name: guide, complete: true, files: [], prerequisites: []}]\n",
+          "version: 1\nname: tools\nskills: []\nscripts: [{name: report, path: report.ts, description: Report}]\ndocs: [{name: guide, path: docs}]\nprofiles: [{name: ci, path: ci.yaml}]\nbundle-support: [{kind: script, name: report, complete: true, files: [], prerequisites: [], package: none}, {kind: docs, name: guide, complete: true, files: [], prerequisites: []}]\n",
         );
         const cases = [
           {
@@ -329,7 +329,7 @@ it.layer(LiveTestLayer)("bundle export completeness", (test) => {
         const f = yield* profileFixture;
         yield* f.write(
           "source/tack.yaml",
-          "version: 2\nname: tools\nskills: []\ndocs: [{name: guide, path: docs}]\nprofiles: [{name: ci, path: ci.yaml}]\nbundle-support: [{kind: docs, name: guide, complete: true, files: [], prerequisites: []}]\n",
+          "version: 1\nname: tools\nskills: []\ndocs: [{name: guide, path: docs}]\nprofiles: [{name: ci, path: ci.yaml}]\nbundle-support: [{kind: docs, name: guide, complete: true, files: [], prerequisites: []}]\n",
         );
         yield* f.write("source/ci.yaml", "version: 1\nname: ci\nmembers: [guide]\n");
         yield* f.write("source/docs/guide.mdx", "# Guide\n");

@@ -96,7 +96,7 @@ export const checkPaths = Effect.fn("check.checkPaths")(function* (
       readFailure(
         file,
         "profile-unpublished",
-        "This profile file is not published by its source. Add its name/path to the version-2 tack.yaml profiles list.",
+        "This profile file is not published by its source. Add its name/path to the tack.yaml profiles list.",
       );
       return;
     }

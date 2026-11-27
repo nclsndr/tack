@@ -330,7 +330,7 @@ export async function runCli(cliArgs: string[]): Promise<void> {
       values.suite === undefined ? join(root, "evals/tasks/index.ts") : resolve(values.suite);
     // Task modules are reviewed local code, never downloaded data or agent-authored files.
     const module: { suite?: TaskSuite } = await import(pathToFileURL(path).href);
-    if (module.suite?.contractVersion !== 2) throw new Error("Expected version-2 suite export");
+    if (module.suite?.contractVersion !== 1) throw new Error("Expected version-1 suite export");
     const build = await Bun.build({ entrypoints: [path], target: "bun" });
     if (build.success === false || build.outputs[0] === undefined)
       throw new Error("Cannot hash the complete trusted suite");

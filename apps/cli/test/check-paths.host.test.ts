@@ -18,7 +18,7 @@ const fixture = Effect.gen(function* () {
     path.join(root, "tools"),
     profileSourceFiles({
       "tack.yaml":
-        "version: 2\nname: tools\nskills: [{path: skills}]\ndocs: [{name: guide, path: docs}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
+        "version: 1\nname: tools\nskills: [{path: skills}]\ndocs: [{name: guide, path: docs}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
       "docs/page.md": "# Guide\n",
     }),
   );
@@ -318,7 +318,7 @@ it.layer(LiveTestLayer)("unified read-only path checks", (test) => {
         yield* f.write("outside/bad.mdx", '<Chart id="outside" />\n');
         yield* f.write(
           "tools/tack.yaml",
-          "version: 2\nname: tools\ndocs: [{name: escape, path: ../outside}]\n",
+          "version: 1\nname: tools\ndocs: [{name: escape, path: ../outside}]\n",
         );
         const report = yield* checkPaths([f.source]);
         expect(report.summary.errors).toBeGreaterThan(0);

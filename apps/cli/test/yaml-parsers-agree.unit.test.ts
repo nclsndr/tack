@@ -18,7 +18,7 @@ const documents: ReadonlyArray<readonly [string, string]> = [
   ["a repeated list key", "version: 1\nskills:\n  - path: a\nskills:\n  - path: b\n"],
   ["a key that is no scalar", "? [a, b]\n: 1\nname: x\n"],
   ["malformed YAML", "version: [\n"],
-  ["two documents", "version: 1\n---\nversion: 2\n"],
+  ["two documents", "version: 1\n---\nversion: 1\n"],
 ];
 
 const directory = await mkdtemp(join(tmpdir(), "tack-yaml-agree-"));

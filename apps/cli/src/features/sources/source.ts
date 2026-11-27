@@ -17,7 +17,6 @@ import {
   type SourceDeclaration,
   type SourceRegistration,
   sourceDeclarationVersion,
-  profileSourceDeclarationVersion,
 } from "../../domain/sources/source-schema.ts";
 import type {
   DeclaredSourceInspection,
@@ -335,12 +334,7 @@ export const validateDeclaration = Effect.fnUntraced(function* (
     });
   }
 
-  if (
-    checkDeclarationVersion(parsedDeclaration, [
-      sourceDeclarationVersion,
-      profileSourceDeclarationVersion,
-    ]) === false
-  ) {
+  if (checkDeclarationVersion(parsedDeclaration, [sourceDeclarationVersion]) === false) {
     return yield* new SourceValidationError({
       code: "declaration-version-unsupported",
       message: "The source declaration version is not supported.",

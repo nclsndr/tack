@@ -9,8 +9,8 @@ export type DeclarationTextEdit = {
 };
 
 /**
- * Applies non-overlapping edits to the text of a `tack.yaml`, keeping every byte outside them. The
- * file is never re-serialized.
+ * Applies one edit to the text of a `tack.yaml`, keeping every byte outside it. The file is never
+ * re-serialized.
  *
  * Each top-level key Tack writes finds its own span. The imports section finds it by lines
  * (`features/imports/imports-section.ts`) and profiles find theirs through the `yaml` CST
@@ -19,13 +19,5 @@ export type DeclarationTextEdit = {
  * span and refuses a quoted or flow key, while the CST locator takes that comment into the span,
  * accepts those keys, and appends with its own blank-line and line-ending rules.
  */
-export const applyDeclarationTextEdits = (
-  text: string,
-  edits: ReadonlyArray<DeclarationTextEdit>,
-): string =>
-  [...edits]
-    .sort((left, right) => right.start - left.start)
-    .reduce(
-      (content, edit) => `${content.slice(0, edit.start)}${edit.text}${content.slice(edit.end)}`,
-      text,
-    );
+export const applyDeclarationTextEdit = (text: string, edit: DeclarationTextEdit): string =>
+  `${text.slice(0, edit.start)}${edit.text}${text.slice(edit.end)}`;

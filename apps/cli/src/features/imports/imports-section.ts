@@ -4,7 +4,7 @@ import { deepStrictEqual } from "../../domain/identity/portable.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
 import { decodeImportRecord, type ImportRecord } from "../../domain/imports/import-record.ts";
 import {
-  applyDeclarationTextEdits,
+  applyDeclarationTextEdit,
   type DeclarationTextEdit,
 } from "../../domain/sources/declaration-text.ts";
 
@@ -247,9 +247,11 @@ export const editImportsSection = (
     const lengthOf = (parts: ReadonlyArray<Line>) =>
       parts.reduce((total, line) => total + line.content.length + line.terminator.length, 0);
     const rendered = sorted.length === 0 ? [] : renderSection(sorted);
-    const edits = ((): ReadonlyArray<DeclarationTextEdit> => {
+    const edit = ((): DeclarationTextEdit => {
       if (span === undefined) {
-        if (rendered.length === 0) return [];
+        const end = originalText.length;
+        // Nothing to write and no section to remove: an empty insertion keeps the text as it is.
+        if (rendered.length === 0) return { start: end, end, text: "" };
         const endsWithBlank =
           originalText.length === 0 ||
           lines.length === 0 ||
@@ -262,20 +264,17 @@ export const editImportsSection = (
               : endsWithBlank
                 ? ""
                 : eol;
-        const end = originalText.length;
-        return [{ start: end, end, text: `${separator}${rendered.join(eol)}${eol}` }];
+        return { start: end, end, text: `${separator}${rendered.join(eol)}${eol}` };
       }
       const last = lines[span.end - 1];
       const finalTerminator = last?.terminator ?? "";
-      return [
-        {
-          start: lengthOf(lines.slice(0, span.start)),
-          end: lengthOf(lines.slice(0, span.end)),
-          text: rendered.length === 0 ? "" : `${rendered.join(eol)}${finalTerminator}`,
-        },
-      ];
+      return {
+        start: lengthOf(lines.slice(0, span.start)),
+        end: lengthOf(lines.slice(0, span.end)),
+        text: rendered.length === 0 ? "" : `${rendered.join(eol)}${finalTerminator}`,
+      };
     })();
-    const next = applyDeclarationTextEdits(originalText, edits);
+    const next = applyDeclarationTextEdit(originalText, edit);
     const reparsed = parseDocument(next);
     if (Result.isFailure(reparsed)) return Result.fail(reparsed.failure);
     const importsBack = reparsed.success["imports"];

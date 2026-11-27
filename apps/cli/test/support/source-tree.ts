@@ -70,7 +70,7 @@ export const profileSourceFiles = (
   overrides: Readonly<Record<string, string>> = {},
 ): Readonly<Record<string, string>> => ({
   "tack.yaml":
-    "version: 2\nname: tools\nskills: [{path: skills}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
+    "version: 1\nname: tools\nskills: [{path: skills}]\nprofiles: [{name: ci, path: ci.yaml}]\n",
   "ci.yaml": "version: 1\nname: ci\nmembers: [review]\n",
   "skills/review/SKILL.md": bareSkillText("review", { description: "Review" }),
   ...overrides,

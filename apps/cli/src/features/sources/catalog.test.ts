@@ -223,7 +223,7 @@ it.layer(LiveTestLayer)("skill catalog", (sourceIt) => {
         yield* createSkill(
           sourcePath,
           "bad-version",
-          frontmatter("bad-version", "metadata:\n  tack: |\n    version: 2"),
+          frontmatter("bad-version", "metadata:\n  tack: |\n    version: 99"),
         );
         yield* createSkill(
           sourcePath,

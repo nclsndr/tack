@@ -27,7 +27,7 @@ const conversation: EvalTask = {
   followUps: ["My skills are in ~/kit.", "Yes."],
 };
 const suite: TaskSuite = {
-  contractVersion: 2,
+  contractVersion: 1,
   families: [
     { id: "quick", limits: { wallSeconds: 120, toolCalls: 12, outputBytes: 4194304 } },
     {

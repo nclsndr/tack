@@ -21,12 +21,12 @@ Use `manage-tack-sources` before changing the owning source, including its maint
    read-only and says `fixed by SOURCE/PROFILE`. `i` toggles a positive member, `x` removes one, and `c` reviews
    direct and required inventory before save. Destination changes require save, discard or cancel
    when edits are pending. Profile save writes only its file and publication.
-2. Publish the file in the owning source's `tack.yaml`. Profile-bearing sources require source
-   version 2. Version 1 remains readable for sources without profiles. Unsupported source versions
-   fail before resource discovery. A broken profile leaves unrelated resources usable.
+2. Publish the file in the owning source's `tack.yaml`, under its `profiles` key. A source
+   declaration is version 1, with or without profiles. Any other source version fails before
+   resource discovery. A broken profile leaves unrelated resources usable.
 
 ```yaml
-version: 2
+version: 1
 name: tools
 skills:
   - path: skills

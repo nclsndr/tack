@@ -187,8 +187,8 @@ it("checks successful auth, invalid suite contracts and failed code hashing with
   await runCli(["doctor", "--suite", suite]);
   expect(output).toHaveBeenCalledWith("codex: subscription auth ready");
   const invalid = join(directory, "invalid.ts");
-  await writeFile(invalid, "export const suite={contractVersion:1};");
-  await expect(runCli(["list", "--suite", invalid])).rejects.toThrow("version-2");
+  await writeFile(invalid, "export const suite={contractVersion:99};");
+  await expect(runCli(["list", "--suite", invalid])).rejects.toThrow("version-1");
   const built = await Bun.build({ entrypoints: [suite], target: "bun" });
   vi.spyOn(Bun, "build").mockResolvedValue({ ...built, success: false });
   await expect(runCli(["list", "--suite", suite])).rejects.toThrow("Cannot hash");
@@ -382,7 +382,7 @@ it("refuses to regrade a fixture whose world links outside it", async () => {
 
 it("refuses doctor for a suite without tasks", async () => {
   const empty = join(directory, "empty-suite.ts");
-  await writeFile(empty, "export const suite={contractVersion:2,families:[],tasks:[]};");
+  await writeFile(empty, "export const suite={contractVersion:1,families:[],tasks:[]};");
 
   await expect(runCli(["doctor", "--suite", empty])).rejects.toThrow("No tasks");
 });

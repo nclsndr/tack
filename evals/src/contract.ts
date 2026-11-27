@@ -108,7 +108,7 @@ export type EvalTask = {
   }>;
 };
 export type TaskSuite = {
-  contractVersion: 2;
+  contractVersion: 1;
   families: readonly TaskFamily[];
   tasks: readonly EvalTask[];
 };

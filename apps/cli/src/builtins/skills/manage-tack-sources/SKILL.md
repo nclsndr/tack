@@ -10,8 +10,8 @@ metadata:
 
 # Manage Tack sources
 
-For fixed resource manifests, use `author-tack-profiles`. Its version-2 `profiles` publication references resources without creating a sixth resource kind.
-Version 2 also accepts `bundle-support` for explicit content closure and non-secret prerequisites;
+For fixed resource manifests, use `author-tack-profiles`. Its `profiles` publication references resources without creating a sixth resource kind.
+A `tack.yaml` also accepts `bundle-support` for explicit content closure and non-secret prerequisites;
 read `author-tack-profiles` before exporting scripts, docs or resources with support content.
 
 A source is a directory that holds resources. It is the only grouping Tack has: a resource is
@@ -65,8 +65,8 @@ docs:
 For a complete source with several skill paths, patterns, scripts, docs, `depends-on`, resource
 dependencies and name clashes, follow [the worked example](references/worked-source.md).
 
-Version 1 supports ordinary resources; version 2 adds `profiles` and `bundle-support` in the same
-source declaration. Profile files and bundles have independent versions. Every key but `version`
+A source declaration is version 1, the only version Tack reads; it holds ordinary resources,
+`profiles` and `bundle-support` alike. Profile files and bundles have independent versions. Every key but `version`
 and `name` is optional, so a source may declare only what it holds, such as `docs` alone.
 Each resource key is a list and may be empty: `skills: []`. A kind with no entries has no
 resources, whatever folders exist, so name every folder that holds resources. Group folders, the

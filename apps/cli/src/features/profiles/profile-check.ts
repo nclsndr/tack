@@ -67,7 +67,7 @@ export const checkProfileInContext = Effect.fnUntraced(function* (
             `${sourcePath}/tack.yaml`,
             "profile-unpublished",
             `Profile ${profileName} is not published by this source.`,
-            "Use source version 2 and publish its name and file in profiles.",
+            "Publish its name and file in the profiles list of tack.yaml.",
             "profiles",
           ),
         ]

@@ -1,9 +1,9 @@
 # The source `tack.yaml` in detail
 
-Source version 1 supports ordinary resources. Version 2 also accepts `profiles`, an explicit list
-of `{ name, path }` publications. Each file has its own profile schema and version. Use
+A source declaration is version 1, the only version Tack reads. Beside ordinary resources it
+accepts `profiles`, an explicit list of `{ name, path }` publications. Each file has its own profile schema and version. Use
 `author-tack-profiles` for the manifest and linkage rules. `tack check` reports malformed profile
-publications/files while leaving unrelated healthy resources available. Version 2 also accepts
+publications/files while leaving unrelated healthy resources available. It also accepts
 `bundle-support`, which names explicit resource support files/directories, complete closure and
 non-secret setup prerequisites. Read `author-tack-profiles` before authoring that section.
 
