@@ -12,6 +12,7 @@ import {
   record,
   text,
 } from "./issues.ts";
+import { type FigureCase, readCases } from "./cases.ts";
 
 /** One box: usually one folder or module. */
 export type ArchitectureNode = {
@@ -97,21 +98,10 @@ export type MapLink = ArchitectureLink & {
   readonly warning?: "up" | "barrier";
 };
 type MapBarrier = { readonly between: readonly [string, string]; readonly label: string };
-export type MapCase =
-  | {
-      readonly kind: "replay";
-      readonly id: string;
-      readonly label: string;
-      readonly steps: readonly { readonly at: string; readonly note: string }[];
-    }
-  | {
-      readonly kind: "lens";
-      readonly id: string;
-      readonly label: string;
-      readonly note: string;
-      readonly focus: readonly string[];
-      readonly blocked: readonly string[];
-    };
+export type MapCase = FigureCase<
+  { readonly at: string; readonly note: string },
+  { readonly focus: readonly string[]; readonly blocked: readonly string[] }
+>;
 export type ArchitectureModel = {
   readonly id: string;
   readonly title: string;
@@ -125,12 +115,6 @@ export type ArchitectureModel = {
   readonly startWith: readonly string[];
   readonly cases: readonly MapCase[];
 };
-
-const slug = (value: string): string =>
-  value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
 
 /** Reads authored tiers in order, dropping what cannot be drawn and naming why. */
 function readTiers(entries: readonly unknown[]): {
@@ -329,76 +313,27 @@ export function readArchitectureMap(props: unknown): {
   });
 
   const caseIssues: FigureIssue[] = [];
-  const usedCaseIds = new Set<string>();
-  const caseId = (authored: string | undefined, label: string, fallback: string): string => {
-    const base = authored ?? (slug(label) === "" ? fallback : slug(label));
-    const id = usedCaseIds.has(base) === true ? `${base}-${usedCaseIds.size + 1}` : base;
-    usedCaseIds.add(id);
-    return id;
-  };
-  const replays = list(raw["replays"]).flatMap((value, index): MapCase[] => {
-    const replay = record(value) ?? {};
-    const label = text(replay["label"]);
-    const name = label === undefined ? `replay ${index + 1}` : `replay "${label}"`;
-    if (label === undefined) caseIssues.push(inputIssue(`${name} has no label`));
-    const authored = list(replay["steps"]);
-    if (authored.length === 0) {
-      caseIssues.push(inputIssue(`${name} has no steps`));
-      return [];
-    }
-    if (authored.length > architectureBudget.steps)
-      caseIssues.push(
-        inputIssue(
-          `${name} has ${authored.length} steps; the budget is ${architectureBudget.steps}`,
-        ),
-      );
-    const steps = authored.flatMap((entry, step) => {
-      const at = text(record(entry)?.["at"]) ?? "?";
-      if (nodeById.has(at) === false) {
-        caseIssues.push(inputIssue(`${name} step ${step + 1} names an unknown id "${at}"`));
-        return [];
-      }
-      return [{ at, note: text(record(entry)?.["note"]) ?? "" }];
-    });
-    const shown = label ?? `Replay ${index + 1}`;
-    return steps.length === 0
-      ? []
-      : [
-          {
-            kind: "replay",
-            id: caseId(text(replay["id"]), shown, `replay-${index + 1}`),
-            label: shown,
-            steps,
-          },
-        ];
-  });
-  const lenses = list(raw["lenses"]).flatMap((value, index): MapCase[] => {
-    const lens = record(value) ?? {};
-    const label = text(lens["label"]);
-    const note = text(lens["note"]);
-    const name = label === undefined ? `lens ${index + 1}` : `lens "${label}"`;
-    if (label === undefined) caseIssues.push(inputIssue(`${name} has no label`));
-    if (note === undefined) caseIssues.push(inputIssue(`${name} has no note`));
-    const ids = (key: string): readonly string[] =>
-      list(lens[key]).flatMap((entry) => {
-        const id = text(entry) ?? "?";
-        if (nodeById.has(id) === true) return [id];
-        const tier = tierById.get(id);
-        if (tier !== undefined) return tier.nodes.map((node) => node.id);
-        caseIssues.push(inputIssue(`${name} names an unknown id "${id}"`));
-        return [];
-      });
-    const shown = label ?? `Lens ${index + 1}`;
-    return [
-      {
-        kind: "lens",
-        id: caseId(text(lens["id"]), shown, `lens-${index + 1}`),
-        label: shown,
-        note: note ?? "",
-        focus: ids("focus"),
-        blocked: ids("blocked"),
-      },
-    ];
+  const cases = readCases(raw, {
+    steps: architectureBudget.steps,
+    issues: caseIssues,
+    step: (fields, where) => {
+      const at = text(fields["at"]) ?? "?";
+      if (nodeById.has(at) === true) return { at, note: text(fields["note"]) ?? "" };
+      caseIssues.push(inputIssue(`${where} names an unknown id "${at}"`));
+      return undefined;
+    },
+    lens: (lens, name) => {
+      const ids = (key: string): readonly string[] =>
+        list(lens[key]).flatMap((entry) => {
+          const id = text(entry) ?? "?";
+          if (nodeById.has(id) === true) return [id];
+          const tier = tierById.get(id);
+          if (tier !== undefined) return tier.nodes.map((node) => node.id);
+          caseIssues.push(inputIssue(`${name} names an unknown id "${id}"`));
+          return [];
+        });
+      return { focus: ids("focus"), blocked: ids("blocked") };
+    },
   });
 
   const budgetIssues = [
@@ -432,7 +367,7 @@ export function readArchitectureMap(props: unknown): {
       links,
       barriers,
       startWith,
-      cases: [...replays, ...lenses],
+      cases,
     },
     issues: [
       ...idIssues(raw["id"]),

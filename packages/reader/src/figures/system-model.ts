@@ -13,6 +13,7 @@ import {
   text,
 } from "./issues.ts";
 import { oneOf } from "./authored-model.ts";
+import { type FigureCase, readCases } from "./cases.ts";
 
 /** What a node is. Each kind has its shape. */
 export const systemNodeKinds = [
@@ -121,21 +122,10 @@ type SystemStep = {
   readonly note: string;
   readonly broken: readonly string[];
 };
-export type SystemCase =
-  | {
-      readonly kind: "replay";
-      readonly id: string;
-      readonly label: string;
-      readonly steps: readonly SystemStep[];
-    }
-  | {
-      readonly kind: "lens";
-      readonly id: string;
-      readonly label: string;
-      readonly note: string;
-      readonly focus: readonly string[];
-      readonly broken: readonly string[];
-    };
+export type SystemCase = FigureCase<
+  SystemStep,
+  { readonly focus: readonly string[]; readonly broken: readonly string[] }
+>;
 export type SystemModel = {
   readonly id: string;
   readonly title: string;
@@ -147,12 +137,6 @@ export type SystemModel = {
   readonly links: readonly SystemLink[];
   readonly cases: readonly SystemCase[];
 };
-
-const slug = (value: string): string =>
-  value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
 
 const tintCount = 6;
 
@@ -373,63 +357,17 @@ export function readSystem(props: unknown): {
       caseIssues.push(inputIssue(`${name} names an unknown id "${id}"`));
       return [];
     });
-  const usedCaseIds = new Set<string>();
-  const caseId = (authored: string | undefined, label: string, fallback: string): string => {
-    const base = authored ?? (slug(label) === "" ? fallback : slug(label));
-    const id = usedCaseIds.has(base) === true ? `${base}-${usedCaseIds.size + 1}` : base;
-    usedCaseIds.add(id);
-    return id;
-  };
-  const replays = list(raw["replays"]).flatMap((value, index): SystemCase[] => {
-    const replay = record(value) ?? {};
-    const label = text(replay["label"]);
-    const name = label === undefined ? `replay ${index + 1}` : `replay "${label}"`;
-    if (label === undefined) caseIssues.push(inputIssue(`${name} has no label`));
-    const authored = list(replay["steps"]);
-    if (authored.length === 0) {
-      caseIssues.push(inputIssue(`${name} has no steps`));
-      return [];
-    }
-    if (authored.length > systemBudget.steps)
-      caseIssues.push(
-        inputIssue(`${name} has ${authored.length} steps; the budget is ${systemBudget.steps}`),
-      );
-    const steps = authored.flatMap((entry, step): SystemStep[] => {
-      const fields = record(entry) ?? {};
-      const at = ids(fields["at"], `${name} step ${step + 1}`);
-      const broken = ids(fields["broken"], `${name} step ${step + 1}`);
+  const cases = readCases(raw, {
+    steps: systemBudget.steps,
+    issues: caseIssues,
+    step: (fields, where): SystemStep | undefined => {
+      const at = ids(fields["at"], where);
+      const broken = ids(fields["broken"], where);
       return at.length === 0 && broken.length === 0
-        ? []
-        : [{ at, note: text(fields["note"]) ?? "", broken }];
-    });
-    const shown = label ?? `Replay ${index + 1}`;
-    return steps.length === 0
-      ? []
-      : [
-          {
-            kind: "replay",
-            id: caseId(text(replay["id"]), shown, `replay-${index + 1}`),
-            label: shown,
-            steps,
-          },
-        ];
-  });
-  const lenses = list(raw["lenses"]).map((value, index): SystemCase => {
-    const lens = record(value) ?? {};
-    const label = text(lens["label"]);
-    const note = text(lens["note"]);
-    const name = label === undefined ? `lens ${index + 1}` : `lens "${label}"`;
-    if (label === undefined) caseIssues.push(inputIssue(`${name} has no label`));
-    if (note === undefined) caseIssues.push(inputIssue(`${name} has no note`));
-    const shown = label ?? `Lens ${index + 1}`;
-    return {
-      kind: "lens",
-      id: caseId(text(lens["id"]), shown, `lens-${index + 1}`),
-      label: shown,
-      note: note ?? "",
-      focus: ids(lens["focus"], name),
-      broken: ids(lens["broken"], name),
-    };
+        ? undefined
+        : { at, note: text(fields["note"]) ?? "", broken };
+    },
+    lens: (lens, name) => ({ focus: ids(lens["focus"], name), broken: ids(lens["broken"], name) }),
   });
 
   const rule = record(raw["rule"]);
@@ -448,7 +386,7 @@ export function readSystem(props: unknown): {
       nodes,
       groups,
       links,
-      cases: [...replays, ...lenses],
+      cases,
     },
     issues: [
       ...idIssues(raw["id"]),

@@ -13,6 +13,7 @@ import {
   record,
   text,
 } from "./issues.ts";
+import { slug } from "./cases.ts";
 
 type TreeSize = { readonly text: string; readonly bytes: number };
 
@@ -295,12 +296,6 @@ function resolveLinks(entries: readonly TreeEntry[]): ReadonlyMap<string, TreeLi
     }),
   );
 }
-
-const slug = (value: string): string =>
-  value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
 
 /** Builds a tree's model from the props and the tree text, with every input issue. */
 export function readFileTree(props: unknown): {
