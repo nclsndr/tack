@@ -32,6 +32,13 @@ Lines to avoid, and what to write instead:
 If a private tool depends on your change, report that through your own private channel, never in
 the PR.
 
+## PR description structure
+
+Every PR description starts with `## Why`, then `## What`, then `## Related to`, as
+`.github/pull_request_template.md` lays out. Add any further sections after those three:
+screenshots, tests run, leftovers. A body written directly, such as with `gh pr create --body`,
+skips the template, so follow its structure by hand.
+
 ## Before posting
 
 Before each push, `gh pr create`, `gh pr edit`, issue or comment, check the diff summary and the
