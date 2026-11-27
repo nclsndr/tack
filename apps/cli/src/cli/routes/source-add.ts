@@ -110,15 +110,15 @@ const encodeRegistrationPlan = Schema.encodeSync(SourceRegistrationPlanSchema);
  * Previews registering a source, and registers it with --apply, as `addSource` does. A config that
  * does not validate reports each of its issues.
  */
-export const sourceAddOutcome = (
-  stateOptions: StateOptions,
-  invocation: {
-    readonly sourcePath: string;
-    readonly apply?: boolean;
-    readonly config?: string;
-  },
-) =>
-  Effect.gen(function* () {
+export const sourceAddOutcome = Effect.fnUntraced(
+  function* (
+    stateOptions: StateOptions,
+    invocation: {
+      readonly sourcePath: string;
+      readonly apply?: boolean;
+      readonly config?: string;
+    },
+  ) {
     const config =
       invocation.config === undefined ? undefined : yield* readConfig(invocation.config);
     const addition = yield* addSource(stateOptions, {
@@ -176,6 +176,6 @@ export const sourceAddOutcome = (
         ...(scaffold === undefined ? {} : { plan: toJson(scaffoldPlanJson(scaffold)) }),
       }),
     });
-  }).pipe(
-    Effect.catchTag("SourceConfigInvalidError", (error) => Effect.succeed(invalidConfig(error))),
-  );
+  },
+  Effect.catchTag("SourceConfigInvalidError", (error) => Effect.succeed(invalidConfig(error))),
+);

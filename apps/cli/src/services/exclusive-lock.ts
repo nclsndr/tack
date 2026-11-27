@@ -89,11 +89,10 @@ export const LockProcess = Context.Reference<LockProcessShape>(
 const processIsGone = (pid: number) =>
   LockProcess.use((owner) => Effect.sync(() => owner.isGone(pid)));
 
-const readRecord = (path: string) =>
-  Effect.gen(function* () {
-    const fileSystem = yield* FileSystem.FileSystem;
-    return yield* fileSystem.readFileString(path);
-  }).pipe(Effect.option);
+const readRecord = Effect.fnUntraced(function* (path: string) {
+  const fileSystem = yield* FileSystem.FileSystem;
+  return yield* fileSystem.readFileString(path);
+}, Effect.option);
 
 /**
  * Publishes this process's record at `path` in one step: the record is written and synced under a
