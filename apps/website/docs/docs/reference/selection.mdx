@@ -104,8 +104,9 @@ where `containingRoot` names the project and root found for a bare request.
 
 The same kind and name in two sources are two healthy resources: a name clash. Every human view
 prints the shortest unambiguous reference, the bare name, or `source:name` when another resource of
-that kind has it. A bare reference to a clashing name fails and lists the commands that name each
-candidate.
+that kind has it. A link row of `tack status --details` or `tack sync` always names its source, as
+`skill acme:release-notes`. A bare reference to a clashing name fails and lists the commands that
+name each candidate.
 
 If two sources both provide a default-activated skill with one name, neither is delivered until you
 run `tack pick include SOURCE:NAME` for the one you want, which wins over its default-activated

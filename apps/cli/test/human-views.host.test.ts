@@ -85,7 +85,10 @@ it.layer(LiveTestLayer)("core human views through the CLI host", (hostIt) => {
           expect(human.exit, label).toEqual(explicit.exit);
           expect(automatic.exit, label).toEqual(explicit.exit);
           expect(human.stderr, label).toBe(explicit.stderr);
-          for (const line of human.stdout.split("\n"))
+          // A path never breaks, so only a line that holds one path alone may be wider.
+          for (const line of human.stdout
+            .split("\n")
+            .filter((candidate) => candidate.trim().includes(" ")))
             expect(displayWidth(line), `${label}: ${line}`).toBeLessThanOrEqual(80);
         }
         // Previews and views write nothing.

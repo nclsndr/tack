@@ -19,6 +19,7 @@ import {
   headerLines,
   headingLines,
   hintLines,
+  linkAddressText,
   needAttention,
   plural,
   sections,
@@ -84,8 +85,8 @@ const destinationAddress = (destination: StatusPayloadDestination, style: Style)
     return `needed by ${candidates(destination, style).join(", ")}`;
   if (destination.address === undefined) return "";
   return destination._tag === "hand-made"
-    ? `kept; Tack's ${shortestAddress(style, destination.address)} is not linked`
-    : shortestAddress(style, destination.address);
+    ? `kept; Tack's ${linkAddressText(destination.address, style)} is not linked`
+    : linkAddressText(destination.address, style);
 };
 
 const destinationLines = (

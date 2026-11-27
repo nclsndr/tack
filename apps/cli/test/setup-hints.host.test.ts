@@ -286,7 +286,7 @@ it.layer(LiveTestLayer)("setup hints", (hintIt) => {
       });
       expect(unitOf(all, "user")).not.toHaveProperty("linkedForUser");
       expect(yield* text(["sync", "--project", "app"])).toContain(
-        "  remove  .claude/skills/review  skill review · linked-for-user\n" +
+        "  remove  .claude/skills/review  skill source:review · linked-for-user\n" +
           "  skip    skill review           linked for the user\n",
       );
       yield* json(["sync", "--all", "--apply"]);

@@ -99,6 +99,22 @@ export const truncate = (text: string, width: number): string => {
   return `${kept}…`;
 };
 
+/**
+ * Whether a token is a path, such as `~/code/app`, `demo:.claude/skills/review` or a URL. A path is
+ * never broken across lines: one that does not fit goes on a line of its own, whole, so a copy works.
+ */
+const isPath = (token: string) => token.includes("/");
+
+/** The widest path among the words of `text`; 0 when it holds none. */
+const widestPath = (text: string) =>
+  Math.max(
+    0,
+    ...text
+      .split(/\s+/)
+      .filter((word) => isPath(word))
+      .map((word) => displayWidth(word)),
+  );
+
 /** Cuts one unbroken token into chunks of at most `width` columns, preferring path separators. */
 const breakToken = (token: string, width: number): ReadonlyArray<string> => {
   const chunks: string[] = [];
@@ -125,7 +141,8 @@ const breakToken = (token: string, width: number): ReadonlyArray<string> => {
 
 /**
  * Wraps plain text at spaces so that no line is wider than `width` columns. A token wider than the
- * line breaks at path separators first, then between characters. Newlines count as spaces.
+ * line breaks at separators first, then between characters, except a path, which takes a line of its
+ * own, whole, and only then may be wider. Newlines count as spaces.
  */
 export const wrapText = (
   text: string,
@@ -151,7 +168,7 @@ export const wrapText = (
       lineWidth = wordWidth;
       continue;
     }
-    if (options.keepWords === true) {
+    if (options.keepWords === true || isPath(word)) {
       line = word;
       lineWidth = wordWidth;
       continue;
@@ -181,7 +198,8 @@ export type FlowOptions = {
 
 /**
  * Places cells left to right, starting a new line when the next cell does not fit. A cell wider than
- * a whole line wraps inside itself. No returned line is wider than `options.width`.
+ * a whole line wraps inside itself. No returned line is wider than `options.width`, except one that
+ * holds a path alone: a path is never broken.
  */
 export const flow = (cells: ReadonlyArray<Cell>, options: FlowOptions): ReadonlyArray<string> => {
   const separator = options.separator ?? " ";
@@ -227,7 +245,11 @@ export const flow = (cells: ReadonlyArray<Cell>, options: FlowOptions): Readonly
       continue;
     }
     // Chunks after the first land on hanging lines, so size every chunk for the narrower of the two.
-    breakToken(piece.text, Math.max(1, Math.min(limit, lineLimit(1)))).forEach((chunk, index) => {
+    const chunkWidth = Math.max(1, Math.min(limit, lineLimit(1)));
+    (isPath(piece.text)
+      ? wrapText(piece.text, chunkWidth)
+      : breakToken(piece.text, chunkWidth)
+    ).forEach((chunk, index) => {
       if (index > 0) startLine();
       place(piece, chunk);
       used += displayWidth(chunk);
@@ -287,9 +309,14 @@ type TableOptions = { readonly width: number; readonly indent?: number; readonly
 
 /**
  * Fits columns to a budget. The last column gives way first, down to a readable width; after that
- * the widest columns shrink first, until the columns fit or none can shrink.
+ * the widest columns shrink first, until the columns fit or none can shrink. No column shrinks below
+ * its floor: the widest path a leading column holds, since a path never breaks.
  */
-const fitColumns = (natural: ReadonlyArray<number>, budget: number): ReadonlyArray<number> => {
+const fitColumns = (
+  natural: ReadonlyArray<number>,
+  budget: number,
+  floors: ReadonlyArray<number>,
+): ReadonlyArray<number> => {
   const widths = [...natural];
   let total = widths.reduce((sum, width) => sum + width, 0);
   const last = widths.length - 1;
@@ -300,9 +327,12 @@ const fitColumns = (natural: ReadonlyArray<number>, budget: number): ReadonlyArr
     total -= give;
   }
   while (total > budget) {
-    const widest = Math.max(...widths);
-    if (widest <= 1) break;
-    widths[widths.indexOf(widest)] = widest - 1;
+    const shrinkable = widths.map((width, column) =>
+      width > Math.max(1, floors[column] ?? 0) ? width : 0,
+    );
+    const widest = Math.max(...shrinkable);
+    if (widest === 0) break;
+    widths[shrinkable.indexOf(widest)] = widest - 1;
     total -= 1;
   }
   return widths;
@@ -310,9 +340,11 @@ const fitColumns = (natural: ReadonlyArray<number>, budget: number): ReadonlyArr
 
 /**
  * Lays rows out as aligned columns. Columns shrink widest first until the table fits, and a cell
- * wider than its column wraps inside it. When the last column would be left too narrow to read, each
- * row stacks instead: its leading cells flow on one line and its last cell wraps on the lines below,
- * indented. No returned line is wider than `options.width`. Rows must have the same number of cells.
+ * wider than its column wraps inside it. When the last column would be left too narrow to read, or a
+ * leading column too narrow for its paths, each row stacks instead: its leading cells flow on one
+ * line and its last cell wraps on the lines below, indented. A path in the last column wider than
+ * the column takes a line of its own below the leading cells. No returned line is wider than
+ * `options.width`, except one that holds a path alone. Rows must have the same number of cells.
  */
 export const table = (
   rows: ReadonlyArray<ReadonlyArray<Cell>>,
@@ -334,23 +366,26 @@ export const tableRows = (
     Math.max(0, ...rows.map((row) => displayWidth(row[column]?.text ?? ""))),
   );
   const budget = options.width - indent - gap * Math.max(0, columnCount - 1);
-  const widths = fitColumns(natural, budget);
   const last = columnCount - 1;
+  // The narrowest each leading column may be: a cell without a path must not wrap
+  // (`--state-dir <string>`), and no cell may break a path. A narrower column stacks instead.
+  const floorsOf = (rigid: boolean) =>
+    Array.from({ length: Math.max(0, last) }, (_, column) =>
+      Math.max(
+        0,
+        ...rows.map((row) => {
+          const text = row[column]?.text ?? "";
+          return rigid && isPath(text) === false ? displayWidth(text) : widestPath(text);
+        }),
+      ),
+    );
+  const floors = floorsOf(true);
+  const widths = fitColumns(natural, budget, floorsOf(false));
   const fits = widths.reduce((sum, width) => sum + width, 0) <= budget;
-  // A leading cell that is not a path must not wrap (`--state-dir <string>`): stack instead.
-  const rigid = Array.from({ length: Math.max(0, last) }, (_, column) =>
-    Math.max(
-      0,
-      ...rows.map((row) => {
-        const text = row[column]?.text ?? "";
-        return text.includes("/") ? 0 : displayWidth(text);
-      }),
-    ),
-  );
   const readable =
     columnCount <= 1 ||
     ((widths[last] ?? 0) >= Math.min(natural[last] ?? 0, minimumFlexWidth) &&
-      rigid.every((width, column) => (widths[column] ?? 0) >= width));
+      floors.every((width, column) => (widths[column] ?? 0) >= width));
   if (fits && readable) {
     return rows.map((row) => {
       const lines = Array.from({ length: columnCount }, (_, column) => {
@@ -358,6 +393,16 @@ export const tableRows = (
         const wrapped = piece === undefined ? [] : wrapText(piece.text, widths[column] ?? 1);
         return wrapped.length === 0 ? [""] : wrapped;
       });
+      // A path wider than the last column starts below the leading cells, so it sits alone.
+      const leading = Math.max(1, ...lines.slice(0, last).map((column) => column.length));
+      const tail = lines[last] ?? [];
+      const wide = tail.findIndex((text) => displayWidth(text) > (widths[last] ?? 0));
+      if (wide !== -1 && wide < leading)
+        lines[last] = [
+          ...tail.slice(0, wide),
+          ...Array.from({ length: leading - wide }, () => ""),
+          ...tail.slice(wide),
+        ];
       const height = Math.max(1, ...lines.map((column) => column.length));
       return Array.from({ length: height }, (_, index) => {
         const line = lines

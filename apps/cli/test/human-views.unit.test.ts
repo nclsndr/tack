@@ -88,7 +88,7 @@ it("renders status before the first reconcile as rows and the plan and apply hin
   expect(text).not.toContain("catalog-quarantined");
 });
 
-it("names each destination's resource through the catalog the style carries, not the payload", () => {
+it("names each link row's resource with its source, read from the catalog the style carries", () => {
   const registration = "0d5b3402-2162-4620-ae41-ddc81538eb23";
   const referenced = (names: ReadonlyArray<string>, label: string) =>
     makeStyle({
@@ -103,14 +103,21 @@ it("names each destination's resource through the catalog the style carries, not
         sources: [{ registration: { id: registration }, label, labelOrigin: "declared" }],
       },
     });
-  const render = (style: ReturnType<typeof makeStyle>) =>
-    renderHuman(fixture("status-before"), style, undefined, { details: true });
-  // `localized` is unique in this catalog, so it keeps its bare name.
-  expect(render(referenced(["localized", "review"], "team"))).toContain("skill localized");
-  // A resource the catalog does not list keeps its source qualifier: the bare name could mean another.
-  expect(render(referenced([], "team"))).toContain("skill team:localized");
+  const render = (name: (typeof fixtureNames)[number], style: ReturnType<typeof makeStyle>) =>
+    renderHuman(fixture(name), style, undefined, { details: true });
+  // A link row names its source even when the name is unique in the catalog.
+  const unique = referenced(["localized", "review"], "team");
+  expect(render("status-before", unique)).toMatch(
+    /demo:\.claude\/skills\/localized +skill team:localized\n/,
+  );
+  expect(render("plan-before", unique)).toMatch(
+    /create +\.claude\/skills\/localized +skill team:localized\n/,
+  );
+  expect(render("reconcile-apply", unique)).toMatch(
+    /\.claude\/skills\/review +skill team:review\n/,
+  );
   // Without any catalog the registration ID stands in, and the payload alone supplies nothing.
-  expect(render(plainStyle(120))).toContain(`skill ${registration}:localized`);
+  expect(render("status-before", plainStyle(120))).toContain(`skill ${registration}:localized`);
 });
 
 it("renders status after reconcile with every destination linked and no destination hints", () => {
@@ -125,7 +132,7 @@ it("renders status after reconcile with every destination linked and no destinat
 });
 
 it("names drifted destinations in words and the scope in the header", () => {
-  const text = view("status-trouble");
+  const text = view("status-trouble", 120);
   expect(text).toContain("2 need attention");
   expect(text).toMatch(/drifted {2}codex {3}demo:\.agents\/skills\/review/);
   expect(text).toMatch(/drifted {2}claude {2}demo:\.claude\/skills\/writer/);
@@ -403,7 +410,7 @@ it("notes each released link once, apart from the records it only forgets", () =
 it("marks each applied action and counts the outcomes", () => {
   const text = view("reconcile-apply");
   expect(text).toContain("Applied 2 units: 14 actions applied, 0 failed, 0 skipped.");
-  expect(linesOf(text).filter((line) => /^ {2}applied {2}create /.test(line))).toHaveLength(14);
+  expect(linesOf(text).filter((line) => /^ {2}applied {2}create\b/.test(line))).toHaveLength(14);
   expect(text).not.toContain("Nothing was written");
   expect(text).not.toContain("Next");
 });
@@ -592,7 +599,9 @@ it("wraps a hint with a project name too long for the width and keeps it copyabl
     JSON.stringify(envelope).replaceAll('"projectName":"demo"', `"projectName":"${name}"`),
   );
   const text = renderHuman(decodeEnvelope(renamed), plainStyle(40));
-  for (const line of linesOf(text)) expect(displayWidth(line)).toBeLessThanOrEqual(40);
+  // A path never breaks, so only a line that holds one path alone may be wider.
+  for (const line of linesOf(text).filter((candidate) => candidate.trim().includes(" ")))
+    expect(displayWidth(line)).toBeLessThanOrEqual(40);
   expect(text).toContain(" \\\n");
   expect(hintsOf(text)).toEqual([`tack sync --project ${name} --apply`]);
 });

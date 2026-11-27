@@ -77,7 +77,8 @@ it.layer(LiveTestLayer)("tack init", (initIt) => {
       );
       expect(output).toContain("applied  create  .claude/skills/use-tack");
       expect(output).toContain("Hand-made, left untouched\n");
-      expect(output).toContain("folder · claude skill\n");
+      // The path of the entry never breaks, so how the rest of its row wraps depends on its length.
+      expect(output.replaceAll(/\s+/g, " ")).toContain("folder · claude skill Next");
       expect(output.endsWith("Next\n  tack guide onboarding\n  tack source add PATH\n")).toBe(true);
       expect(yield* fileSystem.exists(`${state}/.env`)).toBe(true);
       for (const name of builtIns) {

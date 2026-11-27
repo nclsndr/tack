@@ -9,7 +9,10 @@ const skill = (name: string) => ({ kind: "skill", name, sourceRegistrationId: so
 const command = (name: string) =>
   ({ kind: "command", name, sourceRegistrationId: sourceId }) as const;
 const digest = (character: string) => character.repeat(64);
-/** A terminal whose catalog holds the members, so each reads by its shortest reference. */
+/**
+ * A terminal whose catalog holds the members and labels their source, so each reads by its shortest
+ * reference and a link row by its source label.
+ */
 const labelled = styleOf({
   homeDirectory: testHome,
   width: 100,
@@ -18,6 +21,7 @@ const labelled = styleOf({
       { address: { kind: "skill", name: "review" }, sourceRegistrationId: sourceId },
       { address: { kind: "command", name: "ship" }, sourceRegistrationId: sourceId },
     ],
+    sources: [{ registration: { id: sourceId }, label: "personal-brain", labelOrigin: "declared" }],
   },
 });
 
@@ -190,7 +194,7 @@ describe("profile apply view", () => {
         "",
         "claude → demo · 2 to link",
         "  create  .claude/skills/        directory",
-        "  create  .claude/skills/review  skill review",
+        "  create  .claude/skills/review  skill personal-brain:review",
         "",
         "Ambient user instructions and release-owned skills remain outside this target's profile control.",
         "",
@@ -318,7 +322,7 @@ describe("profile apply view", () => {
       [
         "claude → demo · 2 to link",
         "  applied  create  .claude/skills/        directory",
-        "  applied  create  .claude/skills/review  skill review",
+        "  applied  create  .claude/skills/review  skill personal-brain:review",
       ].join("\n"),
     );
     expect(text).not.toContain("link-create:");
@@ -472,7 +476,8 @@ describe("profile apply view", () => {
       );
       expect(text).toContain(`  skill ${member}\n`);
       expect(text).toContain(`skill ${member}: claude → .claude/skills/review\n`);
-      expect(flat(text)).toContain(`create .claude/skills/review skill ${member}`);
+      // A link row names the source of its member, even when the bare name would do.
+      expect(flat(text)).toContain(`create .claude/skills/review skill ${source}:review`);
     },
   );
 });

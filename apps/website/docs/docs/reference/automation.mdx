@@ -8,6 +8,8 @@ description: The text view and the JSON envelope, which payloads are stable, the
 Tack prints a compact text view by default, in terminals, pipes, CI and agent shells. Agents read it
 and follow its `Next` block; they do not pass `--json` for ordinary work. Text views serve people
 and change in any build: do not parse them. Pass `--json` only when a program parses the result.
+The text view wraps to the terminal width, but never inside a path: a path too long for its line
+takes a line of its own, whole, so a copy works.
 
 ## Stable payloads
 

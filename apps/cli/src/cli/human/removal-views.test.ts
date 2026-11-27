@@ -504,9 +504,7 @@ describe("clean", () => {
     expect(lines(narrow)).toEqual(
       expect.arrayContaining([
         "  − remove",
-        "    /home/me/代码/非常长的项目目录名称/",
-        "    demo-with-a-long-checkout-name/",
-        "    .claude/skills/review",
+        "    /home/me/代码/非常长的项目目录名称/demo-with-a-long-checkout-name/.claude/skills/review",
       ]),
     );
   });

@@ -24,6 +24,7 @@ import {
   diagnosticLines,
   headerLines,
   hintLines,
+  linkAddressText,
   needAttention,
   plural,
   sections,
@@ -96,7 +97,7 @@ const actionCells = (
         ? cell("create", style.green)
         : cell("replace", style.yellow),
       cell(relativeTo(target, action.destinationPath, style)),
-      cell(addressText(action.evidence.address, style), style.dim),
+      cell(linkAddressText(action.evidence.address, style), style.dim),
     ];
   // An adopted link is already on disk, exactly as Tack would write it; only its record is new.
   if (action._tag === "link-adopt")
@@ -104,7 +105,7 @@ const actionCells = (
       cell("adopt", style.green),
       cell(relativeTo(target, action.destinationPath, style)),
       cell(
-        `${addressText(action.evidence.address, style)} · already linked, record only`,
+        `${linkAddressText(action.evidence.address, style)} · already linked, record only`,
         style.dim,
       ),
     ];
@@ -113,7 +114,7 @@ const actionCells = (
       cell("remove", style.red),
       cell(relativeTo(target, action.destinationPath, style)),
       cell(
-        `${addressText(action.evidence.address, style)} · ${action.reason}${
+        `${linkAddressText(action.evidence.address, style)} · ${action.reason}${
           action.blockers === undefined ? "" : `: needs ${blockerText(action.blockers, style)}`
         }`,
         style.dim,
@@ -125,14 +126,14 @@ const actionCells = (
         cell("release", style.yellow),
         cell(relativeTo(target, action.destinationPath, style)),
         cell(
-          `${addressText(action.evidence.address, style)} · changed outside Tack, no longer managed`,
+          `${linkAddressText(action.evidence.address, style)} · changed outside Tack, no longer managed`,
           style.dim,
         ),
       ]
     : [
         cell("forget", style.dim),
         cell(relativeTo(target, action.destinationPath, style)),
-        cell(`${addressText(action.evidence.address, style)} · record only`, style.dim),
+        cell(`${linkAddressText(action.evidence.address, style)} · record only`, style.dim),
       ];
 };
 
