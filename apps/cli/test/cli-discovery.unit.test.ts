@@ -1,6 +1,9 @@
 import { BunServices } from "@effect/platform-bun";
 import { expect, it } from "@effect/vitest";
 import { Effect, Record, Result, Schema } from "effect";
+import type { Command } from "effect/cli";
+import { tackCommand } from "../src/cli/commands/command-tree.ts";
+import { isListAlias } from "../src/cli/commands/list-alias.ts";
 import {
   describeHelp,
   HelpPayloadSchema,
@@ -361,34 +364,53 @@ it.effect("scopes payloads to command paths and keeps published schemas within s
   }),
 );
 
+/** The command path of every parent that declares a `list`/`ls` alias, found by walking the tree. */
+const listAliasParents = (
+  command: Command.Command.Any,
+  commandPath: ReadonlyArray<string>,
+): ReadonlyArray<ReadonlyArray<string>> =>
+  command.subcommands.flatMap((group) =>
+    group.commands.flatMap((subcommand) =>
+      isListAlias(subcommand)
+        ? [commandPath]
+        : listAliasParents(subcommand, [...commandPath, subcommand.name]),
+    ),
+  );
+
 it.effect("accepts list and ls as spellings of the bare parents without publishing them", () =>
   Effect.gen(function* () {
-    const parents = {
-      source: "source-list",
-      project: "project-list",
-      pick: "pick-list",
-      adapter: "adapter-list",
-      docs: "docs-list",
-    } as const;
+    const parents = listAliasParents(tackCommand, []);
+    expect(parents.map((path) => path.join(" ")).toSorted()).toEqual([
+      "adapter",
+      "docs",
+      "pick",
+      "project",
+      "script history",
+      "source",
+    ]);
     const published = (yield* contracts()).commands.map(({ command }) => command);
-    for (const [parent, tag] of Object.entries(parents)) {
-      expect(published, parent).toContain(parent);
-      expect(published, `${parent} list`).not.toContain(`${parent} list`);
-      expect(published, `${parent} ls`).not.toContain(`${parent} ls`);
+    for (const parent of parents) {
+      const parentName = parent.join(" ");
+      expect(published, parentName).toContain(parentName);
+      const bare = (yield* parseInvocation(parent)).invocation;
       for (const alias of ["list", "ls"]) {
-        expect((yield* parseInvocation([parent, alias])).invocation["_tag"], alias).toBe(tag);
-        expect((yield* parseInvocation([parent, alias, "--json"])).invocation["_tag"]).toBe(tag);
-        const withoutAlias = yield* contracts([parent, alias]).pipe(Effect.flip);
+        expect(published, `${parentName} ${alias}`).not.toContain(`${parentName} ${alias}`);
+        expect(
+          (yield* parseInvocation([...parent, alias])).invocation,
+          `${parentName} ${alias}`,
+        ).toEqual(bare);
+        expect((yield* parseInvocation([...parent, alias, "--json"])).invocation["_tag"]).toBe(
+          bare["_tag"],
+        );
+        const withoutAlias = yield* contracts([...parent, alias]).pipe(Effect.flip);
         expect(withoutAlias).toMatchObject({ code: "invalid-command" });
-        const helpOfParent = decodeHelp(yield* help([parent]));
+        const helpOfParent = decodeHelp(yield* help(parent));
         expect(helpOfParent.subcommands.map(({ name }) => name)).not.toContain(alias);
-        expect(yield* Effect.flip(help([parent, alias]))).toMatchObject({
+        expect(yield* Effect.flip(help([...parent, alias]))).toMatchObject({
           code: "invalid-command",
         });
       }
     }
-    // Every other group keeps its own list operation, so history is unaffected.
-    expect(published).toContain("script history");
     expect(Object.values(invocationCommandPaths).map((path) => path.join(" "))).not.toContain(
       "source list",
     );

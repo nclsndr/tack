@@ -108,8 +108,8 @@ declaration has a problem and finds no resource as broken, with the warning `sou
 and a partial outcome. Reading these facts is operating Tack; changing a declaration is
 `manage-tack-sources`.
 
-The bare read parents `source`, `project`, `pick`, `adapter` and `docs` also accept `list` and
-`ls`. `status` and `catalog` do not.
+The bare read parents `source`, `project`, `pick`, `adapter`, `docs` and `script history` also
+accept `list` and `ls`. `status` and `catalog` do not.
 
 ## Select and deliver resources
 

@@ -14,7 +14,7 @@ describe("lookUpDocsIcons", () => {
 
   it("lists the whole set by category without a word", () => {
     const lookup = lookUpDocsIcons(undefined);
-    expect(lookup.query).toBeUndefined();
+    expect(lookup).not.toHaveProperty("query");
     expect(lookup.count).toBeGreaterThan(200);
     expect(lookup.categories[0]?.icons[0]).toEqual({ name: "check" });
   });

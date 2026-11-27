@@ -125,7 +125,7 @@ const sourceCommand = Command.make("source", {}, () => receive({ _tag: "source-l
     sourceAddCommand,
     sourceRelocateCommand,
     sourceRemoveCommand,
-    listAlias(receive({ _tag: "source-list" })),
+    listAlias({}, () => receive({ _tag: "source-list" })),
   ]),
   Command.withDescription(
     "Register, relocate and remove sources; bare `source` inspects every registered source, its health and what each of its declarations contributes",

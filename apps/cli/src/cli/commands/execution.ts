@@ -117,14 +117,15 @@ const historyFlags = {
   ),
 };
 
-const historyRoot = Command.make("history", historyFlags, ({ limit, offset }) =>
-  receive({ _tag: "history-list", limit, offset }),
-);
+const listHistory = ({ limit, offset }: Command.Command.Config.Infer<typeof historyFlags>) =>
+  receive({ _tag: "history-list", limit, offset });
+
+const historyRoot = Command.make("history", historyFlags, listHistory);
 
 /** Retained run inspection and explicitly applied clearing commands. */
 const historyCommand = historyRoot.pipe(
   Command.withSubcommands([
-    listAlias(historyRoot),
+    listAlias(historyFlags, listHistory),
     Command.make(
       "show",
       {

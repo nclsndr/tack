@@ -143,7 +143,10 @@ const StateDataSchema = Schema.Struct({
   profileApplications: Schema.optionalKey(Schema.Array(ProfileApplicationSchema)),
 });
 
-/** Validates the runtime model; state-file documents use PersistedStateSchema in state-codec.ts. */
+/**
+ * Validates the runtime model. State-file documents use PersistableStateSchema in state-codec.ts,
+ * which adds the cross-collection ownership checks to this schema.
+ */
 export const StateSchema = Schema.Struct({
   format: Schema.Literal(stateFormat),
   data: StateDataSchema,

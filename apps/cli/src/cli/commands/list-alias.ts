@@ -8,11 +8,16 @@ export class ListAliasAnnotation extends Context.Service<ListAliasAnnotation, tr
 
 /**
  * Declares `list`, and its `ls` alias, as spellings of the executable parent that reads. The bare
- * parent stays the canonical form: the alias runs the parent's own handler, so the two cannot
- * differ, and discovery publishes only the parent.
+ * parent stays the canonical form: the alias takes the parent's own flags and runs its own handler,
+ * so the two cannot differ, and discovery publishes only the parent.
+ *
+ * @param config - The parent's own flags; `{}` when the parent has none or shares them.
  */
-export const listAlias = <E, R>(run: Effect.Effect<void, E, R>) =>
-  Command.make("list", {}, () => run).pipe(
+export const listAlias = <const Config extends Command.Command.Config, E, R>(
+  config: Config,
+  handler: (input: Command.Command.Config.Infer<Config>) => Effect.Effect<void, E, R>,
+) =>
+  Command.make("list", config, handler).pipe(
     Command.withAlias("ls"),
     Command.withDescription("The same as the bare parent command"),
     Command.annotate(ListAliasAnnotation, true),

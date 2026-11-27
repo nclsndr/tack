@@ -16,7 +16,7 @@ type DocsIconHit = typeof DocsIconHitSchema.Type;
  */
 export const DocsIconsPayloadSchema = Schema.Struct({
   kind: Schema.Literal("docs-icons"),
-  query: Schema.optional(Schema.String),
+  query: Schema.optionalKey(Schema.String),
   lucideVersion: Schema.String,
   count: Schema.Number,
   categories: Schema.Array(
@@ -48,5 +48,10 @@ export function lookUpDocsIcons(word: string | undefined): DocsIconLookup {
       );
     return icons.length === 0 ? [] : [{ category, icons }];
   });
-  return { query: word, lucideVersion, count: matches.length, categories };
+  return {
+    ...(word === undefined ? {} : { query: word }),
+    lucideVersion,
+    count: matches.length,
+    categories,
+  };
 }
