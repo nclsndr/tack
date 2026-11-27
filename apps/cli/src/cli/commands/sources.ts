@@ -72,7 +72,7 @@ const sourceAddCommand = Command.make(
     {
       command: "tack source add ~/skills --config -",
       description:
-        'Preview the declaration piped to standard input, such as {"version":1,"name":"skills","kind":"skills"} for a skills collection',
+        'Preview the declaration piped to standard input, such as {"version":1,"name":"skills","skills":[{"path":"."}]} for a folder of skills',
     },
   ]),
   previewApply,

@@ -1,7 +1,7 @@
 import { Effect, FileSystem, Path } from "effect";
 import type { Catalog } from "../../domain/sources/catalog-schema.ts";
 import { patternSelector } from "../sources/resource-declarations.ts";
-import { skillFolderPath, type ImportDestination } from "./import-destination.ts";
+import { segmentsBelow, skillFolderPath, type ImportDestination } from "./import-destination.ts";
 import type { ImportCandidate } from "../../domain/imports/import-schema.ts";
 import type { ImportRecord } from "../../domain/imports/import-record.ts";
 import { sameLocation, type ImportProvider } from "../../domain/imports/providers/provider.ts";
@@ -43,10 +43,7 @@ export const declarationSelects = (
   name: string,
 ): string | undefined => {
   const { covering, folder } = destination;
-  const relative =
-    folder === covering.declaredPath
-      ? name
-      : `${folder.slice(covering.declaredPath.length + 1)}/${name}`;
+  const relative = [...segmentsBelow(covering.declaredPath, folder), name].join("/");
   const { prunedFolder, selected } = patternSelector(covering.include, covering.exclude);
   const excludedDirectory = prunedFolder(relative.split("/").slice(0, -1).join("/"));
   if (excludedDirectory === undefined && selected(relative) === true) return undefined;

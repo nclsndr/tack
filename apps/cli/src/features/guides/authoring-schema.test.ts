@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Yaml } from "../../domain/runtime-neutral.ts";
 import { ProfilePublicationSchema } from "../../domain/profiles/profile-schema.ts";
-import { decodeSourceDeclaration, isCollection } from "../../domain/sources/source-schema.ts";
+import { decodeSourceDeclaration } from "../../domain/sources/source-schema.ts";
 import { BundleSupportSchema } from "../profiles/bundle-support.ts";
 import { AuthoringDeclarationSchema, authoringJsonSchema } from "./authoring-schema.ts";
 import { docsEntrySchema } from "../sources/docs-discovery.ts";
@@ -37,7 +37,6 @@ const runtimeTakes = (parsed: unknown) => {
   );
   if (decoded === undefined) return false;
   const declaration = decoded.declaration;
-  if (isCollection(declaration)) return true;
   return (
     ["skills", "commands", "context"].every((key) =>
       entriesDecode(Reflect.get(declaration, key), decodesAs("skill")),
@@ -84,7 +83,7 @@ const fixtures = (() => {
 
 /** Declarations at the edges of each form, which both schemas must judge alike. */
 const matrix: ReadonlyArray<readonly [string, unknown]> = [
-  ["a list form", { version: 1, name: "tools", skills: [{ path: "skills" }] }],
+  ["a declaration", { version: 1, name: "tools", skills: [{ path: "skills" }] }],
   ["an unknown key", { version: 1, name: "tools", skils: [] }],
   ["a bad name", { version: 1, name: "Tools" }],
   ["no name", { version: 1 }],
@@ -156,16 +155,33 @@ const matrix: ReadonlyArray<readonly [string, unknown]> = [
     },
   ],
   ["version 3", { version: 3, name: "tools" }],
-  ["a skills collection", { version: 1, name: "skills", kind: "skills", "depends-on": ["base"] }],
-  ["a collection with a resource key", { version: 1, name: "skills", kind: "skills", skills: [] }],
-  ["a collection under version 2", { version: 2, name: "skills", kind: "skills" }],
-  ["a docs collection with its reader", { version: 1, name: "notes", kind: "docs", reader: {} }],
+  ["a skills entry at .", { version: 1, name: "skills", skills: [{ path: "." }] }],
   [
-    "a docs collection with depends-on",
-    { version: 1, name: "notes", kind: "docs", "depends-on": [] },
+    "a docs entry at . with its reader",
+    { version: 1, name: "notes", docs: [{ name: "notes", path: ".", reader: {} }] },
   ],
-  ["a commands collection", { version: 1, name: "prompts", kind: "commands" }],
-  ["kind: skill", { version: 1, name: "skills", kind: "skill" }],
+  [
+    "a skills entry at . beside another skills entry",
+    { version: 1, name: "skills", skills: [{ path: "." }, { path: "vendor" }] },
+  ],
+  [
+    "a skills entry at . beside commands",
+    { version: 1, name: "skills", skills: [{ path: "." }], commands: [] },
+  ],
+  [
+    "a docs entry at . beside scripts, under version 2",
+    {
+      version: 2,
+      name: "notes",
+      docs: [{ name: "notes", path: "." }],
+      scripts: [{ name: "run", path: "run.ts", description: "Run" }],
+    },
+  ],
+  [
+    "a context entry at . beside docs",
+    { version: 1, name: "n", context: [{ path: "." }], docs: [] },
+  ],
+  ["kind: skills", { version: 1, name: "skills", kind: "skills" }],
   ["a list", [{ version: 1, name: "tools" }]],
 ];
 
@@ -186,7 +202,7 @@ it.each([...fixtures.map(({ name, parsed }) => [name, parsed] as const), ...matr
 it("refuses imports, which only tack import writes, in every form that holds it", () => {
   for (const declaration of [
     { version: 1, name: "tools", imports: [] },
-    { version: 1, name: "skills", kind: "skills", imports: [] },
+    { version: 1, name: "skills", skills: [{ path: "." }], imports: [] },
   ]) {
     expect(runtimeTakes(declaration)).toBe(true);
     expect(decodes(AuthoringDeclarationSchema, declaration)).toBe(false);
@@ -218,7 +234,6 @@ it("prints a JSON Schema that keeps the name pattern, refuses extra keys and lea
   for (const { node } of objects) expect(Reflect.get(node, "additionalProperties")).toBe(false);
   // Only the reader settings, which the docs reader decodes, take any value.
   expect(nodes.filter(({ node }) => Object.keys(node).length === 0).map(({ key }) => key)).toEqual([
-    "reader",
     "reader",
   ]);
   expect(JSON.stringify(schema)).toContain('"pattern":"^[a-z0-9]+(?:-[a-z0-9]+)*$"');

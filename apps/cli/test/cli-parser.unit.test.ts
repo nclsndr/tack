@@ -573,14 +573,14 @@ const sourceRows: Rows = [
       "add",
       "/brain",
       "--config",
-      '{"version":1,"name":"brain","kind":"skills"}',
+      '{"version":1,"name":"brain","skills":[{"path":"."}]}',
       "--apply",
     ],
     {
       _tag: "source-add",
       sourcePath: "/brain",
       apply: true,
-      config: '{"version":1,"name":"brain","kind":"skills"}',
+      config: '{"version":1,"name":"brain","skills":[{"path":"."}]}',
     },
   ],
   [

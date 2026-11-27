@@ -194,8 +194,6 @@ const resourceEntry = (
       "declared by",
       `${resourceKinds[resource.kind].declarationKey}: ${resource.declaredPath}`,
     ]);
-  else if (resource.kind !== "script" && resource.collection === true)
-    facts.push(["declared by", `${resourceKinds[resource.kind].declarationKey} collection`]);
   if (resource.kind !== "docs") facts.push(["file", path(resource.filePath)]);
   if (hasActivation(resource)) {
     facts.push([

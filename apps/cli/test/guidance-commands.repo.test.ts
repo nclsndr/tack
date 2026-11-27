@@ -4,12 +4,7 @@ import { expect, it } from "vitest";
 import { describeDrift, scanCodes, scanCommands } from "../../../scripts/guidance-drift.ts";
 import { agentAdapterDescriptors } from "../src/domain/agents/agent-adapter.ts";
 import { CatalogQuarantineReasonSchema } from "../src/domain/sources/catalog-schema.ts";
-import {
-  collectionKinds,
-  decodeSourceDeclaration,
-  isCollection,
-  ListDeclarationSchema,
-} from "../src/domain/sources/source-schema.ts";
+import { DeclarationSchema, decodeSourceDeclaration } from "../src/domain/sources/source-schema.ts";
 import {
   parseResourceMetadata,
   parseSkillDocument,
@@ -147,13 +142,12 @@ it("documents every source declaration key and declaration quarantine code", () 
   ]
     .map(read)
     .join("\n");
-  for (const key of [...Object.keys(ListDeclarationSchema.fields), "kind", "reader"])
+  for (const key of [...Object.keys(DeclarationSchema.fields), "reader"])
     expect(
       guide.includes(`\`${key}\``) || guide.includes(`\`${key}:`),
       `manage-tack-sources names the ${key} key`,
     ).toBe(true);
-  for (const kind of collectionKinds)
-    expect(guide.includes(`kind: ${kind}`), `manage-tack-sources shows kind: ${kind}`).toBe(true);
+  expect(guide.includes("path: ."), "manage-tack-sources shows a . entry").toBe(true);
   const codes = CatalogQuarantineReasonSchema.literals.filter((code) =>
     code.startsWith("declaration-"),
   );
@@ -197,7 +191,6 @@ it("keeps every tack.yaml example in the guidance a valid declaration", () => {
   for (const { file, example } of examples) {
     const parsed: unknown = Bun.YAML.parse(example);
     const declaration = Effect.runSync(decodeSourceDeclaration(parsed));
-    if (isCollection(declaration)) continue;
     for (const { key, kind } of declarationKinds) {
       const entries: unknown = declaration[key] ?? [];
       if (Array.isArray(entries) === false) throw new Error(`${file}: ${key} is not a list`);

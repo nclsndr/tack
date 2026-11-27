@@ -192,7 +192,7 @@ it("shows the catalog's resource facts, explicit choices and issues", () => {
   });
 });
 
-it("says a skills collection declared a resource that has no declared path", () => {
+it("says the skills entry at . declared a resource of the source folder", () => {
   const sourceRegistrationId = "00000000-0000-4000-8000-000000000001";
   const report = Schema.decodeUnknownSync(CatalogReportSchema)({
     kind: "catalog",
@@ -206,7 +206,7 @@ it("says a skills collection declared a resource that has no declared path", () 
         sourceRegistrationId,
         directoryPath: "/flat/git",
         filePath: "/flat/git/SKILL.md",
-        collection: true,
+        declaredPath: ".",
         description: "Use Git.",
         activation: "default",
         userActivation: "opt-in",
@@ -218,7 +218,7 @@ it("says a skills collection declared a resource that has no declared path", () 
   });
   expect(explorerEntries(report, [], (path) => path)[0]?.facts).toContainEqual([
     "declared by",
-    "skills collection",
+    "skills: .",
   ]);
 });
 

@@ -14,13 +14,13 @@ import {
 import { isInside, isStrictlyInside } from "../../domain/identity/path-containment.ts";
 import { catalogQuarantine, type ResourceCandidate } from "./discovery-support.ts";
 import {
-  isCollection,
+  sourceFolderPath,
   type SourceDeclaration,
   type SourceRegistration,
 } from "../../domain/sources/source-schema.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
 import { declarationFileName } from "./declaration-file.ts";
-import { marksSourceEdge } from "@tackup/reader/source-edges";
+import { docsWalkSkips, marksSourceEdge } from "@tackup/reader/source-edges";
 import { discoverDocs } from "./docs-discovery.ts";
 import { profilePublications } from "./profile-publications.ts";
 
@@ -36,6 +36,15 @@ export const declarationKinds = ResourceKindSchema.literals
 
 /** The folder at a source root where an import stages its write, outside every declared path. */
 export const importStagingFolderName = ".tack-import-staging";
+
+/**
+ * Whether the walk of the entry declared at `declaredPath` passes over a file or folder by its
+ * name. Only a `.` entry does, as the docs walk does: dot and underscore names, which hold tool
+ * state and drafts, and `node_modules` stay out of a walk of the whole source folder. It passes
+ * over the folders of other sources too, without the finding another entry's walk reports.
+ */
+export const passesOver = (declaredPath: string, name: string) =>
+  declaredPath === sourceFolderPath && docsWalkSkips(name);
 
 /**
  * Compiles the include and exclude patterns of one declared folder. `selected` decides whether a
@@ -203,8 +212,7 @@ type Discovery = {
 
 /** What a candidate records about the declaration that found it. */
 type FoundBy = {
-  readonly declaredPath?: string;
-  readonly collection?: true;
+  readonly declaredPath: string;
   readonly record: DeclarationRecord;
 };
 
@@ -245,8 +253,7 @@ const addSkill = (
 
 /** The fields a candidate takes from the declaration that found it. */
 const foundBy = (declared: FoundBy) => ({
-  ...(declared.declaredPath === undefined ? {} : { declaredPath: declared.declaredPath }),
-  ...(declared.collection === undefined ? {} : { collection: declared.collection }),
+  declaredPath: declared.declaredPath,
   record: declared.record,
 });
 
@@ -393,6 +400,7 @@ const walkSkips = (path: Path.Path, outer: Owner, inner: Owner) => {
   const relative = relativeInside(path, outer, inner);
   const folder = inner.file === true ? relative.split("/").slice(0, -1).join("/") : relative;
   return (
+    relative.split("/").some((name) => passesOver(outer.declaredPath, name)) ||
     outer.patterns.prunedFolder(folder) !== undefined ||
     (inner.file === true && outer.patterns.excluded(relative) === true)
   );
@@ -436,8 +444,7 @@ const declaredOwners = Effect.fnUntraced(function* (
   const path = yield* Path.Path;
   const accepted: Array<Declared & { readonly owner: Owner }> = [];
   for (const { key, kind } of declarationKinds) {
-    // A collection names no path, so it owns nothing the rule compares.
-    const value: unknown = isCollection(declaration) ? undefined : declaration[key];
+    const value: unknown = declaration[key];
     if (value === undefined) continue;
     if (Array.isArray(value) === false) {
       const record = declarationRecord(kind, {});
@@ -474,6 +481,16 @@ const declaredOwners = Effect.fnUntraced(function* (
       const syntax = declaredPathSyntaxIssue(entry.path);
       if (syntax !== undefined) {
         report(record, target, "declaration-path-invalid", `The ${label}: ${syntax}`, kind);
+        continue;
+      }
+      if (decoded.kind === "context" && entry.path === sourceFolderPath) {
+        report(
+          record,
+          target,
+          "declaration-path-invalid",
+          `The ${label} names the source folder itself, where context would take every file, the tack.yaml too. Name the folder or file that holds the context.`,
+          kind,
+        );
         continue;
       }
       if (entry.path.split("/")[0] === importStagingFolderName) {
@@ -655,79 +672,6 @@ export const profileOverlap = Effect.fnUntraced(function* (
 });
 
 /**
- * Reads the top of a skills or commands collection: each folder there that holds `SKILL.md`, or
- * each `.md` file whose name is a command name. Dot and underscore names are never candidates,
- * and every other folder or file is ignored, so another source's folder is a boundary. A skill's
- * content is walked only to check that it stays inside the skill folder.
- */
-const scanCollection = Effect.fnUntraced(function* (
-  discovery: Discovery,
-  kind: "skill" | "command",
-  record: DeclarationRecord,
-  report: ReportDeclarationIssue,
-) {
-  const fs = yield* FileSystem.FileSystem;
-  const { path, source } = discovery;
-  const root = source.canonicalPath;
-  const label = `${resourceKinds[kind].declarationKey} collection`;
-  const entries = yield* fs.readDirectory(root).pipe(
-    Effect.catch((error) => {
-      report(record, root, folderKinds[kind].unreadableFolder, error.message, kind);
-      return Effect.succeed([] as ReadonlyArray<string>);
-    }),
-  );
-  const names = [...entries]
-    .filter((name) => name.startsWith(".") === false && name.startsWith("_") === false)
-    .sort(compareCodeUnits);
-  for (const name of names) {
-    const target = path.join(root, name);
-    if (kind === "command") {
-      if (
-        name.endsWith(".md") === false ||
-        portableAddress(kind, source, name.slice(0, -3)) === undefined
-      )
-        continue;
-      const file = yield* discovery.observe(record, target, root, kind);
-      if (file !== undefined && file.info.type === "File")
-        addFile(discovery, kind, {
-          declared: { collection: true, record },
-          boundary: root,
-          filePath: file.canonical,
-        });
-      continue;
-    }
-    const holdsSkill = yield* fs.stat(path.join(target, "SKILL.md")).pipe(
-      Effect.map((info) => info.type === "File"),
-      Effect.orElseSucceed(() => false),
-    );
-    if (holdsSkill === false) continue;
-    const folder = yield* discovery.observe(record, target, root, kind);
-    if (folder === undefined) continue;
-    const skillFile = yield* discovery.observe(
-      record,
-      path.join(folder.canonical, "SKILL.md"),
-      folder.canonical,
-      kind,
-      portableAddress(kind, source, path.basename(folder.canonical)),
-    );
-    if (skillFile === undefined) continue;
-    addSkill(discovery, { collection: true, record }, folder.canonical, skillFile);
-    yield* discovery.walk(
-      {
-        kind,
-        label,
-        record,
-        resolved: folder.canonical,
-        declaredPath: name,
-        entry: { path: name },
-        single: true,
-      },
-      true,
-    );
-  }
-});
-
-/**
  * Turns the resource declarations of a validated source into candidates and quarantines. Every
  * entry is checked on its own, so one bad entry quarantines only itself. A resource enters the
  * catalog only when a declaration covers it.
@@ -791,6 +735,7 @@ export const discoverDeclaredResources = Effect.fnUntraced(function* (
       insideSkill: boolean,
     ): Effect.Effect<void> =>
       Effect.gen(function* () {
+        if (passesOver(declared.declaredPath, name) === true) return;
         const target = path.join(directory, name);
         const relative = relativeDirectory === "" ? name : `${relativeDirectory}/${name}`;
         if (excludes.length > 0) {
@@ -852,6 +797,8 @@ export const discoverDeclaredResources = Effect.fnUntraced(function* (
           return;
         }
         if (insideSkill === false && directory !== boundary && marksSourceEdge(names) === true) {
+          // A `.` entry walks the whole source folder, where other sources sit by design.
+          if (declared.declaredPath === sourceFolderPath) return;
           const nested = path.relative(source.canonicalPath, directory);
           report(
             record,
@@ -872,13 +819,6 @@ export const discoverDeclaredResources = Effect.fnUntraced(function* (
   };
 
   const discovery: Discovery = { source, path, candidates, observe, walk };
-
-  if (isCollection(declaration) && declaration.kind !== "docs") {
-    const kind = declaration.kind === "skills" ? "skill" : "command";
-    const record = declarationRecord(kind, { collection: true });
-    records.push(record);
-    yield* scanCollection(discovery, kind, record, report);
-  }
 
   for (const declared of usable) {
     if (declared.kind === "script") {
@@ -904,12 +844,9 @@ export const discoverDeclaredResources = Effect.fnUntraced(function* (
   return { candidates, quarantined, records };
 });
 
-/**
- * A declared skills folder that catalog discovery reads: a folder entry that passed every rule, or
- * the source folder of a skills collection.
- */
+/** A declared skills folder that catalog discovery reads: a folder entry that passed every rule. */
 export type DeclaredSkillsFolder = {
-  /** The path as the declaration spells it, relative to the source root; empty for a collection. */
+  /** The path as the declaration spells it, relative to the source root; `.` for the source. */
   readonly declaredPath: string;
   /** The canonical absolute path of the folder. */
   readonly resolved: string;
@@ -919,25 +856,12 @@ export type DeclaredSkillsFolder = {
 
 /**
  * The declared skills folders of a validated source. A `skills` entry that names one skill is not
- * a folder, and an entry that fails the declaration rules is not declared. A skills collection
- * holds skills at its top, so its one folder is the source, with the empty declared path; other
- * collections declare none. Nothing is reported.
+ * a folder, and an entry that fails the declaration rules is not declared. Nothing is reported.
  */
 export const declaredSkillsFolders = Effect.fnUntraced(function* (
   source: SourceRegistration,
   declaration: SourceDeclaration,
 ) {
-  if (isCollection(declaration))
-    return declaration.kind === "skills"
-      ? [
-          {
-            declaredPath: "",
-            resolved: source.canonicalPath,
-            include: undefined,
-            exclude: undefined,
-          } satisfies DeclaredSkillsFolder,
-        ]
-      : [];
   const usable = yield* acceptDeclarations(source.canonicalPath, declaration, ignoreIssues, []);
   return usable.flatMap((declared): ReadonlyArray<DeclaredSkillsFolder> =>
     declared.kind === "skill" && declared.single === false
@@ -957,8 +881,8 @@ export const declaredSkillsFolders = Effect.fnUntraced(function* (
  * How a validated source's declarations would reach a `tack.yaml` written at `folder`, or
  * undefined when none would. `holds` names an entry whose declared path is or lies inside
  * `folder`; `walks` names a skills, commands or context folder whose walk would enter `folder`,
- * with the path relative to that folder that an exclude must name. A docs folder reaches nothing:
- * its walk passes over another source without a finding.
+ * with the path relative to that folder that an exclude must name. A docs folder and a `.` entry
+ * reach nothing: their walks pass over another source without a finding.
  */
 export const declarationReaching = Effect.fnUntraced(function* (
   source: SourceRegistration,
@@ -967,8 +891,6 @@ export const declarationReaching = Effect.fnUntraced(function* (
 ) {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
-  // A collection reads only its top, and a folder there without SKILL.md is never read.
-  if (isCollection(declaration)) return undefined;
   const usable = yield* acceptDeclarations(source.canonicalPath, declaration, ignoreIssues, []);
   const docs = (yield* discoverDocs(source, declaration)).entries.map((entry) => ({
     label: `docs entry "${entry.declaredPath}"`,
@@ -977,18 +899,21 @@ export const declarationReaching = Effect.fnUntraced(function* (
   const held = [...usable, ...docs].find((declared) => isInside(folder, declared.resolved));
   if (held !== undefined) return { holds: held.label };
   for (const declared of usable) {
+    // A `.` entry passes over another source's folder without a finding, as a docs folder does.
     if (declared.kind === "script" || declared.single === true) continue;
+    if (declared.declaredPath === sourceFolderPath) continue;
     if (isStrictlyInside(declared.resolved, folder) === false) continue;
     const parts = path.relative(declared.resolved, folder).split(path.sep);
     const { prunes } = patternSelector(declared.entry.include, declared.entry.exclude);
     let reached = true;
-    for (const [index] of parts.entries()) {
-      const excluded = prunes(parts.slice(0, index + 1).join("/"));
+    for (const [index, name] of parts.entries()) {
+      const excluded =
+        passesOver(declared.declaredPath, name) || prunes(parts.slice(0, index + 1).join("/"));
       const listed = yield* fs
         .readDirectory(path.join(declared.resolved, ...parts.slice(0, index + 1)))
         .pipe(Effect.option);
-      // The walk never enters an excluded folder, one it cannot list, a skill folder's content
-      // or another source's folder.
+      // The walk never enters an excluded folder, a name a `.` entry passes over, one it cannot
+      // list, a skill folder's content or another source's folder.
       reached =
         excluded === false &&
         Option.isSome(listed) &&

@@ -7,7 +7,6 @@ import { initializeState, readState, type StateOptions } from "../../services/st
 
 import { inspectSources, registerSource } from "./source.ts";
 import { declaredSkillsFolders } from "./resource-declarations.ts";
-import { inspectDeclaration } from "./source-check.ts";
 
 type Fixture = { readonly root: string; readonly options: StateOptions };
 
@@ -1255,37 +1254,40 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
     ),
   );
 
-  test.effect("a skills collection reads the skill folders at its top only", () =>
-    withSource(
-      declare("source", "kind: skills"),
-      {
-        "review/SKILL.md": bareSkillText("review"),
-        "git/SKILL.md": bareSkillText("git"),
-        "skills/SKILL.md": bareSkillText("skills"),
-        "Bad/SKILL.md": bareSkillText("Bad"),
-        ".claude/hidden/SKILL.md": bareSkillText("hidden"),
-        "_drafts/SKILL.md": bareSkillText("drafts"),
-        "team/lint/SKILL.md": bareSkillText("lint"),
-        "handbook/tack.yaml": declare("handbook", "kind: docs"),
-        "handbook/sample/SKILL.md": bareSkillText("sample"),
-        "README.md": "# Skills",
-        "review/examples/tack.yaml": declare("examples"),
-      },
-      (fixture) =>
-        Effect.gen(function* () {
-          const catalog = yield* catalogOf(fixture);
-          expect(catalog.unhealthySources).toEqual([]);
-          expect(resources(catalog)).toEqual(["skill/git", "skill/review", "skill/skills"]);
-          expect(quarantines(catalog)).toEqual(["skill:skill-frontmatter-schema-invalid"]);
-          const review = catalog.entries.find((entry) => entry.address.name === "review");
-          expect(review === undefined ? "missing" : "declaredPath" in review).toBe(false);
-        }),
-    ),
+  test.effect(
+    "a skills entry at . walks the source folder past dot, underscore, node_modules and other sources",
+    () =>
+      withSource(
+        declare("source", "skills:", "  - path: ."),
+        {
+          "review/SKILL.md": bareSkillText("review"),
+          "review/examples/tack.yaml": declare("examples"),
+          "team/lint/SKILL.md": bareSkillText("lint"),
+          "Bad/SKILL.md": bareSkillText("Bad"),
+          ".claude/hidden/SKILL.md": bareSkillText("hidden"),
+          "_drafts/old/SKILL.md": bareSkillText("old"),
+          "node_modules/pkg/SKILL.md": bareSkillText("pkg"),
+          "team/_wip/next/SKILL.md": bareSkillText("next"),
+          "handbook/tack.yaml": declare("handbook", "docs:", "  - name: handbook", "    path: ."),
+          "handbook/sample/SKILL.md": bareSkillText("sample"),
+          "README.md": "# Skills",
+        },
+        (fixture) =>
+          Effect.gen(function* () {
+            const catalog = yield* catalogOf(fixture);
+            expect(catalog.unhealthySources).toEqual([]);
+            expect(resources(catalog)).toEqual(["skill/lint", "skill/review"]);
+            expect(quarantines(catalog)).toEqual(["skill:skill-frontmatter-schema-invalid"]);
+            expect(
+              catalog.entries.find((entry) => entry.address.name === "review")?.declaredPath,
+            ).toBe(".");
+          }),
+      ),
   );
 
-  test.effect("a skills collection checks that a skill's content stays inside it", () =>
+  test.effect("a skills entry at . checks that a skill's content stays inside the source", () =>
     withSource(
-      declare("source", "kind: skills"),
+      declare("source", "skills:", "  - path: ."),
       { "review/SKILL.md": bareSkillText("review") },
       (fixture) =>
         Effect.gen(function* () {
@@ -1313,32 +1315,16 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
     ),
   );
 
-  test.effect("a commands collection reads the command files at its top only", () =>
+  test.effect("a commands entry at . reads every command below the source folder", () =>
     withSource(
-      declare("source", "kind: commands"),
+      declare("source", "commands:", "  - path: .", '    exclude: ["README.md"]'),
       {
         "deploy.md": "# Deploy",
-        "review.md": "# Review",
         "README.md": "# Commands",
-        "CHANGELOG.md": "# Changes",
         "_old.md": "# Old",
         "notes.txt": "notes",
         "team/ship.md": "# Ship",
       },
-      (fixture) =>
-        Effect.gen(function* () {
-          const catalog = yield* catalogOf(fixture);
-          expect(catalog.unhealthySources).toEqual([]);
-          expect(resources(catalog)).toEqual(["command/deploy", "command/review"]);
-          expect(catalog.quarantined).toEqual([]);
-        }),
-    ),
-  );
-
-  test.effect("a collection reports a top entry that leaves its folder or is no file", () =>
-    withSource(
-      declare("source", "kind: commands"),
-      { "ship.md": "# Ship", "folder.md/inner.txt": "x" },
       (fixture) =>
         Effect.gen(function* () {
           const fs = yield* FileSystem.FileSystem;
@@ -1347,97 +1333,70 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
           yield* fs.writeFileString(outside, "# Outside");
           yield* fs.symlink(outside, path.join(fixture.root, "escape.md"));
           const catalog = yield* catalogOf(fixture);
-          expect(resources(catalog)).toEqual(["command/ship"]);
+          expect(catalog.unhealthySources).toEqual([]);
+          expect(resources(catalog)).toEqual(["command/deploy", "command/ship"]);
           expect(quarantines(catalog)).toEqual(["command:resource-boundary-violation"]);
         }),
     ),
   );
 
-  test.effect("a skills collection refuses a SKILL.md that leaves its skill folder", () =>
+  test.effect("a docs entry at . is the whole source folder as one docs resource", () =>
     withSource(
-      declare("source", "kind: skills"),
-      { "review/SKILL.md": bareSkillText("review") },
-      (fixture) =>
-        Effect.gen(function* () {
-          const fs = yield* FileSystem.FileSystem;
-          const path = yield* Path.Path;
-          yield* fs.makeDirectory(path.join(fixture.root, "linked"));
-          yield* fs.symlink(
-            path.join(fixture.root, "review", "SKILL.md"),
-            path.join(fixture.root, "linked", "SKILL.md"),
-          );
-          const catalog = yield* catalogOf(fixture);
-          expect(resources(catalog)).toEqual(["skill/review"]);
-          expect(quarantines(catalog)).toEqual(["skill:resource-boundary-violation"]);
-        }),
-    ),
-  );
-
-  test.effect("a collection whose folder cannot be listed reports it as unreadable", () =>
-    withSource(
-      declare("source", "kind: skills"),
-      { "review/SKILL.md": bareSkillText("review") },
-      (fixture) =>
-        Effect.gen(function* () {
-          const fs = yield* FileSystem.FileSystem;
-          // Registration would refuse a folder it cannot resolve, so the declaration is inspected
-          // directly, as source add's preview does.
-          yield* fs.chmod(fixture.root, 0o311);
-          const entries = yield* inspectDeclaration(fixture.root, {
-            version: 1,
-            name: "source",
-            kind: "skills",
-          }).pipe(Effect.ensuring(fs.chmod(fixture.root, 0o755).pipe(Effect.orDie)));
-          expect(entries).toMatchObject([
-            {
-              kind: "skill",
-              collection: true,
-              resources: [],
-              findings: [{ code: "skill-directory-unreadable", field: "kind" }],
-            },
-          ]);
-        }),
-    ),
-  );
-
-  test.effect("a docs collection is its whole folder as one docs resource", () =>
-    withSource(
-      declare("notes", "kind: docs"),
-      { "index.md": "# Notes", "skills/review/SKILL.md": bareSkillText("review") },
+      declare("notes", "docs:", "  - name: notes", "    path: ."),
+      { "index.md": "# Notes" },
       (fixture) =>
         Effect.gen(function* () {
           const catalog = yield* catalogOf(fixture);
           expect(catalog.unhealthySources).toEqual([]);
           expect(resources(catalog)).toEqual(["docs/notes"]);
           expect(catalog.entries.find((entry) => entry.address.kind === "docs")).toMatchObject({
+            declaredPath: ".",
             directoryPath: fixture.root,
           });
         }),
     ),
   );
 
-  test.effect("a skills collection whose folder holds SKILL.md is one skill, not a source", () =>
-    withSource(
-      declare("source", "kind: skills"),
-      { "SKILL.md": bareSkillText("source") },
-      (fixture) =>
-        Effect.gen(function* () {
-          const registered = yield* registerSource(fixture.options, {
-            sourcePath: fixture.root,
-          }).pipe(Effect.flip);
-          expect(registered).toMatchObject({
-            code: "source-is-one-skill",
-            message: `${fixture.root} holds SKILL.md, so it is one skill, not a folder of skills. Register the folder that holds it, or import it into a source with tack import add.`,
-          });
-        }),
+  test.effect("a context entry at . is refused: context would take every file", () =>
+    withSource(declare("source", "context:", "  - path: ."), { "rules.md": "# Rules" }, (fixture) =>
+      Effect.gen(function* () {
+        const catalog = yield* catalogOf(fixture);
+        expect(resources(catalog)).toEqual([]);
+        expect(catalog.quarantined.map(({ code, message }) => ({ code, message }))).toEqual([
+          {
+            code: "declaration-path-invalid",
+            message:
+              'The context entry "." names the source folder itself, where context would take every file, the tack.yaml too. Name the folder or file that holds the context.',
+          },
+        ]);
+      }),
     ),
   );
 
+  test.effect(
+    "a skills entry at . in a folder that holds SKILL.md is one skill, not a source",
+    () =>
+      withSource(
+        declare("source", "skills:", "  - path: ."),
+        { "SKILL.md": bareSkillText("source") },
+        (fixture) =>
+          Effect.gen(function* () {
+            const registered = yield* registerSource(fixture.options, {
+              sourcePath: fixture.root,
+            }).pipe(Effect.flip);
+            expect(registered).toMatchObject({
+              code: "source-is-one-skill",
+              message: `${fixture.root} holds SKILL.md, so it is one skill, not a folder of skills. Register the folder that holds it, or import it into a source with tack import add.`,
+            });
+          }),
+      ),
+  );
+
   test.effect.each([
-    { kind: "skills", files: { "skills/review/SKILL.md": bareSkillText("review") } },
-    { kind: "commands", files: {} },
-  ])("a $kind collection is never warned about undeclared or missing resources", (row) =>
-    withSource(declare("source", `kind: ${row.kind}`), row.files, (fixture) =>
+    { key: "skills", files: { "skills/review/SKILL.md": bareSkillText("review") } },
+    { key: "commands", files: {} },
+  ])("a $key entry at . is never warned about undeclared or missing resources", (row) =>
+    withSource(declare("source", `${row.key}:`, "  - path: ."), row.files, (fixture) =>
       Effect.gen(function* () {
         yield* registerSource(fixture.options, { sourcePath: fixture.root });
         const inspections = yield* inspectSources(yield* readState(fixture.options));

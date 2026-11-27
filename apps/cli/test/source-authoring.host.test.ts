@@ -390,14 +390,14 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
       const fs = yield* FileSystem.FileSystem;
       yield* write("team/review/SKILL.md", "---\nname: review\ndescription: R\n---\n");
       const directory = path.join(root, "team");
-      const stdin = JSON.stringify({ version: 1, name: "team", kind: "skills" });
+      const stdin = JSON.stringify({ version: 1, name: "team", skills: [{ path: "." }] });
       const args = ["source", "add", directory, "--config", "-"];
       const preview = yield* json(root, state, args, stdin);
       expect(preview).toMatchObject({
         classification: "success",
         plan: {
           config: "standard-input",
-          content: "version: 1\nname: team\nkind: skills\n",
+          content: "version: 1\nname: team\nskills:\n  - path: .\n",
         },
         next: [],
       });
@@ -408,7 +408,7 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
       const applied = yield* json(root, state, [...args, "--apply"], stdin);
       expect(applied.applied).toMatchObject({ scaffolded: path.join(directory, "tack.yaml") });
       expect(yield* fs.readFileString(path.join(directory, "tack.yaml"))).toBe(
-        "version: 1\nname: team\nkind: skills\n",
+        "version: 1\nname: team\nskills:\n  - path: .\n",
       );
       // A folder that does not exist is refused before standard input is parsed.
       const empty = yield* json(root, state, [
@@ -502,11 +502,11 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
     () =>
       Effect.gen(function* () {
         const { root, state, path, write, config } = yield* scratch;
-        yield* write("one/team/tack.yaml", "version: 1\nname: team\nkind: skills\n");
+        yield* write("one/team/tack.yaml", "version: 1\nname: team\nskills: [{ path: . }]\n");
         yield* write("two/team/review/SKILL.md", "---\nname: review\ndescription: R\n---\n");
         yield* run(root, state, ["state", "init"]);
         yield* json(root, state, ["source", "add", path.join(root, "one", "team"), "--apply"]);
-        const declared = config({ version: 1, name: "team", kind: "skills" });
+        const declared = config({ version: 1, name: "team", skills: [{ path: "." }] });
         const flags = ["source", "add", path.join(root, "two", "team"), "--config", declared];
         const preview = yield* json(root, state, flags);
         expect(preview.plan).toMatchObject({ kind: "source-scaffold" });
@@ -519,7 +519,7 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
         );
         expect(registration.name).toBe(registration.registration.id);
         // The same holds for a source that has its tack.yaml: its preview names it by path only.
-        yield* write("three/team/tack.yaml", "version: 1\nname: team\nkind: skills\n");
+        yield* write("three/team/tack.yaml", "version: 1\nname: team\nskills: [{ path: . }]\n");
         const third = path.join(root, "three", "team");
         const registering = yield* json(root, state, ["source", "add", third]);
         expect(registering.plan).toMatchObject({ kind: "source-registration-plan" });
@@ -529,86 +529,50 @@ it.layer(LiveTestLayer)("local source authoring", (test) => {
         ).toContain("Would register source /");
       }),
   );
-  test.effect(
-    "source add and check warn about each folder of a skills collection that is not a skill",
-    () =>
-      Effect.gen(function* () {
-        const { root, state, path, write, config } = yield* scratch;
-        const flat = path.join(root, "flat");
-        for (const name of ["alpha", "beta", "team/review"])
-          yield* write(
-            `flat/${name}/SKILL.md`,
-            `---\nname: ${path.basename(name)}\ndescription: S\n---\n`,
-          );
-        yield* write("flat/commands/hi.md", "# Hi");
-        const declared = config({ version: 1, name: "flat", kind: "skills" });
-        const warnings = ["commands", "team"].map((folder) => ({
-          code: "collection-folder-not-skill",
-          severity: "warning",
-          field: "kind",
-          message: expect.stringContaining(`${folder}/ holds no SKILL.md`),
-          candidatePath: path.join(flat, folder),
-        }));
-        const args = ["source", "add", flat, "--config", declared];
-        const preview = yield* json(root, state, args);
-        expect(exitCodeForEnvelope(preview)).toBe(0);
-        expect(preview.plan).toMatchObject({
-          entries: [{ resources: ["alpha", "beta"], findings: warnings }],
-        });
-        const human = (yield* run(root, state, args)).split(/\s+/).join(" ");
-        expect(human).toContain(
-          "warning: collection-folder-not-skill: commands/ holds no SKILL.md",
-        );
-        expect(human).toContain("warning: collection-folder-not-skill: team/ holds no SKILL.md");
-        yield* run(root, state, ["state", "init"]);
-        const applied = yield* json(root, state, [...args, "--apply"]);
-        expect(exitCodeForEnvelope(applied)).toBe(0);
-        expect(applied.applied).toMatchObject({
-          inspection: { counts: { skill: 2, command: 0 }, findings: warnings },
-        });
-        const checked = yield* json(root, state, ["check", flat]);
-        expect(exitCodeForEnvelope(checked)).toBe(0);
-        expect(checked.result).toMatchObject({
-          summary: { errors: 0, warnings: 2 },
-          findings: warnings,
-        });
-      }),
+  test.effect("source add and check refuse kind with the declaration to write instead", () =>
+    Effect.gen(function* () {
+      const { root, state, path, write, config } = yield* scratch;
+      const flat = path.join(root, "flat");
+      yield* write("flat/alpha/SKILL.md", "---\nname: alpha\ndescription: S\n---\n");
+      const args = [
+        "source",
+        "add",
+        flat,
+        "--config",
+        config({ version: 1, name: "flat", kind: "skills" }),
+      ];
+      const preview = yield* json(root, state, args);
+      expect(preview.diagnostics).toMatchObject([
+        {
+          code: "declaration-schema-invalid",
+          message: expect.stringContaining(
+            'Write instead:\n  {"version":1,"name":"flat","skills":[{"path":"."}]}',
+          ),
+        },
+      ]);
+      yield* write("flat/tack.yaml", "version: 1\nname: flat\nkind: skills\n");
+      const checked = yield* run(root, state, ["check", flat]);
+      expect(checked).toContain(
+        [
+          `${path.join(flat, "tack.yaml")}:3: error declaration-schema-invalid: A tack.yaml takes no kind key: a "." entry declares the folder that holds it. Write instead:`,
+          "  version: 1",
+          "  name: flat",
+          "  skills:",
+          "    - path: .",
+        ].join("\n"),
+      );
+    }),
   );
   test.effect("source add previews a tack.yaml that warns with the warning beside its counts", () =>
     Effect.gen(function* () {
       const { root, state, path, write } = yield* scratch;
-      yield* write("flat/tack.yaml", "version: 1\nname: flat\nkind: skills\n");
-      yield* write("flat/review/SKILL.md", "---\nname: review\ndescription: R\n---\n");
-      yield* write("flat/commands/hi.md", "# Hi");
+      yield* write("flat/tack.yaml", "version: 1\nname: flat\n");
       const text = (yield* run(root, state, ["source", "add", path.join(root, "flat")]))
         .split(/\s+/)
         .join(" ");
       expect(text).toContain("Would register source flat");
-      expect(text).toContain("warning: collection-folder-not-skill: commands/ holds no SKILL.md");
+      expect(text).toContain("warning: source-declares-no-resources:");
     }),
-  );
-  test.effect(
-    "source add registers a skills collection that holds no skill, with the warning",
-    () =>
-      Effect.gen(function* () {
-        const { root, state, path, write, config } = yield* scratch;
-        const flat = path.join(root, "flat");
-        yield* write("flat/commands/hi.md", "# Hi");
-        const declared = config({ version: 1, name: "flat", kind: "skills" });
-        yield* run(root, state, ["state", "init"]);
-        const applied = yield* json(root, state, [
-          "source",
-          "add",
-          flat,
-          "--config",
-          declared,
-          "--apply",
-        ]);
-        expect(exitCodeForEnvelope(applied)).toBe(0);
-        expect(applied.applied).toMatchObject({
-          inspection: { findings: [{ code: "collection-folder-not-skill" }] },
-        });
-      }),
   );
   test.effect(
     "source add refuses a tack.yaml that a registered source's walk reaches until it excludes it",
@@ -837,36 +801,39 @@ it.layer(LiveTestLayer)("source declaration output", (test) => {
     }),
   );
 
-  test.effect("shows a collection in source, catalog --details and check without a path", () =>
-    Effect.gen(function* () {
-      const { root, state, path, write } = yield* scratch;
-      yield* write("flat/tack.yaml", "version: 1\nname: flat\nkind: skills\n");
-      yield* write("flat/review/SKILL.md", "---\nname: review\ndescription: R\n---\n");
-      yield* write("flat/git/SKILL.md", "---\nname: git\ndescription: G\n---\n");
-      const directory = path.join(root, "flat");
-      const check = yield* run(root, state, ["check", directory]);
-      expect(check).toContain("skill: 2");
-      yield* run(root, state, ["state", "init"]);
-      yield* run(root, state, ["source", "add", directory, "--apply"]);
-      expect(yield* run(root, state, ["source"])).toMatch(/skills +\(collection\) +2 resources/);
-      expect(yield* run(root, state, ["catalog", "--details"])).toContain("skills collection");
-      expect(yield* run(root, state, ["catalog"])).not.toContain("collection");
-      const details = Schema.decodeUnknownSync(
-        Schema.Struct({
-          resources: Schema.Array(
-            Schema.Struct({
-              origin: Schema.String,
-              collection: Schema.optionalKey(Schema.Boolean),
-            }),
-          ),
-        }),
-      )((yield* json(root, state, ["catalog", "--details"])).result);
-      expect(
-        details.resources
-          .filter(({ origin }) => origin === "registered")
-          .map(({ collection }) => collection),
-      ).toEqual([true, true]);
-    }),
+  test.effect(
+    "shows a skills entry at . as the path . in source, catalog --details and check",
+    () =>
+      Effect.gen(function* () {
+        const { root, state, path, write } = yield* scratch;
+        yield* write("flat/tack.yaml", "version: 1\nname: flat\nskills:\n  - path: .\n");
+        yield* write("flat/review/SKILL.md", "---\nname: review\ndescription: R\n---\n");
+        yield* write("flat/git/SKILL.md", "---\nname: git\ndescription: G\n---\n");
+        const directory = path.join(root, "flat");
+        const check = yield* run(root, state, ["check", directory]);
+        expect(check).toContain("skill: 2");
+        yield* run(root, state, ["state", "init"]);
+        yield* run(root, state, ["source", "add", directory, "--apply"]);
+        expect(yield* run(root, state, ["source"])).toMatch(/skills +\. +2 resources/);
+        expect(yield* run(root, state, ["catalog", "--details"])).toContain(
+          "declared by skills: .",
+        );
+        const details = Schema.decodeUnknownSync(
+          Schema.Struct({
+            resources: Schema.Array(
+              Schema.Struct({
+                origin: Schema.String,
+                declaredPath: Schema.optionalKey(Schema.String),
+              }),
+            ),
+          }),
+        )((yield* json(root, state, ["catalog", "--details"])).result);
+        expect(
+          details.resources
+            .filter(({ origin }) => origin === "registered")
+            .map(({ declaredPath }) => declaredPath),
+        ).toEqual([".", "."]);
+      }),
   );
   test.effect("lists each declaration reason code in catalog, in JSON and in human output", () =>
     Effect.gen(function* () {

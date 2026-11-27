@@ -98,7 +98,7 @@ edits. Nothing is hosted and no account is needed.
 
 This guide uses two repositories:
 
-- `acme-agent-skills`, a skills collection the whole team uses, as in
+- `acme-agent-skills`, a folder of skills the whole team uses, as in
   [Add a source](./add-a-source#a-folder-that-already-has-a-tackyaml);
 - `app`, a project repository that keeps its own skill in `.ai/skills` and declares it in its own
   `tack.yaml`, as [Move an existing setup into Tack](./migrate#5-move-a-repositorys-own-skill)
@@ -112,9 +112,10 @@ its `maintainers`:
 ```yaml
 version: 1
 name: acme
-kind: skills
 maintainers:
   - platform-team
+skills:
+  - path: .
 ```
 
 The project repository commits its `tack.yaml`, its skills, and an `AGENTS.md` with the Tack

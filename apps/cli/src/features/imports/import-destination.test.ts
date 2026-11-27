@@ -68,34 +68,38 @@ it.layer(LiveTestLayer)("import destination", (test) => {
     ),
   );
 
-  test.effect("a skills collection receives skills at its top only", () =>
+  test.effect("a skills entry at . receives skills anywhere below the source folder", () =>
     withDestination(
-      declare("personal-brain", "kind: skills"),
+      declare("personal-brain", "skills: [{ path: . }]"),
       { "a/SKILL.md": bareSkillText("a") },
       (context) =>
         Effect.gen(function* () {
           const source = yield* resolveDestinationSource(context.inspections, "personal-brain");
           expect(yield* resolveDestination(source, undefined)).toMatchObject({
-            folder: "",
-            covering: { declaredPath: "", resolved: context.root },
+            folder: ".",
+            covering: { declaredPath: ".", resolved: context.root },
             missingFolders: [],
           });
           expect(yield* destinationChoices(context.inspections)).toMatchObject([
-            { name: "personal-brain", folders: [""] },
+            { name: "personal-brain", folders: ["."] },
           ]);
-          const refused = yield* resolveDestination(source, "team").pipe(Effect.flip);
+          expect(yield* resolveDestination(source, "team/review")).toMatchObject({
+            folder: "team/review",
+            missingFolders: ["team", "team/review"],
+          });
+          const refused = yield* resolveDestination(source, "team/_drafts").pipe(Effect.flip);
           expect(refused).toMatchObject({
             code: "import-destination-invalid",
             message:
-              "The source personal-brain is a skills collection, which holds skills at its top only. Import with --into personal-brain.",
+              'team/_drafts holds _drafts, a name the skills entry "." passes over, as it passes over every dot, underscore and node_modules name, so skills there are not in the catalog. Choose another folder.',
           });
         }),
     ),
   );
 
-  test.effect("a commands collection declares no skills folder to import into", () =>
+  test.effect("a commands entry at . declares no skills folder to import into", () =>
     withDestination(
-      declare("personal-brain", "kind: commands"),
+      declare("personal-brain", "commands: [{ path: . }]"),
       { "ship.md": "# Ship" },
       ({ inspections }) =>
         Effect.gen(function* () {

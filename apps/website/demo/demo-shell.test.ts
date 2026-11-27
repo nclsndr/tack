@@ -49,7 +49,9 @@ describe("demo session", () => {
     for (const step of demoWalkthrough) await session.run(step.command, 80);
 
     const text = (path: string) => new TextDecoder().decode(volume.readFile(path));
-    expect(text("/home/you/skills/tack.yaml")).toBe("version: 1\nname: skills\nkind: skills\n");
+    expect(text("/home/you/skills/tack.yaml")).toBe(
+      "version: 1\nname: skills\nskills:\n  - path: .\n",
+    );
     expect(text("/home/you/team-docs/tack.yaml")).toContain("name: team-docs\n");
     expect(text("/home/you/team-docs/tack.yaml")).toContain(
       "docs:\n  - name: handbook\n    path: handbook\n",

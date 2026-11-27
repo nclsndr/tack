@@ -11,7 +11,6 @@ import {
 import { catalogQuarantine } from "./discovery-support.ts";
 import { declaredPathSyntaxIssue, resolveDeclaredPath } from "./declared-path.ts";
 import {
-  isCollection,
   type SourceDeclaration,
   type SourceRegistration,
 } from "../../domain/sources/source-schema.ts";
@@ -50,22 +49,6 @@ export const discoverDocs = Effect.fnUntraced(function* (
       candidatePath: problem.directoryPath,
     });
   };
-  if (isCollection(declaration)) {
-    if (declaration.kind !== "docs") return { entries, quarantined, records, owners };
-    // A docs collection is its whole folder, named by the declaration's required name.
-    const record = declarationRecord("docs", { name: declaration.name, collection: true });
-    records.push(record);
-    owners.push(record);
-    entries.push({
-      address: { kind: "docs", sourceRegistrationId: source.id, name: declaration.name },
-      collection: true,
-      directoryPath: source.canonicalPath,
-      sourcePath: source.canonicalPath,
-      sourceRegistrationId: source.id,
-      readerConfig: { kind: "source", path: declarationPath },
-    });
-    return { entries, quarantined, records, owners };
-  }
   if (declaration.docs === undefined) return { entries, quarantined, records, owners };
   const candidates = yield* Schema.decodeUnknownEffect(Schema.Array(Schema.Unknown))(
     declaration.docs,

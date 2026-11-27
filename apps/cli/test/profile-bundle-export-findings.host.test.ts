@@ -142,20 +142,20 @@ it.layer(LiveTestLayer)("bundle export findings", (test) => {
   );
 
   test.effect(
-    "a docs collection exports as kind: docs with its folder, without tool state or nested sources",
+    "a docs entry at . exports with its folder, without tool state or nested sources",
     () =>
       Effect.gen(function* () {
         const f = yield* profileFixture;
         yield* f.write(
           "notes/tack.yaml",
-          "version: 1\nkind: docs\nname: notes\nreader: notes.reader.yaml\n",
+          "version: 1\nname: notes\ndocs: [{name: notes, path: ., reader: notes.reader.yaml}]\n",
         );
         yield* f.write("notes/notes.reader.yaml", "navigation: {preset: folders}\n");
         yield* f.write("notes/index.md", "# Notes\n");
         yield* f.write("notes/_partials/intro.md", "Intro\n");
         yield* f.write("notes/.obsidian/app.json", "{}");
         yield* f.write("notes/node_modules/pkg/index.js", "x");
-        yield* f.write("notes/vendor/tack.yaml", "version: 1\nname: vendor\nkind: skills\n");
+        yield* f.write("notes/vendor/tack.yaml", "version: 1\nname: vendor\nskills: [{path: .}]\n");
         yield* f.write("notes/vendor/x.md", "# Vendored\n");
         yield* registerSource(f.options, { sourcePath: f.path.join(f.root, "notes") });
         yield* f.write(
@@ -166,11 +166,14 @@ it.layer(LiveTestLayer)("bundle export findings", (test) => {
           "source/ci.yaml",
           "version: 1\nname: ci\ndepends-on: [notes]\nmembers: [style, {kind: docs, name: notes, source: notes}]\n",
         );
-        yield* f.write("notes/tack.yaml", "version: 1\nkind: docs\nname: notes\n");
+        yield* f.write(
+          "notes/tack.yaml",
+          "version: 1\nname: notes\ndocs: [{name: notes, path: .}]\n",
+        );
         expect(yield* exportCi(f, "plain-collection")).toMatchObject({ exported: true });
         yield* f.write(
           "notes/tack.yaml",
-          "version: 1\nkind: docs\nname: notes\nreader: notes.reader.yaml\n",
+          "version: 1\nname: notes\ndocs: [{name: notes, path: ., reader: notes.reader.yaml}]\n",
         );
         const exported = yield* exportCi(f, "collection");
         expect(exported).toMatchObject({ exported: true, findings: [] });
@@ -191,7 +194,16 @@ it.layer(LiveTestLayer)("bundle export findings", (test) => {
         ]);
         const declaration = archive.entries.find((entry) => entry.path === `${prefix}tack.yaml`);
         expect(new TextDecoder().decode(declaration?.bytes)).toBe(
-          "version: 1\nkind: docs\nname: notes\nreader: notes.reader.yaml\n",
+          [
+            "version: 2",
+            "name: notes",
+            "depends-on: []",
+            "docs:",
+            "  - name: notes",
+            "    path: .",
+            "    reader: notes.reader.yaml",
+            "",
+          ].join("\n"),
         );
       }),
   );

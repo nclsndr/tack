@@ -1,4 +1,4 @@
-import { Yaml } from "../../domain/runtime-neutral.ts";
+import { RepeatedYamlKeyError, Yaml } from "../../domain/runtime-neutral.ts";
 import { bundleSourceLabel } from "../../domain/bundles/bundle-registration.ts";
 import { bundleIntegrityIssue } from "./bundle-integrity.ts";
 import { fileAccessFailure } from "../file-access.ts";
@@ -11,7 +11,8 @@ import {
   SourceValidationErrorCodeSchema,
   SourceRegistrationSchema,
   declarationResourceKeys,
-  isCollection,
+  keysAtSourceFolder,
+  type DeclarationFormat,
   declarationIssues,
   type SourceDeclaration,
   type SourceRegistration,
@@ -224,7 +225,7 @@ export const sourceFileFailure =
     });
   };
 
-/** Why a folder that holds `SKILL.md` cannot be a skills collection, and what to do instead. */
+/** Why a folder that holds `SKILL.md` cannot be a folder of skills, and what to do instead. */
 export const oneSkillMessage = (folder: string) =>
   `${folder} holds SKILL.md, so it is one skill, not a folder of skills. Register the folder that holds it, or import it into a source with tack import add.`;
 
@@ -290,19 +291,29 @@ const validateSource = Effect.fnUntraced(function* (
     catch: (cause) =>
       new SourceValidationError({
         code: "declaration-malformed",
-        message: String(cause),
+        message: Yaml.failure(cause),
         sourcePath: canonicalPath,
+        // A repeated key is located at its second occurrence, which is the one to remove.
+        ...(cause instanceof RepeatedYamlKeyError
+          ? { issues: [{ message: cause.message, line: cause.lines[1] }] }
+          : {}),
       }),
     try: (): unknown => Yaml.parse(encodedDeclaration),
   });
   return yield* validateDeclaration(canonicalPath, {
     text: encodedDeclaration,
     parsed: parsedDeclaration,
+    format: "yaml",
   });
 });
 
 /** A declaration's text, which locates each issue, and the value the text parses to. */
-export type DeclarationDocument = { readonly text: string; readonly parsed: unknown };
+export type DeclarationDocument = {
+  readonly text: string;
+  readonly parsed: unknown;
+  /** How the text is written, so a fix the refusal shows is written the same way. */
+  readonly format: DeclarationFormat;
+};
 
 /**
  * Validates a parsed declaration for the source folder at `canonicalPath`, whether it was read
@@ -339,9 +350,12 @@ export const validateDeclaration = Effect.fnUntraced(function* (
 
   const declaration = yield* decodeDeclaration(parsedDeclaration).pipe(
     Effect.mapError((cause) => {
-      const issues = declarationIssues(parsedDeclaration, cause, path.basename(canonicalPath)).map(
-        (issue) => ({ ...issue, line: fieldLine(document.text, issue.field) }),
-      );
+      const issues = declarationIssues(
+        parsedDeclaration,
+        cause,
+        path.basename(canonicalPath),
+        document.format,
+      ).map((issue) => ({ ...issue, line: fieldLine(document.text, issue.field) }));
       return new SourceValidationError({
         code: "declaration-schema-invalid",
         message: issues.map((issue) => issue.message).join("\n"),
@@ -351,21 +365,18 @@ export const validateDeclaration = Effect.fnUntraced(function* (
     }),
   );
 
-  if (isCollection(declaration)) {
-    if (
-      declaration.kind === "skills" &&
-      (yield* fileSystem
-        .exists(path.join(canonicalPath, "SKILL.md"))
-        .pipe(Effect.orElseSucceed(constFalse))) === true
-    )
-      return yield* new SourceValidationError({
-        code: "source-is-one-skill",
-        message: oneSkillMessage(canonicalPath),
-        sourcePath: canonicalPath,
-      });
-    // A collection names no folder, so the list form's layout warnings never apply to it.
-    return { canonicalPath, declaration };
-  }
+  // A skills entry "." makes the source folder a folder of skills, so it cannot be one skill.
+  if (
+    keysAtSourceFolder(declaration).includes("skills") &&
+    (yield* fileSystem
+      .exists(path.join(canonicalPath, "SKILL.md"))
+      .pipe(Effect.orElseSucceed(constFalse))) === true
+  )
+    return yield* new SourceValidationError({
+      code: "source-is-one-skill",
+      message: oneSkillMessage(canonicalPath),
+      sourcePath: canonicalPath,
+    });
 
   const hasResourceKey = (["skills", "commands", "context", "scripts"] as const).some(
     (key) => declaration[key] !== undefined,

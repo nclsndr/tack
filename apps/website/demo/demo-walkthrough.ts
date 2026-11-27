@@ -4,8 +4,8 @@ export type WalkthroughStep = {
   readonly command: string;
 };
 
-/** Declares the skills folder as a skills collection, with its `tack.yaml` as inline JSON. */
-export const sourceSkills = `tack source add ~/skills --config '{"version":1,"name":"skills","kind":"skills"}'`;
+/** Declares the skills folder as its own skills entry `.`, with its `tack.yaml` as inline JSON. */
+export const sourceSkills = `tack source add ~/skills --config '{"version":1,"name":"skills","skills":[{"path":"."}]}'`;
 
 /** Declares the team docs folder's commands and docs, with its `tack.yaml` as inline JSON. */
 export const sourceDocs = `tack source add ~/team-docs --config '{"version":1,"name":"team-docs","commands":[{"path":"commands"}],"docs":[{"name":"handbook","path":"handbook"}]}'`;

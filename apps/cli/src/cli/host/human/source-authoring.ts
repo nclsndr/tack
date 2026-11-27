@@ -94,7 +94,7 @@ export const renderSourceScaffold: HumanView = (envelope, style) => {
       .map((line) => `  ${line}`),
     ...plan.entries.map((entry) => [
       ...wrap(
-        `${resourceKinds[entry.kind].declarationKey} ${entry.path ?? "collection"} · ${plural(entry.resources.length, entry.kind, kindPlurals[entry.kind])}`,
+        `${resourceKinds[entry.kind].declarationKey} ${entry.path ?? "(no path)"} · ${plural(entry.resources.length, entry.kind, kindPlurals[entry.kind])}`,
       ),
       ...(entry.resources.length === 0
         ? []

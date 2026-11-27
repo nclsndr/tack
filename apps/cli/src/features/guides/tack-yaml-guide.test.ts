@@ -1,11 +1,7 @@
 import { expect, it } from "vitest";
 import { Effect, Schema } from "effect";
 import { ProfilePublicationSchema } from "../../domain/profiles/profile-schema.ts";
-import {
-  declarationIssues,
-  decodeSourceDeclaration,
-  isCollection,
-} from "../../domain/sources/source-schema.ts";
+import { declarationIssues, decodeSourceDeclaration } from "../../domain/sources/source-schema.ts";
 import { BundleSupportEntrySchema } from "../profiles/bundle-support.ts";
 import { docsEntrySchema } from "../sources/docs-discovery.ts";
 import { decodeEntry } from "../sources/resource-declarations.ts";
@@ -29,7 +25,7 @@ const declarationFieldIssues = (parsed: unknown) =>
   Effect.runSync(
     decodeSourceDeclaration(parsed).pipe(
       Effect.map(() => []),
-      Effect.catch((error) => Effect.succeed(declarationIssues(parsed, error, "brain"))),
+      Effect.catch((error) => Effect.succeed(declarationIssues(parsed, error, "brain", "yaml"))),
     ),
   );
 
@@ -56,8 +52,7 @@ const entryMessage = (kind: "skill" | "script") => (entry: unknown) =>
 
 /**
  * One table of the guide, with a value its decoder takes for every key it requires, a value for any
- * other key, and the fields the decoder refuses in a value. Leaving out `kind` makes a collection
- * the list form, which still decodes, so it is never left out.
+ * other key, and the fields the decoder refuses in a value.
  */
 type Table = {
   readonly heading: string;
@@ -68,19 +63,12 @@ type Table = {
 
 const tables: ReadonlyArray<Table> = [
   {
-    heading: "## List form",
+    heading: "## Keys",
     minimal: { version: 1, name: "brain" },
     sample: (key: string) => (key === "version" ? 2 : []),
     refused: (value: unknown) =>
       declarationFieldIssues(value).flatMap((issue) => issue.field ?? []),
   },
-  ...(["skills", "commands", "docs"] as const).map((kind) => ({
-    heading: `### kind: ${kind}`,
-    minimal: { version: 1, name: "brain", kind },
-    sample: () => [],
-    refused: (value: unknown) =>
-      declarationFieldIssues(value).flatMap((issue) => issue.field ?? []),
-  })),
   {
     heading: "### Folder entries",
     minimal: { path: "skills" },
@@ -121,7 +109,7 @@ it.each(tables)(
     // The required keys alone decode, and each is refused when it is left out.
     expect(rows.filter((row) => row.required).map((row) => row.key)).toEqual(Object.keys(minimal));
     expect(refused(minimal)).toEqual([]);
-    for (const key of Object.keys(minimal).filter((required) => required !== "kind")) {
+    for (const key of Object.keys(minimal)) {
       const { [key]: _left, ...without } = minimal;
       expect(refused(without), `${heading}: ${key} left out`).toContain(key);
     }
@@ -136,8 +124,7 @@ it("prints an example that decodes as a declaration whose every entry decodes", 
   const block = /```json\n([\s\S]*?)```/.exec(guide)?.[1] ?? "";
   const parsed: unknown = JSON.parse(block);
   expect(parsed).toEqual(tackYamlExample);
-  const declaration = Effect.runSync(decodeSourceDeclaration(parsed));
-  expect(isCollection(declaration)).toBe(false);
+  expect(Effect.runSync(decodeSourceDeclaration(parsed))).toEqual(tackYamlExample);
   for (const [key, kind] of [
     ["skills", "skill"],
     ["commands", "skill"],

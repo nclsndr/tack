@@ -55,7 +55,6 @@ const provenanceFields = {
  */
 const declaredPathField = {
   declaredPath: Schema.optionalKey(Schema.String),
-  collection: Schema.optionalKey(Schema.Literal(true)),
 };
 
 /** The complete authored frontmatter mapping, present only in detailed output. */
@@ -251,8 +250,8 @@ type RowContext = {
     CatalogResource,
     "directoryPath" | "origin" | "sourcePath" | "sourceRegistrationId"
   >;
-  /** The declared path or the collection, when the options ask for it and the entry has one. */
-  readonly declared: { readonly declaredPath?: string; readonly collection?: true };
+  /** The declared path, when the options ask for it and the entry has one. */
+  readonly declared: { readonly declaredPath?: string };
   readonly details: boolean;
   readonly imported: CatalogReportOptions["imported"];
 };
@@ -338,9 +337,7 @@ const catalogResource = (
         ? {}
         : entry.declaredPath !== undefined
           ? { declaredPath: entry.declaredPath }
-          : "collection" in entry && entry.collection === true
-            ? { collection: true }
-            : {},
+          : {},
     details,
     imported: options.imported,
   });

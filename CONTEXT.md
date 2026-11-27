@@ -23,22 +23,19 @@ _Avoid_: source declaration, resource identity
 
 **Source declaration**:
 A versioned document authored within a source. It describes source content independently of the
-operator's local registration. The `tack.yaml` at the top of a source has one of two shapes: the
-list form or a collection. The list form supports versions 1 and 2. Both carry a source label,
-maintainers, source dependencies and the resource declarations that say where each kind of resource
-lives; version 2 also publishes profiles and bundle support. Source, profile, bundle and local-state
+operator's local registration. The `tack.yaml` at the top of a source supports versions 1 and 2.
+Both carry a source label, maintainers, source dependencies and the resource declarations that say
+where each kind of resource lives; version 2 also publishes profiles and bundle support. Source, profile, bundle and local-state
 formats are independent. Nothing is a resource unless a declaration covers it. Each `tack.yaml`
 marks the edge of one source: below a source's root, a folder that holds `tack.yaml` and no
 `SKILL.md` belongs to another source, and declarations never merge or inherit across that edge.
 _Avoid_: machine configuration, registration, inherited defaults, area declaration
 
-**Collection**:
-A source whose `tack.yaml` names a `kind` (`skills`, `commands` or `docs`) and no resource keys. Its
-folder is the collection: a skills collection holds a skill folder per skill at its top, a commands
-collection a `.md` file per command at its top, and a docs collection is the whole folder as one
-docs resource. A collection declares nothing else, so content of another kind beside it is its own
-source.
-_Avoid_: flat source, top entry, kind source
+**Source folder entry**:
+A resource declaration whose path is `.`: the folder that holds the `tack.yaml` is a folder of
+skills, of commands, or of docs. A `tack.yaml` with one declares that one kind, so content of
+another kind beside it is its own source. Context is never declared this way.
+_Avoid_: collection, flat source, top entry, kind source
 
 **Resource declaration**:
 One entry, under one kind, in a source's `tack.yaml`. It names where resources of that kind

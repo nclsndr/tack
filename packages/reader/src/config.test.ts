@@ -108,6 +108,14 @@ describe("explicit reader configuration", () => {
     await expect(loadReaderConfig(directory)).rejects.toThrow(/absent.tsx/);
   });
 
+  it("refuses a repeated key, naming the key and both of its lines", async () => {
+    const directory = await fixture();
+    await writeFile(join(directory, "tack.reader.yaml"), `${stringify(valid)}version: 1\n`);
+    await expect(loadReaderConfig(directory)).rejects.toThrow(
+      `${join(directory, "tack.reader.yaml")}: The key "version" appears twice, at lines 1 and 18. Keep one of them.`,
+    );
+  });
+
   it("reports YAML nested too deeply to parse as malformed", async () => {
     const directory = await fixture();
     const depth = 20_000;

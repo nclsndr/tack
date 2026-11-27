@@ -86,9 +86,7 @@ const declaredByText = (resource: CatalogResource): string =>
     ? ""
     : resource.declaredPath !== undefined
       ? `declared by ${resourceKinds[resource.kind].declarationKey}: ${resource.declaredPath}`
-      : resource.collection === true
-        ? `${resourceKinds[resource.kind].declarationKey} collection`
-        : "";
+      : "";
 
 /** How an imported skill's ref request reads: `tracking main`, `pinned v1.2.0`, `tracking the default branch`. */
 const refText = (ref: NonNullable<ImportedSkill>["ref"]) =>

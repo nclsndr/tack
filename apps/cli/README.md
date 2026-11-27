@@ -426,46 +426,48 @@ top-level key makes the source unhealthy; a bad entry is quarantined alone and t
 source keeps working. The five resource keys are decoded one entry at a time, so a typo in one
 entry never hides the others.
 
-### Collections
+### The source folder
 
-A folder that holds only skill folders, only `.md` commands, or only docs can declare itself as a
-**collection**: a `tack.yaml` with `version: 1`, a `name`, a `kind` and no resource keys. The folder that holds
-it is the collection.
+A folder that holds only skill folders, only `.md` commands, or only docs declares itself with the
+path `.`, which names the folder that holds the `tack.yaml`:
 
 ```yaml
 version: 1
 name: review-skills
-kind: skills
+skills:
+  - path: .
 ```
 
-| `kind`     | What the source holds                                                                                   |
-| ---------- | ------------------------------------------------------------------------------------------------------- |
-| `skills`   | Each folder at its top that holds `SKILL.md`. Nothing deeper is read.                                   |
-| `commands` | Each `.md` file at its top whose name is a command name; `README.md` and other names are ignored.       |
-| `docs`     | The whole folder, as one docs resource named by its `name`, which is also the label. `reader` tunes it. |
+| Key        | What a `.` entry holds                                                                        |
+| ---------- | --------------------------------------------------------------------------------------------- |
+| `skills`   | Each folder below the source folder that holds `SKILL.md`, as for any skills folder.          |
+| `commands` | Each `.md` file below the source folder whose name is a command name.                         |
+| `docs`     | The whole source folder, as one docs resource named by the entry's `name`. `reader` tunes it. |
 
-Names that start with `.` or `_` are never resources. A collection takes `name`, `maintainers`,
-`depends-on` (skills and commands) and `reader` (docs); no resource keys, patterns or profiles.
-Context and scripts need the list form. A collection declares nothing else, so other content beside
-it is a source of its own with its own `tack.yaml`. A skills collection holds skills only: each
-folder at its top is a skill. `tack source add` and `tack check` name each folder there
-that holds no `SKILL.md` in the warning `collection-folder-not-skill`, and Tack ignores it; the
-warning changes no exit code. Dot, underscore and `node_modules` folders and folders with their own
-`tack.yaml` are not named. A skills collection whose folder holds
-`SKILL.md` is one skill, and the source is unhealthy with `source-is-one-skill`; `kind: skill` is
-refused. `tack import add --into SOURCE` writes into a skills collection's top; `SOURCE:FOLDER` is
-refused. `tack source` shows its one declaration as `(collection)`, and `catalog --details` says
-`skills collection` where a list-form resource says `declared by skills: PATH`.
+A `.` entry walks the source folder like any declared folder, with `include` and `exclude`, and
+passes over dot, underscore and `node_modules` names and the folders of other sources, as a docs
+walk does. A `tack.yaml` with a `.` entry declares that one kind: another resource key would read
+the same files, so it is refused with `declaration-schema-invalid` at that key. Content of another
+kind is a source of its own with its own `tack.yaml`. A `context` entry is never `.`, since context
+would take every file: it is refused with `declaration-path-invalid`. A source with a skills entry
+`.` whose folder holds `SKILL.md` is one skill, and the source is unhealthy with
+`source-is-one-skill`. `tack import add --into SOURCE` writes into its top, and `SOURCE:FOLDER`
+into a group folder below it.
 
-Every `tack.yaml`, list form or collection, declares its `name`. The label never comes from the
+`kind` is no key of a `tack.yaml`: `tack check` refuses it with `declaration-schema-invalid` and
+prints the `tack.yaml` to write instead. A key that one mapping names twice is refused with
+`declaration-malformed`, which names the key and both of its lines; the docs reader refuses it the
+same way.
+
+Every `tack.yaml` declares its `name`. The label never comes from the
 folder, which can be called differently on each machine, so `depends-on` and `source:` references
 resolve the same everywhere. A `tack.yaml` without `name` makes the source unhealthy with
 `declaration-schema-invalid`, and the message suggests a name made from the folder's. Two registered sources with one label cannot qualify a reference until one changes; each
 stays reachable by registration ID. Labels are typed, never stored: state, picks, docs mount paths,
 reader routes and run history use the registration ID.
 
-**Declared paths.** Every `path`, docs included, is non-empty, relative and `/`-separated, with no
-`.`, `..`, empty segment or backslash. It resolves, after symlinks, to a place inside the source
+**Declared paths.** Every `path`, docs included, is `.` for the source folder, or non-empty,
+relative and `/`-separated, with no `.`, `..`, empty segment or backslash. It resolves, after symlinks, to a place inside the source
 and exists with the right type: a folder for `skills`, a folder or file for `commands` and
 `context`, a `.ts` file for `scripts`, a folder for `docs`. A declared path may be a symlink to a
 place inside the source. Everything found inside a declared folder must resolve inside that folder,
@@ -536,7 +538,7 @@ optional frontmatter.
 ```sh
 tack source add /path/to/my-source   # preview registering a source that has tack.yaml
 tack source add /path/to/my-source --apply   # register it
-tack source add /path/to/skills --config '{"version": 1, "name": "skills", "kind": "skills"}'   # preview the tack.yaml it writes
+tack source add /path/to/skills --config '{"version": 1, "name": "skills", "skills": [{"path": "."}]}'   # preview the tack.yaml it writes
 tack guide tack-yaml   # every key a tack.yaml takes
 tack source
 tack source relocate <registration-id> /path/to/moved-source
@@ -594,9 +596,9 @@ overwriting and registers the source after state initialization; both name the s
 `SOURCE:NAME` reference types it. Pipe the same config again for `--config -`. `--config` on a
 source that has `tack.yaml` fails with `declaration-exists`: edit that file by hand. A bare
 `source add` on a folder without one fails with `declaration-config-required` and suggests a
-declaration read from the folder's top: a skills [collection](#collections) when skill folders sit
-there, with a `commands` or `docs` folder beside them as a collection of its own, or else one entry
-per folder named after a kind. A `tack.yaml` where a registered source's declaration reaches would
+declaration read from the folder's top: a skills entry [`.`](#the-source-folder) when skill folders
+sit there, with a `commands` or `docs` folder beside them as a source of its own with a `.` entry,
+or else one entry per folder named after a kind. A `tack.yaml` where a registered source's declaration reaches would
 take the folder out of that source, so `source add` refuses it with `declaration-inside-source`
 until that source excludes the folder. When every entry has a problem and finds no resource, the
 source would load nothing: the preview is partial with `declaration-loads-nothing` and offers no

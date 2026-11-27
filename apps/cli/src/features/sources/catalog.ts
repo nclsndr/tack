@@ -32,7 +32,6 @@ export type SourceDeclarationsView =
 /** What every entry parsed from a candidate carries, whatever its kind. */
 type EntryCommon = {
   readonly declaredPath?: string;
-  readonly collection?: true;
   readonly directoryPath: string;
   readonly sourcePath: string;
   readonly sourceRegistrationId: string;
@@ -184,8 +183,7 @@ const candidateParserOf = <K extends CandidateKind>(kind: K): CandidateParser<Ca
 const parseCandidate = Effect.fnUntraced(function* (candidate: ResourceCandidate) {
   const path = yield* Path.Path;
   return yield* candidateParserOf(candidate.kind)(candidate, {
-    ...(candidate.declaredPath === undefined ? {} : { declaredPath: candidate.declaredPath }),
-    ...(candidate.collection === undefined ? {} : { collection: candidate.collection }),
+    declaredPath: candidate.declaredPath,
     directoryPath: path.dirname(candidate.filePath),
     sourcePath: candidate.source.canonicalPath,
     sourceRegistrationId: candidate.source.id,

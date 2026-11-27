@@ -7,10 +7,8 @@ import type { DeclarationRecord } from "../../domain/sources/declaration-facts.t
 export type ResourceCandidate = {
   readonly filePath: string;
   readonly source: SourceRegistration;
-  /** The declared path of the entry that found this candidate; absent for a collection. */
-  readonly declaredPath?: string;
-  /** Whether a collection found this candidate, rather than an entry with a path. */
-  readonly collection?: true;
+  /** The declared path of the entry that found this candidate. */
+  readonly declaredPath: string;
   /** The declaration that found this candidate, which collects its problems. */
   readonly record: DeclarationRecord;
 } & (

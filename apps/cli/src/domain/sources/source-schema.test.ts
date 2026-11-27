@@ -3,7 +3,7 @@ import { Effect, Schema } from "effect";
 import {
   declarationIssues,
   decodeSourceDeclaration,
-  ListDeclarationSchema,
+  DeclarationSchema,
   missingSourceNameMessage,
 } from "./source-schema.ts";
 
@@ -12,14 +12,14 @@ it.each([
   ["bundle-support", { "bundle-support": {} }],
 ])("refuses the %s key in a version 1 declaration", (_key, change) => {
   expect(
-    Schema.decodeUnknownSync(ListDeclarationSchema)({ version: 2, name: "tools", ...change }),
+    Schema.decodeUnknownSync(DeclarationSchema)({ version: 2, name: "tools", ...change }),
   ).toEqual({
     version: 2,
     name: "tools",
     ...change,
   });
   expect(() =>
-    Schema.decodeUnknownSync(ListDeclarationSchema)({ version: 1, name: "tools", ...change }),
+    Schema.decodeUnknownSync(DeclarationSchema)({ version: 1, name: "tools", ...change }),
   ).toThrow("The profiles and bundle-support keys require source declaration version 2.");
 });
 
@@ -32,34 +32,103 @@ const decode = (value: unknown) =>
   );
 
 it.each([
-  { version: 1, kind: "skills", name: "personal" },
-  { version: 1, kind: "skills", name: "personal", maintainers: ["me"], "depends-on": ["base"] },
-  { version: 1, kind: "skills", name: "personal", imports: [] },
-  { version: 1, kind: "commands", name: "prompts", "depends-on": [] },
-  { version: 1, kind: "docs", name: "notes", reader: { navigation: { preset: "folders" } } },
-])("decodes the collection %j", (value) => {
+  { version: 1, name: "personal", skills: [{ path: "." }], "depends-on": ["base"] },
+  { version: 1, name: "prompts", commands: [{ path: "." }], maintainers: ["me"] },
+  {
+    version: 1,
+    name: "notes",
+    docs: [
+      { name: "notes", path: "." },
+      { name: "kb", path: "." },
+    ],
+  },
+  { version: 2, name: "personal", skills: [{ path: "." }], profiles: [] },
+  { version: 1, name: "personal", skills: [{ path: "." }, { path: "vendor" }] },
+])("decodes a declaration whose . entries declare one kind: %j", (value) => {
   expect(decode(value)).toEqual({ declaration: value });
 });
 
-it.each([
-  { value: { version: 1, kind: "skills", name: "personal", skills: [] }, says: "skills" },
-  { value: { version: 1, kind: "commands", name: "prompts", imports: [] }, says: "imports" },
-  { value: { version: 1, kind: "skills" }, says: "name" },
-  { value: { version: 1, kind: "commands" }, says: "name" },
-  { value: { version: 1, kind: "docs" }, says: "name" },
-  { value: { version: 1, kind: "docs", name: "notes", "depends-on": [] }, says: "depends-on" },
-  { value: { version: 2, kind: "skills", name: "personal" }, says: "version" },
-  {
-    value: { version: 1, kind: "skill" },
-    says: "Write kind: skills. A folder with SKILL.md is one skill",
-  },
-  { value: { version: 1, kind: "scripts" }, says: "kind is skills, commands or docs" },
-])("refuses the collection $value with one message", ({ value, says }) => {
-  const decoded = decode(value);
-  expect("error" in decoded ? decoded.error : undefined).toContain(says);
+/** Every issue `parsed` has, as `declarationIssues` reports them for a folder named `brain`. */
+const issuesOf = (parsed: unknown, format: "yaml" | "json" = "yaml") =>
+  Effect.runSync(
+    decodeSourceDeclaration(parsed).pipe(
+      Effect.map(() => []),
+      Effect.catch((error) => Effect.succeed(declarationIssues(parsed, error, "brain", format))),
+    ),
+  );
+
+it("refuses another resource key beside a . entry, at each other key", () => {
+  expect(
+    issuesOf({
+      version: 1,
+      name: "brain",
+      skills: [{ path: "vendor" }, { path: "." }],
+      commands: [{ path: "prompts" }],
+      docs: [],
+    }),
+  ).toEqual(
+    ["commands", "docs"].map((other) => ({
+      field: other,
+      message: `${other}: The skills entry "." declares the source folder itself, so this tack.yaml declares skills only. Move ${other} to a tack.yaml of its own folder, or name the folder that holds the skills instead of ".", or list each skill folder.`,
+    })),
+  );
+  expect(
+    issuesOf({ version: 1, name: "brain", context: [{ path: "." }], scripts: [] }),
+  ).toMatchObject([{ field: "scripts" }]);
 });
 
-it("keeps the list form without a kind", () => {
+it.each([
+  {
+    parsed: { version: 1, name: "personal", kind: "skills", "depends-on": ["base"] },
+    yaml: ["version: 1", "name: personal", "depends-on:", "  - base", "skills:", "  - path: ."],
+    json: '{"version":1,"name":"personal","depends-on":["base"],"skills":[{"path":"."}]}',
+  },
+  {
+    parsed: { version: 1, name: "prompts", kind: "commands" },
+    yaml: ["version: 1", "name: prompts", "commands:", "  - path: ."],
+    json: '{"version":1,"name":"prompts","commands":[{"path":"."}]}',
+  },
+  {
+    parsed: {
+      version: 1,
+      kind: "docs",
+      name: "notes",
+      reader: { navigation: { preset: "folders" } },
+    },
+    yaml: [
+      "version: 1",
+      "name: notes",
+      "docs:",
+      "  - name: notes",
+      "    path: .",
+      "    reader:",
+      "      navigation:",
+      "        preset: folders",
+    ],
+    json: '{"version":1,"name":"notes","docs":[{"name":"notes","path":".","reader":{"navigation":{"preset":"folders"}}}]}',
+  },
+])("refuses kind with the exact declaration to write instead: $parsed.kind", (row) => {
+  const says =
+    'A tack.yaml takes no kind key: a "." entry declares the folder that holds it. Write instead:';
+  expect(issuesOf(row.parsed)).toEqual([
+    { field: "kind", message: [says, ...row.yaml.map((line) => `  ${line}`)].join("\n") },
+  ]);
+  expect(issuesOf(row.parsed, "json")).toEqual([
+    { field: "kind", message: `${says}\n  ${row.json}` },
+  ]);
+});
+
+it("refuses a kind that never declared resources with the . entry to use", () => {
+  expect(issuesOf({ version: 1, name: "brain", kind: "skill", skills: [] })).toEqual([
+    {
+      field: "kind",
+      message:
+        'A tack.yaml takes no kind key. Declare the folder that holds it as a "." entry, such as skills: [{ path: "." }]; tack guide tack-yaml lists every key.',
+    },
+  ]);
+});
+
+it("refuses a key the declaration does not name", () => {
   const value = { version: 1, name: "tools", skills: [{ path: "skills" }] };
   expect(decode(value)).toEqual({ declaration: value });
   expect(decode({ ...value, unknown: 1 })).toMatchObject({
@@ -67,7 +136,7 @@ it("keeps the list form without a kind", () => {
   });
 });
 
-it("refuses the list form without a name", () => {
+it("refuses a declaration without a name", () => {
   expect(decode({ version: 1, skills: [{ path: "skills" }] })).toMatchObject({
     error: expect.stringContaining("name"),
   });
@@ -82,22 +151,13 @@ it.each([
   expect(missingSourceNameMessage(folder)).toContain(says);
 });
 
-/** Every issue `parsed` has, as `declarationIssues` reports them for a folder named `brain`. */
-const issuesOf = (parsed: unknown) =>
-  Effect.runSync(
-    decodeSourceDeclaration(parsed).pipe(
-      Effect.map(() => []),
-      Effect.catch((error) => Effect.succeed(declarationIssues(parsed, error, "brain"))),
-    ),
-  );
-
 it("reports every issue of a declaration at once, each with its field", () => {
   expect(
     issuesOf({ version: 1, name: "brain", skils: [], maintainers: [""], "depends-on": ["Bad"] }),
   ).toEqual([
     {
       field: "skils",
-      message: `Unknown key "skils". A list-form tack.yaml takes: ${Object.keys(ListDeclarationSchema.fields).join(", ")}.`,
+      message: `Unknown key "skils". A tack.yaml takes: ${Object.keys(DeclarationSchema.fields).join(", ")}.`,
     },
     { field: "maintainers[0]", message: "maintainers[0]: A maintainers entry must not be empty." },
     {
@@ -105,19 +165,6 @@ it("reports every issue of a declaration at once, each with its field", () => {
       message: expect.stringMatching(/^depends-on\[0\]: Expected a string matching/),
     },
   ]);
-});
-
-it.each([
-  {
-    parsed: { version: 1, kind: "skills", name: "brain", docs: [] },
-    says: 'Unknown key "docs". A skills collection takes: version, name, maintainers, kind, depends-on, imports.',
-  },
-  {
-    parsed: { version: 1, kind: "docs", name: "brain", imports: [] },
-    says: 'Unknown key "imports". A docs collection takes: version, name, maintainers, kind, reader.',
-  },
-])("names the keys a collection takes on an unknown key", ({ parsed, says }) => {
-  expect(issuesOf(parsed)).toEqual([{ field: Object.keys(parsed).at(-1), message: says }]);
 });
 
 it("suggests a name when the name is missing, beside the other issues", () => {

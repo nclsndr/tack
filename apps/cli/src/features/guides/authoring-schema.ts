@@ -1,6 +1,6 @@
 import { Schema, Struct } from "effect";
 import { ProfilePublicationSchema } from "../../domain/profiles/profile-schema.ts";
-import { collectionSchemas, ListDeclarationSchema } from "../../domain/sources/source-schema.ts";
+import { DeclarationSchema, oneKindAtSourceFolder } from "../../domain/sources/source-schema.ts";
 import { BundleSupportEntrySchema } from "../profiles/bundle-support.ts";
 import { docsEntrySchema } from "../sources/docs-discovery.ts";
 import { folderEntrySchema, scriptEntrySchema } from "../sources/resource-declarations.ts";
@@ -14,7 +14,7 @@ const entries = {
   bundle: BundleSupportEntrySchema.annotate({ identifier: "BundleSupport" }),
 };
 
-/** The resource keys of the list form, each a list of the entries its discovery decodes. */
+/** The resource keys, each a list of the entries its discovery decodes. */
 const resourceLists = {
   skills: Schema.optionalKey(Schema.Array(entries.folder)),
   commands: Schema.optionalKey(Schema.Array(entries.folder)),
@@ -23,8 +23,8 @@ const resourceLists = {
   docs: Schema.optionalKey(Schema.Array(entries.docs)),
 };
 
-/** The list-form keys every version takes, as the runtime decoder reads them. */
-const listFields = Struct.omit(ListDeclarationSchema.fields, [
+/** The keys every version takes, as the runtime decoder reads them. */
+const sharedFields = Struct.omit(DeclarationSchema.fields, [
   "version",
   "profiles",
   "bundle-support",
@@ -32,27 +32,26 @@ const listFields = Struct.omit(ListDeclarationSchema.fields, [
 ]);
 
 /**
- * A `tack.yaml` as an author writes it, or `source add --config` takes it: the forms and keys the
- * runtime decoder takes, with each resource key a list of the entries catalog discovery decodes,
- * and without `imports`, which only `tack import add` writes. The runtime keeps its two tiers, so
- * one bad entry never makes a source unhealthy; this schema states the whole shape at once.
+ * A `tack.yaml` as an author writes it, or `source add --config` takes it: the keys the runtime
+ * decoder takes, with each resource key a list of the entries catalog discovery decodes, and
+ * without `imports`, which only `tack import add` writes. The runtime keeps its two tiers, so one
+ * bad entry never makes a source unhealthy; this schema states the whole shape at once. A `.`
+ * entry's one-kind rule is checked here as the runtime checks it, though a JSON Schema cannot
+ * state it.
  */
 export const AuthoringDeclarationSchema = Schema.Union([
-  Schema.Struct({ version: Schema.Literal(1), ...listFields, ...resourceLists }).annotate({
-    title: "List form, version 1",
-  }),
+  Schema.Struct({ version: Schema.Literal(1), ...sharedFields, ...resourceLists })
+    .check(oneKindAtSourceFolder)
+    .annotate({ title: "Version 1" }),
   Schema.Struct({
     version: Schema.Literal(2),
-    ...listFields,
+    ...sharedFields,
     ...resourceLists,
     profiles: Schema.optionalKey(Schema.Array(entries.profile)),
     "bundle-support": Schema.optionalKey(Schema.Array(entries.bundle)),
-  }).annotate({ title: "List form, version 2: profiles and bundle-support" }),
-  Schema.Struct(Struct.omit(collectionSchemas.skills.fields, ["imports"])).annotate({
-    title: "Skills collection",
-  }),
-  collectionSchemas.commands.annotate({ title: "Commands collection" }),
-  collectionSchemas.docs.annotate({ title: "Docs collection" }),
+  })
+    .check(oneKindAtSourceFolder)
+    .annotate({ title: "Version 2: profiles and bundle-support" }),
 ]);
 
 /**

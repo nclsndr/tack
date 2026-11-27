@@ -2,11 +2,21 @@ import { describe, expect, it } from "vitest";
 import { Glob, Yaml } from "./runtime-neutral.ts";
 
 describe("runtime-neutral YAML", () => {
-  it("parses a mapping and keeps the last of duplicate keys", () => {
-    expect(Yaml.parse("name: first\nname: last\nlist: [1, 2]\n")).toEqual({
-      name: "last",
-      list: [1, 2],
-    });
+  it("parses a mapping and refuses a repeated key, naming it and both of its lines", () => {
+    expect(Yaml.parse("name: first\nlist: [1, 2]\n")).toEqual({ name: "first", list: [1, 2] });
+    expect(() => Yaml.parse("name: first\nname: last\n")).toThrow(
+      'The key "name" appears twice, at lines 1 and 2. Keep one of them.',
+    );
+  });
+
+  it("asks to merge a repeated key whose value is a list", () => {
+    expect(() => Yaml.parse("skills:\n  - path: a\nskills:\n  - path: b\n")).toThrow(
+      'The key "skills" appears twice, at lines 1 and 3. Merge them into one list.',
+    );
+  });
+
+  it("passes over a key that is no scalar, which names no key to repeat", () => {
+    expect(Yaml.parse("? [a, b]\n: 1\nname: x\n")).toEqual({ "[ a, b ]": 1, name: "x" });
   });
 
   it("rejects malformed YAML", () => {

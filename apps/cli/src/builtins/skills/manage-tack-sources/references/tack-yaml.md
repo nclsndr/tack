@@ -7,43 +7,43 @@ publications/files while leaving unrelated healthy resources available. Version 
 `bundle-support`, which names explicit resource support files/directories, complete closure and
 non-secret setup prerequisites. Read `author-tack-profiles` before authoring that section.
 
-A `tack.yaml` has one of two shapes. The **list form**, without `kind`, names folders and files in
-resource keys; the rules below are its rules. A **collection** names a `kind` and no resource keys:
-the folder that holds it is the collection.
+A `tack.yaml` names folders and files in resource keys; the rules below are its rules. The path
+`.` names the folder that holds the `tack.yaml` itself.
 
-## Collections
+## The source folder
 
 ```yaml
 version: 1
 name: review-skills
-kind: skills
+skills:
+  - path: .
 ```
 
-- `kind: skills`: each folder at the top that holds `SKILL.md` is a skill. Nothing deeper is read.
-- `kind: commands`: each `.md` file at the top whose name is a command name, such as `deploy.md`,
-  is a command. `README.md` and `CHANGELOG.md` are ignored.
-- `kind: docs`: the whole folder is one docs resource, named by its `name`, which is also
-  the source label. An optional `reader` key tunes it as a docs entry's does.
+- A `skills` entry `.`: the source folder is a folder of skills. Its walk finds each folder below
+  it that holds `SKILL.md`, as for any skills folder.
+- A `commands` entry `.`: each `.md` file below the source folder whose name is a command name is a
+  command. Exclude a `README.md` with `exclude: ["README.md"]`.
+- A `docs` entry `.`: the whole source folder is one docs resource, named by the entry's `name`.
 
-Names that start with `.` or `_` are never resources, so `_draft/` hides a skill. A collection takes
-`version: 1` and `name`, both required, `maintainers` and, for skills and commands, `depends-on`; a skills collection
-also holds the `imports` key Tack writes. It takes no resource keys, `include` or `exclude`, and
-publishes no profiles. Context and scripts need the list form. A skills collection whose folder
-holds `SKILL.md` is one skill, and the source is unhealthy with `source-is-one-skill`: register the
-folder above it, or import it with `tack import add`. `kind: skill` is refused.
+A `.` entry walks the source folder as a declared folder, with `include` and `exclude`, and it
+passes over dot, underscore and `node_modules` names, as a docs walk does, so `_drafts/` and
+`.git/` stay out. It passes over another source's folder without a finding, as a docs walk does.
+A `tack.yaml` with a `.` entry declares that one kind: another resource key would read the same
+files, so `tack check` refuses each other key with `declaration-schema-invalid`. Content of
+another kind is a source of its own, in a folder with its own `tack.yaml`, such as
+`~/skills/handbook` with a docs entry `.` beside `~/skills` with a skills entry `.`. A `context` entry is never `.`: context would take every file, the `tack.yaml` too, so it is
+refused with `declaration-path-invalid`. A source with a skills entry `.` whose folder holds
+`SKILL.md` is one skill, and the source is unhealthy with `source-is-one-skill`: register the folder
+above it, or import it with `tack import add`.
 
-A collection declares nothing else. Other content beside it is its own source with its own
-`tack.yaml`, such as a docs collection in `~/skills/handbook` beside a skills collection in
-`~/skills`: the skills collection never reads `handbook`, which holds no `SKILL.md`. To keep one
-source, move the skills into `skills/` and use the list form.
+`kind` is no key of a `tack.yaml`. `tack check` refuses it with `declaration-schema-invalid` and
+prints the `tack.yaml` to write instead, with the kind's `.` entry.
 
-A skills collection holds skills only: each folder at its top is a skill and holds `SKILL.md`.
-`tack source add` and `tack check` warn with `collection-folder-not-skill` for each
-folder there that holds no `SKILL.md`, such as `commands/` or a group folder, and Tack ignores it.
-Add a `SKILL.md` to make it a skill. The warning changes no exit code. Dot, underscore and
-`node_modules` folders and folders with their own `tack.yaml` are not named.
+A key a `tack.yaml` mapping names twice, anywhere in the file, is refused with
+`declaration-malformed`, which names the key and both of its lines. Keep one of them, or merge two
+lists into one.
 
-## List form
+## Entries
 
 The main skill shows the shape of a declaration and the names it produces. This reference holds the
 rules for each entry. Tack reads resources only from entries declared here, and a bad entry is
@@ -54,8 +54,8 @@ source with their patterns, the number of resources each one contributes and its
 `tack catalog --details` shows `declaredPath` on each resource. A declaration that finds
 nothing, such as an empty folder before an import, is valid and shows `0`.
 
-**Paths.** Every `path` is relative and `/`-separated, with no `.`, `..`, empty segment or
-backslash. After symlinks it must exist inside the source with the right type: a folder for
+**Paths.** Every `path` is `.`, the source folder, or relative and `/`-separated, with no `.`,
+`..`, empty segment or backslash. After symlinks it must exist inside the source with the right type: a folder for
 `skills` and `docs`, a folder or one file for `context`, a folder or one `.md` file for
 `commands`, a `.ts` file for `scripts`. Everything found inside a declared folder must resolve
 inside that folder, or it is refused with `resource-boundary-violation`: declare the other path
@@ -121,16 +121,16 @@ and a leftover folder is finished or rolled back by the next `import add` or `im
 
 `tack source add PATH --config '<json>'` writes `tack.yaml` from a declaration you write, never
 from a guess. The value of `--config` is the declaration itself, as JSON: the same keys and values
-as `tack.yaml`, any of the forms above. `--config -` reads it from standard input instead, which
+as `tack.yaml`. `--config -` reads it from standard input instead, which
 suits a long declaration in a heredoc. A value is never read as a path, and YAML or any other text
-fails with `config-not-json`. `tack guide tack-yaml` lists every key each form and each entry takes,
+fails with `config-not-json`. `tack guide tack-yaml` lists every key a declaration and each entry takes,
 and prints the JSON Schema of the whole declaration. The `imports` key is refused with
 `config-imports-not-allowed`: only `tack import add` writes it.
 
 ```sh
 tack init # once per machine; it writes at once
-tack source add /absolute/path --config '{"version": 1, "name": "personal", "kind": "skills"}'
-tack source add /absolute/path --config '{"version": 1, "name": "personal", "kind": "skills"}' --apply
+tack source add /absolute/path --config '{"version": 1, "name": "personal", "skills": [{"path": "."}]}'
+tack source add /absolute/path --config '{"version": 1, "name": "personal", "skills": [{"path": "."}]}' --apply
 tack check /absolute/path
 tack catalog --details
 ```
@@ -163,9 +163,9 @@ It never overwrites an existing file, including one created by another process d
 operation: `--config` on a source that has `tack.yaml` fails with `declaration-exists`. Edit that
 file by hand and run `tack check`. A bare `tack source add` on a folder without `tack.yaml` fails
 with `declaration-config-required` and suggests a declaration read from the folder's top: a skills
-collection for skill folders there, plus a collection of its own for a `commands` or `docs` folder
-beside them, or one entry per folder named after a kind. A folder that a registered source's
-skills, commands or context walk reaches, or that holds one of its declared paths, fails with
+entry `.` for skill folders there, plus a source of its own with a `.` entry for a `commands` or
+`docs` folder beside them, or one entry per folder named after a kind. A folder that a registered
+source's skills, commands or context walk reaches, other than a `.` entry's, or that holds one of its declared paths, fails with
 `declaration-inside-source`: its new `tack.yaml` would take the folder out of that source. Exclude
 the folder there first, as the message says. A preview in which a declared resource cannot be read,
 such as a command whose frontmatter does not parse, is partial and lists each error under Problems
