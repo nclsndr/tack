@@ -33,6 +33,20 @@ describe("resource kind table", () => {
     expect(keys).toEqual(declarationResourceKeys);
   });
 
+  it("keeps a skill or docs resource in a directory and every other kind in one file", () => {
+    expect(
+      Object.fromEntries(
+        ResourceKindSchema.literals.map((kind) => [kind, resourceKinds[kind].entryType]),
+      ),
+    ).toEqual({
+      skill: "directory",
+      command: "file",
+      context: "file",
+      script: "file",
+      docs: "directory",
+    });
+  });
+
   it("imports only skills", () => {
     expect(ResourceKindSchema.literals.filter((kind) => resourceKinds[kind].importable)).toEqual([
       "skill",

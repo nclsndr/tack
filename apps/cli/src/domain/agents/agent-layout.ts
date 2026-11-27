@@ -1,5 +1,5 @@
 import type { Path } from "effect";
-import { linkableKinds, type LinkableKind } from "../resources/kinds.ts";
+import { linkableKinds, resourceKinds, type LinkableKind } from "../resources/kinds.ts";
 import type { AgentAdapterDescriptor, AgentAdapterId } from "../links/agent-adapter-schema.ts";
 import { agentAdapterDescriptor, agentAdapterIds } from "./agent-adapter.ts";
 
@@ -71,7 +71,7 @@ export const resourceDirectory = (
 
 /** Returns the adapter filename for one resource: commands are Markdown files, skills directories. */
 export const resourceName = (address: AgentLayoutLink["address"]) =>
-  address.kind === "command" ? `${address.name}.md` : address.name;
+  resourceKinds[address.kind].entryType === "file" ? `${address.name}.md` : address.name;
 
 /**
  * Derives the physical destination of one managed link from its adapter, address, and target.
