@@ -13,7 +13,7 @@ import {
   projectRecordView,
   type ProjectRecord,
   projectLifecycle,
-  type TargetSelector,
+  type Selector,
   type ProjectRootIssueCode,
   ProjectUnhealthyRootIssueCodeSchema,
   type ProjectUnhealthyRootIssueCode,
@@ -535,14 +535,14 @@ export type ManagedTarget =
 /** Inputs to target selection. */
 export type SelectTargetsOptions = {
   readonly cwd: string;
-  readonly selector: TargetSelector;
+  readonly selector: Selector;
   readonly userTarget?: string;
 };
 
 /** The selected targets and retained stale-root diagnostics. */
 export type TargetSelection = {
   readonly containingRoot?: ContainingRoot;
-  readonly selector: TargetSelector;
+  readonly selector: Selector;
   readonly staleRoots: ReadonlyArray<{
     readonly canonicalPath: string;
     readonly code: "root-missing";

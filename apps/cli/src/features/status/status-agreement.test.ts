@@ -7,7 +7,7 @@ import { SecureRandom } from "effect/crypto";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { initializeState, type StateOptions } from "../../services/state-store.ts";
 import { managedLinkDestinationPath } from "../../domain/agents/agent-layout.ts";
-import type { TargetSelector } from "../../domain/projects/project-schema.ts";
+import type { Selector } from "../../domain/projects/project-schema.ts";
 import { enableAdapters } from "../reconciliation/agent.ts";
 import { syncResources } from "../../../test/support/reconciliation.ts";
 import { makeSourceService, registerSource, Source } from "../sources/source.ts";
@@ -75,7 +75,7 @@ const agreementFixture = Effect.fnUntraced(function* () {
     readonly apply: boolean;
     readonly cwd?: string;
     readonly includeOptional: boolean;
-    readonly selector: TargetSelector;
+    readonly selector: Selector;
   }) =>
     syncResources(options, {
       apply: request.apply,
@@ -86,7 +86,7 @@ const agreementFixture = Effect.fnUntraced(function* () {
   const status = (request: {
     readonly cwd?: string;
     readonly includeOptional: boolean;
-    readonly selector: TargetSelector;
+    readonly selector: Selector;
   }) =>
     runStatus(options, {
       cwd: request.cwd ?? root,

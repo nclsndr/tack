@@ -2,7 +2,7 @@ import { builtinSkillLockReason } from "../../../../domain/choices/builtin.ts";
 import {
   skillChoiceIdentity,
   type ChoiceDecision,
-  type ChoiceNamespace,
+  type Namespace,
   type SkillChoice,
 } from "../../../../domain/choices/choice-schema.ts";
 import {
@@ -261,7 +261,7 @@ export const stageChange = (
  */
 export const stagedState = (
   state: State,
-  namespace: ChoiceNamespace,
+  namespace: Namespace,
   pending: ReadonlyArray<PendingChange>,
 ): State => {
   let choices: ReadonlyArray<SkillChoice> = allSkillChoices(state);

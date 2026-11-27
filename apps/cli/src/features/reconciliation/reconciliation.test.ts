@@ -16,7 +16,7 @@ import {
   type NamespaceDependencyResolution,
 } from "./reconciliation.ts";
 import type { DependencyResolution } from "../../domain/choices/dependency-resolution.ts";
-import type { ChoiceNamespace } from "../../domain/choices/choice-schema.ts";
+import type { Namespace } from "../../domain/choices/choice-schema.ts";
 import type { CatalogEntryOf, SkillCatalogEntry } from "../../domain/sources/catalog-schema.ts";
 import { Destination } from "../../services/destination.ts";
 import { makeDestinationService } from "../../platform/filesystem/destination-observation.ts";
@@ -25,7 +25,7 @@ import { makeDestinationService } from "../../platform/filesystem/destination-ob
 type SkillAddress = SkillCatalogEntry["address"];
 
 const registrationId = "00000000-0000-4000-8000-000000000001";
-const userNamespace = { _tag: "user" } satisfies ChoiceNamespace;
+const userNamespace = { _tag: "user" } satisfies Namespace;
 
 const address = (name: string, owner: "shared" | "private" = "shared") =>
   ({
@@ -65,7 +65,7 @@ const resolution = (addresses: ReadonlyArray<SkillAddress>): DependencyResolutio
   requestBlockers: [],
 });
 
-const namespaceResolution = (namespace: ChoiceNamespace, addresses: ReadonlyArray<SkillAddress>) =>
+const namespaceResolution = (namespace: Namespace, addresses: ReadonlyArray<SkillAddress>) =>
   ({ namespace, resolution: resolution(addresses) }) satisfies NamespaceDependencyResolution;
 
 const evidence = (

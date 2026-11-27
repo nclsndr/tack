@@ -39,7 +39,7 @@ import {
   TargetSelectionError,
   projectAllRoots,
 } from "../projects/project.ts";
-import { type TargetSelector, projectLifecycle } from "../../domain/projects/project-schema.ts";
+import { type Selector, projectLifecycle } from "../../domain/projects/project-schema.ts";
 import {
   ProjectNameSchema,
   reportProjectRecord,
@@ -414,7 +414,7 @@ const projectRefreshStateProjection = (
 export type ProjectRefreshCommandOptions = {
   readonly apply: boolean;
   readonly scope?: ProjectRefreshScope;
-  readonly selector?: Extract<TargetSelector, { readonly _tag: "bare" | "project" | "all" }>;
+  readonly selector?: Extract<Selector, { readonly _tag: "bare" | "project" | "all" }>;
   readonly cwd?: string;
 };
 

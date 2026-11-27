@@ -1,7 +1,7 @@
 import { Schema } from "effect";
 import { agentAdapterDescriptor } from "../agents/agent-adapter.ts";
 import { deliversKind } from "../agents/agent-layout.ts";
-import type { ChoiceNamespace } from "../choices/choice-schema.ts";
+import type { Namespace } from "../choices/choice-schema.ts";
 import { AgentAdapterIdSchema } from "../agents/agent-adapter-schema.ts";
 import { CanonicalPathSchema } from "../identity/identity-schema.ts";
 import { ProjectNameSchema } from "../projects/project-schema.ts";
@@ -56,7 +56,7 @@ export const managedLinkTargetIdentity = (target: ManagedLinkTarget) =>
     : `user\u0000${target.canonicalPath}`;
 
 /** Returns the choice namespace whose selection one concrete managed-link target receives. */
-export const managedLinkTargetNamespace = (target: ManagedLinkTarget): ChoiceNamespace =>
+export const managedLinkTargetNamespace = (target: ManagedLinkTarget): Namespace =>
   target._tag === "project-root"
     ? { _tag: "project", projectName: target.projectName }
     : { _tag: "user" };

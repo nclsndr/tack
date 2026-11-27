@@ -11,7 +11,7 @@ import {
 export const ChoiceDecisionSchema = Schema.Literals(["include", "exclude"]);
 
 /** A namespace that owns an independent set of exact resource choices. */
-export const ChoiceNamespaceSchema = Schema.Union([
+export const NamespaceSchema = Schema.Union([
   Schema.TaggedStruct("project", { projectName: ProjectNameSchema }),
   Schema.TaggedStruct("user", {}),
 ]);
@@ -20,20 +20,20 @@ export const ChoiceNamespaceSchema = Schema.Union([
 export const SkillChoiceSchema = Schema.Struct({
   address: SelectableAddressSchema,
   decision: ChoiceDecisionSchema,
-  namespace: ChoiceNamespaceSchema,
+  namespace: NamespaceSchema,
 });
 
 /** A persisted choice decision. */
 export type ChoiceDecision = typeof ChoiceDecisionSchema.Type;
 
 /** A project or user choice namespace. */
-export type ChoiceNamespace = typeof ChoiceNamespaceSchema.Type;
+export type Namespace = typeof NamespaceSchema.Type;
 
 /** One validated exact resource choice. */
 export type SkillChoice = typeof SkillChoiceSchema.Type;
 
 /** Returns the canonical comparison and lookup key for one choice namespace. */
-export const choiceNamespaceIdentity = Match.type<ChoiceNamespace>().pipe(
+export const choiceNamespaceIdentity = Match.type<Namespace>().pipe(
   Match.tag("project", (namespace) => `project\u0000${namespace.projectName}`),
   Match.tag("user", () => "user"),
   Match.exhaustive,
@@ -49,7 +49,7 @@ export const kindAndNameKey = (resource: { readonly kind: string; readonly name:
 /** Returns the canonical identity for one exact choice within its namespace. */
 export const skillChoiceIdentity = (choice: {
   readonly address: SelectableAddress;
-  readonly namespace: ChoiceNamespace;
+  readonly namespace: Namespace;
 }) =>
   `${choiceNamespaceIdentity(choice.namespace)}\u0000${resourceAddressIdentity(choice.address)}`;
 

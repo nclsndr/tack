@@ -3,7 +3,7 @@ import { ProfileApplicationSchema } from "../state/profile-application-schema.ts
 import { Schema, Struct } from "effect";
 import { AgentAdapterIdSchema, EnabledAdaptersSchema } from "../agents/agent-adapter-schema.ts";
 import {
-  ChoiceNamespaceSchema,
+  NamespaceSchema,
   SkillChoiceSchema,
   UserLinkedExcludeSchema,
   choiceNamespaceIdentity,
@@ -146,7 +146,7 @@ export const StatusNamespaceSchema = Schema.Struct({
     }),
   ),
   lifecycle: Schema.Literals(["active", "suspended-removing"]),
-  namespace: ChoiceNamespaceSchema,
+  namespace: NamespaceSchema,
   resolution: DependencyResolutionSchema,
   selection: InitialSelectionSchema,
 }).check(

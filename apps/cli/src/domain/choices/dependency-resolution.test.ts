@@ -1,6 +1,6 @@
 import { expect, it } from "@effect/vitest";
 import { Schema } from "effect";
-import type { ChoiceNamespace, SkillChoice } from "./choice-schema.ts";
+import type { Namespace, SkillChoice } from "./choice-schema.ts";
 import {
   DependencyResolutionSchema,
   resolutionIsUnresolved,
@@ -19,8 +19,8 @@ import type {
 /** The address of a skill, as a catalog entry carries it. */
 type SkillAddress = SkillCatalogEntry["address"];
 
-const userNamespace = { _tag: "user" } satisfies ChoiceNamespace;
-const projectNamespace = { _tag: "project", projectName: "project" } satisfies ChoiceNamespace;
+const userNamespace = { _tag: "user" } satisfies Namespace;
+const projectNamespace = { _tag: "project", projectName: "project" } satisfies Namespace;
 
 const address = (name: string, owner: "shared" | "private" = "shared") =>
   ({
@@ -69,7 +69,7 @@ const entry = (
 const choice = (
   catalogAddress: SkillAddress,
   decision: SkillChoice["decision"],
-  namespace: ChoiceNamespace = userNamespace,
+  namespace: Namespace = userNamespace,
 ) => ({ address: catalogAddress, decision, namespace }) satisfies SkillChoice;
 
 const quarantine = (catalogAddress: SkillAddress) =>
@@ -95,7 +95,7 @@ const resolve = ({
   readonly choices?: ReadonlyArray<SkillChoice>;
   readonly entries: ReadonlyArray<SkillCatalogEntry>;
   readonly includeOptional?: boolean;
-  readonly namespace?: ChoiceNamespace;
+  readonly namespace?: Namespace;
   readonly quarantined?: ReadonlyArray<CatalogQuarantine>;
   readonly sources?: NonNullable<Catalog["sources"]>;
 }) =>

@@ -1,5 +1,5 @@
 import { Effect, Schema } from "effect";
-import { ChoiceNamespaceSchema } from "../../domain/choices/choice-schema.ts";
+import { NamespaceSchema } from "../../domain/choices/choice-schema.ts";
 import {
   DroppedDocsAttachmentSchema,
   DroppedPickSchema,
@@ -22,7 +22,7 @@ import { previewOrApply } from "../writer/recovered-writer.ts";
 
 /** The fixed profile application a removed project drops with it. */
 const DroppedProfileApplicationSchema = Schema.Struct({
-  namespace: ChoiceNamespaceSchema,
+  namespace: NamespaceSchema,
   profileName: Schema.String,
   sourceRegistrationId: SourceRegistrationIdSchema,
 });

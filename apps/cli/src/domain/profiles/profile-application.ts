@@ -1,6 +1,6 @@
 import { profileControlledAddresses } from "./profile-policy.ts";
 import { Effect, Schema } from "effect";
-import { choiceNamespaceIdentity, type ChoiceNamespace } from "../choices/choice-schema.ts";
+import { choiceNamespaceIdentity, type Namespace } from "../choices/choice-schema.ts";
 import {
   catalogSelectableEntries,
   isSelectableAddress,
@@ -19,7 +19,7 @@ import type { ProfileApplication } from "../state/profile-application-schema.ts"
 import type { State } from "../state/state-schema.ts";
 
 /** Finds the fixed application that owns this selection context. */
-export const profileApplicationFor = (state: Pick<State, "data">, namespace: ChoiceNamespace) =>
+export const profileApplicationFor = (state: Pick<State, "data">, namespace: Namespace) =>
   state.data.profileApplications?.find(
     (entry) => choiceNamespaceIdentity(entry.namespace) === choiceNamespaceIdentity(namespace),
   );
@@ -31,7 +31,7 @@ export class FixedProfileError extends Schema.TaggedError<FixedProfileError>()(
 ) {}
 
 /** Refuses daily selection edits in a retained fixed context. */
-export const requireDefaultSelection = (state: State, namespace: ChoiceNamespace) =>
+export const requireDefaultSelection = (state: State, namespace: Namespace) =>
   profileApplicationFor(state, namespace) === undefined
     ? Effect.void
     : Effect.fail(
@@ -118,7 +118,7 @@ const retainedProfileSelection = (
 export const resolveContextSelection = (
   state: State,
   catalog: Catalog,
-  namespace: ChoiceNamespace,
+  namespace: Namespace,
   includeOptional: boolean,
   actualTargets?: ReadonlyArray<string>,
 ) => {

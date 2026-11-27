@@ -17,7 +17,7 @@ import {
   ChoiceProjectNotFoundError,
   ChoiceProjectRemovingError,
 } from "./choice.ts";
-import { type ChoiceNamespace, type SkillChoice } from "../../domain/choices/choice-schema.ts";
+import { type Namespace, type SkillChoice } from "../../domain/choices/choice-schema.ts";
 
 it("suggests catalog addresses near a chosen address the catalog lacks", () => {
   const entry = (kind: "command" | "skill", name: string, owner: "private" | "shared") => ({
@@ -71,9 +71,9 @@ it("suggests catalog addresses near a chosen address the catalog lacks", () => {
 });
 
 const projectNamespace = (projectName: string) =>
-  ({ _tag: "project", projectName }) satisfies ChoiceNamespace;
+  ({ _tag: "project", projectName }) satisfies Namespace;
 
-const userNamespace = { _tag: "user" } satisfies ChoiceNamespace;
+const userNamespace = { _tag: "user" } satisfies Namespace;
 
 const address = (owner: "shared" | "private", name: string) =>
   ({
@@ -86,7 +86,7 @@ const address = (owner: "shared" | "private", name: string) =>
   }) satisfies SkillChoice["address"];
 
 const choice = (
-  namespace: ChoiceNamespace,
+  namespace: Namespace,
   owner: "shared" | "private",
   name: string,
   decision: SkillChoice["decision"],
@@ -167,7 +167,7 @@ it.layer(LiveTestLayer)("namespace choices", (choiceIt) => {
     withFixture(({ options }) =>
       Effect.gen(function* () {
         const projectA = projectNamespace("project-a");
-        const command = (namespace: ChoiceNamespace, owner: "shared" | "private") =>
+        const command = (namespace: Namespace, owner: "shared" | "private") =>
           ({
             address: { ...address(owner, "alpha"), kind: "command" as const },
             decision: "include",

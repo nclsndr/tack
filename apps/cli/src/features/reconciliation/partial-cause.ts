@@ -2,8 +2,8 @@ import { Match, Schema } from "effect";
 import type { AgentAdapterId, AgentCapability } from "../../domain/agents/agent-adapter-schema.ts";
 import type { ManagedLinkTarget } from "../../domain/links/managed-link-schema.ts";
 import {
-  ChoiceNamespaceSchema,
-  type ChoiceNamespace,
+  NamespaceSchema,
+  type Namespace,
   type UserLinkedExclude,
 } from "../../domain/choices/choice-schema.ts";
 import { RequiredDependencyBlockerSchema } from "../../domain/choices/dependency-resolution.ts";
@@ -35,7 +35,7 @@ type Issue = { readonly code: string; readonly message: string };
 export const DependencyBlockedSubjectSchema = Schema.Struct({
   blockers: Schema.Array(RequiredDependencyBlockerSchema),
   members: Schema.Array(SelectableAddressSchema),
-  namespace: ChoiceNamespaceSchema,
+  namespace: NamespaceSchema,
 });
 
 /** The target-and-adapter unit a reconciliation cause belongs to. */
@@ -49,7 +49,7 @@ export type PartialCause =
   | {
       readonly code: "profile-inventory-unresolved" | "profile-delivery-incomplete";
       readonly subject: {
-        readonly namespace: ChoiceNamespace;
+        readonly namespace: Namespace;
         readonly issues: ReadonlyArray<string>;
       };
     }
@@ -112,7 +112,7 @@ export type PartialCause =
       readonly code: "unresolved-choice";
       readonly subject: {
         readonly address: SelectableAddress;
-        readonly namespace: ChoiceNamespace;
+        readonly namespace: Namespace;
         readonly reason: "missing" | "quarantined";
       };
     }

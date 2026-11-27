@@ -1,10 +1,7 @@
 import { Source } from "../sources/source.ts";
 import { Effect, FileSystem, Path } from "effect";
 import { agentAdapterDescriptor } from "../../domain/agents/agent-adapter.ts";
-import {
-  choiceNamespaceIdentity,
-  type ChoiceNamespace,
-} from "../../domain/choices/choice-schema.ts";
+import { choiceNamespaceIdentity, type Namespace } from "../../domain/choices/choice-schema.ts";
 import { profileApplicationFor } from "../../domain/profiles/profile-application.ts";
 import type { ProfileApplication } from "../../domain/state/profile-application-schema.ts";
 import type { ProfilePlanFinding } from "../../domain/profiles/profile-schema.ts";
@@ -12,7 +9,7 @@ import type { State } from "../../domain/state/state-schema.ts";
 import type { StateOptions } from "../../services/state-store.ts";
 
 export type ProfileTargetRequest = {
-  readonly namespace: ChoiceNamespace;
+  readonly namespace: Namespace;
   readonly targetRoots: ReadonlyArray<string>;
   readonly targetHome?: string;
   readonly force: boolean;

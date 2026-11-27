@@ -1,7 +1,7 @@
 import { isBuiltinSkill } from "../../../../domain/choices/builtin.ts";
 import {
   choiceNamespaceIdentity,
-  type ChoiceNamespace,
+  type Namespace,
 } from "../../../../domain/choices/choice-schema.ts";
 import type { InitialSelectionDecision } from "../../../../domain/choices/selection.ts";
 import { docsResourceIdentity } from "../../../../domain/docs/docs-schema.ts";
@@ -112,7 +112,7 @@ export const profileLabel = (catalog: Catalog, sourceRegistrationId: string, nam
 const selectionActivity = (
   state: State,
   catalog: Catalog,
-  namespace: ChoiceNamespace,
+  namespace: Namespace,
 ): DestinationActivity => {
   const { selection, resolution, application } = resolveContextSelection(
     state,

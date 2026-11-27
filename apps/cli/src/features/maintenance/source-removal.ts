@@ -1,5 +1,5 @@
 import { Effect, Schema } from "effect";
-import { ChoiceNamespaceSchema } from "../../domain/choices/choice-schema.ts";
+import { NamespaceSchema } from "../../domain/choices/choice-schema.ts";
 import {
   DroppedDocsAttachmentSchema,
   DroppedPickSchema,
@@ -40,7 +40,7 @@ const RemovedSourceSchema = Schema.Struct({
  * members of the source is kept and reports those members as `unresolved`.
  */
 const AffectedProfileApplicationSchema = Schema.Struct({
-  namespace: ChoiceNamespaceSchema,
+  namespace: NamespaceSchema,
   profileName: Schema.String,
   sourceRegistrationId: SourceRegistrationIdSchema,
   outcome: Schema.Literals(["dropped", "unresolved"]),

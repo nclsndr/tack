@@ -5,7 +5,7 @@ import { BunServices } from "@effect/platform-bun";
 import { expect, it } from "@effect/vitest";
 import { Cause, Effect, FileSystem, Option, Path, Queue, Ref, Terminal } from "effect";
 import { SecureRandom } from "effect/crypto";
-import type { ChoiceNamespace } from "../src/domain/choices/choice-schema.ts";
+import type { Namespace } from "../src/domain/choices/choice-schema.ts";
 import { explorerEntries } from "../src/cli/host/human/explorer/entries.ts";
 import { renderExplorerFrame } from "../src/cli/host/human/explorer/frame.ts";
 import { makeStyle } from "../src/cli/host/human/style.ts";
@@ -36,7 +36,7 @@ import { initializeState, readState } from "../src/services/state-store.ts";
 import { type State } from "../src/domain/state/state-schema.ts";
 import { makeExplorerDestinations } from "../src/cli/host/human/explorer/profile-editor.ts";
 
-const user: ChoiceNamespace = { _tag: "user" };
+const user: Namespace = { _tag: "user" };
 
 it("asks for review before leaving with staged changes and refuses to review nothing", () => {
   const editing = on(initialExplorerState("Tack explorer", [choice("review")], user), "review");
@@ -341,7 +341,7 @@ const scriptedTerminal = Effect.fnUntraced(function* (keys: ReadonlyArray<Termin
   });
   return { terminal, displayed };
 });
-const projectNamespace: ChoiceNamespace = { _tag: "project", projectName: "demo" };
+const projectNamespace: Namespace = { _tag: "project", projectName: "demo" };
 
 const withWorkspace = Effect.fnUntraced(function* () {
   const fs = yield* FileSystem.FileSystem;
@@ -411,7 +411,7 @@ const runExplore = (
 const runEditing = (
   options: Parameters<typeof initializeState>[0] & { readonly homeDirectory: string },
   terminal: Terminal.Terminal,
-  namespace: ChoiceNamespace = user,
+  namespace: Namespace = user,
   environment: Readonly<Record<string, string>> = { TERM: "xterm" },
 ) =>
   runExplore(

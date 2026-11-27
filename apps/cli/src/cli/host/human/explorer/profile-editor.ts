@@ -27,7 +27,7 @@ import type { DestinationOption, OpenableDestination, ProfileDestination } from 
 import { profileLabel } from "./activity.ts";
 import {
   choiceNamespaceIdentity,
-  type ChoiceNamespace,
+  type Namespace,
 } from "../../../../domain/choices/choice-schema.ts";
 import type { ProfileCopyInput } from "../../../../features/profiles/profile-copy.ts";
 import type { ExplorerEntry, ExplorerState } from "./model.ts";
@@ -58,10 +58,10 @@ export const makeExplorerDestinations = Effect.fnUntraced(function* (options: {
   const sources = yield* snapshot.sourceInspections;
   const catalog = yield* snapshot.catalog;
   const applications = snapshot.state.data.profileApplications ?? [];
-  const namespaceLabel = (namespace: ChoiceNamespace) =>
+  const namespaceLabel = (namespace: Namespace) =>
     namespace._tag === "user" ? "user" : namespace.projectName;
   // A fixed selection still opens, read-only; the note says which profile owns it.
-  const fixedNote = (namespace: ChoiceNamespace) => {
+  const fixedNote = (namespace: Namespace) => {
     const application = applications.find(
       (item) => choiceNamespaceIdentity(item.namespace) === choiceNamespaceIdentity(namespace),
     );
@@ -71,7 +71,7 @@ export const makeExplorerDestinations = Effect.fnUntraced(function* (options: {
           note: `fixed by ${profileLabel(catalog, application.sourceRegistrationId, application.profileName)} (read-only)`,
         };
   };
-  const daily = (label: string, namespace: ChoiceNamespace): DestinationOption => ({
+  const daily = (label: string, namespace: Namespace): DestinationOption => ({
     label,
     group: "Daily selections",
     ...fixedNote(namespace),

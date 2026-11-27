@@ -21,7 +21,7 @@ import {
 } from "../../../features/sources/resource-reference.ts";
 import { isSelectableAddress, type Catalog } from "../../../domain/sources/catalog-schema.ts";
 import { selectableKinds, type SelectableKind } from "../../../domain/resources/kinds.ts";
-import type { ChoiceNamespace, SkillChoice } from "../../../domain/choices/choice-schema.ts";
+import type { Namespace, SkillChoice } from "../../../domain/choices/choice-schema.ts";
 import {
   argvLine,
   commandLine,
@@ -37,7 +37,7 @@ const resolvePick = Effect.fnUntraced(function* (
   catalog: Catalog,
   reference: string,
   command: string,
-  namespace: ChoiceNamespace,
+  namespace: Namespace,
   kind?: SelectableKind,
 ) {
   const entry = yield* resolveResourceReference(
@@ -64,7 +64,7 @@ const resolvePick = Effect.fnUntraced(function* (
 const resolveStoredPick = Effect.fnUntraced(function* (
   catalog: Catalog,
   choices: ReadonlyArray<SkillChoice>,
-  namespace: ChoiceNamespace,
+  namespace: Namespace,
   reference: string,
   kind?: SelectableKind,
 ) {
@@ -154,7 +154,7 @@ const setPick = (
     readonly tag: "pick-include" | "pick-exclude";
     readonly decision: "include" | "exclude";
     readonly kind?: SelectableKind;
-    readonly namespace: ChoiceNamespace;
+    readonly namespace: Namespace;
     readonly reference: string;
   },
 ) =>

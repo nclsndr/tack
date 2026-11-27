@@ -11,7 +11,7 @@ import {
   selectTargets,
   type SelectionEcho,
 } from "../projects/project.ts";
-import { type TargetSelector } from "../../domain/projects/project-schema.ts";
+import { type Selector } from "../../domain/projects/project-schema.ts";
 import {
   catalogCauses,
   noAdaptersCause,
@@ -43,7 +43,7 @@ export type ReconcileCommandOptions = {
   readonly includeOptional: boolean;
   /** A capability every adapter must support; units of adapters that lack it are blocked. */
   readonly requiredCapability?: AgentCapability;
-  readonly selector: TargetSelector;
+  readonly selector: Selector;
 };
 
 export type PreparedReconciliation = {

@@ -3,7 +3,7 @@ import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "../../../../../test/support/live-test-layer.ts";
 import { mutateStateFixture, stateOptionsAt } from "../../../../../test/support/state-fixture.ts";
-import type { ChoiceNamespace } from "../../../../domain/choices/choice-schema.ts";
+import type { Namespace } from "../../../../domain/choices/choice-schema.ts";
 import { enableAdapters } from "../../../../features/reconciliation/agent.ts";
 import { registerSource } from "../../../../features/sources/source.ts";
 import { SourceLive } from "../../../../features/sources/source-live.ts";
@@ -61,7 +61,7 @@ const workspace = Effect.fnUntraced(function* (adapters: ReadonlyArray<"claude">
     },
   }));
   const style = makeStyle({ color: false, width: 140, homeDirectory: root });
-  const editorFor = (namespace: ChoiceNamespace) =>
+  const editorFor = (namespace: Namespace) =>
     Effect.gen(function* () {
       const loaded = yield* loadExplorer(options, style, namespace);
       const review = loaded.entries.find((entry) => entry.title === "review")?.address;

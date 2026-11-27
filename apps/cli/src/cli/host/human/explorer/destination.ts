@@ -5,7 +5,7 @@ import type {
   ProfileCopyInput,
   ProfileCopyMember,
 } from "../../../../features/profiles/profile-copy.ts";
-import type { ChoiceNamespace } from "../../../../domain/choices/choice-schema.ts";
+import type { Namespace } from "../../../../domain/choices/choice-schema.ts";
 
 /** A profile edits only its publication and manifest, independently of daily selections. */
 export type ProfileDestination = {
@@ -16,7 +16,7 @@ export type ProfileDestination = {
   readonly seed?: ReadonlyArray<ProfileCopyMember>;
 };
 export type CopyDestination = { readonly _tag: "copy"; readonly input: ProfileCopyInput };
-export type ExplorerDestination = ChoiceNamespace | ProfileDestination | CopyDestination;
+export type ExplorerDestination = Namespace | ProfileDestination | CopyDestination;
 /** No destination: the window only reads, as `explore` does before one is chosen. */
 type BrowseOnly = { readonly _tag: "browse" };
 /** What the chooser can open: a destination to edit, or none. */

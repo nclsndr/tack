@@ -1,11 +1,11 @@
 import { Match, Schema } from "effect";
 import { resolveDependencyClosure, type DependencyResolution } from "./dependency-resolution.ts";
 import {
-  ChoiceNamespaceSchema,
+  NamespaceSchema,
   SkillChoiceSchema,
   choiceNamespaceIdentity,
   kindAndNameKey,
-  type ChoiceNamespace,
+  type Namespace,
   type SkillChoice,
 } from "./choice-schema.ts";
 import { compareCodeUnits } from "../identity/ordering.ts";
@@ -46,7 +46,7 @@ const InitialSelectionDecisionSchema = Schema.Union([
 /** The complete deterministic initial decision set for one namespace. */
 export const InitialSelectionSchema = Schema.Struct({
   decisions: Schema.Array(InitialSelectionDecisionSchema),
-  namespace: ChoiceNamespaceSchema,
+  namespace: NamespaceSchema,
   unresolvedChoices: Schema.Array(SkillChoiceSchema),
 });
 
@@ -60,14 +60,14 @@ export type InitialSelection = typeof InitialSelectionSchema.Type;
 export type ResolveInitialSelectionInput = {
   readonly choices: ReadonlyArray<SkillChoice>;
   readonly entries: ReadonlyArray<SelectableCatalogEntry>;
-  readonly namespace: ChoiceNamespace;
+  readonly namespace: Namespace;
 };
 
 type Compatibility = typeof InitialSelectionCompatibilitySchema.Type;
 type ObservedCompatibility = Exclude<Compatibility, "forced">;
 
 const compatibilityFor = (
-  namespace: ChoiceNamespace,
+  namespace: Namespace,
   entry: SelectableCatalogEntry,
 ): ObservedCompatibility =>
   !("projects" in entry)
@@ -83,7 +83,7 @@ const compatibilityFor = (
       );
 
 const decisionFor = (
-  namespace: ChoiceNamespace,
+  namespace: Namespace,
   entry: SelectableCatalogEntry,
   choice: SkillChoice | undefined,
   compatibility: ObservedCompatibility,
@@ -206,7 +206,7 @@ export type ResolveNamespaceSelectionInput = {
   readonly catalog: Pick<Catalog, "entries" | "quarantined"> & Partial<Pick<Catalog, "sources">>;
   readonly choices: ReadonlyArray<SkillChoice>;
   readonly includeOptional: boolean;
-  readonly namespace: ChoiceNamespace;
+  readonly namespace: Namespace;
 };
 
 /** One namespace's initial decisions and the dependency closure derived from them. */
@@ -224,7 +224,7 @@ export const activationIn = (
     readonly activation: typeof SkillActivationSchema.Type;
     readonly userActivation?: typeof SkillActivationSchema.Type;
   },
-  scope: ChoiceNamespace["_tag"],
+  scope: Namespace["_tag"],
 ): typeof SkillActivationSchema.Type =>
   scope === "user" ? (entry.userActivation ?? "opt-in") : entry.activation;
 

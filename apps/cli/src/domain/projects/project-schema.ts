@@ -109,7 +109,7 @@ export const projectLifecycle = (project: ProjectRecord) =>
   project.roots.length === 0 ? ("removing" as const) : ("active" as const);
 
 /** A target selector understood by the application use cases. */
-export type TargetSelector =
+export type Selector =
   | { readonly _tag: "bare" }
   | { readonly _tag: "all" }
   | { readonly _tag: "project"; readonly projectName: string }

@@ -4,11 +4,11 @@ import {
 } from "../../domain/profiles/profile-application.ts";
 import { Effect, Match, Schema } from "effect";
 import {
-  ChoiceNamespaceSchema,
+  NamespaceSchema,
   choiceNamespaceIdentity,
   SkillChoiceSchema,
   skillChoiceIdentity,
-  type ChoiceNamespace,
+  type Namespace,
   type SkillChoice,
 } from "../../domain/choices/choice-schema.ts";
 import { NextCommandsSchema } from "../../domain/hints/next-commands.ts";
@@ -74,7 +74,7 @@ export type SetSkillChoiceResult = Omit<typeof ChoiceChangePayloadSchema.Type, "
 export const ChoiceRemovalPayloadSchema = Schema.Struct({
   kind: Schema.Literal("choice-removal"),
   address: SelectableAddressSchema,
-  namespace: ChoiceNamespaceSchema,
+  namespace: NamespaceSchema,
   removed: Schema.Boolean,
 });
 
@@ -96,7 +96,7 @@ export type ChoiceAddressCandidates = typeof ChoiceAddressCandidatesSchema.Type;
 /** The exact identity needed to remove one persisted choice. */
 export type RemoveSkillChoiceOptions = {
   readonly address: SelectableAddress;
-  readonly namespace: ChoiceNamespace;
+  readonly namespace: Namespace;
 };
 
 const choicesFrom = (state: State): ReadonlyArray<SkillChoice> => allSkillChoices(state);
@@ -104,7 +104,7 @@ const choicesFrom = (state: State): ReadonlyArray<SkillChoice> => allSkillChoice
 /** Replaces one namespace's persisted choices in a state snapshot without persisting it. */
 export const withChoice = (
   state: State,
-  namespace: ChoiceNamespace,
+  namespace: Namespace,
   choices: ReadonlyArray<SkillChoice>,
 ): State =>
   namespace._tag === "user"
@@ -145,7 +145,7 @@ const sortChoices = (choices: ReadonlyArray<SkillChoice>) =>
   );
 
 /** Fails unless the namespace is the user's or a registered project that is not being removed. */
-export const requireChoiceNamespace = (state: State, namespace: ChoiceNamespace) =>
+export const requireChoiceNamespace = (state: State, namespace: Namespace) =>
   Match.value(namespace).pipe(
     Match.tag("user", () => Effect.void),
     Match.tag("project", ({ projectName }) =>
@@ -297,7 +297,7 @@ export const ChoiceListPayloadSchema = Schema.Struct({
 /** Lists persisted choices in deterministic order, optionally narrowed to one namespace. */
 export const listSkillChoices = Effect.fn("choices.listSkillChoices")(function* (
   state: State,
-  namespace?: ChoiceNamespace,
+  namespace?: Namespace,
 ) {
   // Listing never mutates, so a project being removed still lists its retained choices.
   if (

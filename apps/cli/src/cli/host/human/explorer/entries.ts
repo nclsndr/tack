@@ -1,7 +1,7 @@
 import { isBuiltinSkill } from "../../../../domain/choices/builtin.ts";
 import {
   choiceNamespaceIdentity,
-  type ChoiceNamespace,
+  type Namespace,
   type SkillChoice,
 } from "../../../../domain/choices/choice-schema.ts";
 import {
@@ -39,7 +39,7 @@ import type { ExplorerEntry } from "./model.ts";
 
 /** What edit mode needs beyond the catalog: the namespace and its current docs attachments. */
 export type ExplorerEditing = {
-  readonly namespace: ChoiceNamespace;
+  readonly namespace: Namespace;
   readonly attachments: ReadonlyArray<DocsResourceReference>;
 };
 

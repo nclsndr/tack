@@ -1,11 +1,11 @@
 import { expect, it } from "@effect/vitest";
 import { Schema } from "effect";
 import { InitialSelectionSchema, resolveInitialSelection } from "./selection.ts";
-import type { ChoiceDecision, ChoiceNamespace, SkillChoice } from "./choice-schema.ts";
+import type { ChoiceDecision, Namespace, SkillChoice } from "./choice-schema.ts";
 import type { SkillCatalogEntry } from "../sources/catalog-schema.ts";
 
-const projectNamespace = { _tag: "project", projectName: "project" } satisfies ChoiceNamespace;
-const userNamespace = { _tag: "user" } satisfies ChoiceNamespace;
+const projectNamespace = { _tag: "project", projectName: "project" } satisfies Namespace;
+const userNamespace = { _tag: "user" } satisfies Namespace;
 
 const entry = (
   activation: SkillCatalogEntry["activation"],
@@ -36,11 +36,8 @@ const entry = (
         : "00000000-0000-4000-8000-000000000002",
   }) satisfies SkillCatalogEntry;
 
-const choice = (
-  namespace: ChoiceNamespace,
-  catalogEntry: SkillCatalogEntry,
-  decision: ChoiceDecision,
-) => ({ address: catalogEntry.address, decision, namespace }) satisfies SkillChoice;
+const choice = (namespace: Namespace, catalogEntry: SkillCatalogEntry, decision: ChoiceDecision) =>
+  ({ address: catalogEntry.address, decision, namespace }) satisfies SkillChoice;
 
 const projectCases = [
   ["default", true, "none", "selected", "default", "compatible"],
@@ -194,7 +191,7 @@ it("keeps global defaults independent from project activation", () => {
   const globalOptional = { ...entry("default", true), userActivation: "opt-in" as const };
   const select = (
     catalogEntry: SkillCatalogEntry,
-    namespace: ChoiceNamespace,
+    namespace: Namespace,
     choices: ReadonlyArray<SkillChoice> = [],
   ) => resolveInitialSelection({ entries: [catalogEntry], choices, namespace }).decisions[0];
 

@@ -7,9 +7,9 @@ import { profileDeliveryCollisions } from "../../domain/profiles/inventory-colli
 import { Effect, FileSystem, Path, Schema } from "effect";
 import type { ResourceKind } from "../../domain/resources/kinds.ts";
 import {
-  ChoiceNamespaceSchema,
+  NamespaceSchema,
   choiceNamespaceIdentity,
-  type ChoiceNamespace,
+  type Namespace,
   type SkillChoice,
 } from "../../domain/choices/choice-schema.ts";
 import {
@@ -100,7 +100,7 @@ type ProfileSavePlan = typeof ProfileSavePlanSchema.Type;
 export const ProfileAdoptPlanSchema = Schema.Struct({
   kind: Schema.Literal("profile-adopt"),
   reference: Schema.String,
-  namespace: ChoiceNamespaceSchema,
+  namespace: NamespaceSchema,
   includes: Schema.Array(SelectableAddressSchema),
   attachments: Schema.Array(ResourceAddressSchema),
   notes: Schema.Array(Schema.String),
@@ -148,7 +148,7 @@ export const collectProfileInput = Effect.fnUntraced(function* (
 ) {
   const catalog = yield* snapshot.catalog;
   const findings: ProfilePlanFinding[] = [];
-  const levels: ChoiceNamespace[] = [
+  const levels: Namespace[] = [
     ...(input.user ? [{ _tag: "user" as const }] : []),
     ...(input.projectName === undefined
       ? []
@@ -335,7 +335,7 @@ export const runProfileSaveSelection = Effect.fn("profiles.runProfileSaveSelecti
 
 export type ProfileAdoptRequest = {
   readonly reference: string;
-  readonly namespace: ChoiceNamespace;
+  readonly namespace: Namespace;
   readonly apply: boolean;
   readonly cwd: string;
 };

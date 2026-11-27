@@ -1,12 +1,12 @@
 import { Schema } from "effect";
-import { ChoiceNamespaceSchema } from "../choices/choice-schema.ts";
+import { NamespaceSchema } from "../choices/choice-schema.ts";
 import { CanonicalPathSchema } from "../identity/identity-schema.ts";
 import { ResourceAddressSchema, resourceAddressIdentity } from "../sources/catalog-schema.ts";
 import { SourceRegistrationIdSchema } from "../sources/source-schema.ts";
 
 /** Exact local intent retained even after an empty or incomplete application. */
 export const ProfileApplicationSchema = Schema.Struct({
-  namespace: ChoiceNamespaceSchema,
+  namespace: NamespaceSchema,
   profileName: Schema.String,
   sourceRegistrationId: SourceRegistrationIdSchema,
   direct: Schema.Array(ResourceAddressSchema),

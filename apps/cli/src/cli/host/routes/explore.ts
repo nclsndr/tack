@@ -1,6 +1,6 @@
 import { Effect, Schema } from "effect";
 import { InvocationError } from "../../commands/index.ts";
-import type { ChoiceNamespace } from "../../../domain/choices/choice-schema.ts";
+import type { Namespace } from "../../../domain/choices/choice-schema.ts";
 import { makeExplorerEditor, loadExplorer } from "../human/explorer/editor.ts";
 import { initialExplorerState } from "../human/explorer/model.ts";
 import { makeExplorerDestinations } from "../human/explorer/profile-editor.ts";
@@ -28,7 +28,7 @@ const containingProject = Effect.fnUntraced(function* (stateOptions: StateOption
   const { containing } = yield* resolveContainingRoot(state, cwd);
   return containing === undefined
     ? undefined
-    : ({ _tag: "project", projectName: containing.projectName } satisfies ChoiceNamespace);
+    : ({ _tag: "project", projectName: containing.projectName } satisfies Namespace);
 });
 
 /**
@@ -38,7 +38,7 @@ const containingProject = Effect.fnUntraced(function* (stateOptions: StateOption
  */
 export const exploreSelection = Effect.fn("explore.exploreSelection")(function* (
   stateOptions: StateOptions,
-  options: { readonly destination?: ChoiceNamespace; readonly cwd: string },
+  options: { readonly destination?: Namespace; readonly cwd: string },
 ) {
   const terminal = yield* TerminalContext;
   if (!interactiveAllowed(terminal))

@@ -5,10 +5,7 @@ import { allSkillChoices } from "../../domain/state/state-intent.ts";
 import { Effect, FileSystem, Path, PlatformError, Schema } from "effect";
 import { agentAdapterDescriptor } from "../../domain/agents/agent-adapter.ts";
 import { deliversKind, managedLinkDestinationPath } from "../../domain/agents/agent-layout.ts";
-import {
-  choiceNamespaceIdentity,
-  type ChoiceNamespace,
-} from "../../domain/choices/choice-schema.ts";
+import { choiceNamespaceIdentity, type Namespace } from "../../domain/choices/choice-schema.ts";
 import { selectedDependencyAddresses } from "../../domain/choices/dependency-resolution.ts";
 import { Destination } from "../../services/destination.ts";
 import {
@@ -50,7 +47,7 @@ import {
   type ProjectInspection,
   type ProjectRootInspection,
 } from "../projects/project.ts";
-import { projectLifecycle, type TargetSelector } from "../../domain/projects/project-schema.ts";
+import { projectLifecycle, type Selector } from "../../domain/projects/project-schema.ts";
 import type { ProjectRecord } from "../../domain/projects/project-schema.ts";
 import { observeImportsDisplay, type ImportsDisplay } from "../imports/import-display.ts";
 import { readInvocationSnapshot, type CommandSnapshot } from "../snapshot/command-snapshot.ts";
@@ -126,7 +123,7 @@ export type StatusOptions = {
   readonly cwd: string;
   /** Includes optional dependency closure in the desired state, as `reconcile` does. */
   readonly includeOptional?: boolean;
-  readonly selector: TargetSelector;
+  readonly selector: Selector;
   readonly userTarget?: string;
 };
 
@@ -204,7 +201,7 @@ const sourceStatuses = (
     );
 
 const scopeFromSelection = Effect.fnUntraced(function* (
-  selector: TargetSelector,
+  selector: Selector,
   containingRoot: { readonly projectName: string } | undefined,
 ): Effect.fn.Return<StatusScope, TargetSelectionError> {
   if (selector._tag === "user") {
@@ -226,7 +223,7 @@ const scopeFromSelection = Effect.fnUntraced(function* (
 const statusNamespace = (
   state: State,
   catalog: Catalog,
-  namespace: ChoiceNamespace,
+  namespace: Namespace,
   project: ProjectRecord | undefined,
   includeOptional: boolean,
   actualTargets: ReadonlyArray<string>,
@@ -663,7 +660,7 @@ export const statusFromSnapshot = Effect.fn("status.statusFromSnapshot")(functio
     )
     .sort((left, right) => compareCodeUnits(left.name, right.name));
   const namespaceInputs: ReadonlyArray<{
-    readonly namespace: ChoiceNamespace;
+    readonly namespace: Namespace;
     readonly project?: ProjectRecord;
   }> =
     scope._tag === "user"

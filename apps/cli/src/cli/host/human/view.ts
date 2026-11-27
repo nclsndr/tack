@@ -1,5 +1,5 @@
 import { Predicate } from "effect";
-import type { ChoiceNamespace } from "../../../domain/choices/choice-schema.ts";
+import type { Namespace } from "../../../domain/choices/choice-schema.ts";
 import type { ResourceKind } from "../../../domain/resources/kinds.ts";
 import { argvLine } from "../command-line.ts";
 import type { PublicEnvelope } from "../public-outcome.ts";
@@ -26,7 +26,7 @@ export const addressText = (
  * `user` or `project demo`; `prose` sits inside a sentence, where a bare `user` would read as a
  * person, so it says `the user namespace`.
  */
-export const namespaceText = (namespace: ChoiceNamespace, form: "label" | "prose"): string =>
+export const namespaceText = (namespace: Namespace, form: "label" | "prose"): string =>
   namespace._tag === "project"
     ? `project ${namespace.projectName}`
     : form === "label"

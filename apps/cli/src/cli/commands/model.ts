@@ -2,8 +2,8 @@ import { Record, Schema } from "effect";
 import { NextCommandsSchema } from "../../domain/hints/next-commands.ts";
 import { commandDeclarations, type CommandDeclaration } from "./declarations.ts";
 import type { DocsResourceRequest } from "../../domain/docs/docs-schema.ts";
-import type { ChoiceNamespace } from "../../domain/choices/choice-schema.ts";
-import type { TargetSelector } from "../../domain/projects/project-schema.ts";
+import type { Namespace } from "../../domain/choices/choice-schema.ts";
+import type { Selector } from "../../domain/projects/project-schema.ts";
 import type { AgentAdapterId, AgentCapability } from "../../domain/agents/agent-adapter-schema.ts";
 import type { ResourceKind, SelectableKind } from "../../domain/resources/kinds.ts";
 import type { OperatorRunRequest } from "../../domain/execution/execution-schema.ts";
@@ -47,7 +47,7 @@ type SelectedRemoval = {
   /** Lists every cleanup action in the text view. */
   readonly details: boolean;
   readonly cwd?: string;
-  readonly selector: TargetSelector;
+  readonly selector: Selector;
 };
 
 /** Planning inputs for selected links and attached project docs mounts. */
@@ -57,7 +57,7 @@ export type ReconcilePlanningRequest = {
   readonly includeOptional: boolean;
   readonly noDocs: boolean;
   readonly requiredCapability?: AgentCapability;
-  readonly selector: TargetSelector;
+  readonly selector: Selector;
 };
 
 /** The parsed, transport-free request handled by the CLI application boundary. */
@@ -148,7 +148,7 @@ export type Invocation =
   | {
       readonly _tag: "profile-apply";
       readonly reference: string;
-      readonly namespace: ChoiceNamespace;
+      readonly namespace: Namespace;
       readonly targetRoots: ReadonlyArray<string>;
       readonly targetHome?: string | undefined;
       readonly force: boolean;
@@ -166,7 +166,7 @@ export type Invocation =
   | {
       readonly _tag: "profile-adopt";
       readonly reference: string;
-      readonly namespace: ChoiceNamespace;
+      readonly namespace: Namespace;
       readonly apply: boolean;
     }
   | {
@@ -179,7 +179,7 @@ export type Invocation =
   | {
       readonly _tag: "profile-apply-bundle";
       readonly file: string;
-      readonly namespace: ChoiceNamespace;
+      readonly namespace: Namespace;
       readonly targetRoots: ReadonlyArray<string>;
       readonly targetHome?: string;
       readonly force: boolean;
@@ -210,7 +210,7 @@ export type Invocation =
       readonly apply: boolean;
       readonly details: boolean;
       readonly cwd?: string;
-      readonly selector: Extract<TargetSelector, { readonly _tag: "bare" | "project" | "all" }>;
+      readonly selector: Extract<Selector, { readonly _tag: "bare" | "project" | "all" }>;
     }
   | {
       readonly _tag: "catalog";
@@ -224,27 +224,27 @@ export type Invocation =
        * The selection the explorer opens on. Absent, it opens the project that contains the
        * working directory, or else the destination chooser.
        */
-      readonly destination?: ChoiceNamespace;
+      readonly destination?: Namespace;
     }
   | {
       readonly _tag: "pick-include";
       readonly reference: string;
       readonly kind?: SelectableKind;
-      readonly namespace: ChoiceNamespace;
+      readonly namespace: Namespace;
     }
   | {
       readonly _tag: "pick-exclude";
       readonly reference: string;
       readonly kind?: SelectableKind;
-      readonly namespace: ChoiceNamespace;
+      readonly namespace: Namespace;
     }
   | {
       readonly _tag: "pick-remove";
       readonly reference: string;
       readonly kind?: SelectableKind;
-      readonly namespace: ChoiceNamespace;
+      readonly namespace: Namespace;
     }
-  | { readonly _tag: "pick-list"; readonly namespace?: ChoiceNamespace }
+  | { readonly _tag: "pick-list"; readonly namespace?: Namespace }
   | { readonly _tag: "adapter-enable"; readonly adapters: ReadonlyArray<AgentAdapterId> }
   | {
       readonly _tag: "adapter-disable";
@@ -258,7 +258,7 @@ export type Invocation =
       readonly cwd?: string;
       readonly includeOptional: boolean;
       readonly details: boolean;
-      readonly selector: TargetSelector;
+      readonly selector: Selector;
     }
   | ({ readonly _tag: "state-clean" } & SelectedRemoval)
   | ({ readonly _tag: "state-clean-pending" } & SelectedRemoval)

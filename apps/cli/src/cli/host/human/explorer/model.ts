@@ -1,4 +1,4 @@
-import type { ChoiceNamespace } from "../../../../domain/choices/choice-schema.ts";
+import type { Namespace } from "../../../../domain/choices/choice-schema.ts";
 import type { ResourceAddress } from "../../../../domain/sources/catalog-schema.ts";
 import type { ExplorerActivity } from "./activity.ts";
 import type { DestinationMenu, DestinationOption, OpenableDestination } from "./destination.ts";
@@ -110,7 +110,7 @@ export type ExplorerStep =
 export const initialExplorerState = (
   heading: string,
   entries: ReadonlyArray<ExplorerEntry>,
-  namespace?: ChoiceNamespace,
+  namespace?: Namespace,
   fixedBy?: string,
 ): ExplorerState => ({
   heading,

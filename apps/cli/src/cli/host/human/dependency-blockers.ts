@@ -1,5 +1,5 @@
 import { Match, Option, Schema } from "effect";
-import type { ChoiceNamespace } from "../../../domain/choices/choice-schema.ts";
+import type { Namespace } from "../../../domain/choices/choice-schema.ts";
 import type { RequiredDependencyBlocker } from "../../../domain/choices/dependency-resolution.ts";
 import { DependencyBlockedSubjectSchema } from "../../../features/reconciliation/partial-cause.ts";
 import { commandLine, selectorFlags } from "../command-line.ts";
@@ -13,7 +13,7 @@ const referenceOf = (dependency: RequiredDependencyBlocker["dependency"]) =>
 /** What stops one requirement and the step that lifts it. */
 const sentence = (
   blocker: RequiredDependencyBlocker,
-  namespace: ChoiceNamespace,
+  namespace: Namespace,
   style: Style,
 ): string => {
   const { dependency, requester } = blocker;

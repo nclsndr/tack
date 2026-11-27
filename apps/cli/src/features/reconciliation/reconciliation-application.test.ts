@@ -9,7 +9,7 @@ import { faultyFileSystem, platformTestError, stallAt } from "../../../test/supp
 import { expect, it } from "@effect/vitest";
 import { Deferred, Effect, FileSystem, Fiber, Path, Schema } from "effect";
 import { agentAdapterDescriptor } from "../../domain/agents/agent-adapter.ts";
-import type { ChoiceNamespace } from "../../domain/choices/choice-schema.ts";
+import type { Namespace } from "../../domain/choices/choice-schema.ts";
 import type { DependencyResolution } from "../../domain/choices/dependency-resolution.ts";
 import {
   type ManagedLinkEvidence,
@@ -40,7 +40,7 @@ import {
 type SkillAddress = SkillCatalogEntry["address"];
 
 const registrationId = "00000000-0000-4000-8000-000000000001";
-const userNamespace = { _tag: "user" } satisfies ChoiceNamespace;
+const userNamespace = { _tag: "user" } satisfies Namespace;
 
 const address = (name: string, owner: "shared" | "private" = "shared") =>
   ({

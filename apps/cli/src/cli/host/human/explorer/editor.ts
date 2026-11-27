@@ -5,7 +5,7 @@ import {
   removeSkillChoice,
   setSkillChoice,
 } from "../../../../features/choices/choice.ts";
-import type { ChoiceNamespace } from "../../../../domain/choices/choice-schema.ts";
+import type { Namespace } from "../../../../domain/choices/choice-schema.ts";
 import { attachDocs, detachDocs } from "../../../../features/docs/docs.ts";
 import type { ReconcileCommandOptions } from "../../../../features/reconciliation/reconcile-command.ts";
 import { planSync, runSyncCommand } from "../../../../features/reconciliation/sync-command.ts";
@@ -57,7 +57,7 @@ type EditedProfile = {
 export const loadExplorer = Effect.fnUntraced(function* (
   stateOptions: StateOptions,
   style: Style,
-  destination: ChoiceNamespace | EditedProfile | undefined,
+  destination: Namespace | EditedProfile | undefined,
 ) {
   const snapshot = yield* readInvocationSnapshot(stateOptions);
   const { state } = snapshot;
@@ -135,11 +135,7 @@ const actionLine = (
   return `  forget      ${relativeTo(root, action.destinationPath, style)}  record only`;
 };
 
-const changeLines = (
-  pending: ReadonlyArray<PendingChange>,
-  namespace: ChoiceNamespace,
-  style: Style,
-) => [
+const changeLines = (pending: ReadonlyArray<PendingChange>, namespace: Namespace, style: Style) => [
   `Staged changes in ${namespaceText(namespace, "prose")}`,
   ...pending.map((change) =>
     change.kind === "docs"
@@ -156,7 +152,7 @@ const plural = (count: number, word: string) => `${count} ${word}${count === 1 ?
  */
 export const makeExplorerEditor = (options: {
   readonly stateOptions: StateOptions;
-  readonly namespace: ChoiceNamespace;
+  readonly namespace: Namespace;
   readonly style: Style;
   readonly cwd: string;
   readonly context: Context.Context<RouteServices>;

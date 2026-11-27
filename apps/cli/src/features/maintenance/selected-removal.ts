@@ -11,7 +11,7 @@ import {
   type ManagedTarget,
   type SelectionEcho,
 } from "../projects/project.ts";
-import { projectLifecycle, type TargetSelector } from "../../domain/projects/project-schema.ts";
+import { projectLifecycle, type Selector } from "../../domain/projects/project-schema.ts";
 import { runManagedRemoval, type RemovalExecution } from "../removal/removal.ts";
 import { applyRemovalWithWriter } from "../removal/removal-apply.ts";
 import { planRemoval } from "../removal/removal-plan.ts";
@@ -29,7 +29,7 @@ import { previewOrApply } from "../writer/recovered-writer.ts";
 export type SelectedRemovalOptions = {
   readonly apply?: boolean;
   readonly cwd: string;
-  readonly selector: TargetSelector;
+  readonly selector: Selector;
 };
 
 /** Invocation-scoped inputs for retrying pending cleanup obligations. */
