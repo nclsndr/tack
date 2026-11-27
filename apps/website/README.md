@@ -54,6 +54,10 @@ with `apps/website` as the root directory and `dist` as the output directory, so
 `functions/`.
 
 - `docs/public/_headers` serves `.md` files as `text/markdown` and sets `Vary: Accept`.
+- `docs/public/.well-known/agent-skills/index.json` lists the `set-up-tack` skill for skill
+  installers, such as `npx skills add https://tackup.dev`. The build copies the skill from
+  `skills/set-up-tack` at the repository root, the folder `npx skills add nclsndr/tack` reads, and a
+  test keeps the index's digest equal to the file's.
 - `docs/public/robots.txt` lets every crawler read every page and names the sitemap. Keep
   Cloudflare's managed `robots.txt` and its AI crawler block off for the zone: either one would
   replace or prepend rules that shut agents out.

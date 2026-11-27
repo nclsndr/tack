@@ -70,6 +70,17 @@ export default defineConfig({
   logo: "/favicon.svg",
   logoText: "tack",
   globalStyles: local("./styles/site.css"),
+  // The set-up-tack skill, served where /.well-known/agent-skills/index.json says it is.
+  builderConfig: {
+    output: {
+      copy: [
+        {
+          from: local("../../skills/set-up-tack/SKILL.md"),
+          to: ".well-known/agent-skills/set-up-tack/SKILL.md",
+        },
+      ],
+    },
+  },
   route: { cleanUrls: true },
   head: [...pageHead],
   // Writes llms.txt, llms-full.txt and a Markdown twin beside every HTML page.

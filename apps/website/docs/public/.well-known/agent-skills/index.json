@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schemas.agentskills.io/discovery/0.2.0/schema.json",
+  "skills": [
+    {
+      "name": "set-up-tack",
+      "type": "skill-md",
+      "description": "Install and set up Tack (@tackup/cli, tackup.dev), the CLI that links skills, commands and docs from folders and Git repositories you own into Claude Code, Codex, Cursor, Copilot CLI, Gemini CLI, Cline, OpenCode and Pi, in every project and Git worktree. Use when asked to share skills between coding agents, to link one skills folder into .claude/skills, .agents/skills or .cursor/skills, or to install Tack.",
+      "url": "/.well-known/agent-skills/set-up-tack/SKILL.md",
+      "digest": "sha256:d934f62acaa7f3c6e532c70d0b014e82a126d100d0a9e8831fe2dacc28d10a3e"
+    }
+  ]
+}
