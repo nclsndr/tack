@@ -12,21 +12,21 @@ import { ChoiceUserLinkedError, setChoice } from "./choice.ts";
 
 /**
  * The `tack` argv that excludes a resource for the user, from its source-qualified reference and
- * its kind. The caller names the command, as it does when it resolves a reference.
+ * its kind. The CLI builds it from its command model.
  */
 export type UserExcludeCommand = (reference: string, kind: LinkableKind) => ReadonlyArray<string>;
 
 /**
- * Refuses a project exclude that would hide nothing because the user namespace links the resource.
- * Its fix is the user exclude, named by source and kind.
+ * Refuses the first project exclude among `choices` that would hide nothing because the user
+ * namespace links its resource. Its fix is the user exclude, named by source and kind.
  */
-const requireVisibleExclude = Effect.fnUntraced(function* (
+export const requireVisibleExcludes = Effect.fnUntraced(function* (
   catalog: Catalog,
   state: State,
-  choice: Choice,
+  choices: ReadonlyArray<Choice>,
   userExclude: UserExcludeCommand,
 ) {
-  const [refused] = userLinkedExcludes(userLinksOf(state, catalog, false), [choice]);
+  const [refused] = userLinkedExcludes(userLinksOf(state, catalog, false), choices);
   if (refused === undefined) return undefined;
   const { address, projectName } = refused;
   const command = userExclude(
@@ -43,27 +43,17 @@ const requireVisibleExclude = Effect.fnUntraced(function* (
 });
 
 /**
- * Checks that a pick can be recorded against the current catalog and state: its resource is not
- * built in, and a project exclude still hides something. A batch runs it on every pick before its
- * first write.
+ * Records one pick in the writer's document, after the checks the catalog and state impose: the
+ * resource is not built in, and a project exclude still hides something.
  */
-export const requirePickable = Effect.fnUntraced(function* (
+export const pickChoice = Effect.fnUntraced(function* (
+  writer: StateCheckpointWriter,
   catalog: Catalog,
   state: State,
   choice: Choice,
   userExclude: UserExcludeCommand,
 ) {
   yield* requireMutableChoice(catalog, choice.address);
-  yield* requireVisibleExclude(catalog, state, choice, userExclude);
-});
-
-/** Records one pick in the writer's document once {@link requirePickable} accepts it. */
-export const pickChoice = Effect.fnUntraced(function* (
-  writer: StateCheckpointWriter,
-  snapshot: { readonly catalog: Catalog; readonly state: State },
-  choice: Choice,
-  userExclude: UserExcludeCommand,
-) {
-  yield* requirePickable(snapshot.catalog, snapshot.state, choice, userExclude);
+  yield* requireVisibleExcludes(catalog, state, [choice], userExclude);
   return yield* setChoice(writer, choice);
 });

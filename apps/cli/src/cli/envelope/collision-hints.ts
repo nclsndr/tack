@@ -1,7 +1,8 @@
 import { Option, Schema } from "effect";
 import { UserLinkedExcludeSchema } from "../../domain/choices/choice-schema.ts";
 import type { ManagedLinkTarget } from "../../domain/links/managed-link-schema.ts";
-import { commandLine, selectorFlags } from "./command-line.ts";
+import { argvLine } from "../../domain/hints/next-commands.ts";
+import { commandLine, selectorFlags, userExcludeCommand } from "./command-line.ts";
 
 /**
  * One `tack pick exclude` command per candidate of a selection collision: excluding all but one
@@ -55,5 +56,5 @@ export const userExcludeCommands = (
     .filter((diagnostic) => diagnostic.code === "project-exclude-linked-for-user")
     .flatMap((diagnostic) => Option.toArray(decodeUserLinkedExclude(diagnostic.details)))
     .map(({ subject: { address } }) =>
-      commandLine("pick-exclude", reference(address), "--kind", address.kind, "--user"),
+      argvLine(userExcludeCommand(reference(address), address.kind)),
     );

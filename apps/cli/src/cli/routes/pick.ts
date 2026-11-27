@@ -129,7 +129,8 @@ const setPick = (
       );
       const applied = yield* pickChoice(
         writer,
-        { catalog, state: snapshot.state },
+        catalog,
+        snapshot.state,
         { address, decision: request.decision, namespace: request.namespace },
         userExcludeCommand,
       );

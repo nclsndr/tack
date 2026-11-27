@@ -1,5 +1,5 @@
 import { requireMutableChoice } from "../../features/choices/builtin-choice.ts";
-import { requirePickable } from "../../features/choices/pick.ts";
+import { requireVisibleExcludes } from "../../features/choices/pick.ts";
 import { Effect, type Context } from "effect";
 import { listChoices, removeChoice, setChoice } from "../../features/choices/choice.ts";
 import type { Namespace } from "../../domain/choices/choice-schema.ts";
@@ -174,23 +174,23 @@ export const makeExplorerEditor = (options: {
         : { _tag: "project", projectName: namespace.projectName },
   };
   const projectName = namespace._tag === "project" ? namespace.projectName : undefined;
-  // The checks `tack pick` runs, on every staged choice before the first write, so a refused
-  // change leaves no half-saved batch. A reset only needs the resource to be mutable.
+  // The checks `tack pick` makes, run on the whole batch against the state read before it, so a
+  // refused change leaves no half-saved batch. A reset only needs the resource to be mutable.
   const requireBatch = Effect.fnUntraced(function* (
     catalog: Catalog,
     state: State,
     pending: ReadonlyArray<PendingChange>,
   ) {
-    for (const change of pending)
-      if (change.kind === "choice")
-        yield* change.decision === "unset"
-          ? requireMutableChoice(catalog, change.address)
-          : requirePickable(
-              catalog,
-              state,
-              { address: change.address, decision: change.decision, namespace },
-              userExcludeCommand,
-            );
+    const changes = pending.flatMap((change) => (change.kind === "choice" ? [change] : []));
+    for (const { address } of changes) yield* requireMutableChoice(catalog, address);
+    yield* requireVisibleExcludes(
+      catalog,
+      state,
+      changes.flatMap(({ address, decision }) =>
+        decision === "unset" ? [] : [{ address, decision, namespace }],
+      ),
+      userExcludeCommand,
+    );
   });
 
   const preview: ExplorerEditor["preview"] = (pending) =>
@@ -321,8 +321,13 @@ export const makeExplorerEditor = (options: {
         return undefined;
       }),
     ).pipe(Effect.catch((error) => Effect.succeed(describe(error))));
+    // A refusal before the first write saved nothing, as its message says.
+    const saved = lines.length > 0;
     if (failure !== undefined)
-      lines.push(`stopped ${failure}`, "Changes saved before this point remain; rerun to finish.");
+      lines.push(
+        `stopped ${failure}`,
+        ...(saved ? ["Changes saved before this point remain; rerun to finish."] : []),
+      );
     const entries = yield* run(
       loadExplorer(stateOptions, options.style, namespace).pipe(
         Effect.map((loaded) => loaded.entries),

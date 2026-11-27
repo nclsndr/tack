@@ -344,11 +344,32 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
       expect(yield* editor.preview(batch)).toEqual([`Cannot preview these changes: ${refusal}`]);
       const before = yield* readState(options);
       const applied = yield* editor.apply(batch);
-      expect(applied.lines).toEqual([
-        `stopped ${refusal}`,
-        "Changes saved before this point remain; rerun to finish.",
-      ]);
+      expect(applied.lines).toEqual([`stopped ${refusal}`]);
       expect((yield* readState(options)).data).toEqual(before.data);
+    }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
+  );
+
+  test.effect("keeps the changes saved before a failed one and says so", () =>
+    Effect.gen(function* () {
+      const { options, editorFor } = yield* workspace();
+      const { editor, review, handbook } = yield* editorFor({
+        _tag: "project",
+        projectName: "demo",
+      });
+      const applied = yield* editor.apply([
+        { kind: "choice", address: review, decision: "include" },
+        {
+          kind: "docs",
+          resource: { sourceRegistrationId: handbook.sourceRegistrationId, name: "missing" },
+          attached: true,
+        },
+      ]);
+      expect(applied.lines[0]).toBe("saved   include skill source:review");
+      expect(applied.lines[1]).toMatch(/^stopped /);
+      expect(applied.lines[2]).toBe("Changes saved before this point remain; rerun to finish.");
+      expect((yield* readState(options)).data.projects[0]?.choices).toEqual([
+        { address: review, decision: "include" },
+      ]);
     }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
   );
 

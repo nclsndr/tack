@@ -1,6 +1,7 @@
 import type { commandDeclarations } from "../commands/declarations.ts";
 import { commandPathOf } from "../commands/model.ts";
 import { argvLine } from "../../domain/hints/next-commands.ts";
+import type { UserExcludeCommand } from "../../features/choices/pick.ts";
 
 /** An operation a printed command can name: every invocation the command tree declares. */
 export type CommandName = keyof typeof commandDeclarations;
@@ -38,8 +39,8 @@ export const selectorFlags = (selector: {
         : [];
 
 /**
- * The user exclude that turns a resource off everywhere: the fix a refused project exclude names,
- * from the pick route and from the explorer alike.
+ * The user exclude that turns a resource off everywhere: the fix that a refused project exclude and
+ * the `project-exclude-linked-for-user` warning name.
  */
-export const userExcludeCommand = (reference: string, kind: string): ReadonlyArray<string> =>
+export const userExcludeCommand: UserExcludeCommand = (reference, kind) =>
   invocation("pick-exclude", reference, "--kind", kind, "--user");
