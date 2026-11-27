@@ -24,7 +24,7 @@ import {
   plural,
   sections,
 } from "./view.ts";
-import type { HumanView, HumanViewRegistry } from "./render.ts";
+import type { HumanView, HumanViewRegistry } from "./human-view.ts";
 import type { Style } from "./style.ts";
 
 // Diagnostic details are read through the schema of the failure or warning that carries them.

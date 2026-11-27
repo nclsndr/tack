@@ -6,7 +6,7 @@ import type {
   InitPlanSchema,
 } from "../../domain/setup/machine-init-schema.ts";
 import { commandLine } from "../envelope/command-line.ts";
-import type { HumanView } from "./render.ts";
+import type { HumanView } from "./human-view.ts";
 import { handMadeLines } from "./hand-made.ts";
 import { attentionOf, repeatedByRows, unitSections, workOf } from "./plan.ts";
 import type { Style } from "./style.ts";

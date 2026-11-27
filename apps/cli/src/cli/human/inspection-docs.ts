@@ -1,6 +1,6 @@
 import type { DocsResourceReference as Reference } from "../../domain/docs/docs-schema.ts";
 import type { DocsList } from "../../features/docs/docs.ts";
-import type { HumanViewRegistry } from "./render.ts";
+import type { HumanViewRegistry } from "./human-view.ts";
 import type { Style } from "./style.ts";
 import { cell, paragraph } from "./text.ts";
 import { factRows, headingLines, plural } from "./view.ts";

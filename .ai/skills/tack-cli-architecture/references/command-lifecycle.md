@@ -29,8 +29,8 @@ All paths are under `apps/cli/src`.
    `appliedAs(tag)`, which read the payload `kind` from the declaration. A new failure gets its
    public code in `cli/envelope/errors.ts`.
 6. **View.** The host decodes each slot once with the declared schema and hands the view one
-   `Option` per slot (`cli/human/render.ts`). Add a `HumanView<"your-tag">` to a family table and to
-   `humanViews`. A view that declines a payload returns `undefined`, and the generic view shows it.
+   `Option` per slot (`cli/human/render.ts`). Add a `HumanView<"your-tag">` (`cli/human/human-view.ts`)
+   to a family table and to `humanViews`. A view that declines a payload returns `undefined`, and the generic view shows it.
    `--json` prints the envelope itself; no view is involved.
 7. **Help map.** Add the command to its row in `operationMap` (`cli/human/help-map.ts`) with its
    mode.

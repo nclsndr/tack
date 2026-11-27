@@ -1,6 +1,6 @@
 import { Option } from "effect";
 import { frameView } from "./frame.ts";
-import type { HumanView } from "./render.ts";
+import type { HumanView } from "./human-view.ts";
 import { renderPlan } from "./plan.ts";
 import { docsSyncPart, type DocsSyncPart } from "./removal-views.ts";
 import type { Style } from "./style.ts";

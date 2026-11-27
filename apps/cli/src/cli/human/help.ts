@@ -1,7 +1,7 @@
 import { Option } from "effect";
 import type { HelpPayloadSchema } from "../commands/index.ts";
 import { argvLine } from "../../domain/hints/next-commands.ts";
-import type { HumanView } from "./render.ts";
+import type { HumanView } from "./human-view.ts";
 import type { Style } from "./style.ts";
 import { mapModes, mapModeWords, operationMap } from "./help-map.ts";
 import { cell, flow, paragraph, table, type Cell } from "./text.ts";

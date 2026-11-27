@@ -1,6 +1,6 @@
 import { Option } from "effect";
 import { frameView } from "./frame.ts";
-import type { HumanView } from "./render.ts";
+import type { HumanView } from "./human-view.ts";
 import { withoutPayload } from "./run-text.ts";
 import { cell } from "./text.ts";
 import { factRows } from "./view.ts";

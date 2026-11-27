@@ -1,6 +1,6 @@
 import { Option } from "effect";
 import { headerLines, hintLines, sections } from "./view.ts";
-import type { HumanView } from "./render.ts";
+import type { HumanView } from "./human-view.ts";
 
 /** Shows one combined file:line authoring report, using the same findings that determine exit status. */
 export const renderCheck: HumanView<"check"> = (envelope, { result }, style) => {

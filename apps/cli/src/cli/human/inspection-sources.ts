@@ -7,7 +7,7 @@ import {
   type SourceListEntry,
 } from "../../features/imports/import-display.ts";
 import type { ProjectInspection } from "../../features/projects/project.ts";
-import type { HumanViewRegistry } from "./render.ts";
+import type { HumanViewRegistry } from "./human-view.ts";
 import type { Style } from "./style.ts";
 import { cell, paragraph, tableRows } from "./text.ts";
 import { headingLines, needAttention, plural } from "./view.ts";

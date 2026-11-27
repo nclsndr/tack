@@ -1,5 +1,5 @@
 import { Option } from "effect";
-import type { HumanView } from "./render.ts";
+import type { HumanView } from "./human-view.ts";
 import { addressText, headerLines, sections } from "./view.ts";
 
 /** Shows the independent copy's input origins and exact authoring diff before save. */

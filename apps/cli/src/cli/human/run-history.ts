@@ -7,7 +7,7 @@ import {
 import { commandLine } from "../envelope/command-line.ts";
 import { shellWord } from "../../domain/hints/next-commands.ts";
 import { frameView } from "./frame.ts";
-import type { HumanView } from "./render.ts";
+import type { HumanView } from "./human-view.ts";
 import {
   finalizationFacts,
   logLines,

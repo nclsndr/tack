@@ -1,5 +1,5 @@
 import { Option } from "effect";
-import type { HumanView } from "./render.ts";
+import type { HumanView } from "./human-view.ts";
 import { cell } from "./text.ts";
 import { factRows, headerLines, sections } from "./view.ts";
 

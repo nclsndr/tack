@@ -2,7 +2,7 @@ import { Option, Schema } from "effect";
 import type { ProfileCheckReport } from "../../domain/profiles/profile-schema.ts";
 import type { Style } from "./style.ts";
 import type { PublicEnvelope } from "../envelope/public-outcome.ts";
-import type { HumanView } from "./render.ts";
+import type { HumanView } from "./human-view.ts";
 import { ProfileDeliveryApplicationSchema } from "../../features/profiles/profile-apply.ts";
 import {
   deliveryMemberName,

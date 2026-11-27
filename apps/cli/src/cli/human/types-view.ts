@@ -2,7 +2,7 @@ import { Option } from "effect";
 import type { TypesPlanSchema } from "../../features/execution/script-types.ts";
 import { commandLine } from "../envelope/command-line.ts";
 import { frameView } from "./frame.ts";
-import type { HumanView } from "./render.ts";
+import type { HumanView } from "./human-view.ts";
 import { withoutPayload } from "./run-text.ts";
 import { cell, table } from "./text.ts";
 import { factRows } from "./view.ts";

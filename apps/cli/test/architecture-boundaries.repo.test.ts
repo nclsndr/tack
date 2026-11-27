@@ -232,6 +232,19 @@ describe("CLI architecture boundaries", () => {
     ).toEqual([]);
   });
 
+  it("keeps the text views below their registry: no view imports render.ts", () => {
+    // `render.ts` imports every view to build the registry, so a view that imported it, even for a
+    // type, would close a cycle through all of them. The view contract lives in `human-view.ts`.
+    const importers = productionSourceFiles().filter(
+      (path) =>
+        modulePath(path).startsWith("cli/human/") &&
+        !path.endsWith(".test-support.ts") &&
+        localImportsOf(path).includes("cli/human/render.ts"),
+    );
+
+    expect(importers.map(modulePath)).toEqual([]);
+  });
+
   it("reads the state document only through the command snapshot", () => {
     const readers = productionSourceFiles().flatMap((path) =>
       /\breadState\b/.test(readFileSync(path, "utf8")) ? [modulePath(path)] : [],

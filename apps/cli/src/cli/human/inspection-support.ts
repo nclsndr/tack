@@ -3,7 +3,7 @@ import type { DeclaredPayload } from "../commands/declarations.ts";
 import type { Invocation } from "../commands/index.ts";
 import type { PublicEnvelope } from "../envelope/public-outcome.ts";
 import { frameView } from "./frame.ts";
-import type { HumanView } from "./render.ts";
+import type { HumanView } from "./human-view.ts";
 import type { Style } from "./style.ts";
 import { cell, paragraph, table, tableRows, type Cell } from "./text.ts";
 

@@ -1,6 +1,6 @@
 import { Option } from "effect";
 import { commandLine } from "../envelope/command-line.ts";
-import type { HumanView } from "./render.ts";
+import type { HumanView } from "./human-view.ts";
 import type { Style } from "./style.ts";
 import { cell, flow, paragraph, table } from "./text.ts";
 import { headerLines, hintLines, sections, withoutPayload } from "./view.ts";

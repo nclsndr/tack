@@ -13,7 +13,7 @@ import {
   type ResourceKind,
 } from "../../domain/resources/kinds.ts";
 import { referenceFor, type ReferenceIndex } from "../../features/sources/resource-reference.ts";
-import type { HumanView } from "./render.ts";
+import type { HumanView } from "./human-view.ts";
 import { withReferences, type Style } from "./style.ts";
 import { cell, flow, table, wrapText, type Cell } from "./text.ts";
 import {
