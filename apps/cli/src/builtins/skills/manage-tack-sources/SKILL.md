@@ -45,10 +45,11 @@ requested scope, using the source's normal review process where applicable.
 ## Declare resources in `tack.yaml`
 
 Tack reads resources only from the `tack.yaml` at the top of the source. A folder is never read because of its
-name: a folder called `skills/` means nothing until a declaration names it. A folder of skill
-folders, `.md` commands or docs alone declares itself as `.`, such as `skills: [{ path: . }]`
-([the source folder](references/tack-yaml.md#the-source-folder)). Each `tack.yaml` is the edge of
-its source: configs never merge, and one that another source's declaration reaches is an error.
+name: a folder called `skills/` means nothing until a declaration names it. List each folder that
+holds resources under its kind in that one `tack.yaml`, as below, whatever kinds it mixes. A folder
+of one kind alone declares itself as `.`, such as `skills: [{ path: . }]`
+([the source folder](references/tack-yaml.md#the-source-folder)). A subfolder with a `tack.yaml`
+of its own is another source, an edge case: configs never merge.
 
 ```yaml
 version: 1
