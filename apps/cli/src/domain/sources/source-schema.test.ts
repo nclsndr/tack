@@ -69,12 +69,15 @@ it("refuses another resource key beside a . entry, at each other key", () => {
   ).toEqual(
     ["commands", "docs"].map((other) => ({
       field: other,
-      message: `${other}: The skills entry "." declares the source folder itself, so this tack.yaml declares skills only. Move ${other} to a tack.yaml of its own folder, or name the folder that holds the skills instead of ".", or list each skill folder.`,
+      message: `${other}: The skills entry "." declares the source folder itself, so this tack.yaml declares skills only. List each skill folder instead of ".", or name the folder that holds the skills, or move ${other} to a tack.yaml of its own folder.`,
     })),
   );
-  expect(
-    issuesOf({ version: 1, name: "brain", context: [{ path: "." }], scripts: [] }),
-  ).toMatchObject([{ field: "scripts" }]);
+  expect(issuesOf({ version: 1, name: "brain", context: [{ path: "." }], scripts: [] })).toEqual([
+    {
+      field: "scripts",
+      message: `scripts: The context entry "." declares the source folder itself, so this tack.yaml declares context only. List each context file instead of ".", or name the folder that holds the context, or move scripts to a tack.yaml of its own folder.`,
+    },
+  ]);
 });
 
 it.each([

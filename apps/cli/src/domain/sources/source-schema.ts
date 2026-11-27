@@ -106,7 +106,7 @@ export const oneKindAtSourceFolder = Schema.makeFilter(
       .filter((other) => other !== key && value[other] !== undefined)
       .map((other) => ({
         path: [other],
-        issue: `The ${key} entry "." declares the source folder itself, so this tack.yaml declares ${key} only. Move ${other} to a tack.yaml of its own folder, or name the folder that holds the ${key} instead of ".", or list ${eachOf[key]}.`,
+        issue: `The ${key} entry "." declares the source folder itself, so this tack.yaml declares ${key} only. List ${eachOf[key]} instead of ".", or name the folder that holds the ${key}, or move ${other} to a tack.yaml of its own folder.`,
       }));
   },
 );
