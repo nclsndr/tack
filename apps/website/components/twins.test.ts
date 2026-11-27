@@ -8,6 +8,7 @@ import {
   sourceFigure,
 } from "./features-page/content.ts";
 import { featuresMarkdown } from "./features-page/markdown.ts";
+import { closing, getStarted } from "./landing/content.ts";
 import { landingMarkdown } from "./landing/markdown.ts";
 
 /** The Markdown twins agents read in place of the two custom pages. */
@@ -42,5 +43,14 @@ describe("the features page's twin", () => {
       ...profileFigure.steps.flatMap((step) => [step.what, step.how]),
     ];
     for (const fact of facts) expect(text).toContain(fact);
+  });
+});
+
+describe("the landing page's twin", () => {
+  it("carries the page's headings and its closing, not only its sections", () => {
+    const text = landingMarkdown();
+    for (const line of [`## ${getStarted.heading}`, `## ${closing.heading}`, closing.text]) {
+      expect(text).toContain(line);
+    }
   });
 });

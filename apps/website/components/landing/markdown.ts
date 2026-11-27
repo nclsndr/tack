@@ -1,7 +1,16 @@
 import { agentPrompt } from "@tackup/harness/prompts/landing";
 import { demoWalkthrough } from "../../demo/demo-walkthrough.ts";
 import { siteUrl } from "../site.ts";
-import { demo, docsHref, features, getStarted, hero, questions, story } from "./content.ts";
+import {
+  closing,
+  demo,
+  docsHref,
+  features,
+  getStarted,
+  hero,
+  questions,
+  story,
+} from "./content.ts";
 
 /** The Markdown twin of the landing page: the same copy, without layout or illustrations. */
 export const landingMarkdown = () => {
@@ -49,7 +58,7 @@ ${parts}
 
 [${features.more.label}](${siteUrl(features.more.href)})
 
-## Get started
+## ${getStarted.heading}
 
 Paste this prompt into your coding agent:
 
@@ -66,6 +75,10 @@ ${getStarted.note} ${getStarted.teammate}
 ## Questions
 
 ${answers}
+
+## ${closing.heading}
+
+${closing.text}
 
 Read the docs: [${siteUrl(docsHref)}](${siteUrl(docsHref)})
 `;
