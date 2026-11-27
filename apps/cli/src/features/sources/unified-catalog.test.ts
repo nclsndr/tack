@@ -1,5 +1,5 @@
 import { bareSkillText, declare, writeUnder } from "../../../test/support/source-tree.ts";
-import { resolveCatalogAt, setSkillChoice } from "../../../test/support/snapshot-helpers.ts";
+import { resolveCatalogAt, setChoice } from "../../../test/support/snapshot-helpers.ts";
 
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, PlatformError, Schema } from "effect";
@@ -235,7 +235,7 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
           yield* write(root, "tack.yaml", declare("shared", "skills:", "  - path: skills"));
           yield* write(root, "skills/valid/SKILL.md", bareSkillText("valid"));
           const registered = yield* registerSource(options, { sourcePath: root });
-          yield* setSkillChoice(options, {
+          yield* setChoice(options, {
             address: {
               kind: "skill",
               name: "valid",

@@ -1,20 +1,16 @@
 import { builtinSkillLockReason } from "../../domain/choices/builtin.ts";
 import {
-  skillChoiceIdentity,
+  choiceIdentity,
   type ChoiceDecision,
   type Namespace,
-  type SkillChoice,
+  type Choice,
 } from "../../domain/choices/choice-schema.ts";
 import { docsResourceIdentity, type DocsResourceReference } from "../../domain/docs/docs-schema.ts";
 import type { ResourceAddress, SelectableAddress } from "../../domain/sources/catalog-schema.ts";
 import type { ExplorerDestination } from "./destination.ts";
 import { namespaceText } from "../human/view.ts";
 import { withChoice } from "../../features/choices/choice.ts";
-import {
-  allSkillChoices,
-  docsSettingsFor,
-  withDocsSettings,
-} from "../../domain/state/state-intent.ts";
+import { allChoices, docsSettingsFor, withDocsSettings } from "../../domain/state/state-intent.ts";
 import type { State } from "../../domain/state/state-schema.ts";
 
 /** Whether an entry is locked or can stage changes, with its persisted starting value. */
@@ -258,13 +254,13 @@ export const stagedState = (
   namespace: Namespace,
   pending: ReadonlyArray<PendingChange>,
 ): State => {
-  let choices: ReadonlyArray<SkillChoice> = allSkillChoices(state);
+  let choices: ReadonlyArray<Choice> = allChoices(state);
   let latest = state;
   for (const change of pending) {
     if (change.kind === "choice") {
-      const identity = skillChoiceIdentity({ address: change.address, namespace });
+      const identity = choiceIdentity({ address: change.address, namespace });
       choices = [
-        ...choices.filter((choice) => skillChoiceIdentity(choice) !== identity),
+        ...choices.filter((choice) => choiceIdentity(choice) !== identity),
         ...(change.decision === "unset"
           ? []
           : [{ address: change.address, decision: change.decision, namespace }]),

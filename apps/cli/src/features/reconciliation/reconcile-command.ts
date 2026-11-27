@@ -30,7 +30,7 @@ import type { ReconciliationPlan } from "../../domain/reconciliation/reconciliat
 import { selectedDependencyAddresses } from "../../domain/choices/dependency-resolution.ts";
 import { quarantineIssue } from "../../domain/sources/catalog-report.ts";
 import { resolveContextSelection } from "../../domain/profiles/profile-application.ts";
-import { allSkillChoices } from "../../domain/state/state-intent.ts";
+import { allChoices } from "../../domain/state/state-intent.ts";
 import type { StateOptions } from "../../services/state-store.ts";
 import type { CommandSnapshot } from "../snapshot/command-snapshot.ts";
 import { userLinkedExcludes, userLinksOf } from "./linked-for-user.ts";
@@ -162,7 +162,7 @@ export const prepareReconciliation = Effect.fnUntraced(function* (
       ...reconciliationPlanCauses(plan),
       ...userLinkedExcludes(
         userLinks,
-        allSkillChoices(state).filter(
+        allChoices(state).filter(
           (choice) =>
             choice.namespace._tag === "project" &&
             projectNames.includes(choice.namespace.projectName),

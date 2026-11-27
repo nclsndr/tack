@@ -33,10 +33,7 @@ import type { DoctorReport } from "../../domain/doctor/doctor-schema.ts";
 import type { DocsIconLookup } from "../../features/reader/icon-lookup.ts";
 import type { ReaderSearch } from "../../features/reader/search.ts";
 import type { DocsList } from "../../features/docs/docs.ts";
-import type {
-  ChoiceAddressCandidates,
-  SetSkillChoiceResult,
-} from "../../features/choices/choice.ts";
+import type { ChoiceAddressCandidates, SetChoiceResult } from "../../features/choices/choice.ts";
 import type { SelectableAddress } from "../../domain/sources/catalog-schema.ts";
 import {
   commandDeclarations,
@@ -119,7 +116,7 @@ export const appliedAs =
  */
 export const choiceSetOutcome = (
   tag: "pick-include" | "pick-exclude",
-  applied: SetSkillChoiceResult,
+  applied: SetChoiceResult,
   candidates: ReadonlyArray<SelectableAddress> | undefined,
 ): PublicOutcome => ({
   ...appliedAs(tag)(applied),

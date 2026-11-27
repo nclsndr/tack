@@ -1,7 +1,7 @@
 import { profileDelivery } from "../../domain/profiles/profile-delivery.ts";
 import { resolveContextSelection } from "../../domain/profiles/profile-application.ts";
 import { pendingRemovalsOf } from "../../domain/links/link-record-schema.ts";
-import { allSkillChoices } from "../../domain/state/state-intent.ts";
+import { allChoices } from "../../domain/state/state-intent.ts";
 import { Effect, FileSystem, Path, PlatformError, Schema } from "effect";
 import { agentAdapterDescriptor } from "../../domain/agents/agent-adapter.ts";
 import { deliversKind, managedLinkDestinationPath } from "../../domain/agents/agent-layout.ts";
@@ -209,7 +209,7 @@ const statusNamespace = (
   actualTargets: ReadonlyArray<string>,
   userLinks: ReadonlyArray<UserLink>,
 ): StatusNamespace => {
-  const choices = allSkillChoices(state)
+  const choices = allChoices(state)
     .filter(
       (choice) => choiceNamespaceIdentity(choice.namespace) === choiceNamespaceIdentity(namespace),
     )

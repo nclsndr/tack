@@ -10,7 +10,7 @@ import {
   NamespaceSchema,
   choiceNamespaceIdentity,
   type Namespace,
-  type SkillChoice,
+  type Choice,
 } from "../../domain/choices/choice-schema.ts";
 import {
   resolutionIsUnresolved,
@@ -32,11 +32,7 @@ import {
   type ResourceAddress,
   type SelectableAddress,
 } from "../../domain/sources/catalog-schema.ts";
-import {
-  allSkillChoices,
-  docsSettingsFor,
-  withDocsSettings,
-} from "../../domain/state/state-intent.ts";
+import { allChoices, docsSettingsFor, withDocsSettings } from "../../domain/state/state-intent.ts";
 import { withChoice, requireChoiceNamespace } from "../choices/choice.ts";
 import { profileContext } from "./profile-check.ts";
 import { readProfileFile } from "../sources/profile-files.ts";
@@ -120,7 +116,7 @@ export const ProfileAdoptedSchema = Schema.Struct({ adopted: Schema.Literal(true
  * provides, or a member whose required dependency is blocked.
  */
 const unresolvedIdentities = (
-  unresolvedChoices: ReadonlyArray<SkillChoice>,
+  unresolvedChoices: ReadonlyArray<Choice>,
   resolution: DependencyResolution,
 ): ReadonlyArray<string> => [
   ...new Set([
@@ -402,7 +398,7 @@ const planAdoption = Effect.fnUntraced(function* (
     });
   const copied = new Set(includes.map(resourceAddressIdentity));
   const namespaceKey = choiceNamespaceIdentity(request.namespace);
-  const choices = allSkillChoices(snapshot.state).filter(
+  const choices = allChoices(snapshot.state).filter(
     (choice) =>
       choiceNamespaceIdentity(choice.namespace) !== namespaceKey ||
       copied.has(resourceAddressIdentity(choice.address)) === false,

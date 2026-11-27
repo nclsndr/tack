@@ -1,6 +1,6 @@
 import { agentAdapterDescriptor } from "../../domain/agents/agent-adapter.ts";
 import { deliversKind } from "../../domain/agents/agent-layout.ts";
-import type { SkillChoice, UserLinkedExclude } from "../../domain/choices/choice-schema.ts";
+import type { Choice, UserLinkedExclude } from "../../domain/choices/choice-schema.ts";
 import { selectedDependencyAddresses } from "../../domain/choices/dependency-resolution.ts";
 import type { AgentAdapterId } from "../../domain/agents/agent-adapter-schema.ts";
 import { resolveContextSelection } from "../../domain/profiles/profile-application.ts";
@@ -76,7 +76,7 @@ export const linkedForUser = (
  */
 export const userLinkedExcludes = (
   userLinks: ReadonlyArray<UserLink>,
-  choices: ReadonlyArray<SkillChoice>,
+  choices: ReadonlyArray<Choice>,
 ): ReadonlyArray<UserLinkedExclude> => {
   const linked = new Set(userLinks.map((link) => resourceAddressIdentity(link.address)));
   return choices.flatMap(({ address, decision, namespace }) =>

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Effect, Record } from "effect";
 import { catalogAddressCandidates } from "../../features/choices/choice.ts";
-import type { SetSkillChoiceResult } from "../../features/choices/choice.ts";
+import type { SetChoiceResult } from "../../features/choices/choice.ts";
 import type { RegisterProjectResult } from "../../features/projects/project.ts";
 import type { SetEnabledAdaptersResult } from "../../features/reconciliation/agent.ts";
 import { AgentSelectionValidationError } from "../../features/reconciliation/agent.ts";
@@ -105,14 +105,14 @@ const projectDemo = { _tag: "project", projectName: "demo" } as const;
 
 const choiceSet = (
   changed: boolean,
-  address: SetSkillChoiceResult["choice"]["address"],
-  namespace: SetSkillChoiceResult["choice"]["namespace"] = projectDemo,
+  address: SetChoiceResult["choice"]["address"],
+  namespace: SetChoiceResult["choice"]["namespace"] = projectDemo,
   decision: "include" | "exclude" = "include",
 ) => {
   const result = {
     changed,
     choice: { address, decision, namespace },
-  } satisfies SetSkillChoiceResult;
+  } satisfies SetChoiceResult;
   const catalog: Parameters<typeof catalogAddressCandidates>[0] = {
     entries: [
       { address: review },
@@ -484,7 +484,7 @@ describe("pick include", () => {
 });
 
 describe("pick remove", () => {
-  const removal = (removed: boolean, namespace: SetSkillChoiceResult["choice"]["namespace"]) =>
+  const removal = (removed: boolean, namespace: SetChoiceResult["choice"]["namespace"]) =>
     applied("pick-remove", { address: review, namespace, removed });
 
   it.effect("confirms the removal and hints at plan", () =>

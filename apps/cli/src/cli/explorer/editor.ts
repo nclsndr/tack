@@ -1,11 +1,7 @@
 import { requireMutableChoice } from "../../features/choices/builtin-choice.ts";
 import { requirePickable } from "../../features/choices/pick.ts";
 import { Effect, type Context } from "effect";
-import {
-  listSkillChoices,
-  removeSkillChoice,
-  setSkillChoice,
-} from "../../features/choices/choice.ts";
+import { listChoices, removeChoice, setChoice } from "../../features/choices/choice.ts";
 import type { Namespace } from "../../domain/choices/choice-schema.ts";
 import { attachDocs, detachDocs } from "../../features/docs/docs.ts";
 import type { ReconcileCommandOptions } from "../../features/reconciliation/reconcile-command.ts";
@@ -66,7 +62,7 @@ export const loadExplorer = Effect.fnUntraced(function* (
   const { state } = snapshot;
   const catalog = yield* snapshot.catalog;
   const report = catalogReport(catalog, { declaredBy: true });
-  const choices = yield* listSkillChoices(state);
+  const choices = yield* listChoices(state);
   const destinations = explorerActivity(
     state,
     catalog,
@@ -85,7 +81,7 @@ export const loadExplorer = Effect.fnUntraced(function* (
       ),
     };
   // Listing the namespace first reports an unregistered project before the session opens.
-  yield* listSkillChoices(state, destination);
+  yield* listChoices(state, destination);
   const attachments =
     destination._tag === "project"
       ? (docsSettingsFor(state, destination.projectName)?.attachments ?? [])
@@ -272,12 +268,12 @@ export const makeExplorerEditor = (options: {
           if (change.kind === "choice") {
             if (change.decision === "unset")
               yield* withStateCheckpointWriter(stateOptions, (writer) =>
-                removeSkillChoice(writer, { address: change.address, namespace }),
+                removeChoice(writer, { address: change.address, namespace }),
               );
             else {
               const { decision } = change;
               yield* withStateCheckpointWriter(stateOptions, (writer) =>
-                setSkillChoice(writer, { address: change.address, decision, namespace }),
+                setChoice(writer, { address: change.address, decision, namespace }),
               );
             }
             lines.push(`saved   ${pendingText(change)} ${labelled(change.address, style)}`);

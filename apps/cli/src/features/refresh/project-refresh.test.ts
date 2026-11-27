@@ -6,7 +6,7 @@ import {
   pendingRemovalsOf,
 } from "../../domain/links/link-record-schema.ts";
 import type { ProfileApplication } from "../../domain/state/profile-application-schema.ts";
-import { allSkillChoices } from "../../domain/state/state-intent.ts";
+import { allChoices } from "../../domain/state/state-intent.ts";
 import { mutateStateFixture, projectRecords } from "../../../test/support/state-fixture.ts";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
@@ -433,7 +433,7 @@ it.layer(LiveTestLayer)("project worktree refresh planning", (refreshIt) => {
           { action: "deregistered", canonicalRoot: missingPath, projectName: "project" },
         ]);
         expect(state.data.projects?.at(0)?.roots).toEqual([kept, newRoot]);
-        expect(allSkillChoices(state)).toHaveLength(1);
+        expect(allChoices(state)).toHaveLength(1);
       }),
     ),
   );
@@ -502,7 +502,7 @@ it.layer(LiveTestLayer)("project worktree refresh planning", (refreshIt) => {
             roots: [kept],
           },
         ]);
-        expect(allSkillChoices(state)).toHaveLength(1);
+        expect(allChoices(state)).toHaveLength(1);
         expect(managedLinksOf(state.data.links)).toEqual([evidence]);
         expect(pendingRemovalsOf(state.data.links)).toMatchObject([
           { cause: "root-removal", evidence },
@@ -762,7 +762,7 @@ it.layer(LiveTestLayer)("project worktree refresh planning", (refreshIt) => {
 
         expect(result.removedProjects).toEqual(["project"]);
         expect(state.data.projects ?? []).toEqual([]);
-        expect(allSkillChoices(state) ?? []).toEqual([]);
+        expect(allChoices(state) ?? []).toEqual([]);
         expect(managedLinksOf(state.data.links)).toEqual([]);
       }),
     ),
@@ -804,7 +804,7 @@ it.layer(LiveTestLayer)("project worktree refresh planning", (refreshIt) => {
 
         expect(result.removedProjects).toEqual(["project"]);
         expect(state.data.projects ?? []).toEqual([]);
-        expect(allSkillChoices(state) ?? []).toEqual([]);
+        expect(allChoices(state) ?? []).toEqual([]);
         expect(pendingRemovalsOf(state.data.links)).toEqual([]);
       }),
     ),

@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import type { SkillChoice } from "../../domain/choices/choice-schema.ts";
+import type { Choice } from "../../domain/choices/choice-schema.ts";
 import { argvLine } from "../../domain/hints/next-commands.ts";
 import type { LinkableKind } from "../../domain/resources/kinds.ts";
 import type { Catalog } from "../../domain/sources/catalog-schema.ts";
@@ -8,7 +8,7 @@ import type { StateCheckpointWriter } from "../../services/state-store.ts";
 import { userLinkedExcludes, userLinksOf } from "../reconciliation/linked-for-user.ts";
 import { sourceQualifier } from "../sources/resource-reference.ts";
 import { requireMutableChoice } from "./builtin-choice.ts";
-import { ChoiceUserLinkedError, setSkillChoice } from "./choice.ts";
+import { ChoiceUserLinkedError, setChoice } from "./choice.ts";
 
 /**
  * The `tack` argv that excludes a resource for the user, from its source-qualified reference and
@@ -23,7 +23,7 @@ export type UserExcludeCommand = (reference: string, kind: LinkableKind) => Read
 const requireVisibleExclude = Effect.fnUntraced(function* (
   catalog: Catalog,
   state: State,
-  choice: SkillChoice,
+  choice: Choice,
   userExclude: UserExcludeCommand,
 ) {
   const [refused] = userLinkedExcludes(userLinksOf(state, catalog, false), [choice]);
@@ -50,7 +50,7 @@ const requireVisibleExclude = Effect.fnUntraced(function* (
 export const requirePickable = Effect.fnUntraced(function* (
   catalog: Catalog,
   state: State,
-  choice: SkillChoice,
+  choice: Choice,
   userExclude: UserExcludeCommand,
 ) {
   yield* requireMutableChoice(catalog, choice.address);
@@ -61,9 +61,9 @@ export const requirePickable = Effect.fnUntraced(function* (
 export const pickChoice = Effect.fnUntraced(function* (
   writer: StateCheckpointWriter,
   snapshot: { readonly catalog: Catalog; readonly state: State },
-  choice: SkillChoice,
+  choice: Choice,
   userExclude: UserExcludeCommand,
 ) {
   yield* requirePickable(snapshot.catalog, snapshot.state, choice, userExclude);
-  return yield* setSkillChoice(writer, choice);
+  return yield* setChoice(writer, choice);
 });

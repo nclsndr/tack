@@ -14,7 +14,7 @@ import {
   type DependencyResolution,
 } from "../choices/dependency-resolution.ts";
 import { resolveNamespaceSelection, type InitialSelection } from "../choices/selection.ts";
-import { allSkillChoices } from "../state/state-intent.ts";
+import { allChoices } from "../state/state-intent.ts";
 import type { ProfileApplication } from "../state/profile-application-schema.ts";
 import type { State } from "../state/state-schema.ts";
 
@@ -129,7 +129,7 @@ export const resolveContextSelection = (
           catalog,
           namespace,
           includeOptional,
-          choices: allSkillChoices(state),
+          choices: allChoices(state),
         }),
         issues: [],
         application,

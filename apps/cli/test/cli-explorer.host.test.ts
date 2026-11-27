@@ -43,7 +43,7 @@ import { registerSource } from "../src/features/sources/source.ts";
 import { exploreSelection } from "../src/cli/routes/explore.ts";
 import { loadExplorer } from "../src/cli/explorer/editor.ts";
 import { CatalogReportSchema } from "../src/domain/sources/catalog-report.ts";
-import { SkillChoiceSchema } from "../src/domain/choices/choice-schema.ts";
+import { ChoiceSchema } from "../src/domain/choices/choice-schema.ts";
 import { explorerEntries } from "../src/cli/explorer/entries.ts";
 import { stateOptionsAt } from "./support/state-fixture.ts";
 
@@ -174,7 +174,7 @@ it("shows the catalog's resource facts, explicit choices and issues", () => {
       },
     ],
   });
-  const choices = Schema.decodeUnknownSync(Schema.Array(SkillChoiceSchema))([
+  const choices = Schema.decodeUnknownSync(Schema.Array(ChoiceSchema))([
     { address, decision: "include", namespace: { _tag: "project", projectName: "demo" } },
   ]);
   const projected = explorerEntries(report, choices, (path) => path);

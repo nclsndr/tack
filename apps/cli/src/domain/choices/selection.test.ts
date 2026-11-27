@@ -1,7 +1,7 @@
 import { expect, it } from "@effect/vitest";
 import { Schema } from "effect";
 import { InitialSelectionSchema, resolveInitialSelection } from "./selection.ts";
-import type { ChoiceDecision, Namespace, SkillChoice } from "./choice-schema.ts";
+import type { ChoiceDecision, Namespace, Choice } from "./choice-schema.ts";
 import type { SkillCatalogEntry } from "../sources/catalog-schema.ts";
 
 const projectNamespace = { _tag: "project", projectName: "project" } satisfies Namespace;
@@ -37,7 +37,7 @@ const entry = (
   }) satisfies SkillCatalogEntry;
 
 const choice = (namespace: Namespace, catalogEntry: SkillCatalogEntry, decision: ChoiceDecision) =>
-  ({ address: catalogEntry.address, decision, namespace }) satisfies SkillChoice;
+  ({ address: catalogEntry.address, decision, namespace }) satisfies Choice;
 
 const projectCases = [
   ["default", true, "none", "selected", "default", "compatible"],
@@ -192,7 +192,7 @@ it("keeps global defaults independent from project activation", () => {
   const select = (
     catalogEntry: SkillCatalogEntry,
     namespace: Namespace,
-    choices: ReadonlyArray<SkillChoice> = [],
+    choices: ReadonlyArray<Choice> = [],
   ) => resolveInitialSelection({ entries: [catalogEntry], choices, namespace }).decisions[0];
 
   expect(select(globalDefault, userNamespace)).toMatchObject({

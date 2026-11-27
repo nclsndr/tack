@@ -6,14 +6,14 @@ import { Effect, Match, Schema } from "effect";
 import {
   NamespaceSchema,
   choiceNamespaceIdentity,
-  SkillChoiceSchema,
-  skillChoiceIdentity,
+  ChoiceSchema,
+  choiceIdentity,
   type Namespace,
-  type SkillChoice,
+  type Choice,
 } from "../../domain/choices/choice-schema.ts";
 import { NextCommandsSchema } from "../../domain/hints/next-commands.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
-import { allSkillChoices } from "../../domain/state/state-intent.ts";
+import { allChoices } from "../../domain/state/state-intent.ts";
 import { projectLifecycle } from "../../domain/projects/project-schema.ts";
 import {
   isSelectableAddress,
@@ -64,11 +64,11 @@ export class ChoiceUserLinkedError extends Schema.TaggedError<ChoiceUserLinkedEr
 export const ChoiceChangePayloadSchema = Schema.Struct({
   kind: Schema.Literal("choice-change"),
   changed: Schema.Boolean,
-  choice: SkillChoiceSchema,
+  choice: ChoiceSchema,
 });
 
 /** The result of persisting or confirming one exact choice. */
-export type SetSkillChoiceResult = Omit<typeof ChoiceChangePayloadSchema.Type, "kind">;
+export type SetChoiceResult = Omit<typeof ChoiceChangePayloadSchema.Type, "kind">;
 
 /** The `pick remove` payload: the choice's identity and whether one was removed. */
 export const ChoiceRemovalPayloadSchema = Schema.Struct({
@@ -79,7 +79,7 @@ export const ChoiceRemovalPayloadSchema = Schema.Struct({
 });
 
 /** The result of removing or confirming the absence of one exact choice. */
-export type RemoveSkillChoiceResult = Omit<typeof ChoiceRemovalPayloadSchema.Type, "kind">;
+export type RemoveChoiceResult = Omit<typeof ChoiceRemovalPayloadSchema.Type, "kind">;
 
 /**
  * The details of a `choice-address-not-in-catalog` warning: the chosen address and the catalog
@@ -94,18 +94,18 @@ export const ChoiceAddressCandidatesSchema = Schema.Struct({
 export type ChoiceAddressCandidates = typeof ChoiceAddressCandidatesSchema.Type;
 
 /** The exact identity needed to remove one persisted choice. */
-export type RemoveSkillChoiceOptions = {
+export type RemoveChoiceOptions = {
   readonly address: SelectableAddress;
   readonly namespace: Namespace;
 };
 
-const choicesFrom = (state: State): ReadonlyArray<SkillChoice> => allSkillChoices(state);
+const choicesFrom = (state: State): ReadonlyArray<Choice> => allChoices(state);
 
 /** Replaces one namespace's persisted choices in a state snapshot without persisting it. */
 export const withChoice = (
   state: State,
   namespace: Namespace,
-  choices: ReadonlyArray<SkillChoice>,
+  choices: ReadonlyArray<Choice>,
 ): State =>
   namespace._tag === "user"
     ? {
@@ -139,10 +139,8 @@ export const withChoice = (
       };
 
 /** Orders choices by namespace, then by address, the way state lists them. */
-const sortChoices = (choices: ReadonlyArray<SkillChoice>) =>
-  [...choices].sort((left, right) =>
-    compareCodeUnits(skillChoiceIdentity(left), skillChoiceIdentity(right)),
-  );
+const sortChoices = (choices: ReadonlyArray<Choice>) =>
+  [...choices].sort((left, right) => compareCodeUnits(choiceIdentity(left), choiceIdentity(right)));
 
 /** Fails unless the namespace is the user's or a registered project that is not being removed. */
 export const requireChoiceNamespace = (state: State, namespace: Namespace) =>
@@ -170,27 +168,27 @@ export const requireChoiceNamespace = (state: State, namespace: Namespace) =>
   );
 
 /** Persists one exact choice without consulting the live resource catalog. */
-export const setSkillChoice = Effect.fn("choices.setSkillChoice")(function* (
+export const setChoice = Effect.fn("choices.setChoice")(function* (
   writer: StateCheckpointWriter,
-  choice: SkillChoice,
+  choice: Choice,
 ) {
   return yield* writer.checkpoint((state) =>
     Effect.gen(function* (): Effect.fn.Return<
-      StateMutation<SetSkillChoiceResult>,
+      StateMutation<SetChoiceResult>,
       ChoiceProjectNotFoundError | ChoiceProjectRemovingError | FixedProfileError
     > {
       yield* requireChoiceNamespace(state, choice.namespace);
       yield* requireDefaultSelection(state, choice.namespace);
       const choices = choicesFrom(state);
-      const identity = skillChoiceIdentity(choice);
-      const existing = choices.find((candidate) => skillChoiceIdentity(candidate) === identity);
+      const identity = choiceIdentity(choice);
+      const existing = choices.find((candidate) => choiceIdentity(candidate) === identity);
 
       if (existing?.decision === choice.decision) {
         return { state, value: { changed: false, choice: existing } };
       }
 
       const nextChoices = sortChoices([
-        ...choices.filter((candidate) => skillChoiceIdentity(candidate) !== identity),
+        ...choices.filter((candidate) => choiceIdentity(candidate) !== identity),
         choice,
       ]);
       return {
@@ -261,20 +259,20 @@ export const catalogAddressCandidates = (
 };
 
 /** Removes one exact choice so declaration-driven behavior applies again. */
-export const removeSkillChoice = Effect.fn("choices.removeSkillChoice")(function* (
+export const removeChoice = Effect.fn("choices.removeChoice")(function* (
   writer: StateCheckpointWriter,
-  remove: RemoveSkillChoiceOptions,
+  remove: RemoveChoiceOptions,
 ) {
   return yield* writer.checkpoint((state) =>
     Effect.gen(function* (): Effect.fn.Return<
-      StateMutation<RemoveSkillChoiceResult>,
+      StateMutation<RemoveChoiceResult>,
       ChoiceProjectNotFoundError | ChoiceProjectRemovingError | FixedProfileError
     > {
       yield* requireChoiceNamespace(state, remove.namespace);
       yield* requireDefaultSelection(state, remove.namespace);
-      const identity = skillChoiceIdentity(remove);
+      const identity = choiceIdentity(remove);
       const choices = choicesFrom(state);
-      const retained = choices.filter((candidate) => skillChoiceIdentity(candidate) !== identity);
+      const retained = choices.filter((candidate) => choiceIdentity(candidate) !== identity);
 
       if (retained.length === choices.length) {
         return { state, value: { ...remove, removed: false } };
@@ -288,14 +286,14 @@ export const removeSkillChoice = Effect.fn("choices.removeSkillChoice")(function
   );
 });
 
-/** The `pick` payload: the persisted choices, in the order `listSkillChoices` returns them. */
+/** The `pick` payload: the persisted choices, in the order `listChoices` returns them. */
 export const ChoiceListPayloadSchema = Schema.Struct({
   kind: Schema.Literal("choices"),
-  choices: Schema.Array(SkillChoiceSchema),
+  choices: Schema.Array(ChoiceSchema),
 });
 
 /** Lists persisted choices in deterministic order, optionally narrowed to one namespace. */
-export const listSkillChoices = Effect.fn("choices.listSkillChoices")(function* (
+export const listChoices = Effect.fn("choices.listChoices")(function* (
   state: State,
   namespace?: Namespace,
 ) {

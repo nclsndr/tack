@@ -2,7 +2,7 @@ import { isBuiltinSkill } from "../../domain/choices/builtin.ts";
 import {
   choiceNamespaceIdentity,
   type Namespace,
-  type SkillChoice,
+  type Choice,
 } from "../../domain/choices/choice-schema.ts";
 import { docsResourceIdentity, type DocsResourceReference } from "../../domain/docs/docs-schema.ts";
 import type {
@@ -35,7 +35,7 @@ export type ExplorerEditing = {
 
 const editableOf = (
   resource: CatalogResource,
-  choices: ReadonlyArray<SkillChoice>,
+  choices: ReadonlyArray<Choice>,
   editing: ExplorerEditing,
   fixedBy: string | undefined,
 ): Editable | undefined => {
@@ -155,7 +155,7 @@ const foldersUnder = (resource: CatalogResource): ReadonlyArray<string> => {
 const resourceEntry = (
   resource: CatalogResource,
   report: Pick<CatalogReport, "sources">,
-  choices: ReadonlyArray<SkillChoice>,
+  choices: ReadonlyArray<Choice>,
   path: (value: string) => string,
   source: string | undefined,
   editing: ExplorerEditing | undefined,
@@ -267,7 +267,7 @@ const issueEntry = (
  */
 export const explorerEntries = (
   report: CatalogReport,
-  choices: ReadonlyArray<SkillChoice>,
+  choices: ReadonlyArray<Choice>,
   path: (value: string) => string,
   editing?: ExplorerEditing,
   destinations: ReadonlyArray<DestinationActivity> = [],

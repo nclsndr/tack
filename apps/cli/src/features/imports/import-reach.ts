@@ -4,7 +4,7 @@ import {
   resolveInitialSelection,
   type InitialSelectionDecision,
 } from "../../domain/choices/selection.ts";
-import { allSkillChoices } from "../../domain/state/state-intent.ts";
+import { allChoices } from "../../domain/state/state-intent.ts";
 import {
   catalogSelectableEntries,
   resourceAddressIdentity,
@@ -79,7 +79,7 @@ export const computeReach = (input: {
   const { state, catalog, destination, candidate } = input;
   const entry = hypotheticalEntry(destination, candidate);
   const entries = catalogSelectableEntries({ entries: [...catalog.entries, entry] });
-  const choices = allSkillChoices(state);
+  const choices = allChoices(state);
   const noAdapters = state.data.enabledAdapters.length === 0;
   const namespaces: ReadonlyArray<Namespace> = [
     ...[...state.data.projects]

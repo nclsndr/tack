@@ -1,6 +1,6 @@
 import { pendingRemovalsOf } from "../../domain/links/link-record-schema.ts";
 import { stallAt } from "../../../test/support/faults.ts";
-import { allSkillChoices } from "../../domain/state/state-intent.ts";
+import { allChoices } from "../../domain/state/state-intent.ts";
 import {
   mutateStateFixture,
   runtimeFixture,
@@ -486,7 +486,7 @@ it.layer(LiveTestLayer)("reset and pending-removal retry", (resetIt) => {
 
         expect(execution.applied?.finalizedProject).toBe(true);
         expect(settled.data.projects?.map((project) => project.name)).toEqual(["second"]);
-        expect(allSkillChoices(settled)?.map((choice) => choice.namespace)).toEqual([
+        expect(allChoices(settled)?.map((choice) => choice.namespace)).toEqual([
           { _tag: "project", projectName: "second" },
         ]);
         expect(pendingRemovalsOf(settled.data.links)).toEqual([]);
@@ -558,7 +558,7 @@ it.layer(LiveTestLayer)("reset and pending-removal retry", (resetIt) => {
           expect(execution.plan.actions).toEqual([]);
           expect(execution.applied?.finalizedProject).toBe(true);
           expect(settled.data.projects?.map((project) => project.name)).toEqual(["active"]);
-          expect(allSkillChoices(settled)?.map((choice) => choice.namespace)).toEqual([
+          expect(allChoices(settled)?.map((choice) => choice.namespace)).toEqual([
             { _tag: "project", projectName: "active" },
           ]);
         }),

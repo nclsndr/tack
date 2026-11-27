@@ -1,4 +1,4 @@
-import { choiceNamespaceIdentity, type SkillChoice } from "../../domain/choices/choice-schema.ts";
+import { choiceNamespaceIdentity, type Choice } from "../../domain/choices/choice-schema.ts";
 import { AgentAdapterIdSchema } from "../../domain/agents/agent-adapter-schema.ts";
 import type { HumanViewRegistry } from "./render.ts";
 import { cell, paragraph, table } from "./text.ts";
@@ -6,12 +6,12 @@ import { addressText, factRows, headingLines, plural } from "./view.ts";
 import { resultView } from "./inspection-support.ts";
 import { commandLine } from "../envelope/command-line.ts";
 
-const namespaceTitle = (namespace: SkillChoice["namespace"]) =>
+const namespaceTitle = (namespace: Choice["namespace"]) =>
   namespace._tag === "project" ? `Project ${namespace.projectName}` : "User";
 
 /** Choices grouped by namespace, in the order the list already has. */
-const groupByNamespace = (choices: ReadonlyArray<SkillChoice>) => {
-  const groups = new Map<string, { namespace: SkillChoice["namespace"]; choices: SkillChoice[] }>();
+const groupByNamespace = (choices: ReadonlyArray<Choice>) => {
+  const groups = new Map<string, { namespace: Choice["namespace"]; choices: Choice[] }>();
   for (const choice of choices) {
     const key = choiceNamespaceIdentity(choice.namespace);
     const group = groups.get(key) ?? { namespace: choice.namespace, choices: [] };

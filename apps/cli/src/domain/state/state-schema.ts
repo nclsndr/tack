@@ -17,12 +17,12 @@ import { stateFormat } from "./state-format.ts";
 
 // Project intent has the same nesting as the persisted document.
 
-const ChoiceSchema = Schema.Struct({
+const StoredChoiceSchema = Schema.Struct({
   address: SelectableAddressSchema,
   decision: ChoiceDecisionSchema,
 });
 
-const ChoicesSchema = Schema.Array(ChoiceSchema).check(
+const ChoicesSchema = Schema.Array(StoredChoiceSchema).check(
   Schema.makeFilter((choices) =>
     new Set(choices.map((choice) => resourceAddressIdentity(choice.address))).size ===
     choices.length

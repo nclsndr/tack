@@ -1,6 +1,6 @@
 import { expect, it } from "@effect/vitest";
 import { Schema } from "effect";
-import type { Namespace, SkillChoice } from "./choice-schema.ts";
+import type { Namespace, Choice } from "./choice-schema.ts";
 import {
   DependencyResolutionSchema,
   resolutionIsUnresolved,
@@ -68,9 +68,9 @@ const entry = (
 
 const choice = (
   catalogAddress: SkillAddress,
-  decision: SkillChoice["decision"],
+  decision: Choice["decision"],
   namespace: Namespace = userNamespace,
-) => ({ address: catalogAddress, decision, namespace }) satisfies SkillChoice;
+) => ({ address: catalogAddress, decision, namespace }) satisfies Choice;
 
 const quarantine = (catalogAddress: SkillAddress) =>
   ({
@@ -92,7 +92,7 @@ const resolve = ({
   quarantined = [],
   sources = [],
 }: {
-  readonly choices?: ReadonlyArray<SkillChoice>;
+  readonly choices?: ReadonlyArray<Choice>;
   readonly entries: ReadonlyArray<SkillCatalogEntry>;
   readonly includeOptional?: boolean;
   readonly namespace?: Namespace;

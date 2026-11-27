@@ -2,11 +2,11 @@ import { Match, Schema } from "effect";
 import { resolveDependencyClosure, type DependencyResolution } from "./dependency-resolution.ts";
 import {
   NamespaceSchema,
-  SkillChoiceSchema,
+  ChoiceSchema,
   choiceNamespaceIdentity,
   kindAndNameKey,
   type Namespace,
-  type SkillChoice,
+  type Choice,
 } from "./choice-schema.ts";
 import { compareCodeUnits } from "../identity/ordering.ts";
 import {
@@ -47,7 +47,7 @@ const InitialSelectionDecisionSchema = Schema.Union([
 export const InitialSelectionSchema = Schema.Struct({
   decisions: Schema.Array(InitialSelectionDecisionSchema),
   namespace: NamespaceSchema,
-  unresolvedChoices: Schema.Array(SkillChoiceSchema),
+  unresolvedChoices: Schema.Array(ChoiceSchema),
 });
 
 /** One initial selection decision. */
@@ -58,7 +58,7 @@ export type InitialSelection = typeof InitialSelectionSchema.Type;
 
 /** Inputs to initial selection resolution. */
 export type ResolveInitialSelectionInput = {
-  readonly choices: ReadonlyArray<SkillChoice>;
+  readonly choices: ReadonlyArray<Choice>;
   readonly entries: ReadonlyArray<SelectableCatalogEntry>;
   readonly namespace: Namespace;
 };
@@ -85,7 +85,7 @@ const compatibilityFor = (
 const decisionFor = (
   namespace: Namespace,
   entry: SelectableCatalogEntry,
-  choice: SkillChoice | undefined,
+  choice: Choice | undefined,
   compatibility: ObservedCompatibility,
   nameIncluded: boolean,
 ): InitialSelectionDecision => {
@@ -204,7 +204,7 @@ export const resolveInitialSelection = ({
 /** Inputs to the one selection pipeline shared by reconciliation and status. */
 export type ResolveNamespaceSelectionInput = {
   readonly catalog: Pick<Catalog, "entries" | "quarantined"> & Partial<Pick<Catalog, "sources">>;
-  readonly choices: ReadonlyArray<SkillChoice>;
+  readonly choices: ReadonlyArray<Choice>;
   readonly includeOptional: boolean;
   readonly namespace: Namespace;
 };

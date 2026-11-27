@@ -1,5 +1,5 @@
 import { managedLinksOf, pendingRemovalsOf } from "../../domain/links/link-record-schema.ts";
-import { allSkillChoices } from "../../domain/state/state-intent.ts";
+import { allChoices } from "../../domain/state/state-intent.ts";
 import {
   mutateStateFixture,
   projectRecords,
@@ -147,7 +147,7 @@ it.layer(LiveTestLayer)("adapter disablement", (adapterIt) => {
           const after = yield* readState(options);
           expect(after.data.enabledAdapters).toEqual(["codex"]);
           expect(projectRecords(after)).toEqual(projects);
-          expect(allSkillChoices(after)).toEqual(choices);
+          expect(allChoices(after)).toEqual(choices);
           expect(managedLinksOf(after.data.links)).toEqual([codexActive, cursorRemoving]);
           expect(pendingRemovalsOf(after.data.links)).toEqual([
             {

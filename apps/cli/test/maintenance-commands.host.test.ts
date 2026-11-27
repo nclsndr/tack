@@ -1,6 +1,6 @@
 import { write, bareSkillText } from "./support/source-tree.ts";
 import { managedLinksOf } from "../src/domain/links/link-record-schema.ts";
-import { allSkillChoices } from "../src/domain/state/state-intent.ts";
+import { allChoices } from "../src/domain/state/state-intent.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Schema } from "effect";
@@ -202,7 +202,7 @@ it.layer(LiveTestLayer)("maintenance commands", (maintenanceIt) => {
 
           const after = yield* readState(fixture.options);
           expect(after.data.projects).toEqual(before.data.projects);
-          expect(allSkillChoices(after)).toEqual(allSkillChoices(before));
+          expect(allChoices(after)).toEqual(allChoices(before));
           expect(after.data.enabledAdapters).toEqual(before.data.enabledAdapters);
           expect(after.data.sources).toEqual(before.data.sources);
           expect(managedLinksOf(after.data.links)).toEqual([]);

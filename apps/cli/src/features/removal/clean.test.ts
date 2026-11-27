@@ -1,5 +1,5 @@
 import { managedLinksOf, pendingRemovalsOf } from "../../domain/links/link-record-schema.ts";
-import { allSkillChoices } from "../../domain/state/state-intent.ts";
+import { allChoices } from "../../domain/state/state-intent.ts";
 import {
   mutateStateFixture,
   projectRecords,
@@ -162,7 +162,7 @@ it.layer(LiveTestLayer)("clean managed links", (cleanIt) => {
             "applied",
           ]);
           expect(after.data.projects).toEqual(before.data.projects);
-          expect(allSkillChoices(after)).toEqual(allSkillChoices(before));
+          expect(allChoices(after)).toEqual(allChoices(before));
           expect(after.data.enabledAdapters).toEqual(before.data.enabledAdapters);
           expect(after.data.sources).toEqual(before.data.sources);
           expect(managedLinksOf(after.data.links)).toEqual([userEvidence, blockedEvidence]);
@@ -371,7 +371,7 @@ it.layer(LiveTestLayer)("clean managed links", (cleanIt) => {
 
           expect(cleaned.applied?.finalizedProject).toBe(false);
           expect(projectRecords(state)).toEqual([removingProject]);
-          expect(allSkillChoices(state)).toEqual(choices);
+          expect(allChoices(state)).toEqual(choices);
           expect(managedLinksOf(state.data.links)).toEqual([]);
           expect(pendingRemovalsOf(state.data.links)).toEqual([]);
 
@@ -385,7 +385,7 @@ it.layer(LiveTestLayer)("clean managed links", (cleanIt) => {
           expect(retried.plan.scope).toEqual(selector);
           expect(retried.applied?.finalizedProject).toBe(true);
           expect(settled.data.projects ?? []).toEqual([]);
-          expect(allSkillChoices(settled) ?? []).toEqual([]);
+          expect(allChoices(settled) ?? []).toEqual([]);
         }),
       ),
   );

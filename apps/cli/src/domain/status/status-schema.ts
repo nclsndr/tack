@@ -4,7 +4,7 @@ import { Schema, Struct } from "effect";
 import { AgentAdapterIdSchema, EnabledAdaptersSchema } from "../agents/agent-adapter-schema.ts";
 import {
   NamespaceSchema,
-  SkillChoiceSchema,
+  ChoiceSchema,
   UserLinkedExcludeSchema,
   choiceNamespaceIdentity,
 } from "../choices/choice-schema.ts";
@@ -131,7 +131,7 @@ export const StatusNamespaceSchema = Schema.Struct({
       delivery: ProfileDeliverySchema,
     }),
   ),
-  choices: Schema.Array(SkillChoiceSchema),
+  choices: Schema.Array(ChoiceSchema),
   desired: Schema.Array(SelectableAddressSchema),
   undelivered: Schema.Array(
     Schema.Struct({

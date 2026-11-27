@@ -14,7 +14,7 @@ import { Source, makeSourceService, registerSource } from "../src/features/sourc
 import { runProfileApply } from "../src/features/profiles/profile-apply.ts";
 import { runSyncCommand } from "../src/features/reconciliation/sync-command.ts";
 import { withStateCheckpointWriter } from "../src/services/state-store.ts";
-import { setSkillChoice } from "../src/features/choices/choice.ts";
+import { setChoice } from "../src/features/choices/choice.ts";
 
 it.layer(LiveTestLayer)("exact profile application", (test) => {
   test.effect("retires fixed intent when its project registration is removed", () =>
@@ -486,7 +486,7 @@ it.layer(LiveTestLayer)("exact profile application", (test) => {
         const before = yield* readState(options);
         const failure = yield* Effect.flip(
           withStateCheckpointWriter(options, (writer) =>
-            setSkillChoice(writer, {
+            setChoice(writer, {
               namespace: request.namespace,
               address: { kind: "skill", name: "notes", sourceRegistrationId: sourceId },
               decision: "include",

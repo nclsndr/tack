@@ -4,7 +4,7 @@ import {
   managedLinksOf,
   pendingRemovalsOf,
 } from "../../domain/links/link-record-schema.ts";
-import { allDocsSettings, allSkillChoices } from "../../domain/state/state-intent.ts";
+import { allDocsSettings, allChoices } from "../../domain/state/state-intent.ts";
 import {
   expectWriterGuarded,
   mutateStateFixture,
@@ -180,7 +180,7 @@ it.layer(LiveTestLayer)("removal lifecycle", (removalIt) => {
         const state = yield* readState(options);
         expect(execution.applied?.finalizedProject).toBe(true);
         expect(state.data.projects ?? []).toEqual([]);
-        expect(allSkillChoices(state) ?? []).toEqual([]);
+        expect(allChoices(state) ?? []).toEqual([]);
         expect(managedLinksOf(state.data.links)).toEqual([]);
         expect(pendingRemovalsOf(state.data.links)).toEqual([]);
       }),
@@ -352,7 +352,7 @@ it.layer(LiveTestLayer)("removal lifecycle", (removalIt) => {
             roots: [],
           },
         ]);
-        expect(allSkillChoices(state)).toHaveLength(1);
+        expect(allChoices(state)).toHaveLength(1);
         expect(managedLinksOf(state.data.links)).toEqual([evidence]);
         expect(pendingRemovalsOf(state.data.links)).toHaveLength(1);
         expect(yield* fileSystem.readFileString(destination)).toBe("foreign");
@@ -470,7 +470,7 @@ it.layer(LiveTestLayer)("removal lifecycle", (removalIt) => {
             roots: [canonicalSecondRoot],
           },
         ]);
-        expect(allSkillChoices(state)).toHaveLength(1);
+        expect(allChoices(state)).toHaveLength(1);
         expect(managedLinksOf(state.data.links)).toEqual([]);
       }),
     ),

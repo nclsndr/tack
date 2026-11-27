@@ -2,8 +2,8 @@ import { requireMutableChoice } from "../../features/choices/builtin-choice.ts";
 import { Effect } from "effect";
 import {
   catalogAddressCandidates,
-  listSkillChoices,
-  removeSkillChoice,
+  listChoices,
+  removeChoice,
 } from "../../features/choices/choice.ts";
 import { pickChoice } from "../../features/choices/pick.ts";
 import { withCommandWriter } from "../../features/writer/recovered-writer.ts";
@@ -16,7 +16,7 @@ import {
 } from "../../features/sources/resource-reference.ts";
 import { isSelectableAddress, type Catalog } from "../../domain/sources/catalog-schema.ts";
 import { selectableKinds, type SelectableKind } from "../../domain/resources/kinds.ts";
-import type { Namespace, SkillChoice } from "../../domain/choices/choice-schema.ts";
+import type { Namespace, Choice } from "../../domain/choices/choice-schema.ts";
 import { commandLine, selectorFlags, userExcludeCommand } from "../envelope/command-line.ts";
 import { argvLine, shellWord } from "../../domain/hints/next-commands.ts";
 import { appliedAs, choiceSetOutcome, resultAs } from "../envelope/outcomes.ts";
@@ -49,7 +49,7 @@ const resolvePick = Effect.fnUntraced(function* (
 
 const resolveStoredPick = Effect.fnUntraced(function* (
   catalog: Catalog,
-  choices: ReadonlyArray<SkillChoice>,
+  choices: ReadonlyArray<Choice>,
   namespace: Namespace,
   reference: string,
   kind?: SelectableKind,
@@ -118,7 +118,7 @@ const setPick = (
 ) =>
   withCommandWriter(stateOptions, (writer, snapshot) =>
     Effect.gen(function* () {
-      yield* listSkillChoices(snapshot.state, request.namespace);
+      yield* listChoices(snapshot.state, request.namespace);
       const catalog = yield* snapshot.catalog;
       const address = yield* resolvePick(
         catalog,
@@ -172,7 +172,7 @@ export const pickRoutes: RoutesFor<"pick-remove" | "pick-include" | "pick-exclud
         withCommandWriter(stateOptions, (writer, snapshot) =>
           Effect.gen(function* () {
             const catalog = yield* snapshot.catalog;
-            const choices = yield* listSkillChoices(snapshot.state, invocation.namespace);
+            const choices = yield* listChoices(snapshot.state, invocation.namespace);
             const address = yield* resolveStoredPick(
               catalog,
               choices,
@@ -181,7 +181,7 @@ export const pickRoutes: RoutesFor<"pick-remove" | "pick-include" | "pick-exclud
               invocation.kind,
             );
             return appliedAs("pick-remove")(
-              yield* removeSkillChoice(writer, { address, namespace: invocation.namespace }),
+              yield* removeChoice(writer, { address, namespace: invocation.namespace }),
             );
           }),
         ),
@@ -191,7 +191,7 @@ export const pickRoutes: RoutesFor<"pick-remove" | "pick-include" | "pick-exclud
       run: (invocation, stateOptions) =>
         Effect.gen(function* () {
           const { state } = yield* readInvocationSnapshot(stateOptions);
-          const choices = yield* listSkillChoices(state, invocation.namespace);
+          const choices = yield* listChoices(state, invocation.namespace);
           return resultAs("pick-list")({ choices });
         }),
     },

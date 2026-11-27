@@ -7,7 +7,7 @@ import { encodeState } from "../../src/domain/state/state-codec.ts";
 import { initializeState, mutateState } from "../../src/services/state-store.ts";
 import type { JournalEntry, StateProject } from "../../src/domain/state/state-schema.ts";
 import type { ReconciliationAction } from "../../src/domain/reconciliation/reconciliation-schema.ts";
-import type { SkillChoice } from "../../src/domain/choices/choice-schema.ts";
+import type { Choice } from "../../src/domain/choices/choice-schema.ts";
 import {
   docsLink,
   type DocsManagedLink,
@@ -60,7 +60,7 @@ export type FixtureData = Partial<Omit<State["data"], "projects" | "journal">> &
   readonly pendingRemovals?: ReadonlyArray<PendingRemoval>;
   /** Docs mounts, recorded in the same ledger as agent links. */
   readonly docsLinks?: ReadonlyArray<DocsManagedLink>;
-  readonly choices?: ReadonlyArray<SkillChoice>;
+  readonly choices?: ReadonlyArray<Choice>;
   readonly docsProjects?: ReadonlyArray<DocsProject>;
   /** An agent action prepared in the journal. */
   readonly preparedAgentAction?: PreparedAgentAction;

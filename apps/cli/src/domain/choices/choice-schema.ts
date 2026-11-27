@@ -17,7 +17,7 @@ export const NamespaceSchema = Schema.Union([
 ]);
 
 /** One explicit selection decision persisted under a project or user namespace. */
-export const SkillChoiceSchema = Schema.Struct({
+export const ChoiceSchema = Schema.Struct({
   address: SelectableAddressSchema,
   decision: ChoiceDecisionSchema,
   namespace: NamespaceSchema,
@@ -30,7 +30,7 @@ export type ChoiceDecision = typeof ChoiceDecisionSchema.Type;
 export type Namespace = typeof NamespaceSchema.Type;
 
 /** One validated exact resource choice. */
-export type SkillChoice = typeof SkillChoiceSchema.Type;
+export type Choice = typeof ChoiceSchema.Type;
 
 /** Returns the canonical comparison and lookup key for one choice namespace. */
 export const choiceNamespaceIdentity = Match.type<Namespace>().pipe(
@@ -47,7 +47,7 @@ export const kindAndNameKey = (resource: { readonly kind: string; readonly name:
   `${resource.kind}\u0000${resource.name}`;
 
 /** Returns the canonical identity for one exact choice within its namespace. */
-export const skillChoiceIdentity = (choice: {
+export const choiceIdentity = (choice: {
   readonly address: SelectableAddress;
   readonly namespace: Namespace;
 }) =>

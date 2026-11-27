@@ -1,8 +1,4 @@
-import {
-  listSkillChoices,
-  removeSkillChoice,
-  setSkillChoice,
-} from "../../../test/support/snapshot-helpers.ts";
+import { listChoices, removeChoice, setChoice } from "../../../test/support/snapshot-helpers.ts";
 import {
   mutateStateFixture,
   withStateFixture,
@@ -17,7 +13,7 @@ import {
   ChoiceProjectNotFoundError,
   ChoiceProjectRemovingError,
 } from "./choice.ts";
-import { type Namespace, type SkillChoice } from "../../domain/choices/choice-schema.ts";
+import { type Namespace, type Choice } from "../../domain/choices/choice-schema.ts";
 
 it("suggests catalog addresses near a chosen address the catalog lacks", () => {
   const entry = (kind: "command" | "skill", name: string, owner: "private" | "shared") => ({
@@ -83,14 +79,14 @@ const address = (owner: "shared" | "private", name: string) =>
       owner === "shared"
         ? "00000000-0000-4000-8000-000000000001"
         : "00000000-0000-4000-8000-000000000002",
-  }) satisfies SkillChoice["address"];
+  }) satisfies Choice["address"];
 
 const choice = (
   namespace: Namespace,
   owner: "shared" | "private",
   name: string,
-  decision: SkillChoice["decision"],
-) => ({ address: address(owner, name), decision, namespace }) satisfies SkillChoice;
+  decision: Choice["decision"],
+) => ({ address: address(owner, name), decision, namespace }) satisfies Choice;
 
 /** A state fixture with the registered projects `project-a` and `project-b`. */
 const withFixture = <A, E, R>(use: (fixture: StateFixture) => Effect.Effect<A, E, R>) =>
@@ -126,24 +122,18 @@ it.layer(LiveTestLayer)("namespace choices", (choiceIt) => {
       Effect.gen(function* () {
         const projectA = projectNamespace("project-a");
         const projectB = projectNamespace("project-b");
-        const first = yield* setSkillChoice(
-          options,
-          choice(userNamespace, "shared", "zeta", "include"),
-        );
-        yield* setSkillChoice(options, choice(projectA, "shared", "alpha", "include"));
-        yield* setSkillChoice(options, choice(projectB, "shared", "alpha", "exclude"));
-        const replaced = yield* setSkillChoice(
-          options,
-          choice(projectA, "shared", "alpha", "exclude"),
-        );
+        const first = yield* setChoice(options, choice(userNamespace, "shared", "zeta", "include"));
+        yield* setChoice(options, choice(projectA, "shared", "alpha", "include"));
+        yield* setChoice(options, choice(projectB, "shared", "alpha", "exclude"));
+        const replaced = yield* setChoice(options, choice(projectA, "shared", "alpha", "exclude"));
 
-        const all = yield* listSkillChoices(options);
-        const onlyProjectA = yield* listSkillChoices(options, projectA);
-        const removed = yield* removeSkillChoice(options, {
+        const all = yield* listChoices(options);
+        const onlyProjectA = yield* listChoices(options, projectA);
+        const removed = yield* removeChoice(options, {
           address: address("shared", "alpha"),
           namespace: projectA,
         });
-        const repeatedRemoval = yield* removeSkillChoice(options, {
+        const repeatedRemoval = yield* removeChoice(options, {
           address: address("shared", "alpha"),
           namespace: projectA,
         });
@@ -158,7 +148,7 @@ it.layer(LiveTestLayer)("namespace choices", (choiceIt) => {
         expect(onlyProjectA).toEqual([choice(projectA, "shared", "alpha", "exclude")]);
         expect(removed.removed).toBe(true);
         expect(repeatedRemoval.removed).toBe(false);
-        expect(yield* listSkillChoices(options, projectA)).toEqual([]);
+        expect(yield* listChoices(options, projectA)).toEqual([]);
       }),
     ),
   );
@@ -172,20 +162,20 @@ it.layer(LiveTestLayer)("namespace choices", (choiceIt) => {
             address: { ...address(owner, "alpha"), kind: "command" as const },
             decision: "include",
             namespace,
-          }) satisfies SkillChoice;
-        yield* setSkillChoice(options, choice(userNamespace, "shared", "alpha", "include"));
-        yield* setSkillChoice(options, choice(userNamespace, "private", "alpha", "exclude"));
-        yield* setSkillChoice(options, command(userNamespace, "shared"));
-        yield* setSkillChoice(options, choice(projectA, "shared", "alpha", "include"));
+          }) satisfies Choice;
+        yield* setChoice(options, choice(userNamespace, "shared", "alpha", "include"));
+        yield* setChoice(options, choice(userNamespace, "private", "alpha", "exclude"));
+        yield* setChoice(options, command(userNamespace, "shared"));
+        yield* setChoice(options, choice(projectA, "shared", "alpha", "include"));
 
         // Setting one exact pick never replaces a pick of another source, kind or namespace.
-        const replaced = yield* setSkillChoice(
+        const replaced = yield* setChoice(
           options,
           choice(userNamespace, "shared", "alpha", "exclude"),
         );
 
         expect(replaced).toMatchObject({ changed: true, choice: { decision: "exclude" } });
-        expect(yield* listSkillChoices(options)).toEqual([
+        expect(yield* listChoices(options)).toEqual([
           choice(projectA, "shared", "alpha", "include"),
           command(userNamespace, "shared"),
           choice(userNamespace, "shared", "alpha", "exclude"),
@@ -200,9 +190,9 @@ it.layer(LiveTestLayer)("namespace choices", (choiceIt) => {
       Effect.gen(function* () {
         const missing = choice(userNamespace, "private", "missing-skill", "include");
 
-        yield* setSkillChoice(options, missing);
+        yield* setChoice(options, missing);
 
-        expect(yield* listSkillChoices(options)).toEqual([missing]);
+        expect(yield* listChoices(options)).toEqual([missing]);
       }),
     ),
   );
@@ -216,12 +206,12 @@ it.layer(LiveTestLayer)("namespace choices", (choiceIt) => {
           choice(projectNamespace("project-b"), "private", "beta", "exclude"),
           choice(projectNamespace("project-a"), "shared", "alpha", "include"),
         ];
-        yield* Effect.forEach(values, (value) => setSkillChoice(options, value));
+        yield* Effect.forEach(values, (value) => setChoice(options, value));
         const forward = yield* fileSystem.readFileString(statePath);
         yield* Effect.forEach(values, (value) =>
-          removeSkillChoice(options, { address: value.address, namespace: value.namespace }),
+          removeChoice(options, { address: value.address, namespace: value.namespace }),
         );
-        yield* Effect.forEach([...values].reverse(), (value) => setSkillChoice(options, value));
+        yield* Effect.forEach([...values].reverse(), (value) => setChoice(options, value));
 
         expect(yield* fileSystem.readFileString(statePath)).toBe(forward);
       }),
@@ -233,14 +223,14 @@ it.layer(LiveTestLayer)("namespace choices", (choiceIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const existing = choice(userNamespace, "shared", "alpha", "include");
-        yield* setSkillChoice(options, existing);
+        yield* setChoice(options, existing);
         const before = yield* fileSystem.readFileString(statePath);
 
         const results = yield* provideTestFileSystem(
           Effect.all(
             [
-              setSkillChoice(options, existing),
-              removeSkillChoice(options, {
+              setChoice(options, existing),
+              removeChoice(options, {
                 address: address("shared", "absent"),
                 namespace: userNamespace,
               }),
@@ -264,13 +254,13 @@ it.layer(LiveTestLayer)("namespace choices", (choiceIt) => {
         const before = yield* fileSystem.readFileString(statePath);
 
         const error = yield* Effect.flip(
-          setSkillChoice(
+          setChoice(
             options,
             choice(projectNamespace("missing-project"), "shared", "alpha", "include"),
           ),
         );
         const removeError = yield* Effect.flip(
-          removeSkillChoice(options, {
+          removeChoice(options, {
             address: address("shared", "alpha"),
             namespace: projectNamespace("missing-project"),
           }),
@@ -313,10 +303,10 @@ it.layer(LiveTestLayer)("namespace choices", (choiceIt) => {
         const before = yield* fileSystem.readFileString(statePath);
         const namespace = projectNamespace("project-a");
         const setError = yield* Effect.flip(
-          setSkillChoice(options, choice(namespace, "shared", "alpha", "include")),
+          setChoice(options, choice(namespace, "shared", "alpha", "include")),
         );
         const removeError = yield* Effect.flip(
-          removeSkillChoice(options, {
+          removeChoice(options, {
             address: address("shared", "alpha"),
             namespace,
           }),

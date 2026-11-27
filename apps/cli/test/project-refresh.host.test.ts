@@ -1,7 +1,7 @@
 import { skillText } from "./support/source-tree.ts";
 import { pendingRemovalsOf } from "../src/domain/links/link-record-schema.ts";
 import { projectRecords } from "./support/state-fixture.ts";
-import { allSkillChoices } from "../src/domain/state/state-intent.ts";
+import { allChoices } from "../src/domain/state/state-intent.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Schema } from "effect";
@@ -252,7 +252,7 @@ it.layer(LiveTestLayer)("project refresh against real Git", (refreshIt) => {
               roots: [fixture.primaryRoot],
             },
           ]);
-          expect(allSkillChoices(state)).toEqual([
+          expect(allChoices(state)).toEqual([
             expect.objectContaining({
               address: expect.objectContaining({ kind: "skill", name: "valid" }),
               decision: "include",
@@ -388,7 +388,7 @@ it.layer(LiveTestLayer)("project refresh against real Git", (refreshIt) => {
               }),
             ]),
           );
-          expect(allSkillChoices(state)).toEqual(
+          expect(allChoices(state)).toEqual(
             expect.arrayContaining([
               expect.objectContaining({
                 namespace: { _tag: "project", projectName: "final-project" },
@@ -449,7 +449,7 @@ it.layer(LiveTestLayer)("project refresh against real Git", (refreshIt) => {
           expect(converged.data.projects).not.toEqual(
             expect.arrayContaining([expect.objectContaining({ name: "final-project" })]),
           );
-          expect(allSkillChoices(converged)).not.toEqual(
+          expect(allChoices(converged)).not.toEqual(
             expect.arrayContaining([
               expect.objectContaining({
                 namespace: { _tag: "project", projectName: "final-project" },

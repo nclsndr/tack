@@ -1,13 +1,13 @@
 import { skillText } from "../../../test/support/source-tree.ts";
 import { fakeGit } from "../../../test/support/fake-git.ts";
 import { writeUnder } from "../../../test/support/source-tree.ts";
-import { setSkillChoice } from "../../../test/support/snapshot-helpers.ts";
+import { setChoice } from "../../../test/support/snapshot-helpers.ts";
 import {
   agentLink,
   managedLinksOf,
   pendingRemovalsOf,
 } from "../../domain/links/link-record-schema.ts";
-import { allSkillChoices } from "../../domain/state/state-intent.ts";
+import { allChoices } from "../../domain/state/state-intent.ts";
 import { mutateStateFixture, stateOptionsAt } from "../../../test/support/state-fixture.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, PlatformError, Schema } from "effect";
@@ -102,7 +102,7 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
     () =>
       Effect.gen(function* () {
         const f = yield* fixture();
-        yield* setSkillChoice(f.options, {
+        yield* setChoice(f.options, {
           namespace: { _tag: "user" },
           address: {
             kind: "context",
@@ -166,7 +166,7 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
         expect(yield* f.fs.exists(f.path.join(f.source, "commands", "review.md"))).toBe(true);
         const retained = yield* readState(f.options);
         expect(managedLinksOf(retained.data.links)).toEqual([]);
-        expect(allSkillChoices(retained)).toHaveLength(1);
+        expect(allChoices(retained)).toHaveLength(1);
       }),
   );
 
@@ -378,7 +378,7 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
         }));
         const git = fakeGit(anchor, [{ path: activeRoot }]);
         // Out of the user's folder, so the project links the command itself.
-        yield* setSkillChoice(f.options, {
+        yield* setChoice(f.options, {
           namespace: { _tag: "user" },
           address: {
             kind: "command",
@@ -521,13 +521,13 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
       const git = fakeGit(anchor, [{ path: projectRoot }]);
       // Out of the user's folders, so the project links both resources itself.
       for (const kind of ["command", "skill"] as const)
-        yield* setSkillChoice(f.options, {
+        yield* setChoice(f.options, {
           namespace: { _tag: "user" },
           address: { kind, name: "review", sourceRegistrationId: f.sourceRegistrationId },
           decision: "exclude",
         });
       for (const kind of ["command", "skill"] as const)
-        yield* setSkillChoice(f.options, {
+        yield* setChoice(f.options, {
           namespace: { _tag: "project", projectName: "app" },
           address: { kind, name: "review", sourceRegistrationId: f.sourceRegistrationId },
           decision: "include",

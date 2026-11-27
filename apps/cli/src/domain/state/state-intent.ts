@@ -1,10 +1,10 @@
 import type { DocsProject } from "../docs/docs-schema.ts";
 import { docsResourceIdentity } from "../docs/docs-schema.ts";
-import type { SkillChoice } from "../choices/choice-schema.ts";
+import type { Choice } from "../choices/choice-schema.ts";
 import type { State } from "./state-schema.ts";
 
 /** Projects own their decisions; this view supplies namespaces to selection and reports. */
-export const allSkillChoices = (state: State): SkillChoice[] => [
+export const allChoices = (state: State): Choice[] => [
   ...state.data.userChoices.map((choice) => ({
     ...choice,
     namespace: { _tag: "user" as const },
