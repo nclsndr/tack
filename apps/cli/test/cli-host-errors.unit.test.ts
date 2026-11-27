@@ -17,7 +17,7 @@ import { DocsError } from "../src/domain/docs/docs-schema.ts";
 import { HistoryNotFoundError } from "../src/features/execution/execution.ts";
 import { ImportError } from "../src/features/imports/import-error.ts";
 import { ResourceReferenceError } from "../src/features/sources/resource-reference.ts";
-import { AdapterDisablementValidationError } from "../src/features/maintenance/adapter-disablement.ts";
+import { AdapterDisablementValidationError } from "../src/features/removal/adapter-disablement.ts";
 import {
   ProjectNotFoundError,
   ProjectRegistrationConflictError,
@@ -44,7 +44,7 @@ import {
   SourceStorageError,
   SourceValidationError,
 } from "../src/features/sources/source.ts";
-import { SourceRemovalError } from "../src/features/maintenance/source-removal.ts";
+import { SourceRemovalError } from "../src/features/removal/source-removal.ts";
 import { SourceAddRequestError } from "../src/features/sources/source-scaffold.ts";
 import { ExecutionError } from "../src/services/execution-platform.ts";
 import { ExplorerInterruptedError } from "../src/cli/host/routes/explore.ts";

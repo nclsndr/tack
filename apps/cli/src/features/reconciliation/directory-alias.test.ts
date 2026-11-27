@@ -4,7 +4,7 @@ import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { managedLinksOf } from "../../domain/links/link-record-schema.ts";
 import { initializeState, readState, type StateOptions } from "../../services/state-store.ts";
-import { disableAdapter } from "../maintenance/adapter-disablement.ts";
+import { disableAdapter } from "../removal/adapter-disablement.ts";
 import { registerSource } from "../sources/source.ts";
 import { runStatus } from "../status/status.ts";
 import { enableAdapters } from "./agent.ts";

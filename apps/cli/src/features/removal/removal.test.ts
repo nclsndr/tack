@@ -34,7 +34,7 @@ import { StateSchema } from "../../domain/state/state-schema.ts";
 import { docsPendingRemovalsOf, reportDocsManagedLink } from "../../domain/docs/docs-schema.ts";
 import { attachDocs } from "../docs/docs.ts";
 import { linksCheck } from "../doctor/doctor-observations.ts";
-import { resetTack, retrySelectedPendingRemovals } from "../maintenance/selected-removal.ts";
+import { resetTack, retrySelectedPendingRemovals } from "./selected-removal.ts";
 import { runStatus } from "../status/status.ts";
 import {
   docsEvidence,

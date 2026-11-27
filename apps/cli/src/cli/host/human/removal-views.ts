@@ -5,7 +5,7 @@ import type {
   DocsLinkOutcome,
   DocsLinkReport,
 } from "../../../domain/docs/docs-schema.ts";
-import type { SourceRemovalPlan } from "../../../features/maintenance/source-removal.ts";
+import type { SourceRemovalPlan } from "../../../features/removal/source-removal.ts";
 import type {
   DroppedDocsAttachment,
   DroppedPick,
@@ -15,7 +15,7 @@ import type {
   ProjectRefreshProject,
 } from "../../../features/refresh/project-refresh-schema.ts";
 import type { RemovalPlan, RemovalResult } from "../../../domain/reconciliation/removal-schema.ts";
-import type { SelectedRemovalPlanSchema } from "../../../features/maintenance/selected-removal.ts";
+import type { SelectedRemovalPlanSchema } from "../../../features/removal/selected-removal.ts";
 import type { DeclaredPayload } from "../../commands/declarations.ts";
 import type { Invocation } from "../../commands/index.ts";
 import type { PublicEnvelope } from "../public-outcome.ts";

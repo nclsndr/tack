@@ -8,8 +8,8 @@ import {
   SourceRegistrationPayloadSchema,
   makeSourceService,
 } from "../src/features/sources/source.ts";
-import { SourceRemovalPlanSchema } from "../src/features/maintenance/source-removal.ts";
-import { ProjectRemovalPlanSchema } from "../src/features/maintenance/project-removal.ts";
+import { SourceRemovalPlanSchema } from "../src/features/removal/source-removal.ts";
+import { ProjectRemovalPlanSchema } from "../src/features/removal/project-removal.ts";
 import type { GitService } from "../src/services/git.ts";
 import { exitCodeForEnvelope } from "../src/cli/host/public-outcome.ts";
 import { readState } from "../src/services/state-store.ts";

@@ -3,7 +3,7 @@ import {
   cleanManagedLinks,
   resetTack,
   retrySelectedPendingRemovals,
-} from "../../../features/maintenance/selected-removal.ts";
+} from "../../../features/removal/selected-removal.ts";
 import type { RemovalExecution } from "../../../features/removal/removal.ts";
 import { removalOutcome, withOutsidePendingDiagnostic } from "../outcomes.ts";
 import { cwdOrCurrent, type RoutesFor, onlyUserOrAllSelector } from "./route.ts";

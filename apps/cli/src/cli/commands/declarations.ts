@@ -40,16 +40,16 @@ import { SourceListPayloadSchema } from "../../features/imports/import-display.t
 import {
   AdapterDisablementPlanSchema,
   AdapterDisablementResultSchema,
-} from "../../features/maintenance/adapter-disablement.ts";
+} from "../../features/removal/adapter-disablement.ts";
 import {
   ProjectRemovalPlanSchema,
   ProjectRemovalResultSchema,
-} from "../../features/maintenance/project-removal.ts";
-import { SelectedRemovalPlanSchema } from "../../features/maintenance/selected-removal.ts";
+} from "../../features/removal/project-removal.ts";
+import { SelectedRemovalPlanSchema } from "../../features/removal/selected-removal.ts";
 import {
   SourceRemovalPlanSchema,
   SourceRemovalResultSchema,
-} from "../../features/maintenance/source-removal.ts";
+} from "../../features/removal/source-removal.ts";
 import { BundleApplyPlanSchema } from "../../features/profiles/bundle-apply.ts";
 import {
   BundleExportedSchema,

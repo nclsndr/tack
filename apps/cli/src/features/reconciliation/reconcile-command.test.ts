@@ -6,10 +6,7 @@ import { expect, it } from "@effect/vitest";
 import { Deferred, Effect, FileSystem, Fiber, Path, PlatformError, Schema } from "effect";
 import { enableAdapters } from "./agent.ts";
 import { syncResources } from "../../../test/support/reconciliation.ts";
-import {
-  cleanManagedLinks,
-  retrySelectedPendingRemovals,
-} from "../maintenance/selected-removal.ts";
+import { cleanManagedLinks, retrySelectedPendingRemovals } from "../removal/selected-removal.ts";
 import { ReconciliationApplyResultSchema } from "./reconciliation-application.ts";
 import { registerSource, relocateSource } from "../sources/source.ts";
 import { runStatus } from "../status/status.ts";

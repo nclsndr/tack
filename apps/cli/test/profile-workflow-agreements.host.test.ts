@@ -1,5 +1,5 @@
 import { enableAdapters } from "../src/features/reconciliation/agent.ts";
-import { disableAdapter } from "../src/features/maintenance/adapter-disablement.ts";
+import { disableAdapter } from "../src/features/removal/adapter-disablement.ts";
 import { ExecutionPlatformLive } from "../src/platform/execution/execution-platform.ts";
 import { checkPaths } from "../src/features/check/check-paths.ts";
 import { expect, it } from "@effect/vitest";

@@ -22,9 +22,9 @@ import {
   removeProjectRoot,
   retryPendingRemovals,
 } from "../../../test/support/removal.ts";
-import { disableAdapter } from "../maintenance/adapter-disablement.ts";
+import { disableAdapter } from "./adapter-disablement.ts";
 import { withRecoveredWriter } from "../writer/recovered-writer.ts";
-import { cleanManagedLinks, resetTack } from "../maintenance/selected-removal.ts";
+import { cleanManagedLinks, resetTack } from "./selected-removal.ts";
 import { applyRemovalWithWriter } from "./removal-apply.ts";
 
 /*

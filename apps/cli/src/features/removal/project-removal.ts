@@ -16,8 +16,8 @@ import { profileApplicationFor } from "../../domain/profiles/profile-application
 import { SourceRegistrationIdSchema } from "../../domain/sources/source-schema.ts";
 import type { State } from "../../domain/state/state-schema.ts";
 import type { StateCheckpointWriter, StateOptions } from "../../services/state-store.ts";
-import { applyRemovalWithWriter } from "../removal/removal-apply.ts";
-import { planRemoval } from "../removal/removal-plan.ts";
+import { applyRemovalWithWriter } from "./removal-apply.ts";
+import { planRemoval } from "./removal-plan.ts";
 import { previewOrApply } from "../writer/recovered-writer.ts";
 
 /** The fixed profile application a removed project drops with it. */
@@ -95,7 +95,7 @@ const applyPlan = Effect.fnUntraced(function* (
  * A link that cannot be removed safely keeps the project in removal until a later apply or
  * `state clean --pending` settles it. The worktrees are never touched.
  */
-export const removeProject = Effect.fn("maintenance.removeProject")(function* (
+export const removeProject = Effect.fn("removal.removeProject")(function* (
   stateOptions: StateOptions,
   projectName: string,
   options: { readonly apply: boolean },

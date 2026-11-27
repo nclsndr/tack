@@ -6,7 +6,7 @@ import {
 import { catalogReport } from "../../../domain/sources/catalog-report.ts";
 import { relocateSource } from "../../../features/sources/source.ts";
 import { initializeState } from "../../../services/state-store.ts";
-import { removeSource } from "../../../features/maintenance/source-removal.ts";
+import { removeSource } from "../../../features/removal/source-removal.ts";
 import { addSource } from "./source-add.ts";
 import { appliedAs, catalogOutcome, removalOutcome, sourcesOutcome } from "../outcomes.ts";
 import type { RoutesFor } from "./route.ts";

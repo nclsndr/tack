@@ -12,9 +12,9 @@ import {
   type SelectionEcho,
 } from "../projects/project.ts";
 import { projectLifecycle, type Selector } from "../../domain/projects/project-schema.ts";
-import { runManagedRemoval, type RemovalExecution } from "../removal/removal.ts";
-import { applyRemovalWithWriter } from "../removal/removal-apply.ts";
-import { planRemoval } from "../removal/removal-plan.ts";
+import { runManagedRemoval, type RemovalExecution } from "./removal.ts";
+import { applyRemovalWithWriter } from "./removal-apply.ts";
+import { planRemoval } from "./removal-plan.ts";
 import {
   RemovalPlanSchema,
   type RemovalPlan,
@@ -138,7 +138,7 @@ const runSelectedRemoval = (
   );
 
 /** Plans a clean by default, or removes exact verified links when apply is true. */
-export const cleanManagedLinks = Effect.fn("maintenance.cleanManagedLinks")(function* (
+export const cleanManagedLinks = Effect.fn("removal.cleanManagedLinks")(function* (
   stateOptions: StateOptions,
   options: CleanOptions,
 ) {
@@ -146,14 +146,14 @@ export const cleanManagedLinks = Effect.fn("maintenance.cleanManagedLinks")(func
 });
 
 /** Plans a scoped retry by default, or applies only retained pending obligations. */
-export const retrySelectedPendingRemovals = Effect.fn("maintenance.retrySelectedPendingRemovals")(
+export const retrySelectedPendingRemovals = Effect.fn("removal.retrySelectedPendingRemovals")(
   function* (stateOptions: StateOptions, options: RetryPendingRemovalOptions) {
     return yield* runSelectedRemoval(stateOptions, "retry", options);
   },
 );
 
 /** Plans a full reset by default, or applies it and deletes state after cleanup settles. */
-export const resetTack = Effect.fn("maintenance.resetTack")(function* (
+export const resetTack = Effect.fn("removal.resetTack")(function* (
   stateOptions: StateOptions,
   options: ResetOptions = {},
 ) {

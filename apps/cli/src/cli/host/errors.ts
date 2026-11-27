@@ -12,7 +12,7 @@ import type {
 import type { DocsError } from "../../domain/docs/docs-schema.ts";
 import type { HistoryNotFoundError } from "../../features/execution/execution.ts";
 import type { ResourceReferenceError } from "../../features/sources/resource-reference.ts";
-import type { AdapterDisablementValidationError } from "../../features/maintenance/adapter-disablement.ts";
+import type { AdapterDisablementValidationError } from "../../features/removal/adapter-disablement.ts";
 import type {
   ProjectNotFoundError,
   ProjectRegistrationConflictError,
@@ -39,7 +39,7 @@ import type {
   SourceStorageError,
   SourceValidationError,
 } from "../../features/sources/source.ts";
-import type { SourceRemovalError } from "../../features/maintenance/source-removal.ts";
+import type { SourceRemovalError } from "../../features/removal/source-removal.ts";
 import type { SourceAddRequestError } from "../../features/sources/source-scaffold.ts";
 import type { ImportError } from "../../features/imports/import-error.ts";
 import type { ExecutionError } from "../../services/execution-platform.ts";

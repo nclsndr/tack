@@ -17,8 +17,8 @@ import { registerSource } from "../sources/source.ts";
 
 import { enableAdapters } from "./agent.ts";
 import { runStatus } from "../status/status.ts";
-import { cleanManagedLinks, resetTack } from "../maintenance/selected-removal.ts";
-import { disableAdapter } from "../maintenance/adapter-disablement.ts";
+import { cleanManagedLinks, resetTack } from "../removal/selected-removal.ts";
+import { disableAdapter } from "../removal/adapter-disablement.ts";
 import { runProjectRefreshCommand } from "../refresh/project-refresh.ts";
 import { ManagedLinkEvidenceSchema } from "../../domain/links/managed-link-schema.ts";
 import { applyReconciliationPlan, syncResources } from "../../../test/support/reconciliation.ts";

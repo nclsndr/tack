@@ -21,8 +21,8 @@ import { CanonicalPathSchema } from "../../domain/identity/identity-schema.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
 import type { State, StateProject } from "../../domain/state/state-schema.ts";
 import type { StateCheckpointWriter, StateOptions } from "../../services/state-store.ts";
-import { applyRemovalWithWriter } from "../removal/removal-apply.ts";
-import { planRemoval } from "../removal/removal-plan.ts";
+import { applyRemovalWithWriter } from "./removal-apply.ts";
+import { planRemoval } from "./removal-plan.ts";
 import type { CommandSnapshot } from "../snapshot/command-snapshot.ts";
 import { previewOrApply } from "../writer/recovered-writer.ts";
 
@@ -287,7 +287,7 @@ const applyPlan = Effect.fnUntraced(function* (
  * every link and docs mount Tack made for its resources, in every project and at user level, and
  * then its registration and the intent that names it. The source directory is never touched.
  */
-export const removeSource = Effect.fn("maintenance.removeSource")(function* (
+export const removeSource = Effect.fn("removal.removeSource")(function* (
   stateOptions: StateOptions,
   reference: string,
   options: { readonly apply: boolean },

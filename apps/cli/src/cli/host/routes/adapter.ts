@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import { disableAdapter } from "../../../features/maintenance/adapter-disablement.ts";
+import { disableAdapter } from "../../../features/removal/adapter-disablement.ts";
 import { enableAdapters, listEnabledAdapters } from "../../../features/reconciliation/agent.ts";
 import { appliedAs, removalOutcome, resultAs } from "../outcomes.ts";
 import type { RoutesFor } from "./route.ts";

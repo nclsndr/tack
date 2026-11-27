@@ -19,7 +19,7 @@ import {
   resolveAdapterCapability,
 } from "../../domain/agents/agent-adapter.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
-import { disableAdapter } from "../maintenance/adapter-disablement.ts";
+import { disableAdapter } from "../removal/adapter-disablement.ts";
 import {
   AdapterNotEnabledError,
   AgentDisablementRequiredError,

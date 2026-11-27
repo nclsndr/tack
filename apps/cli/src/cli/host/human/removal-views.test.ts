@@ -33,17 +33,17 @@ import {
   AdapterDisablementResultSchema,
   type AdapterDisablementPlan,
   type AdapterDisablementResult,
-} from "../../../features/maintenance/adapter-disablement.ts";
+} from "../../../features/removal/adapter-disablement.ts";
 import {
   SourceRemovalPlanSchema,
   SourceRemovalResultSchema,
   type SourceRemovalPlan,
-} from "../../../features/maintenance/source-removal.ts";
+} from "../../../features/removal/source-removal.ts";
 import {
   ProjectRemovalPlanSchema,
   ProjectRemovalResultSchema,
   type ProjectRemovalPlan,
-} from "../../../features/maintenance/project-removal.ts";
+} from "../../../features/removal/project-removal.ts";
 import {
   ProjectRefreshCommandPlanSchema,
   ProjectRefreshCommandResultSchema,

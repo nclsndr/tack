@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import { readInvocationSnapshot } from "../../../features/snapshot/command-snapshot.ts";
 import { registerProject } from "../../../features/projects/project.ts";
 import { runProjectRefreshCommand } from "../../../features/refresh/project-refresh.ts";
-import { removeProject } from "../../../features/maintenance/project-removal.ts";
+import { removeProject } from "../../../features/removal/project-removal.ts";
 import { appliedAs, projectsOutcome, removalOutcome } from "../outcomes.ts";
 import { cwdOrCurrent, type RoutesFor } from "./route.ts";
 
