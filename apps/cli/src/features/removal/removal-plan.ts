@@ -1,5 +1,5 @@
 import { Effect, FileSystem, Path } from "effect";
-import type { AgentAdapterId } from "../../domain/links/agent-adapter-schema.ts";
+import type { AgentAdapterId } from "../../domain/agents/agent-adapter-schema.ts";
 import { agentAdapterDescriptors } from "../../domain/agents/agent-adapter.ts";
 import { managedLinkDestinationPath, resourceDirectory } from "../../domain/agents/agent-layout.ts";
 import {

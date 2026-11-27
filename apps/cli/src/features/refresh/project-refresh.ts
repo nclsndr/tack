@@ -62,14 +62,11 @@ import {
   type ProjectRefreshResult,
   type ProjectRefreshScope,
   ProjectRefreshSelectionSchema,
-} from "../../domain/projects/project-refresh-schema.ts";
+} from "./project-refresh-schema.ts";
 import type { State } from "../../domain/state/state-schema.ts";
 import type { StateCheckpointWriter, StateOptions } from "../../services/state-store.ts";
 import type { StateProject } from "../../domain/state/state-schema.ts";
-import {
-  moveProjectRoots,
-  type ProjectRootMoves,
-} from "../../domain/projects/project-lifecycle.ts";
+import { moveProjectRoots, type ProjectRootMoves } from "../../domain/state/project-lifecycle.ts";
 
 // Observation
 

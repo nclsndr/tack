@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import type { ProfileApplication } from "./profile-application.ts";
+import type { ProfileApplication } from "../state/profile-application-schema.ts";
 import { profileDelivery } from "./profile-delivery.ts";
 
 const source = "00000000-0000-4000-8000-000000000001";

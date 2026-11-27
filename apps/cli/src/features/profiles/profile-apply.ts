@@ -6,7 +6,7 @@ import {
 import {
   ProfileApplicationSchema,
   type ProfileApplication,
-} from "../../domain/profiles/profile-application.ts";
+} from "../../domain/state/profile-application-schema.ts";
 import { ProfilePlanFindingSchema } from "../../domain/profiles/profile-schema.ts";
 import {
   profileDelivery,

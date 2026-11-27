@@ -1,6 +1,6 @@
 import { sortAndDedupeStrings } from "../identity/ordering.ts";
-import type { State, StateProject } from "../state/state-schema.ts";
-import { projectLifecycle } from "./project-schema.ts";
+import type { State, StateProject } from "./state-schema.ts";
+import { projectLifecycle } from "../projects/project-schema.ts";
 
 /**
  * The lifecycle of a registered project as pure state transitions. A root is active, handed off

@@ -1,6 +1,6 @@
 import { Schema } from "effect";
 
-import { agentAdapterIds } from "../agents/agent-adapter.ts";
+import { agentAdapterIds } from "./agent-adapter.ts";
 import { sortedUnique } from "../identity/ordering.ts";
 
 /** The built-in agent adapters supported by Tack, the keys of the adapter table. */

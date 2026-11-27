@@ -4,7 +4,7 @@ import {
   AgentAdapterIdSchema,
   EnabledAdaptersSchema,
   type AgentAdapterId,
-} from "../../domain/links/agent-adapter-schema.ts";
+} from "../../domain/agents/agent-adapter-schema.ts";
 import { applyRemovalWithWriter } from "../removal/removal-apply.ts";
 import { planRemoval } from "../removal/removal-plan.ts";
 import {

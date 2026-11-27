@@ -9,7 +9,7 @@ import {
   isLinkableAddress,
   resourceAddressIdentity,
 } from "../sources/catalog-schema.ts";
-import { AgentAdapterIdSchema } from "./agent-adapter-schema.ts";
+import { AgentAdapterIdSchema } from "../agents/agent-adapter-schema.ts";
 import { CanonicalPathSchema } from "../identity/identity-schema.ts";
 import {
   ManagedLinkTargetSchema,

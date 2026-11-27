@@ -2,7 +2,7 @@ import { Effect, FileSystem, Path } from "effect";
 import type { HandMadeEntry } from "../../domain/agents/hand-made-entry.ts";
 import { resourceDirectory, type AgentLayoutTarget } from "../../domain/agents/agent-layout.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
-import type { AgentAdapterId } from "../../domain/links/agent-adapter-schema.ts";
+import type { AgentAdapterId } from "../../domain/agents/agent-adapter-schema.ts";
 import type { LinkRecord } from "../../domain/links/link-record-schema.ts";
 import type { DestinationObservation } from "../../domain/reconciliation/destination-observation-schema.ts";
 import type { State } from "../../domain/state/state-schema.ts";

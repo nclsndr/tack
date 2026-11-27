@@ -4,7 +4,7 @@ import {
   type ManagedLinkEvidence,
 } from "../../domain/links/managed-link-schema.ts";
 import { sortAndDedupeBy, sortAndDedupeStrings } from "../../domain/identity/ordering.ts";
-import type { ProjectRefreshRemoval } from "../../domain/projects/project-refresh-schema.ts";
+import type { ProjectRefreshRemoval } from "./project-refresh-schema.ts";
 import type { State } from "../../domain/state/state-schema.ts";
 
 /** Canonical root facts needed to compute a refresh without filesystem effects. */

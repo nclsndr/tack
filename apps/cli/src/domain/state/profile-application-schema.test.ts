@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { Schema } from "effect";
-import { ProfileApplicationSchema } from "./profile-application.ts";
-import { StateSchema, emptyState } from "../state/state-schema.ts";
+import { ProfileApplicationSchema } from "./profile-application-schema.ts";
+import { StateSchema, emptyState } from "./state-schema.ts";
 
 const address = {
   kind: "skill",

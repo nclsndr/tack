@@ -27,7 +27,7 @@ import {
   handOffProject,
   handOffRoot,
   removeProject,
-} from "../../domain/projects/project-lifecycle.ts";
+} from "../../domain/state/project-lifecycle.ts";
 import { Destination, observeDestination } from "../../services/destination.ts";
 import {
   concludeResult,

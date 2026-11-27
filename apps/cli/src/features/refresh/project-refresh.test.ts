@@ -5,7 +5,7 @@ import {
   managedLinksOf,
   pendingRemovalsOf,
 } from "../../domain/links/link-record-schema.ts";
-import type { ProfileApplication } from "../../domain/profiles/profile-application.ts";
+import type { ProfileApplication } from "../../domain/state/profile-application-schema.ts";
 import { allSkillChoices } from "../../domain/state/state-intent.ts";
 import { mutateStateFixture, projectRecords } from "../../../test/support/state-fixture.ts";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
@@ -15,7 +15,7 @@ import { Git, type GitService } from "../../services/git.ts";
 import { sortAndDedupeBy, sortAndDedupeStrings } from "../../domain/identity/ordering.ts";
 import { diffProjectRoots, type ProjectRootDiffInput } from "./project-refresh-diff.ts";
 import { ProjectRefreshEvidenceError, runProjectRefreshCommand } from "./project-refresh.ts";
-import type { ProjectRefreshScope } from "../../domain/projects/project-refresh-schema.ts";
+import type { ProjectRefreshScope } from "./project-refresh-schema.ts";
 import { ProjectRecordSchema } from "../../domain/projects/project-schema.ts";
 import { ProjectRootOwnershipError } from "../projects/project.ts";
 import { projectLifecycle } from "../../domain/projects/project-schema.ts";

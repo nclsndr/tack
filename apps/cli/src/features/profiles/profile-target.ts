@@ -5,10 +5,8 @@ import {
   choiceNamespaceIdentity,
   type ChoiceNamespace,
 } from "../../domain/choices/choice-schema.ts";
-import {
-  profileApplicationFor,
-  type ProfileApplication,
-} from "../../domain/profiles/profile-application.ts";
+import { profileApplicationFor } from "../../domain/profiles/profile-application.ts";
+import type { ProfileApplication } from "../../domain/state/profile-application-schema.ts";
 import type { ProfilePlanFinding } from "../../domain/profiles/profile-schema.ts";
 import type { State } from "../../domain/state/state-schema.ts";
 import type { StateOptions } from "../../services/state-store.ts";

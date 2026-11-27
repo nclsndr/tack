@@ -4,7 +4,7 @@ import {
   AgentAdapterIdSchema,
   AgentCapabilitySchema,
   type AgentAdapterId,
-} from "../../domain/links/agent-adapter-schema.ts";
+} from "../../domain/agents/agent-adapter-schema.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
 import { listAlias } from "./list-alias.ts";
 import { InvocationIssue, type ReconcilePlanningRequest } from "./model.ts";

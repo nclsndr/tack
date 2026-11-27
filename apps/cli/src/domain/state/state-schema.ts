@@ -1,11 +1,11 @@
 import { Result, Schema } from "effect";
-import { ProfileApplicationSchema } from "../profiles/profile-application.ts";
+import { ProfileApplicationSchema } from "./profile-application-schema.ts";
 import { ChoiceDecisionSchema, choiceNamespaceIdentity } from "../choices/choice-schema.ts";
 import { DocsDestinationSchema, DocsResourceReferenceSchema } from "../docs/docs-schema.ts";
 import { ProjectPathSchema, ProjectRecordSchema } from "../projects/project-schema.ts";
 import { SelectableAddressSchema } from "../sources/catalog-schema.ts";
 import { SourceRegistrationSchema } from "../sources/source-schema.ts";
-import { EnabledAdaptersSchema } from "../links/agent-adapter-schema.ts";
+import { EnabledAdaptersSchema } from "../agents/agent-adapter-schema.ts";
 import {
   LinkEvidenceSchema,
   LinkRecordsSchema,

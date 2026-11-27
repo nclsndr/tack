@@ -2,7 +2,7 @@ import { Schema } from "effect";
 import { agentAdapterDescriptor } from "../agents/agent-adapter.ts";
 import { deliversKind } from "../agents/agent-layout.ts";
 import type { ChoiceNamespace } from "../choices/choice-schema.ts";
-import { AgentAdapterIdSchema } from "./agent-adapter-schema.ts";
+import { AgentAdapterIdSchema } from "../agents/agent-adapter-schema.ts";
 import { CanonicalPathSchema } from "../identity/identity-schema.ts";
 import { ProjectNameSchema } from "../projects/project-schema.ts";
 import { resourceAddressIdentity, LinkableAddressSchema } from "../sources/catalog-schema.ts";

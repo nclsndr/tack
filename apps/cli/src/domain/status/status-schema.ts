@@ -1,7 +1,7 @@
 import { ProfileDeliverySchema } from "../profiles/profile-delivery.ts";
-import { ProfileApplicationSchema } from "../profiles/profile-application.ts";
+import { ProfileApplicationSchema } from "../state/profile-application-schema.ts";
 import { Schema, Struct } from "effect";
-import { AgentAdapterIdSchema, EnabledAdaptersSchema } from "../links/agent-adapter-schema.ts";
+import { AgentAdapterIdSchema, EnabledAdaptersSchema } from "../agents/agent-adapter-schema.ts";
 import {
   ChoiceNamespaceSchema,
   SkillChoiceSchema,

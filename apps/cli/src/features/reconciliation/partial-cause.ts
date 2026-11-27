@@ -1,5 +1,5 @@
 import { Match, Schema } from "effect";
-import type { AgentAdapterId, AgentCapability } from "../../domain/links/agent-adapter-schema.ts";
+import type { AgentAdapterId, AgentCapability } from "../../domain/agents/agent-adapter-schema.ts";
 import type { ManagedLinkTarget } from "../../domain/links/managed-link-schema.ts";
 import {
   ChoiceNamespaceSchema,

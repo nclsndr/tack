@@ -2,7 +2,7 @@ import { agentAdapterDescriptor } from "../../domain/agents/agent-adapter.ts";
 import { deliversKind } from "../../domain/agents/agent-layout.ts";
 import type { SkillChoice, UserLinkedExclude } from "../../domain/choices/choice-schema.ts";
 import { selectedDependencyAddresses } from "../../domain/choices/dependency-resolution.ts";
-import type { AgentAdapterId } from "../../domain/links/agent-adapter-schema.ts";
+import type { AgentAdapterId } from "../../domain/agents/agent-adapter-schema.ts";
 import { resolveContextSelection } from "../../domain/profiles/profile-application.ts";
 import {
   isLinkableAddress,

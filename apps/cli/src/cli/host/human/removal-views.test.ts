@@ -49,7 +49,7 @@ import {
   ProjectRefreshCommandResultSchema,
   type ProjectRefreshCommandPlan,
   type ProjectRefreshCommandResult,
-} from "../../../domain/projects/project-refresh-schema.ts";
+} from "../../../features/refresh/project-refresh-schema.ts";
 import { destinationObservationMessage } from "../../../features/links/managed-link-ownership.ts";
 import {
   RemovalPlanSchema,

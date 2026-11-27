@@ -4,7 +4,7 @@ import type {
   AgentAdapterDescriptor,
   AgentAdapterId,
   AgentCapability,
-} from "../../domain/links/agent-adapter-schema.ts";
+} from "../../domain/agents/agent-adapter-schema.ts";
 import {
   agentAdapterDescriptor,
   resolveAdapterCapability,

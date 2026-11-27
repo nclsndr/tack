@@ -11,7 +11,7 @@ import {
   EnabledAdaptersSchema,
   type AgentAdapterDescriptor,
   type AgentCapabilityDecision,
-} from "../../domain/links/agent-adapter-schema.ts";
+} from "../../domain/agents/agent-adapter-schema.ts";
 import {
   agentAdapterDescriptor,
   agentAdapterDescriptors,

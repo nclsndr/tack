@@ -1,9 +1,9 @@
 import { Schema } from "effect";
 import { agentAdapterDescriptor } from "../agents/agent-adapter.ts";
 import { deliversKind, managedLinkDestinationPath } from "../agents/agent-layout.ts";
-import { AgentAdapterIdSchema, type AgentAdapterId } from "../links/agent-adapter-schema.ts";
+import { AgentAdapterIdSchema, type AgentAdapterId } from "../agents/agent-adapter-schema.ts";
 import type { ResourceAddress } from "../sources/catalog-schema.ts";
-import type { ProfileApplication } from "./profile-application.ts";
+import type { ProfileApplication } from "../state/profile-application-schema.ts";
 
 /**
  * A member one enabled agent cannot take, such as a command for an agent Tack links no commands

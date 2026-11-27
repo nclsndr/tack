@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@effect/vitest";
 import { agentLink } from "../links/link-record-schema.ts";
-import type { ProfileApplication } from "../profiles/profile-application.ts";
-import { emptyState, type State, type StateProject } from "../state/state-schema.ts";
+import type { ProfileApplication } from "./profile-application-schema.ts";
+import { emptyState, type State, type StateProject } from "./state-schema.ts";
 import {
   finalizeHandoffs,
   finalizeRoot,

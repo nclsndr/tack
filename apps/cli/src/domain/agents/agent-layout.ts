@@ -1,6 +1,6 @@
 import type { Path } from "effect";
 import { linkableKinds, resourceKinds, type LinkableKind } from "../resources/kinds.ts";
-import type { AgentAdapterDescriptor, AgentAdapterId } from "../links/agent-adapter-schema.ts";
+import type { AgentAdapterDescriptor, AgentAdapterId } from "./agent-adapter-schema.ts";
 import { agentAdapterDescriptor, agentAdapterIds } from "./agent-adapter.ts";
 
 /** A concrete user or project-root target whose adapter directories can receive managed links. */

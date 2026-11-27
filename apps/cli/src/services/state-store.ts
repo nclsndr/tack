@@ -1,6 +1,6 @@
 import { Context, Effect, Schema } from "effect";
 import type { State } from "../domain/state/state-schema.ts";
-import type { AgentAdapterId } from "../domain/links/agent-adapter-schema.ts";
+import type { AgentAdapterId } from "../domain/agents/agent-adapter-schema.ts";
 
 /** Inputs that the application boundary resolves before operating on Tack state. */
 export type StateOptions = {

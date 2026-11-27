@@ -27,7 +27,7 @@ import {
   ProjectRefreshCommandResultSchema,
   type ProjectRefreshChange,
   type ProjectRefreshProject,
-} from "../../../domain/projects/project-refresh-schema.ts";
+} from "../../../features/refresh/project-refresh-schema.ts";
 import {
   RemovalResultSchema,
   type RemovalPlan,

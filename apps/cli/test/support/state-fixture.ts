@@ -25,7 +25,7 @@ import type {
   ManagedLinkEvidence,
   ManagedLinkTarget,
 } from "../../src/domain/links/managed-link-schema.ts";
-import type { AgentAdapterId } from "../../src/domain/links/agent-adapter-schema.ts";
+import type { AgentAdapterId } from "../../src/domain/agents/agent-adapter-schema.ts";
 import { managedLinkDestinationPath } from "../../src/domain/agents/agent-layout.ts";
 import type { PendingRemoval } from "../../src/domain/links/pending-removal-schema.ts";
 import { compareCodeUnits } from "../../src/domain/identity/ordering.ts";

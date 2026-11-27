@@ -1,6 +1,6 @@
 import { profileDelivery } from "../../domain/profiles/profile-delivery.ts";
 import { Effect } from "effect";
-import type { AgentAdapterId, AgentCapability } from "../../domain/links/agent-adapter-schema.ts";
+import type { AgentAdapterId, AgentCapability } from "../../domain/agents/agent-adapter-schema.ts";
 import { resolveEffectiveAdapters } from "./agent.ts";
 import { choiceNamespaceIdentity } from "../../domain/choices/choice-schema.ts";
 import { managedLinkTargetNamespace } from "../../domain/links/managed-link-schema.ts";

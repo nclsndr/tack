@@ -1,5 +1,5 @@
 import { Schema } from "effect";
-import { AgentAdapterIdSchema, AgentCapabilitySchema } from "../links/agent-adapter-schema.ts";
+import { AgentAdapterIdSchema, AgentCapabilitySchema } from "../agents/agent-adapter-schema.ts";
 import {
   DocsLinkApplicationSchema,
   DocsLinkPlanSchema,

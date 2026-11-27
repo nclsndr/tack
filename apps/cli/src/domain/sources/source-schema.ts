@@ -1,4 +1,4 @@
-import { BundleDigestSchema, BundleFileSchema } from "../bundles/bundle-facts.ts";
+import { BundleDigestSchema, BundleFileSchema } from "./bundle-facts.ts";
 import { Predicate, Schema, SchemaIssue } from "effect";
 import { CanonicalPathSchema, PortableNameSchema } from "../identity/identity-schema.ts";
 import { Yaml } from "../runtime-neutral.ts";

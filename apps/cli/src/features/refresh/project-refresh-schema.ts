@@ -1,13 +1,16 @@
 import { Schema } from "effect";
-import { HandMadeEntrySchema } from "../agents/hand-made-entry.ts";
-import { ManagedLinkEvidenceCollectionSchema } from "../links/managed-link-schema.ts";
-import { DocsLinkApplicationSchema, DocsLinkPlanSchema } from "../docs/docs-schema.ts";
-import { RemovalPlanSchema, RemovalResultSchema } from "../reconciliation/removal-schema.ts";
+import { HandMadeEntrySchema } from "../../domain/agents/hand-made-entry.ts";
+import { ManagedLinkEvidenceCollectionSchema } from "../../domain/links/managed-link-schema.ts";
+import { DocsLinkApplicationSchema, DocsLinkPlanSchema } from "../../domain/docs/docs-schema.ts";
+import {
+  RemovalPlanSchema,
+  RemovalResultSchema,
+} from "../../domain/reconciliation/removal-schema.ts";
 import {
   ProjectNameSchema,
   ProjectPathSchema,
   ReportedProjectRecordSchema,
-} from "./project-schema.ts";
+} from "../../domain/projects/project-schema.ts";
 
 /** The only project-refresh plan version supported by this release. */
 export const projectRefreshPlanVersion = 1 as const;

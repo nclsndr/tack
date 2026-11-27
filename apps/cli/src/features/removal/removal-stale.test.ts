@@ -4,7 +4,7 @@ import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { planRemovalAt, retryPendingRemovals } from "../../../test/support/removal.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
-import type { ProfileApplication } from "../../domain/profiles/profile-application.ts";
+import type { ProfileApplication } from "../../domain/state/profile-application-schema.ts";
 import {
   initializeState,
   readState,

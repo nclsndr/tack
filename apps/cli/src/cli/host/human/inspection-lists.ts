@@ -2,7 +2,7 @@ import {
   choiceNamespaceIdentity,
   type SkillChoice,
 } from "../../../domain/choices/choice-schema.ts";
-import { AgentAdapterIdSchema } from "../../../domain/links/agent-adapter-schema.ts";
+import { AgentAdapterIdSchema } from "../../../domain/agents/agent-adapter-schema.ts";
 import { ChoiceListPayloadSchema } from "../../../features/choices/choice.ts";
 import { AdapterListPayloadSchema } from "../../../features/reconciliation/agent.ts";
 import type { HumanViewRegistry } from "./render.ts";

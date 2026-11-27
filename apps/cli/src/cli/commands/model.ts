@@ -3,7 +3,7 @@ import { NextCommandsSchema } from "../../domain/hints/next-commands.ts";
 import type { DocsResourceRequest } from "../../domain/docs/docs-schema.ts";
 import type { ChoiceNamespace } from "../../domain/choices/choice-schema.ts";
 import type { TargetSelector } from "../../domain/projects/project-schema.ts";
-import type { AgentAdapterId, AgentCapability } from "../../domain/links/agent-adapter-schema.ts";
+import type { AgentAdapterId, AgentCapability } from "../../domain/agents/agent-adapter-schema.ts";
 import type { ResourceKind, SelectableKind } from "../../domain/resources/kinds.ts";
 import type { OperatorRunRequest } from "../../domain/execution/execution-schema.ts";
 

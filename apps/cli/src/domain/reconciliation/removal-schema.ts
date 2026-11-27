@@ -4,7 +4,7 @@ import {
   DocsPendingRemovalsSchema,
   DocsRemovalActionsSchema,
 } from "../docs/docs-schema.ts";
-import { AgentAdapterIdSchema } from "../links/agent-adapter-schema.ts";
+import { AgentAdapterIdSchema } from "../agents/agent-adapter-schema.ts";
 import {
   ManagedLinkEvidenceSchema,
   ManagedLinkEvidenceCollectionSchema,
