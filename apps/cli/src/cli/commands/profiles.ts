@@ -1,12 +1,11 @@
 import { Effect, Option } from "effect";
 import { booleanFlag, optionalFlag, optionalStringFlag } from "./flag-utils.ts";
 import { handle } from "./invocation-receiver.ts";
-import { applyFlag, operationContract } from "./operation-contract.ts";
+import { applyFlag } from "./operation-contract.ts";
 import { namespaceFrom, projectFlag, userFlag } from "./target-selector.ts";
 import { Argument, Command, Flag } from "effect/cli";
 import { PortableNameSchema } from "../../domain/identity/identity-schema.ts";
 import { receive } from "./invocation-receiver.ts";
-import { readOnly } from "./operation-contract.ts";
 
 const explicitTargetFlags = {
   projectName: projectFlag,
@@ -51,11 +50,6 @@ const apply = Command.make(
     { command: "tack profile apply tools:ci --project ci --target-root /work/repo" },
     { command: "tack profile apply tools:ci --user --target-home /isolated/home" },
   ]),
-  operationContract({
-    mutation: "preview-apply",
-    slots: ["plan", "applied"],
-    applySlots: ["plan", "applied"],
-  }),
 );
 
 const save = Command.make(
@@ -89,11 +83,6 @@ const save = Command.make(
     { command: "tack profile save /path/to/source ci --project demo" },
     { command: "tack profile save /path/to/source toolbox --input user --apply" },
   ]),
-  operationContract({
-    mutation: "preview-apply",
-    slots: ["plan", "applied"],
-    applySlots: ["plan", "applied"],
-  }),
 );
 const adopt = Command.make(
   "adopt",
@@ -121,11 +110,6 @@ const adopt = Command.make(
     { command: "tack profile adopt tools:ci --project demo" },
     { command: "tack profile adopt tools:toolbox --user --apply" },
   ]),
-  operationContract({
-    mutation: "preview-apply",
-    slots: ["plan", "applied"],
-    applySlots: ["plan", "applied"],
-  }),
 );
 
 const exportBundle = Command.make(
@@ -137,11 +121,6 @@ const exportBundle = Command.make(
     "Preview exact direct/required content, support, prerequisites and sensitive-path findings. --apply writes a new tar.gz artifact. No code, hook or installer runs.",
   ),
   Command.withExamples([{ command: "tack profile export tools:ci /artifacts/ci.tar.gz" }]),
-  operationContract({
-    mutation: "preview-apply",
-    slots: ["plan", "applied"],
-    applySlots: ["plan", "applied"],
-  }),
 );
 const inspectBundle = Command.make("inspect-bundle", { file: Argument.String("file") }, (request) =>
   receive({ _tag: "profile-inspect-bundle", ...request }),
@@ -150,7 +129,6 @@ const inspectBundle = Command.make("inspect-bundle", { file: Argument.String("fi
     "Read a content bundle's manifest, files, inventory and setup requirements offline. Run tack check FILE for complete validation. No state, original source, fetch or execution.",
   ),
   Command.withExamples([{ command: "tack profile inspect-bundle /artifacts/ci.tar.gz" }]),
-  readOnly,
 );
 const applyBundle = Command.make(
   "apply-bundle",
@@ -176,11 +154,6 @@ const applyBundle = Command.make(
         "tack profile apply-bundle /artifacts/ci.tar.gz --project ci --target-root /work/repo",
     },
   ]),
-  operationContract({
-    mutation: "preview-apply",
-    slots: ["plan", "applied"],
-    applySlots: ["plan", "applied"],
-  }),
 );
 
 /** Authoring and explicit target operations for fixed profiles. */

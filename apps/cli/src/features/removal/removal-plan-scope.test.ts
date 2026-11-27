@@ -16,7 +16,7 @@ const owedDocsWorld = Effect.gen(function* () {
   const path = yield* Path.Path;
   const root = yield* fs.realPath(yield* fs.makeTempDirectoryScoped({ prefix: "tack-plan-" }));
   const options = {
-    environment: { TACK_STATE_DIR: path.join(root, "state") },
+    stateDirectory: path.join(root, "state"),
     homeDirectory: path.join(root, "home"),
   } satisfies StateOptions;
   yield* initializeState(options);

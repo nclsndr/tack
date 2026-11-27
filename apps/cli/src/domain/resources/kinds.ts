@@ -25,6 +25,8 @@ type ResourceKindTraits = {
   readonly activation: boolean;
   /** The `tack.yaml` key that declares resources of this kind. */
   readonly declarationKey: string;
+  /** What one resource of this kind is on disk, and so what a link to it points at. */
+  readonly entryType: "file" | "directory";
 };
 
 /**
@@ -39,6 +41,7 @@ export const resourceKinds = {
     importable: true,
     activation: true,
     declarationKey: "skills",
+    entryType: "directory",
   },
   command: {
     selectable: true,
@@ -47,6 +50,7 @@ export const resourceKinds = {
     importable: false,
     activation: true,
     declarationKey: "commands",
+    entryType: "file",
   },
   context: {
     selectable: true,
@@ -55,6 +59,7 @@ export const resourceKinds = {
     importable: false,
     activation: false,
     declarationKey: "context",
+    entryType: "file",
   },
   script: {
     selectable: false,
@@ -63,6 +68,7 @@ export const resourceKinds = {
     importable: false,
     activation: false,
     declarationKey: "scripts",
+    entryType: "file",
   },
   docs: {
     selectable: false,
@@ -71,6 +77,7 @@ export const resourceKinds = {
     importable: false,
     activation: false,
     declarationKey: "docs",
+    entryType: "directory",
   },
 } as const satisfies Record<ResourceKind, ResourceKindTraits>;
 

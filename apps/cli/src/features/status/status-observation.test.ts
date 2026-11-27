@@ -1,9 +1,9 @@
 import { skillText } from "../../../test/support/source-tree.ts";
-import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "../../../test/support/state-fixture.ts";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
-import { initializeState, type StateOptions } from "../../services/state-store.ts";
+import { initializeState } from "../../services/state-store.ts";
 import { registerSource } from "../sources/source.ts";
 import { enableAdapters } from "../reconciliation/agent.ts";
 import { runStatus } from "./status.ts";
@@ -18,10 +18,7 @@ const world = Effect.gen(function* () {
   const root = yield* fs.realPath(yield* fs.makeTempDirectoryScoped({ prefix: "tack-status-" }));
   const home = path.join(root, "home");
   const source = path.join(root, "My Notes");
-  const options = {
-    environment: { TACK_STATE_DIR: path.join(root, "state") },
-    homeDirectory: home,
-  } satisfies StateOptions;
+  const options = stateOptionsAt(path.join(root, "state"), home);
   yield* fs.makeDirectory(path.join(source, "skills", "valid"), { recursive: true });
   yield* fs.writeFileString(
     path.join(source, "tack.yaml"),

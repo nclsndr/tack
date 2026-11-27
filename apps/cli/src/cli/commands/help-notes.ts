@@ -1,11 +1,9 @@
 import { Context } from "effect";
 import { Command } from "effect/cli";
+import type { HelpNoteSchema } from "./command-payloads.ts";
 
 /** One titled block of `term  meaning` rows that help prints after a command's flags. */
-export type HelpNote = {
-  readonly title: string;
-  readonly rows: ReadonlyArray<{ readonly term: string; readonly text: string }>;
-};
+export type HelpNote = typeof HelpNoteSchema.Type;
 
 /** Annotates a command with the notes its help page adds, such as what each status value means. */
 export class HelpNotesAnnotation extends Context.Service<

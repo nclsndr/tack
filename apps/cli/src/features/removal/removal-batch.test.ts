@@ -22,9 +22,9 @@ import {
   removeProjectRoot,
   retryPendingRemovals,
 } from "../../../test/support/removal.ts";
-import { disableAdapter } from "../maintenance/adapter-disablement.ts";
+import { disableAdapter } from "./adapter-disablement.ts";
 import { withRecoveredWriter } from "../writer/recovered-writer.ts";
-import { cleanManagedLinks, resetTack } from "../maintenance/selected-removal.ts";
+import { cleanManagedLinks, resetTack } from "./selected-removal.ts";
 import { applyRemovalWithWriter } from "./removal-apply.ts";
 
 /*
@@ -58,7 +58,7 @@ const withLinks = <A, E, R>(count: number, use: (world: World) => Effect.Effect<
     const source = path.join(root, "source");
     let writes = 0;
     const options: StateOptions = {
-      environment: { TACK_STATE_DIR: stateDirectory },
+      stateDirectory,
       homeDirectory: path.join(root, "home"),
       observer: {
         wrote: () => {

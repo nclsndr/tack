@@ -48,18 +48,22 @@ export const generatedTsconfig = `${JSON.stringify(
 )}\n`;
 
 /** What `tack types` does, or did, to one file. */
-type TypesFileAction = "create" | "update" | "unchanged" | "keep";
+const TypesFileActionSchema = Schema.Literals(["create", "update", "unchanged", "keep"]);
+type TypesFileAction = typeof TypesFileActionSchema.Type;
 
 /** The `types` plan: the source folder, each file's action, and whether the stub is in scope. */
-export type TypesPlan = {
-  readonly directory: string;
-  readonly files: ReadonlyArray<{ readonly path: string; readonly action: TypesFileAction }>;
+export const TypesPlanSchema = Schema.Struct({
+  directory: Schema.String,
+  files: Schema.Array(Schema.Struct({ path: Schema.String, action: TypesFileActionSchema })),
   /**
    * Whether the source's `tsconfig.json` includes the stub; `null` when Tack cannot read it, so the
    * author checks it by hand.
    */
-  readonly inScope: boolean | null;
-};
+  inScope: Schema.NullOr(Schema.Boolean),
+});
+
+/** The `types` plan, as {@link TypesPlanSchema} describes it. */
+export type TypesPlan = typeof TypesPlanSchema.Type;
 
 /** A folder that is not a source root: `tack types` writes only next to a `tack.yaml`. */
 export class TypesTargetError extends Schema.TaggedError<TypesTargetError>()("TypesTargetError", {

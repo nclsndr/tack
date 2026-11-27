@@ -1,6 +1,7 @@
 import { Schema } from "effect";
 import { CanonicalPathSchema } from "../identity/identity-schema.ts";
 import { compareCodeUnits, sortAndDedupeBy } from "../identity/ordering.ts";
+import { kindAndNameKey } from "./choice-schema.ts";
 import type { InitialSelection } from "./selection.ts";
 import {
   SelectableAddressSchema,
@@ -229,7 +230,7 @@ const labelUnresolved = (
 
 /** What every dependency lookup of one catalog reads, built once so a lookup never scans it. */
 type DependencyIndex = {
-  /** The entries of each kind and name, across sources, keyed by {@link kindAndName}. */
+  /** The entries of each kind and name, across sources, keyed by {@link kindAndNameKey}. */
   readonly byKindAndName: ReadonlyMap<string, ReadonlyArray<SelectableCatalogEntry>>;
   /** The identities of the quarantined resources. */
   readonly quarantined: ReadonlySet<string>;
@@ -238,8 +239,6 @@ type DependencyIndex = {
   readonly sources: NonNullable<Catalog["sources"]>;
 };
 
-const kindAndName = (kind: string, name: string) => `${kind}\u0000${name}`;
-
 /** Groups the entries by kind and name, so a lookup reads only the entries a dependency can name. */
 const indexDependencies = (
   entries: Iterable<SelectableCatalogEntry>,
@@ -247,7 +246,7 @@ const indexDependencies = (
   sources: NonNullable<Catalog["sources"]>,
 ): DependencyIndex => ({
   byKindAndName: [...entries].reduce((index, entry) => {
-    const key = kindAndName(entry.address.kind, entry.address.name);
+    const key = kindAndNameKey(entry.address);
     return index.set(key, [...(index.get(key) ?? []), entry]);
   }, new Map<string, ReadonlyArray<SelectableCatalogEntry>>()),
   quarantined: new Set(
@@ -273,7 +272,7 @@ const findDependency = (
   dependency: typeof ResourceDependencySchema.Type,
   { byKindAndName, quarantined, sourceNames, sources }: DependencyIndex,
 ): DependencyFind => {
-  const candidates = byKindAndName.get(kindAndName(dependency.kind, dependency.name)) ?? [];
+  const candidates = byKindAndName.get(kindAndNameKey(dependency)) ?? [];
   /** The names of the given sources, in code-unit order. */
   const namesOf = (ids: ReadonlyArray<string>) =>
     ids.map((id) => sourceNames.get(id) ?? id).sort(compareCodeUnits);
@@ -663,9 +662,7 @@ export const resolveDependencyClosure = ({
         }
         const optionalDependencies = ("dependencies" in member ? member.dependencies : [])
           .filter((dependency) => dependency.optional === true)
-          .sort((left, right) =>
-            compareCodeUnits(`${left.kind}\u0000${left.name}`, `${right.kind}\u0000${right.name}`),
-          );
+          .sort((left, right) => compareCodeUnits(kindAndNameKey(left), kindAndNameKey(right)));
         for (const dependency of optionalDependencies) {
           const lookup = dependencyLookup(member.address, dependency, index, excluded);
           if (lookup.reason !== undefined) {

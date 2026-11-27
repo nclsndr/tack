@@ -2,19 +2,21 @@ import { checkCommand } from "./check.ts";
 import { guideCommand } from "./guide.ts";
 import { typesCommand } from "./types.ts";
 import { Command } from "effect/cli";
-import { pickCommand } from "./choices.ts";
+import { pickCommand } from "./pick.ts";
 import { docsCommand } from "./docs.ts";
 import { importCommands } from "./imports.ts";
-import { scriptCommand } from "./execution.ts";
-import { maintenanceCommands } from "./maintenance.ts";
+import { scriptCommand } from "./script.ts";
+import { stateCommand } from "./state.ts";
+import { statusCommand } from "./status.ts";
 import { projectCommand } from "./projects.ts";
 import { doctorCommand } from "./doctor.ts";
 import { exploreCommand } from "./explore.ts";
-import { reconciliationCommands } from "./reconciliation.ts";
-import { upgradeCommand } from "./self.ts";
+import { adapterCommand } from "./adapter.ts";
+import { syncCommand } from "./sync.ts";
+import { upgradeCommand } from "./upgrade.ts";
 import { rootCommand } from "./root-command.ts";
 import { sourceCommands } from "./sources.ts";
-import { initCommand } from "./setup.ts";
+import { initCommand } from "./init.ts";
 import { profileCommand } from "./profiles.ts";
 
 /**
@@ -35,8 +37,10 @@ export const tackCommand = rootCommand.pipe(
     ...importCommands,
     projectCommand,
     pickCommand,
-    ...reconciliationCommands,
-    ...maintenanceCommands,
+    adapterCommand,
+    syncCommand,
+    statusCommand,
+    stateCommand,
     upgradeCommand,
   ]),
 );

@@ -4,7 +4,7 @@ import { type State } from "../../domain/state/state-schema.ts";
 import { readInvocationSnapshot } from "../snapshot/command-snapshot.ts";
 import { managedLinksOf } from "../../domain/links/link-record-schema.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
-import { allSkillChoices } from "../../domain/state/state-intent.ts";
+import { allChoices } from "../../domain/state/state-intent.ts";
 import { inspectSources } from "../sources/source.ts";
 import { sourceDisplayName } from "./import-destination.ts";
 import { importFailure, importFileFailure } from "./import-error.ts";
@@ -97,7 +97,7 @@ const planFor = Effect.fnUntraced(function* (state: State, reference: string, fo
         ),
     ),
   ].sort(compareCodeUnits);
-  const picks = allSkillChoices(state)
+  const picks = allChoices(state)
     .filter(
       (choice) =>
         choice.address.kind === "skill" &&

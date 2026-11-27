@@ -27,7 +27,7 @@ import {
   handOffProject,
   handOffRoot,
   removeProject,
-} from "../../domain/projects/project-lifecycle.ts";
+} from "../../domain/state/project-lifecycle.ts";
 import { Destination, observeDestination } from "../../services/destination.ts";
 import {
   concludeResult,
@@ -293,16 +293,16 @@ export const applyRemovalWithWriter = Effect.fnUntraced(function* (
       }),
     extension,
   );
-  const docsPending = writer.stateExists()
+  const docsPendingRemovals = writer.stateExists()
     ? docsPendingRemovalsOf(writer.current().data.links)
     : [];
   return {
     actions,
     ...(docsActions.length === 0 ? {} : { docsActions }),
-    ...(docsPending.length === 0 ? {} : { docsPending }),
+    ...(docsPendingRemovals.length === 0 ? {} : { docsPendingRemovals }),
     finalizedProject: finalized,
     kind: "managed-removal-application" as const,
-    pending: writer.stateExists()
+    pendingRemovals: writer.stateExists()
       ? statePendingRemovals(writer.current()).map((pending) => reportPendingRemoval(pending))
       : [],
     version: 1 as const,

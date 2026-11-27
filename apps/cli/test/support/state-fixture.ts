@@ -7,7 +7,7 @@ import { encodeState } from "../../src/domain/state/state-codec.ts";
 import { initializeState, mutateState } from "../../src/services/state-store.ts";
 import type { JournalEntry, StateProject } from "../../src/domain/state/state-schema.ts";
 import type { ReconciliationAction } from "../../src/domain/reconciliation/reconciliation-schema.ts";
-import type { SkillChoice } from "../../src/domain/choices/choice-schema.ts";
+import type { Choice } from "../../src/domain/choices/choice-schema.ts";
 import {
   docsLink,
   type DocsManagedLink,
@@ -25,7 +25,7 @@ import type {
   ManagedLinkEvidence,
   ManagedLinkTarget,
 } from "../../src/domain/links/managed-link-schema.ts";
-import type { AgentAdapterId } from "../../src/domain/links/agent-adapter-schema.ts";
+import type { AgentAdapterId } from "../../src/domain/agents/agent-adapter-schema.ts";
 import { managedLinkDestinationPath } from "../../src/domain/agents/agent-layout.ts";
 import type { PendingRemoval } from "../../src/domain/links/pending-removal-schema.ts";
 import { compareCodeUnits } from "../../src/domain/identity/ordering.ts";
@@ -60,7 +60,7 @@ export type FixtureData = Partial<Omit<State["data"], "projects" | "journal">> &
   readonly pendingRemovals?: ReadonlyArray<PendingRemoval>;
   /** Docs mounts, recorded in the same ledger as agent links. */
   readonly docsLinks?: ReadonlyArray<DocsManagedLink>;
-  readonly choices?: ReadonlyArray<SkillChoice>;
+  readonly choices?: ReadonlyArray<Choice>;
   readonly docsProjects?: ReadonlyArray<DocsProject>;
   /** An agent action prepared in the journal. */
   readonly preparedAgentAction?: PreparedAgentAction;
@@ -215,10 +215,22 @@ export const projectRecords = (state: State) =>
 export const encodeStateFixture = (state: FlatFixture): string =>
   JSON.stringify(Effect.runSync(encodeState(runtimeFixture(state))));
 
+/** The state options of a test: state in `directory`, and the operator home when one is given. */
+export function stateOptionsAt(directory: string): { readonly stateDirectory: string };
+export function stateOptionsAt(
+  directory: string,
+  home: string,
+): { readonly stateDirectory: string; readonly homeDirectory: string };
+export function stateOptionsAt(directory: string, home?: string): StateOptions {
+  return home === undefined
+    ? { stateDirectory: directory }
+    : { stateDirectory: directory, homeDirectory: home };
+}
+
 /** The temporary world of a state test: a canonical root with an initialized state below it. */
 export type StateFixture = {
   readonly options: StateOptions & {
-    readonly environment: { readonly TACK_STATE_DIR: string };
+    readonly stateDirectory: string;
     readonly homeDirectory: string;
   };
   readonly root: string;
@@ -239,7 +251,7 @@ export const withStateFixture = <A, E, R>(use: (fixture: StateFixture) => Effect
     );
     const stateDirectory = path.join(root, "state");
     const options = {
-      environment: { TACK_STATE_DIR: stateDirectory },
+      stateDirectory,
       homeDirectory: path.join(root, "home"),
     };
     yield* fileSystem.makeDirectory(options.homeDirectory, { recursive: true });

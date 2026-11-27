@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 
+import type { PreviewOrApplied } from "../../domain/plan-and-apply.ts";
 import { recoverLinkJournal } from "../links/link-settlement.ts";
 import {
   withStateCheckpointWriter,
@@ -11,12 +12,6 @@ import {
   writerInvocationSnapshot,
   type CommandSnapshot,
 } from "../snapshot/command-snapshot.ts";
-
-/** One plan and, after an explicit apply, the outcome produced from that same plan. */
-export type PreviewOrApplied<Plan, Applied> = {
-  readonly applied?: Applied;
-  readonly plan: Plan;
-};
 
 /**
  * Holds the state writer lock and settles the prepared journal, whichever kind of link its

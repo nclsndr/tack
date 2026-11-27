@@ -1,5 +1,5 @@
 import { bareSkillText, declare, writeUnder } from "../../../test/support/source-tree.ts";
-import { resolveCatalogAt, setSkillChoice } from "../../../test/support/snapshot-helpers.ts";
+import { resolveCatalogAt, setChoice } from "../../../test/support/snapshot-helpers.ts";
 
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, PlatformError, Schema } from "effect";
@@ -8,6 +8,7 @@ import { LiveTestLayer, provideTestFileSystem } from "../../../test/support/live
 import { initializeState, readState, type StateOptions } from "../../services/state-store.ts";
 import { registerSource, inspectSources } from "./source.ts";
 import { resolveCatalog } from "./catalog.ts";
+import { stateOptionsAt } from "../../../test/support/state-fixture.ts";
 
 const withSource = <A, E, R>(
   use: (fixture: { root: string; options: StateOptions }) => Effect.Effect<A, E, R>,
@@ -17,10 +18,7 @@ const withSource = <A, E, R>(
     const path = yield* Path.Path;
     const temporary = yield* fs.makeTempDirectoryScoped({ prefix: "tack-unified-catalog-" });
     const root = yield* fs.realPath(temporary);
-    const options = {
-      environment: { TACK_STATE_DIR: path.join(root, "state") },
-      homeDirectory: root,
-    };
+    const options = stateOptionsAt(path.join(root, "state"), root);
     yield* initializeState(options);
     yield* fs.writeFileString(path.join(root, "tack.yaml"), "version: 1\nname: shared\n");
     return yield* use({ root, options });
@@ -237,7 +235,7 @@ it.layer(LiveTestLayer)("unified source catalog", (test) => {
           yield* write(root, "tack.yaml", declare("shared", "skills:", "  - path: skills"));
           yield* write(root, "skills/valid/SKILL.md", bareSkillText("valid"));
           const registered = yield* registerSource(options, { sourcePath: root });
-          yield* setSkillChoice(options, {
+          yield* setChoice(options, {
             address: {
               kind: "skill",
               name: "valid",

@@ -2,7 +2,7 @@ import { skillText } from "../../../test/support/source-tree.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
-import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "../../../test/support/state-fixture.ts";
 import { initializeState, type StateOptions } from "../../services/state-store.ts";
 import { attachDocs } from "../docs/docs.ts";
 import { enableAdapters } from "./agent.ts";
@@ -31,10 +31,7 @@ it.layer(LiveTestLayer)("combined sync", (test) => {
         skillText("review", { description: "Review", tack: ["activation: default"], body: "" }),
       );
       yield* fs.writeFileString(path.join(source, "knowledge", "start.md"), "# Start\n");
-      const options: StateOptions = {
-        homeDirectory: home,
-        environment: { TACK_STATE_DIR: path.join(root, "state") },
-      };
+      const options: StateOptions = stateOptionsAt(path.join(root, "state"), home);
       yield* initializeState(options);
       yield* mutateStateFixture(options, (state) => ({
         ...state,
@@ -107,11 +104,11 @@ it.layer(LiveTestLayer)("combined sync", (test) => {
         },
       }));
       const owed = yield* runSyncCommand(options, request);
-      expect(owed.plan.docsPending.map((pending) => pending.evidence.destinationPath)).toEqual([
-        docsPath,
-      ]);
       expect(
-        (yield* runSyncCommand(options, { ...request, noDocs: true })).plan.docsPending,
+        owed.plan.docsPendingRemovals.map((pending) => pending.evidence.destinationPath),
+      ).toEqual([docsPath]);
+      expect(
+        (yield* runSyncCommand(options, { ...request, noDocs: true })).plan.docsPendingRemovals,
       ).toEqual([]);
     }).pipe(Effect.scoped),
   );

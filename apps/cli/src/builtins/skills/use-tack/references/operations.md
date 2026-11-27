@@ -136,7 +136,8 @@ New picks store the source registration ID, kind, name and decision. Use exactly
 metadata-driven selection, including opt-in user activation when `user-activation` is omitted. Project choices cannot suppress a global skill,
 one the user namespace selects and links at user level. `pick exclude --project` refuses such a
 resource with `project-exclude-refused` and records nothing; its Next names
-`pick exclude SOURCE:NAME --kind KIND --user`, which turns the resource off everywhere. An exclude
+`pick exclude SOURCE:NAME --kind KIND --user`, which turns the resource off everywhere.
+`tack explore` refuses the same exclude in its preview and before it saves any staged change. An exclude
 recorded before the user namespace linked the resource stays, and `sync` and `status` warn about it
 with `project-exclude-linked-for-user` and the same Next command. Inspect
 `status --user` when that explains unexpected availability.

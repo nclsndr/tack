@@ -4,7 +4,7 @@ import { writeUnder } from "./support/source-tree.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Schema } from "effect";
-import { exitCodeForEnvelope } from "../src/cli/host/public-outcome.ts";
+import { exitCodeForEnvelope } from "../src/cli/envelope/public-outcome.ts";
 import { SourceRegistrationPayloadSchema } from "../src/features/sources/source.ts";
 import { runHost } from "./support/host-runner.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";

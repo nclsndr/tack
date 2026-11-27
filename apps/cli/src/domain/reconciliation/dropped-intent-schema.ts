@@ -1,5 +1,5 @@
 import { Schema } from "effect";
-import { SkillChoiceSchema } from "../choices/choice-schema.ts";
+import { ChoiceSchema } from "../choices/choice-schema.ts";
 import { ProjectNameSchema } from "../projects/project-schema.ts";
 import { DocsResourceReferenceSchema } from "../docs/docs-schema.ts";
 import type { StateProject } from "../state/state-schema.ts";
@@ -10,7 +10,7 @@ import type { StateProject } from "../state/state-schema.ts";
  */
 
 /** A pick that the removal deletes, with the namespace that held it. */
-export const DroppedPickSchema = SkillChoiceSchema;
+export const DroppedPickSchema = ChoiceSchema;
 
 /** A docs attachment that the removal detaches, with the project that held it. */
 export const DroppedDocsAttachmentSchema = Schema.Struct({

@@ -11,7 +11,7 @@ import type { State } from "../../src/domain/state/state-schema.ts";
 import { registerSource } from "../../src/features/sources/source.ts";
 import { initializeState, type StateOptions } from "../../src/services/state-store.ts";
 import { syncDocs } from "./reconciliation.ts";
-import { mutateStateFixture } from "./state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "./state-fixture.ts";
 
 /** The temporary world of a docs test. */
 export type DocsWorld = {
@@ -31,10 +31,7 @@ export const withDocsWorld = <A, E, R>(use: (world: DocsWorld) => Effect.Effect<
     const fs = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
     const root = yield* fs.realPath(yield* fs.makeTempDirectoryScoped({ prefix: "tack-docs-" }));
-    const options = {
-      environment: { TACK_STATE_DIR: path.join(root, "state") },
-      homeDirectory: root,
-    };
+    const options = stateOptionsAt(path.join(root, "state"), root);
     yield* initializeState(options);
     const roots = [path.join(root, "project-a"), path.join(root, "project-b")];
     for (const directory of roots) yield* fs.makeDirectory(directory);

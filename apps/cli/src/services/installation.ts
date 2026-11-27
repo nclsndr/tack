@@ -4,10 +4,9 @@ import type { InstallKind } from "../domain/self/upgrade-guide.ts";
 /** The variable that selects an import step to crash at; source runs in tests only. */
 export const crashAtVariable = "TACK_IMPORT_CRASH_AT";
 
-/** What a built-ins prune needs: the operator home, its environment and the agent link folders. */
+/** What a built-ins prune needs: the operator home and the agent link folders. */
 export type BuiltInsPruneRequest = {
   readonly home: string;
-  readonly environment: Readonly<Record<string, string | undefined>>;
   readonly folders: ReadonlyArray<string>;
 };
 

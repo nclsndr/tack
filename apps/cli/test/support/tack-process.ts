@@ -3,12 +3,29 @@ import { expect } from "@effect/vitest";
 import { Effect, Schema, Stream } from "effect";
 import { ChildProcess, ChildProcessSpawner } from "effect/process";
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { agentMarkers } from "../../src/cli/host/human/terminal-context.ts";
-import { PublicEnvelopeSchema, type PublicEnvelope } from "../../src/cli/host/public-outcome.ts";
+import { agentMarkers } from "../../src/cli/human/terminal-context.ts";
+import {
+  PublicEnvelopeSchema,
+  type PublicEnvelope,
+} from "../../src/cli/envelope/public-outcome.ts";
 
 /** The root of the Tack repository. */
 export const repositoryRoot = resolve(import.meta.dirname, "../../../..");
+
+const { packageManager } = Schema.decodeUnknownSync(
+  Schema.Struct({ packageManager: Schema.String }),
+)(JSON.parse(readFileSync(join(repositoryRoot, "package.json"), "utf8")));
+
+/**
+ * Why a test that builds a release cannot run on this Bun, or `undefined` on the pinned one. The
+ * release build refuses any Bun but the `packageManager` pin, and CI runs the pin.
+ */
+export const unpinnedBunReason =
+  packageManager === `bun@${Bun.version}`
+    ? undefined
+    : `The release build needs ${packageManager}; this is bun@${Bun.version}.`;
 
 /** The CLI's source entrypoint, run by Bun. */
 export const sourceEntrypoint = join(repositoryRoot, "apps", "cli", "src", "main.ts");

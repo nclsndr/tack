@@ -3,14 +3,14 @@ import { expect, it } from "@effect/vitest";
 import { Effect, Schema } from "effect";
 import { readFileSync } from "node:fs";
 import { HelpPayloadSchema, parseInvocation } from "../src/cli/commands/index.ts";
-import { rootFlagNames } from "../src/cli/host/human/help.ts";
-import { operationMap } from "../src/cli/host/human/help-map.ts";
-import { renderGeneric, renderHuman } from "../src/cli/host/human/render.ts";
-import { makeStyle } from "../src/cli/host/human/style.ts";
-import { shellWord } from "../src/cli/host/command-line.ts";
-import { expectViewContract } from "../src/cli/host/human/human.test-support.ts";
-import { displayWidth } from "../src/cli/host/human/text.ts";
-import { PublicEnvelopeSchema, type PublicEnvelope } from "../src/cli/host/public-outcome.ts";
+import { rootFlagNames } from "../src/cli/human/help.ts";
+import { mapModeWords, operationMap } from "../src/cli/human/help-map.ts";
+import { renderGeneric, renderHuman } from "../src/cli/human/render.ts";
+import { makeStyle } from "../src/cli/human/style.ts";
+import { shellWord } from "../src/domain/hints/next-commands.ts";
+import { expectViewContract } from "../src/cli/human/human.test-support.ts";
+import { displayWidth } from "../src/cli/human/text.ts";
+import { PublicEnvelopeSchema, type PublicEnvelope } from "../src/cli/envelope/public-outcome.ts";
 import { ReconciliationPlanSchema } from "../src/domain/reconciliation/reconciliation-schema.ts";
 import { StatusPayloadSchema } from "../src/domain/status/status-schema.ts";
 
@@ -488,7 +488,9 @@ it("renders the root help as the operation map, grouped by task, with no schema 
     expect(linesOf(text), title).toContain(title);
     for (const { usage, mode } of rows)
       expect(
-        linesOf(text).some((line) => line.startsWith(`  ${usage} `) && line.includes(` ${mode} `)),
+        linesOf(text).some(
+          (line) => line.startsWith(`  ${usage} `) && line.includes(` ${mapModeWords[mode].word} `),
+        ),
         usage,
       ).toBe(true);
   }

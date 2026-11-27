@@ -1,6 +1,6 @@
 import { Schema } from "effect";
 import { HandMadeEntrySchema } from "../agents/hand-made-entry.ts";
-import { AgentAdapterIdSchema } from "../links/agent-adapter-schema.ts";
+import { AgentAdapterIdSchema } from "../agents/agent-adapter-schema.ts";
 import { SyncApplicationSchema, SyncPlanSchema } from "../reconciliation/sync-schema.ts";
 
 /** Whether one agent's home folder exists in the operator home. */

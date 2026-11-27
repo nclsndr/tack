@@ -1,5 +1,5 @@
 import { expect, it } from "@effect/vitest";
-import { resourceCountText } from "../src/cli/host/human/catalog.ts";
+import { resourceCountText } from "../src/cli/human/catalog.ts";
 
 const counts = [0, 1, 2];
 

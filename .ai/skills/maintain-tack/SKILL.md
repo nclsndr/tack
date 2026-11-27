@@ -11,6 +11,8 @@ makes agents run removed flags, miss new rules and teach operators behavior that
 **Change the skills in the same PR as the behavior.** A PR that alters what a skill describes is not
 done until the skill says the new thing.
 
+To place the code of a new command, feature or domain concept, use the `tack-cli-architecture` skill.
+
 ## What to update
 
 | File                                                                             | Owns                                                                                                                                                                                                              |
@@ -41,7 +43,7 @@ Run these against your change and read the code, not the skill, to decide what i
 
 | If the change touches…                                        | Compare with…                                                                                                                                                                                   |
 | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A command, subcommand, flag, alias or default                 | `bun tack --help` and `bun tack PATH... --help`, and the operation map in `cli/host/human/help-map.ts`. Aliases such as `list` and `ls` are not in the map: read `cli/commands/list-alias.ts`.  |
+| A command, subcommand, flag, alias or default                 | `bun tack --help` and `bun tack PATH... --help`, and the operation map in `cli/human/help-map.ts`. Aliases such as `list` and `ls` are not in the map: read `cli/commands/list-alias.ts`.       |
 | Which flags combine, which selector a command needs           | The command's handler in `apps/cli/src/cli/commands` and its route. A flag that "requires" another is a claim to test.                                                                          |
 | JSON payloads, `kind` names, stable commands                  | The payload schemas in `domain/*/*-schema.ts` and `cli/commands/manifest.ts`. Only `status`, `sync`, `init`, `doctor`, `upgrade` (with `upgrade status`) and `--version` are stable.            |
 | Human output, `--format`, color, `next`                       | Skills teach the text view and its `Next` block. Say that text views are unstable and not to be parsed.                                                                                         |
@@ -125,7 +127,7 @@ publishes as `@tackup/cli`, its workspace name, and the private workspace packag
   stderr filtering, console suppression, a longer timeout or a global sleep.
 - Treat a warning as a possible product bug: a missing `Drawer.Viewport` once broke swipe-to-close
   and touch scroll on mobile. A product fix ships with a regression test that goes red without it.
-- Test a text view beside it in `apps/cli/src/cli/host/human/`, on the helpers of
+- Test a text view beside it in `apps/cli/src/cli/human/`, on the helpers of
   `human.test-support.ts`. `render.test.ts` holds every operation to the view contract (fits 40, 80
   and 120 columns, no ANSI without color); a view test passes its long or wide samples to
   `expectViewContract` instead of checking widths or escapes itself.

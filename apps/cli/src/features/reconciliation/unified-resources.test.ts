@@ -1,14 +1,14 @@
 import { skillText } from "../../../test/support/source-tree.ts";
 import { fakeGit } from "../../../test/support/fake-git.ts";
 import { writeUnder } from "../../../test/support/source-tree.ts";
-import { setSkillChoice } from "../../../test/support/snapshot-helpers.ts";
+import { setChoice } from "../../../test/support/snapshot-helpers.ts";
 import {
   agentLink,
   managedLinksOf,
   pendingRemovalsOf,
 } from "../../domain/links/link-record-schema.ts";
-import { allSkillChoices } from "../../domain/state/state-intent.ts";
-import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
+import { allChoices } from "../../domain/state/state-intent.ts";
+import { mutateStateFixture, stateOptionsAt } from "../../../test/support/state-fixture.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, PlatformError, Schema } from "effect";
 import { LiveTestLayer, provideTestFileSystem } from "../../../test/support/live-test-layer.ts";
@@ -17,8 +17,8 @@ import { registerSource } from "../sources/source.ts";
 
 import { enableAdapters } from "./agent.ts";
 import { runStatus } from "../status/status.ts";
-import { cleanManagedLinks, resetTack } from "../maintenance/selected-removal.ts";
-import { disableAdapter } from "../maintenance/adapter-disablement.ts";
+import { cleanManagedLinks, resetTack } from "../removal/selected-removal.ts";
+import { disableAdapter } from "../removal/adapter-disablement.ts";
 import { runProjectRefreshCommand } from "../refresh/project-refresh.ts";
 import { ManagedLinkEvidenceSchema } from "../../domain/links/managed-link-schema.ts";
 import { applyReconciliationPlan, syncResources } from "../../../test/support/reconciliation.ts";
@@ -33,10 +33,7 @@ const fixture = Effect.fnUntraced(function* () {
   const home = path.join(root, "home");
   const source = path.join(root, "source");
   const statePath = path.join(root, "state", "state.json");
-  const options: StateOptions = {
-    homeDirectory: home,
-    environment: { TACK_STATE_DIR: path.dirname(statePath) },
-  };
+  const options: StateOptions = stateOptionsAt(path.dirname(statePath), home);
   const write = writeUnder(source);
   yield* fs.makeDirectory(home);
   yield* write(
@@ -105,7 +102,7 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
     () =>
       Effect.gen(function* () {
         const f = yield* fixture();
-        yield* setSkillChoice(f.options, {
+        yield* setChoice(f.options, {
           namespace: { _tag: "user" },
           address: {
             kind: "context",
@@ -169,7 +166,7 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
         expect(yield* f.fs.exists(f.path.join(f.source, "commands", "review.md"))).toBe(true);
         const retained = yield* readState(f.options);
         expect(managedLinksOf(retained.data.links)).toEqual([]);
-        expect(allSkillChoices(retained)).toHaveLength(1);
+        expect(allChoices(retained)).toHaveLength(1);
       }),
   );
 
@@ -253,7 +250,7 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
           f.command,
         );
         const reset = yield* resetTack(f.options, { apply: true });
-        expect(reset.applied?.pending).toHaveLength(1);
+        expect(reset.applied?.pendingRemovals).toHaveLength(1);
         const retained = yield* readState(f.options);
         expect(pendingRemovalsOf(retained.data.links)[0]).toMatchObject({
           cause: "reset",
@@ -381,7 +378,7 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
         }));
         const git = fakeGit(anchor, [{ path: activeRoot }]);
         // Out of the user's folder, so the project links the command itself.
-        yield* setSkillChoice(f.options, {
+        yield* setChoice(f.options, {
           namespace: { _tag: "user" },
           address: {
             kind: "command",
@@ -524,13 +521,13 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
       const git = fakeGit(anchor, [{ path: projectRoot }]);
       // Out of the user's folders, so the project links both resources itself.
       for (const kind of ["command", "skill"] as const)
-        yield* setSkillChoice(f.options, {
+        yield* setChoice(f.options, {
           namespace: { _tag: "user" },
           address: { kind, name: "review", sourceRegistrationId: f.sourceRegistrationId },
           decision: "exclude",
         });
       for (const kind of ["command", "skill"] as const)
-        yield* setSkillChoice(f.options, {
+        yield* setChoice(f.options, {
           namespace: { _tag: "project", projectName: "app" },
           address: { kind, name: "review", sourceRegistrationId: f.sourceRegistrationId },
           decision: "include",

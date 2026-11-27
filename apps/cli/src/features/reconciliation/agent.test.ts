@@ -11,7 +11,7 @@ import {
   EnabledAdaptersSchema,
   type AgentAdapterDescriptor,
   type AgentCapabilityDecision,
-} from "../../domain/links/agent-adapter-schema.ts";
+} from "../../domain/agents/agent-adapter-schema.ts";
 import {
   agentAdapterDescriptor,
   agentAdapterDescriptors,
@@ -19,7 +19,7 @@ import {
   resolveAdapterCapability,
 } from "../../domain/agents/agent-adapter.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
-import { disableAdapter } from "../maintenance/adapter-disablement.ts";
+import { disableAdapter } from "../removal/adapter-disablement.ts";
 import {
   AdapterNotEnabledError,
   AgentDisablementRequiredError,
@@ -178,23 +178,6 @@ it.layer(LiveTestLayer)("agent selection", (agentIt) => {
         expect(duplicate).toMatchObject({ code: "enabled-adapters-invalid" });
         expect(unknown).toMatchObject({ code: "enabled-adapters-invalid" });
         expect(yield* fileSystem.readFileString(statePath)).toBe(before);
-      }),
-    ),
-  );
-
-  agentIt.effect("keeps state enablement independent from environment values", () =>
-    withStateFixture(({ options }) =>
-      Effect.gen(function* () {
-        const result = yield* enableAdapters(
-          {
-            ...options,
-            environment: { ...options.environment, TACK_ADAPTERS: "cursor" },
-          },
-          ["codex"],
-        );
-
-        expect(result.enabledAdapters).toEqual(["codex"]);
-        expect(yield* listEnabledAdapters(options)).toEqual(["codex"]);
       }),
     ),
   );

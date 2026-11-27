@@ -1,11 +1,12 @@
 import { Match, Schema } from "effect";
 import { resolveDependencyClosure, type DependencyResolution } from "./dependency-resolution.ts";
 import {
-  ChoiceNamespaceSchema,
-  SkillChoiceSchema,
+  NamespaceSchema,
+  ChoiceSchema,
   choiceNamespaceIdentity,
-  type ChoiceNamespace,
-  type SkillChoice,
+  kindAndNameKey,
+  type Namespace,
+  type Choice,
 } from "./choice-schema.ts";
 import { compareCodeUnits } from "../identity/ordering.ts";
 import {
@@ -14,7 +15,6 @@ import {
   catalogSelectableEntries,
   resourceAddressIdentity,
   type Catalog,
-  type SelectableAddress,
   type SelectableCatalogEntry,
 } from "../sources/catalog-schema.ts";
 
@@ -46,8 +46,8 @@ const InitialSelectionDecisionSchema = Schema.Union([
 /** The complete deterministic initial decision set for one namespace. */
 export const InitialSelectionSchema = Schema.Struct({
   decisions: Schema.Array(InitialSelectionDecisionSchema),
-  namespace: ChoiceNamespaceSchema,
-  unresolvedChoices: Schema.Array(SkillChoiceSchema),
+  namespace: NamespaceSchema,
+  unresolvedChoices: Schema.Array(ChoiceSchema),
 });
 
 /** One initial selection decision. */
@@ -58,16 +58,16 @@ export type InitialSelection = typeof InitialSelectionSchema.Type;
 
 /** Inputs to initial selection resolution. */
 export type ResolveInitialSelectionInput = {
-  readonly choices: ReadonlyArray<SkillChoice>;
+  readonly choices: ReadonlyArray<Choice>;
   readonly entries: ReadonlyArray<SelectableCatalogEntry>;
-  readonly namespace: ChoiceNamespace;
+  readonly namespace: Namespace;
 };
 
 type Compatibility = typeof InitialSelectionCompatibilitySchema.Type;
 type ObservedCompatibility = Exclude<Compatibility, "forced">;
 
 const compatibilityFor = (
-  namespace: ChoiceNamespace,
+  namespace: Namespace,
   entry: SelectableCatalogEntry,
 ): ObservedCompatibility =>
   !("projects" in entry)
@@ -83,9 +83,9 @@ const compatibilityFor = (
       );
 
 const decisionFor = (
-  namespace: ChoiceNamespace,
+  namespace: Namespace,
   entry: SelectableCatalogEntry,
-  choice: SkillChoice | undefined,
+  choice: Choice | undefined,
   compatibility: ObservedCompatibility,
   nameIncluded: boolean,
 ): InitialSelectionDecision => {
@@ -150,9 +150,6 @@ const decisionFor = (
   return { _tag: "selected", address: entry.address, compatibility, reason: "default" };
 };
 
-/** The kind and name two resources must share to compete for one destination. */
-const nameKey = (address: SelectableAddress) => `${address.kind}\u0000${address.name}`;
-
 /** Resolves declaration behavior and exact choices for one independent namespace. */
 export const resolveInitialSelection = ({
   choices,
@@ -179,7 +176,7 @@ export const resolveInitialSelection = ({
   const includedNames = new Set(
     sortedEntries.flatMap((entry) =>
       choicesByAddress.get(resourceAddressIdentity(entry.address))?.decision === "include"
-        ? [nameKey(entry.address)]
+        ? [kindAndNameKey(entry.address)]
         : [],
     ),
   );
@@ -194,7 +191,7 @@ export const resolveInitialSelection = ({
         entry,
         choicesByAddress.get(resourceAddressIdentity(entry.address)),
         compatibilityFor(namespace, entry),
-        includedNames.has(nameKey(entry.address)),
+        includedNames.has(kindAndNameKey(entry.address)),
       ),
     ),
     namespace,
@@ -207,9 +204,9 @@ export const resolveInitialSelection = ({
 /** Inputs to the one selection pipeline shared by reconciliation and status. */
 export type ResolveNamespaceSelectionInput = {
   readonly catalog: Pick<Catalog, "entries" | "quarantined"> & Partial<Pick<Catalog, "sources">>;
-  readonly choices: ReadonlyArray<SkillChoice>;
+  readonly choices: ReadonlyArray<Choice>;
   readonly includeOptional: boolean;
-  readonly namespace: ChoiceNamespace;
+  readonly namespace: Namespace;
 };
 
 /** One namespace's initial decisions and the dependency closure derived from them. */
@@ -227,7 +224,7 @@ export const activationIn = (
     readonly activation: typeof SkillActivationSchema.Type;
     readonly userActivation?: typeof SkillActivationSchema.Type;
   },
-  scope: ChoiceNamespace["_tag"],
+  scope: Namespace["_tag"],
 ): typeof SkillActivationSchema.Type =>
   scope === "user" ? (entry.userActivation ?? "opt-in") : entry.activation;
 

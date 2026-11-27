@@ -8,16 +8,16 @@ import {
   SourceRegistrationPayloadSchema,
   makeSourceService,
 } from "../src/features/sources/source.ts";
-import { SourceRemovalPlanSchema } from "../src/features/maintenance/source-removal.ts";
-import { ProjectRemovalPlanSchema } from "../src/features/maintenance/project-removal.ts";
+import { SourceRemovalPlanSchema } from "../src/features/removal/source-removal.ts";
+import { ProjectRemovalPlanSchema } from "../src/features/removal/project-removal.ts";
 import type { GitService } from "../src/services/git.ts";
-import { exitCodeForEnvelope } from "../src/cli/host/public-outcome.ts";
+import { exitCodeForEnvelope } from "../src/cli/envelope/public-outcome.ts";
 import { readState } from "../src/services/state-store.ts";
 import { managedLinksOf } from "../src/domain/links/link-record-schema.ts";
 import { managedDocsLinksOf } from "../src/domain/docs/docs-schema.ts";
 import { runHost } from "./support/host-runner.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
-import { mutateStateFixture } from "./support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "./support/state-fixture.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
 import { write } from "./support/source-tree.ts";
 
@@ -41,7 +41,7 @@ const withRemovalWorld = <A, E, R>(
     readonly brainId: string;
     readonly home: string;
     readonly options: {
-      readonly environment: { readonly TACK_STATE_DIR: string };
+      readonly stateDirectory: string;
       readonly homeDirectory: string;
     };
     readonly repository: string;
@@ -94,7 +94,7 @@ const withRemovalWorld = <A, E, R>(
       brain,
       brainId,
       home,
-      options: { environment: { TACK_STATE_DIR: stateDirectory }, homeDirectory: home },
+      options: stateOptionsAt(stateDirectory, home),
       repository,
       root,
       tack,

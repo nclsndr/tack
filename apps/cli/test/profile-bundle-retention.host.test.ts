@@ -11,7 +11,7 @@ it.layer(LiveTestLayer)("bundle payload retention", (test) => {
       const { fs, path, root, options, request, run, file } = yield* bundleFixture;
       const elsewhere = path.join(root, "elsewhere");
       yield* fs.makeDirectory(elsewhere);
-      const bundles = path.join(options.environment.TACK_STATE_DIR, "bundles");
+      const bundles = path.join(options.stateDirectory, "bundles");
       yield* fs.symlink(elsewhere, bundles);
       const before = yield* readState(options);
       const result = yield* run(runBundleApply(options, { ...request, file, force: true }));
@@ -29,11 +29,7 @@ it.layer(LiveTestLayer)("bundle payload retention", (test) => {
     Effect.gen(function* () {
       const { fs, path, options, request, run, file, archive } = yield* bundleFixture;
       expect((yield* run(runBundleApply(options, { ...request, file }))).plan.refused).toBe(false);
-      const payload = path.join(
-        options.environment.TACK_STATE_DIR,
-        "bundles",
-        archive.manifest.identity,
-      );
+      const payload = path.join(options.stateDirectory, "bundles", archive.manifest.identity);
       yield* fs.writeFileString(path.join(payload, "extra"), "foreign");
       const applied = yield* readState(options);
       const reused = yield* run(runBundleApply(options, { ...request, file, force: true }));

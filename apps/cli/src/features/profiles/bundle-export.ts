@@ -165,6 +165,12 @@ export const BundleExportPlanSchema = Schema.Struct({
   refused: Schema.Boolean,
 });
 
+/** The `profile export` application payload: the bundle was written to `output`. */
+export const BundleExportedSchema = Schema.Struct({
+  exported: Schema.Literal(true),
+  output: Schema.String,
+});
+
 /** Previews exact content and findings, then writes a new artifact only with explicit apply. */
 export const runBundleExport = Effect.fn("profiles.runBundleExport")(
   function* (

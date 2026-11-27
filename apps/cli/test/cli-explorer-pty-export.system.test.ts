@@ -3,12 +3,14 @@ import { cpSync, existsSync, mkdtempSync, realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { expect, it } from "vitest";
+import { unpinnedBunReason } from "./support/tack-process.ts";
 
 const repository = resolve(import.meta.dirname, "../../..");
 
 // The release gate runs `bun run check` in an exported staging copy that has no `.git`. A test
 // that builds a release and silently relies on git passes in a checkout but fails the gate.
-it("passes the explorer PTY system test from an export with no .git", () => {
+it("passes the explorer PTY system test from an export with no .git", (context) => {
+  if (unpinnedBunReason !== undefined) context.skip(unpinnedBunReason);
   const exported = realpathSync(mkdtempSync(join(tmpdir(), "tack-export-check-")));
   for (const path of [
     "package.json",

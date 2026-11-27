@@ -9,9 +9,9 @@ import { mutateStateFixture, withStateFixture } from "../../../test/support/stat
 import { LiveTestLayer, provideTestFileSystem } from "../../../test/support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
-import { Git, GitOutputParseError } from "../../services/git.ts";
-import { parseGitWorktreeList } from "../../services/git.ts";
+import { Git } from "../../services/git.ts";
 import {
+  bareSelectionRefusal,
   ProjectRegistrationConflictError,
   ProjectValidationError,
   ProjectRootOwnershipError,
@@ -56,53 +56,6 @@ const persistPendingRemovals = (options: StateOptions, targets: ReadonlyArray<Ma
         ),
     },
   }));
-
-it.effect("parses NUL-terminated worktree records without newline splitting", () =>
-  Effect.gen(function* () {
-    const output =
-      "worktree /repo/with\nnewline\0HEAD abc\0branch refs/heads/main\0\0" +
-      "worktree /repo/second\0bare\0locked\0prunable\0\0";
-    const parsed = yield* parseGitWorktreeList(output);
-
-    expect(parsed).toEqual([
-      {
-        bare: false,
-        branch: "refs/heads/main",
-        detached: false,
-        path: "/repo/with\nnewline",
-      },
-      { bare: true, detached: false, locked: "", path: "/repo/second", prunable: "" },
-    ]);
-  }),
-);
-
-it.effect("rejects non-NUL-terminated worktree output", () =>
-  Effect.gen(function* () {
-    const error = yield* Effect.flip(parseGitWorktreeList("worktree /repo"));
-
-    expect(error).toBeInstanceOf(GitOutputParseError);
-  }),
-);
-
-it.effect("rejects malformed and duplicate porcelain attributes", () =>
-  Effect.gen(function* () {
-    const malformed = yield* Effect.flip(parseGitWorktreeList("not-worktree /repo\0\0"));
-    const malformedAttribute = yield* Effect.flip(
-      parseGitWorktreeList("worktree /repo\0worktree\0\0"),
-    );
-    const missingPath = yield* Effect.flip(parseGitWorktreeList("worktree \0\0"));
-    const duplicate = yield* Effect.flip(
-      parseGitWorktreeList("worktree /repo\0HEAD abc\0HEAD def\0\0"),
-    );
-    const empty = yield* parseGitWorktreeList("");
-
-    expect(malformed).toBeInstanceOf(GitOutputParseError);
-    expect(malformedAttribute).toBeInstanceOf(GitOutputParseError);
-    expect(missingPath).toBeInstanceOf(GitOutputParseError);
-    expect(duplicate).toBeInstanceOf(GitOutputParseError);
-    expect(empty).toEqual([]);
-  }),
-);
 
 it.layer(LiveTestLayer)("project registration and targeting", (projectIt) => {
   projectIt.effect("canonicalizes roots and rejects cross-project ownership", () =>
@@ -606,6 +559,10 @@ it.layer(LiveTestLayer)("project registration and targeting", (projectIt) => {
             canonicalPath: path.join(root, "pending-other"),
           }),
         ]);
+        expect([project.resolved, user.resolved]).toEqual([
+          { _tag: "project", projectName: "project" },
+          { _tag: "user" },
+        ]);
         expect(bareError).toBeInstanceOf(TargetSelectionError);
         expect(bareError).toMatchObject({ code: "bare-target-requires-registered-root" });
         expect(missingProject).toMatchObject({ code: "project-not-found", projectName: "missing" });
@@ -851,6 +808,9 @@ it.layer(LiveTestLayer)("project registration and targeting", (projectIt) => {
           projectName: "nested",
           root: yield* fileSystem.realPath(inner),
         });
+        // The requested selector stays bare; the resolved one names the project it chose.
+        expect(selection.selector).toEqual({ _tag: "bare" });
+        expect(selection.resolved).toEqual({ _tag: "project", projectName: "nested" });
         expect(selection.targets).toHaveLength(2);
       }),
     ),
@@ -950,4 +910,27 @@ it.layer(LiveTestLayer)("project registration outside a repository", (outsideIt)
       }),
     ),
   );
+});
+
+it.each([
+  {
+    accepts: ["project", "user", "all"] as const,
+    choose: "Choose --project NAME, --user or --all.",
+  },
+  { accepts: ["project", "all"] as const, choose: "Choose --project NAME or --all." },
+  { accepts: ["project"] as const, choose: "Choose --project NAME." },
+])("refuses a bare selector by naming exactly the flags $accepts", ({ accepts, choose }) => {
+  expect(bareSelectionRefusal(accepts, "/outside")).toEqual(
+    new TargetSelectionError({
+      code: "bare-target-requires-registered-root",
+      message: `This directory is not inside a registered project. ${choose}`,
+      path: "/outside",
+    }),
+  );
+});
+
+it("names the root being removed that contains the refused directory", () => {
+  expect(
+    bareSelectionRefusal(["project"], "/old/nested", { projectName: "gone", root: "/old" }),
+  ).toMatchObject({ path: "/old/nested", projectName: "gone", root: "/old" });
 });

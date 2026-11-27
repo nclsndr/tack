@@ -11,6 +11,7 @@ import { Destination, observeDestination } from "../../services/destination.ts";
 import { type DestinationObservation } from "../../domain/reconciliation/destination-observation-schema.ts";
 import { deliveryKindOf, type ParentVerdict } from "./link-delivery.ts";
 import { destinationObservationMessage } from "./managed-link-ownership.ts";
+import { resourceKinds } from "../../domain/resources/kinds.ts";
 import {
   decideSettlements,
   settleLinkJournal,
@@ -220,7 +221,7 @@ export const refuseSource = Effect.fnUntraced(function* (
     Effect.catch((error) => Effect.succeed({ _tag: "unreadable" as const, error })),
   );
   if (status._tag === "unreadable") return status;
-  const expected = link.resource.kind === "command" ? "file" : "directory";
+  const expected = resourceKinds[link.resource.kind].entryType;
   if (status.info.type !== (expected === "file" ? "File" : "Directory"))
     return { _tag: "wrong-type", kind: link.resource.kind, expected };
   const canonical = yield* fileSystem.realPath(link.sourceDirectoryPath).pipe(

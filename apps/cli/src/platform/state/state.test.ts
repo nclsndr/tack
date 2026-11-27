@@ -25,7 +25,11 @@ import { makeStateStoreService } from "./state.ts";
 import { decodeState, encodeState } from "../../domain/state/state-codec.ts";
 import { agentLink } from "../../domain/links/link-record-schema.ts";
 import { docsLink } from "../../domain/docs/docs-schema.ts";
-import { mutateStateFixture, runtimeFixture } from "../../../test/support/state-fixture.ts";
+import {
+  mutateStateFixture,
+  runtimeFixture,
+  stateOptionsAt,
+} from "../../../test/support/state-fixture.ts";
 
 it("keeps the pure replacement helper out of the production state module", async () => {
   const production = await import("./state.ts");
@@ -61,19 +65,13 @@ const withStateDirectory = <A, E, R>(use: (stateDirectory: string) => Effect.Eff
     return yield* use(stateDirectory);
   });
 
-const stateOptions = (stateDirectory: string) => ({
-  environment: { TACK_STATE_DIR: stateDirectory },
-  homeDirectory: "/unused-home",
-});
-
 it.layer(LiveTestLayer)("state", (stateIt) => {
   stateIt.effect("uses TACK_STATE_DIR before the default location", () =>
     Effect.gen(function* () {
       const path = yield* Path.Path;
-      const resolved = yield* resolveStateDirectory({
-        environment: { TACK_STATE_DIR: "relative-tack-state" },
-        homeDirectory: "/operator-home",
-      });
+      const resolved = yield* resolveStateDirectory(
+        stateOptionsAt("relative-tack-state", "/operator-home"),
+      );
 
       expect(resolved).toBe(path.resolve("relative-tack-state"));
     }),
@@ -81,10 +79,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
 
   stateIt.effect("uses the operator home when TACK_STATE_DIR is absent", () =>
     Effect.gen(function* () {
-      const resolved = yield* resolveStateDirectory({
-        environment: {},
-        homeDirectory: "/operator-home",
-      });
+      const resolved = yield* resolveStateDirectory({ homeDirectory: "/operator-home" });
 
       expect(resolved).toBe("/operator-home/.tack");
     }),
@@ -93,13 +88,10 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
   stateIt.effect("rejects empty configured and default state directories", () =>
     Effect.gen(function* () {
       const configuredDirectoryError = yield* Effect.flip(
-        resolveStateDirectory({
-          environment: { TACK_STATE_DIR: "" },
-          homeDirectory: "/operator-home",
-        }),
+        resolveStateDirectory(stateOptionsAt("", "/operator-home")),
       );
       const defaultDirectoryError = yield* Effect.flip(
-        resolveStateDirectory({ environment: {}, homeDirectory: "" }),
+        resolveStateDirectory({ homeDirectory: "" }),
       );
 
       expect(configuredDirectoryError).toBeInstanceOf(StateConfigurationError);
@@ -112,7 +104,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const result = yield* initializeState(stateOptions(stateDirectory));
+        const result = yield* initializeState(stateOptionsAt(stateDirectory));
         const dotenvPath = path.join(stateDirectory, dotenvFileName);
         const statePath = path.join(stateDirectory, stateFileName);
         const dotenvStatus = yield* fileSystem.stat(dotenvPath);
@@ -134,7 +126,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const dotenvPath = path.join(stateDirectory, dotenvFileName);
         const statePath = path.join(stateDirectory, stateFileName);
         yield* initializeState(options);
@@ -159,7 +151,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const dotenvPath = path.join(stateDirectory, dotenvFileName);
         yield* initializeState(options);
 
@@ -192,7 +184,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const statePath = path.join(stateDirectory, stateFileName);
         yield* initializeState(options);
         const before = yield* fileSystem.stat(statePath);
@@ -223,7 +215,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const statePath = path.join(stateDirectory, stateFileName);
         const validState = JSON.stringify(yield* encodeState(emptyState()));
         yield* fileSystem.writeFileString(statePath, JSON.stringify({ data: {}, version: 2 }));
@@ -261,7 +253,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
         Effect.gen(function* () {
           const fileSystem = yield* FileSystem.FileSystem;
           const path = yield* Path.Path;
-          const options = stateOptions(stateDirectory);
+          const options = stateOptionsAt(stateDirectory);
           const statePath = path.join(stateDirectory, stateFileName);
           // One document per refusal: the first field is not `format`, and the schema rejects the
           // rest. Which documents the schema rejects is owned by `domain/state`.
@@ -307,7 +299,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const statePath = path.join(stateDirectory, stateFileName);
         const temporaryPath = `${statePath}.tmp-orphan`;
         const bytes = '{"format":99,"data":{}}';
@@ -344,7 +336,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
         Effect.gen(function* () {
           const fileSystem = yield* FileSystem.FileSystem;
           const path = yield* Path.Path;
-          const options = stateOptions(stateDirectory);
+          const options = stateOptionsAt(stateDirectory);
           const statePath = path.join(stateDirectory, stateFileName);
           const bytes = JSON.stringify(document);
           yield* fileSystem.writeFileString(statePath, bytes);
@@ -384,7 +376,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
         Effect.gen(function* () {
           const fileSystem = yield* FileSystem.FileSystem;
           const path = yield* Path.Path;
-          const options = stateOptions(stateDirectory);
+          const options = stateOptionsAt(stateDirectory);
           const statePath = path.join(stateDirectory, stateFileName);
           yield* fileSystem.writeFileString(statePath, bytes);
           expect(yield* Effect.flip(readState(options))).toBeInstanceOf(StateCorruptError);
@@ -401,7 +393,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
         Effect.gen(function* () {
           const fileSystem = yield* FileSystem.FileSystem;
           const path = yield* Path.Path;
-          const options = stateOptions(stateDirectory);
+          const options = stateOptionsAt(stateDirectory);
           const statePath = path.join(stateDirectory, stateFileName);
           const sourceRegistrationId = "00000000-0000-4000-8000-000000000001";
           const address = { kind: "skill", name: "example", sourceRegistrationId } as const;
@@ -511,7 +503,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const statePath = path.join(stateDirectory, stateFileName);
         yield* initializeState(options);
         const before = yield* fileSystem.readFileString(statePath);
@@ -581,7 +573,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const statePath = path.join(stateDirectory, stateFileName);
         yield* initializeState(options);
         const stateBeforeMutation = yield* fileSystem.readFileString(statePath);
@@ -605,7 +597,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const lockPath = path.join(stateDirectory, lockFileName);
         yield* initializeState(options);
         yield* fileSystem.writeFileString(lockPath, "2147483647\n");
@@ -627,7 +619,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const lockPath = path.join(stateDirectory, lockFileName);
         yield* initializeState(options);
         for (let attempt = 0; attempt < 10; attempt += 1) {
@@ -664,7 +656,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
         prefix: "tack-state-test-",
       });
       const stateDirectory = path.join(temporaryRoot, "state-not-initialized");
-      const options = stateOptions(stateDirectory);
+      const options = stateOptionsAt(stateDirectory);
 
       const error = yield* Effect.flip(
         mutateStateFixture(options, (state) => ({
@@ -687,7 +679,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       });
       const stateDirectory = path.join(temporaryRoot, "not-a-directory");
       const statePath = path.join(stateDirectory, stateFileName);
-      const options = stateOptions(stateDirectory);
+      const options = stateOptionsAt(stateDirectory);
       yield* fileSystem.writeFileString(stateDirectory, "not a directory");
       const initializationError = yield* Effect.flip(initializeState(options));
       const mutationError = yield* Effect.flip(
@@ -712,7 +704,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const statePath = path.join(stateDirectory, stateFileName);
         const dotenvPath = path.join(stateDirectory, dotenvFileName);
         const lockPath = path.join(stateDirectory, lockFileName);
@@ -750,7 +742,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const lockPath = path.join(stateDirectory, lockFileName);
         yield* initializeState(options);
 
@@ -792,7 +784,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const statePath = path.join(stateDirectory, stateFileName);
         yield* initializeState(options);
 
@@ -825,7 +817,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
     withStateDirectory((stateDirectory) =>
       Effect.gen(function* () {
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const statePath = path.join(stateDirectory, stateFileName);
         yield* initializeState(options);
 
@@ -852,7 +844,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
     withStateDirectory((stateDirectory) =>
       Effect.gen(function* () {
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const lockPath = path.join(stateDirectory, lockFileName);
         yield* initializeState(options);
 
@@ -874,7 +866,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const statePath = path.join(stateDirectory, stateFileName);
 
         yield* initializeState(options);
@@ -904,7 +896,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const statePath = path.join(stateDirectory, stateFileName);
         const dotenvPath = path.join(stateDirectory, dotenvFileName);
         const mutationCalls: Array<undefined> = [];
@@ -932,7 +924,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const lockPath = path.join(stateDirectory, lockFileName);
         yield* initializeState(options);
         const entered = yield* Deferred.make<void>();
@@ -961,7 +953,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const lockPath = path.join(stateDirectory, lockFileName);
         yield* initializeState(options);
         const entered = yield* Deferred.make<void>();
@@ -987,7 +979,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const lockPath = path.join(stateDirectory, lockFileName);
         yield* initializeState(options);
         const entered = yield* Deferred.make<void>();
@@ -1018,7 +1010,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const statePath = path.join(stateDirectory, stateFileName);
         const lockPath = path.join(stateDirectory, lockFileName);
         const dotenvPath = path.join(stateDirectory, dotenvFileName);
@@ -1048,7 +1040,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
     withStateDirectory((stateDirectory) =>
       Effect.gen(function* () {
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const statePath = path.join(stateDirectory, stateFileName);
         yield* initializeState(options);
 
@@ -1071,7 +1063,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const statePath = path.join(stateDirectory, stateFileName);
         let renameCount = 0;
         yield* initializeState(options);
@@ -1100,7 +1092,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const statePath = path.join(stateDirectory, stateFileName);
         let renameCount = 0;
         yield* initializeState(options);
@@ -1148,7 +1140,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const statePath = path.join(stateDirectory, stateFileName);
         yield* initializeState(options);
         const before = yield* fileSystem.readFileString(statePath);
@@ -1188,7 +1180,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
         const path = yield* Path.Path;
         const writes: string[] = [];
         const notices = makeStateNoticeCollector(() => writes.push("wrote"));
-        const options = { environment: {}, homeDirectory: home, observer: notices.sink };
+        const options = { homeDirectory: home, observer: notices.sink };
         const value = yield* mutateState(options, (state) =>
           Effect.succeed({ state, value: "first" }),
         );
@@ -1213,7 +1205,6 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
         const path = yield* Path.Path;
         const notices = makeStateNoticeCollector();
         const options = {
-          environment: {},
           homeDirectory: home,
           observer: notices.sink,
           initialAdapters: Effect.succeed(["claude", "codex"] as const),
@@ -1250,7 +1241,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         yield* initializeState(options);
         const lockPath = path.join(stateDirectory, lockFileName);
         yield* fileSystem.writeFileString(lockPath, "99999999999999999999\n");
@@ -1269,7 +1260,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         yield* initializeState(options);
         const orphan = path.join(stateDirectory, `${stateFileName}.tmp-orphan`);
         const directory = path.join(stateDirectory, `${stateFileName}.tmp-directory`);
@@ -1289,7 +1280,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
       Effect.gen(function* () {
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         yield* initializeState(options);
         const orphan = path.join(stateDirectory, `${stateFileName}.tmp-orphan`);
         yield* fileSystem.writeFileString(orphan, "orphan");
@@ -1336,7 +1327,7 @@ it.layer(LiveTestLayer)("state", (stateIt) => {
     withStateDirectory((stateDirectory) =>
       Effect.gen(function* () {
         const path = yield* Path.Path;
-        const options = stateOptions(stateDirectory);
+        const options = stateOptionsAt(stateDirectory);
         const historyPath = path.join(stateDirectory, "history");
         yield* initializeState(options);
 

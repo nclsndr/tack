@@ -5,6 +5,7 @@ import type { SourceRegistration } from "../../domain/sources/source-schema.ts";
 import { initializeState } from "../../services/state-store.ts";
 import { bundleIntegrityIssue } from "./bundle-integrity.ts";
 import { registerSource } from "./source.ts";
+import { stateOptionsAt } from "../../../test/support/state-fixture.ts";
 
 const identity = "a".repeat(64);
 
@@ -14,7 +15,7 @@ it.layer(LiveTestLayer)("source edges", (test) => {
       const fs = yield* FileSystem.FileSystem;
       const path = yield* Path.Path;
       const root = yield* fs.realPath(yield* fs.makeTempDirectoryScoped({ prefix: "tack-src-" }));
-      const options = { environment: { TACK_STATE_DIR: path.join(root, "state") } };
+      const options = stateOptionsAt(path.join(root, "state"));
       yield* initializeState(options);
       const source = path.join(root, "source");
       for (const folder of ["zeta", "alpha"])

@@ -4,7 +4,7 @@ import {
   DocsPendingRemovalsSchema,
   DocsRemovalActionsSchema,
 } from "../docs/docs-schema.ts";
-import { AgentAdapterIdSchema } from "../links/agent-adapter-schema.ts";
+import { AgentAdapterIdSchema } from "../agents/agent-adapter-schema.ts";
 import {
   ManagedLinkEvidenceSchema,
   ManagedLinkEvidenceCollectionSchema,
@@ -152,10 +152,10 @@ export const RemovalResultSchema = Schema.Struct({
   actions: Schema.Array(RemovalActionOutcomeSchema),
   docsActions: Schema.optionalKey(Schema.Array(DocsLinkOutcomeSchema)),
   /** The docs mounts whose removal is still owed; absent when none is. */
-  docsPending: Schema.optionalKey(DocsPendingRemovalsSchema),
+  docsPendingRemovals: Schema.optionalKey(DocsPendingRemovalsSchema),
   finalizedProject: Schema.Boolean,
   kind: Schema.Literal("managed-removal-application"),
-  pending: ReportedPendingRemovalCollectionSchema,
+  pendingRemovals: ReportedPendingRemovalCollectionSchema,
   version: Schema.Literal(1),
 });
 

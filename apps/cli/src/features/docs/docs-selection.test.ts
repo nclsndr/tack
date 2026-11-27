@@ -1,4 +1,4 @@
-import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "../../../test/support/state-fixture.ts";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
@@ -15,10 +15,7 @@ const world = Effect.gen(function* () {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
   const root = yield* fs.realPath(yield* fs.makeTempDirectoryScoped({ prefix: "tack-docs-sel-" }));
-  const options = {
-    environment: { TACK_STATE_DIR: path.join(root, "state") },
-    homeDirectory: root,
-  };
+  const options = stateOptionsAt(path.join(root, "state"), root);
   yield* initializeState(options);
   const projectRoot = path.join(root, "project");
   yield* fs.makeDirectory(projectRoot);

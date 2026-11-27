@@ -1,5 +1,5 @@
 import { Schema } from "effect";
-import { AgentAdapterIdSchema } from "../links/agent-adapter-schema.ts";
+import { AgentAdapterIdSchema } from "./agent-adapter-schema.ts";
 
 /**
  * What a hand-made entry is on disk: a folder, a file, a symbolic link Tack has no record of, an

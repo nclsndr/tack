@@ -4,10 +4,11 @@ import { describe, expect, it } from "@effect/vitest";
 import { InvocationError } from "../src/cli/commands/index.ts";
 import {
   errorRegistry,
+  ExplorerInterruptedError,
   HostConfigurationError,
   outcomeForError,
   type HostFailure,
-} from "../src/cli/host/errors.ts";
+} from "../src/cli/envelope/errors.ts";
 import {
   ChoiceProjectNotFoundError,
   ChoiceProjectRemovingError,
@@ -17,7 +18,7 @@ import { DocsError } from "../src/domain/docs/docs-schema.ts";
 import { HistoryNotFoundError } from "../src/features/execution/execution.ts";
 import { ImportError } from "../src/features/imports/import-error.ts";
 import { ResourceReferenceError } from "../src/features/sources/resource-reference.ts";
-import { AdapterDisablementValidationError } from "../src/features/maintenance/adapter-disablement.ts";
+import { AdapterDisablementValidationError } from "../src/features/removal/adapter-disablement.ts";
 import {
   ProjectNotFoundError,
   ProjectRegistrationConflictError,
@@ -44,10 +45,9 @@ import {
   SourceStorageError,
   SourceValidationError,
 } from "../src/features/sources/source.ts";
-import { SourceRemovalError } from "../src/features/maintenance/source-removal.ts";
+import { SourceRemovalError } from "../src/features/removal/source-removal.ts";
 import { SourceAddRequestError } from "../src/features/sources/source-scaffold.ts";
 import { ExecutionError } from "../src/services/execution-platform.ts";
-import { ExplorerInterruptedError } from "../src/cli/host/routes/explore.ts";
 import { GitCommandError, GitOutputParseError } from "../src/services/git.ts";
 import { ImportFetchError } from "../src/services/import-remote.ts";
 import { ReaderStartupError } from "../src/services/reader.ts";

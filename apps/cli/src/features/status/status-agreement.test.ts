@@ -1,13 +1,13 @@
 import { writeUnder, bareSkillText, tackMetadata } from "../../../test/support/source-tree.ts";
 import { managedLinksOf } from "../../domain/links/link-record-schema.ts";
-import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "../../../test/support/state-fixture.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { SecureRandom } from "effect/crypto";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { initializeState, type StateOptions } from "../../services/state-store.ts";
 import { managedLinkDestinationPath } from "../../domain/agents/agent-layout.ts";
-import type { TargetSelector } from "../../domain/projects/project-schema.ts";
+import type { Selector } from "../../domain/projects/project-schema.ts";
 import { enableAdapters } from "../reconciliation/agent.ts";
 import { syncResources } from "../../../test/support/reconciliation.ts";
 import { makeSourceService, registerSource, Source } from "../sources/source.ts";
@@ -30,10 +30,7 @@ const agreementFixture = Effect.fnUntraced(function* () {
   const source = path.join(root, "source");
   const workspace = path.join(root, "workspace");
   const anchor = path.join(root, "anchor");
-  const options: StateOptions = {
-    environment: { TACK_STATE_DIR: path.join(root, "state") },
-    homeDirectory: home,
-  };
+  const options: StateOptions = stateOptionsAt(path.join(root, "state"), home);
   const write = writeUnder(source);
   yield* Effect.forEach([home, workspace, anchor], (directory) =>
     fileSystem.makeDirectory(directory, { recursive: true }),
@@ -78,7 +75,7 @@ const agreementFixture = Effect.fnUntraced(function* () {
     readonly apply: boolean;
     readonly cwd?: string;
     readonly includeOptional: boolean;
-    readonly selector: TargetSelector;
+    readonly selector: Selector;
   }) =>
     syncResources(options, {
       apply: request.apply,
@@ -89,7 +86,7 @@ const agreementFixture = Effect.fnUntraced(function* () {
   const status = (request: {
     readonly cwd?: string;
     readonly includeOptional: boolean;
-    readonly selector: TargetSelector;
+    readonly selector: Selector;
   }) =>
     runStatus(options, {
       cwd: request.cwd ?? root,

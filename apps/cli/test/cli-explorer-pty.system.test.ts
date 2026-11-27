@@ -8,6 +8,7 @@ import {
   repositoryRoot as repository,
   runTackSync,
   tackEnvironment,
+  unpinnedBunReason,
 } from "./support/tack-process.ts";
 
 // Python's standard pty/termios modules work on macOS and Linux CI. A real slave TTY lets us
@@ -35,6 +36,7 @@ const command = (...args: string[]) => {
 };
 
 beforeAll(() => {
+  if (unpinnedBunReason !== undefined) return;
   mkdirSync(home);
   mkdirSync(skill, { recursive: true });
   writeFileSync(join(source, "tack.yaml"), "version: 1\nname: source\nskills:\n  - path: skills\n");
@@ -91,7 +93,8 @@ const drive = (mode: "normal" | "interrupt") => {
   };
 };
 
-it("uses raw mode and the alternate screen, then restores both on normal exit", () => {
+it("uses raw mode and the alternate screen, then restores both on normal exit", (context) => {
+  if (unpinnedBunReason !== undefined) context.skip(unpinnedBunReason);
   const facts = drive("normal");
   expect(facts.exitCode).toBe(0);
   expect(facts.raw).toBe(true);
@@ -105,7 +108,8 @@ it("uses raw mode and the alternate screen, then restores both on normal exit", 
   );
 }, 50_000);
 
-it("restores the terminal and leaves state untouched on Ctrl-C mid-review", () => {
+it("restores the terminal and leaves state untouched on Ctrl-C mid-review", (context) => {
+  if (unpinnedBunReason !== undefined) context.skip(unpinnedBunReason);
   const before = readFileSync(join(state, "state.json"));
   const facts = drive("interrupt");
   expect([0, 130]).toContain(facts.exitCode);

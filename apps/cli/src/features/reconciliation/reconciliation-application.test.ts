@@ -1,11 +1,15 @@
 import { managedLinksOf } from "../../domain/links/link-record-schema.ts";
-import { expectWriterGuarded, mutateStateFixture } from "../../../test/support/state-fixture.ts";
+import {
+  expectWriterGuarded,
+  mutateStateFixture,
+  stateOptionsAt,
+} from "../../../test/support/state-fixture.ts";
 import { LiveTestLayer, provideTestFileSystem } from "../../../test/support/live-test-layer.ts";
 import { faultyFileSystem, platformTestError, stallAt } from "../../../test/support/faults.ts";
 import { expect, it } from "@effect/vitest";
 import { Deferred, Effect, FileSystem, Fiber, Path, Schema } from "effect";
 import { agentAdapterDescriptor } from "../../domain/agents/agent-adapter.ts";
-import type { ChoiceNamespace } from "../../domain/choices/choice-schema.ts";
+import type { Namespace } from "../../domain/choices/choice-schema.ts";
 import type { DependencyResolution } from "../../domain/choices/dependency-resolution.ts";
 import {
   type ManagedLinkEvidence,
@@ -36,7 +40,7 @@ import {
 type SkillAddress = SkillCatalogEntry["address"];
 
 const registrationId = "00000000-0000-4000-8000-000000000001";
-const userNamespace = { _tag: "user" } satisfies ChoiceNamespace;
+const userNamespace = { _tag: "user" } satisfies Namespace;
 
 const address = (name: string, owner: "shared" | "private" = "shared") =>
   ({
@@ -98,10 +102,10 @@ const homeDirectoryFromStateDirectory = (stateDirectory: string) =>
   `${stateDirectory.slice(0, -stateDirectorySuffix.length)}/home`;
 
 const stateOptions = (stateDirectory: string, homeDirectory?: string) =>
-  ({
-    environment: { TACK_STATE_DIR: stateDirectory },
-    homeDirectory: homeDirectory ?? homeDirectoryFromStateDirectory(stateDirectory),
-  }) satisfies StateOptions;
+  stateOptionsAt(
+    stateDirectory,
+    homeDirectory ?? homeDirectoryFromStateDirectory(stateDirectory),
+  ) satisfies StateOptions;
 
 const withTemporaryRoot = <A, E, R>(use: (root: string) => Effect.Effect<A, E, R>) =>
   Effect.gen(function* () {

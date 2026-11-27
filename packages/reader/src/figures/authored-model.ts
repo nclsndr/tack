@@ -5,6 +5,7 @@
  * Boxes size themselves from their text and the kit routes links, so every overlap, overflow and
  * crossing can be checked here, without a browser.
  */
+import { type FigureCase, readCases } from "./cases.ts";
 import { type Cubic, edgeOf, fanSpreads, pointAt, type Rect, route } from "./curves.ts";
 import {
   claimIssues,
@@ -148,22 +149,14 @@ type AuthoredLabel = {
   readonly size: "large" | "small";
   readonly anchor: "start" | "middle" | "end";
 };
-export type AuthoredCase =
-  | {
-      readonly kind: "replay";
-      readonly id: string;
-      readonly label: string;
-      readonly steps: readonly { readonly at: string; readonly note: string }[];
-    }
-  | {
-      readonly kind: "lens";
-      readonly id: string;
-      readonly label: string;
-      readonly note: string;
-      readonly focus: readonly string[];
-      readonly blocked: readonly string[];
-      readonly broken: readonly string[];
-    };
+export type AuthoredCase = FigureCase<
+  { readonly at: string; readonly note: string },
+  {
+    readonly focus: readonly string[];
+    readonly blocked: readonly string[];
+    readonly broken: readonly string[];
+  }
+>;
 
 export type AuthoredModel = {
   readonly id: string;
@@ -198,12 +191,6 @@ const tintOf = (value: unknown): number | undefined =>
 
 const number = (value: unknown): number | undefined =>
   typeof value === "number" && Number.isFinite(value) === true ? value : undefined;
-
-const slug = (value: string): string =>
-  value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
 
 const overlaps = (a: Rect, b: Rect): boolean =>
   a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
@@ -434,68 +421,27 @@ export function readAuthoredFigure(input: unknown): {
     inputs.push(inputIssue(`startWith names an unknown id "${id}"`));
     return [];
   });
-  const usedCaseIds = new Set<string>();
-  const caseId = (authored: string | undefined, label: string, fallback: string): string => {
-    const base = authored ?? (slug(label) === "" ? fallback : slug(label));
-    const id = usedCaseIds.has(base) === true ? `${base}-${usedCaseIds.size + 1}` : base;
-    usedCaseIds.add(id);
-    return id;
-  };
-  const replays = list(raw["replays"]).flatMap((value, index): AuthoredCase[] => {
-    const replay = record(value) ?? {};
-    const label = text(replay["label"]);
-    const name = label === undefined ? `replay ${index + 1}` : `replay "${label}"`;
-    if (label === undefined) inputs.push(inputIssue(`${name} has no label`));
-    const authored = list(replay["steps"]);
-    if (authored.length > authoredBudget.steps)
-      inputs.push(
-        inputIssue(`${name} has ${authored.length} steps; the budget is ${authoredBudget.steps}`),
-      );
-    const steps = authored.flatMap((entry, step) => {
-      const at = text(record(entry)?.["at"]) ?? "?";
-      if (boxById.has(at) === false) {
-        inputs.push(inputIssue(`${name} step ${step + 1} names an unknown id "${at}"`));
-        return [];
-      }
-      return [{ at, note: text(record(entry)?.["note"]) ?? "" }];
+  const ids = (lens: Readonly<Record<string, unknown>>, key: string, name: string) =>
+    list(lens[key]).flatMap((entry) => {
+      const id = text(entry) ?? "?";
+      if (boxById.has(id) === true) return [id];
+      inputs.push(inputIssue(`${name} names an unknown id "${id}"`));
+      return [];
     });
-    if (authored.length === 0) inputs.push(inputIssue(`${name} has no steps`));
-    const shown = label ?? `Replay ${index + 1}`;
-    return steps.length === 0
-      ? []
-      : [
-          {
-            kind: "replay",
-            id: caseId(text(replay["id"]), shown, `replay-${index + 1}`),
-            label: shown,
-            steps,
-          },
-        ];
-  });
-  const lenses = list(raw["lenses"]).map((value, index): AuthoredCase => {
-    const lens = record(value) ?? {};
-    const label = text(lens["label"]);
-    const note = text(lens["note"]);
-    const name = label === undefined ? `lens ${index + 1}` : `lens "${label}"`;
-    if (label === undefined) inputs.push(inputIssue(`${name} has no label`));
-    if (note === undefined) inputs.push(inputIssue(`${name} has no note`));
-    const ids = (key: string): readonly string[] =>
-      list(lens[key]).flatMap((entry) => {
-        const id = text(entry) ?? "?";
-        if (boxById.has(id) === true) return [id];
-        inputs.push(inputIssue(`${name} names an unknown id "${id}"`));
-        return [];
-      });
-    const shown = label ?? `Lens ${index + 1}`;
-    return {
-      kind: "lens",
-      id: caseId(text(lens["id"]), shown, `lens-${index + 1}`),
-      label: shown,
-      note: note ?? "",
-      focus: ids("focus"),
-      blocked: ids("blocked"),
-      broken: ids("broken"),
-    };
+  const cases = readCases(raw, {
+    steps: authoredBudget.steps,
+    issues: inputs,
+    step: (fields, where) => {
+      const at = text(fields["at"]) ?? "?";
+      if (boxById.has(at) === true) return { at, note: text(fields["note"]) ?? "" };
+      inputs.push(inputIssue(`${where} names an unknown id "${at}"`));
+      return undefined;
+    },
+    lens: (lens, name) => ({
+      focus: ids(lens, "focus", name),
+      blocked: ids(lens, "blocked", name),
+      broken: ids(lens, "broken", name),
+    }),
   });
 
   if (boxes.length > authoredBudget.boxes)
@@ -593,7 +539,7 @@ export function readAuthoredFigure(input: unknown): {
       labels,
       raw: rawCount,
       startWith,
-      cases: [...replays, ...lenses],
+      cases,
       legend,
     },
     issues: [...idIssues(raw["id"]), ...claimIssues(raw["title"]), ...inputs, ...layout],

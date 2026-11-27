@@ -8,7 +8,7 @@ import { InstallationLive } from "../platform/installation/installation.ts";
 import { ReaderLive } from "../platform/reader/reader.ts";
 import { ReaderCorpusLive } from "../platform/reader/search.ts";
 import { ExecutionPlatformLive } from "../platform/execution/execution-platform.ts";
-import { TerminalContextLive } from "../cli/host/human/terminal-context.ts";
+import { TerminalContextLive } from "../cli/human/terminal-context.ts";
 import { PortableLive } from "./portable-layer.ts";
 import { PlatformServicesLive } from "./platform-services.ts";
 

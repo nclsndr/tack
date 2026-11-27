@@ -6,7 +6,7 @@ import { Effect } from "effect";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { profileFixture } from "./support/profile-fixture.ts";
 import { initializeState, readState } from "../src/services/state-store.ts";
-import { mutateStateFixture } from "./support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "./support/state-fixture.ts";
 import { runBundleExport, inspectBundle } from "../src/features/profiles/bundle-export.ts";
 import { runBundleApply } from "../src/features/profiles/bundle-apply.ts";
 import { runSyncCommand } from "../src/features/reconciliation/sync-command.ts";
@@ -72,9 +72,7 @@ it.layer(LiveTestLayer)("content-only profile bundles", (test) => {
           (yield* run(runBundleApply(options, { ...request, file: misleading }))).plan.refused,
         ).toBe(true);
         expect(yield* readState(options)).toEqual(before);
-        expect(yield* fs.exists(path.join(options.environment.TACK_STATE_DIR, "bundles"))).toBe(
-          false,
-        );
+        expect(yield* fs.exists(path.join(options.stateDirectory, "bundles"))).toBe(false);
       }),
   );
   test.effect(
@@ -107,9 +105,7 @@ it.layer(LiveTestLayer)("content-only profile bundles", (test) => {
           (yield* run(runBundleApply(options, { ...request, file }))).plan.findings[0]?.code,
         ).toBe("profile-existing-selection");
         expect(yield* readState(options)).toEqual(before);
-        expect(yield* fs.exists(path.join(options.environment.TACK_STATE_DIR, "bundles"))).toBe(
-          false,
-        );
+        expect(yield* fs.exists(path.join(options.stateDirectory, "bundles"))).toBe(false);
         yield* fs.makeDirectory(path.join(root, "second"));
         yield* mutateStateFixture(options, (state) => ({
           ...state,
@@ -125,14 +121,9 @@ it.layer(LiveTestLayer)("content-only profile bundles", (test) => {
           (yield* run(runBundleApply(options, { ...request, file, force: true }))).plan.findings[0]
             ?.code,
         ).toBe("profile-target-boundary");
-        expect(yield* fs.exists(path.join(options.environment.TACK_STATE_DIR, "bundles"))).toBe(
-          false,
-        );
+        expect(yield* fs.exists(path.join(options.stateDirectory, "bundles"))).toBe(false);
         yield* fs.makeDirectory(path.join(root, "other-home"));
-        const escaped = {
-          homeDirectory: root,
-          environment: { HOME: root, TACK_STATE_DIR: options.environment.TACK_STATE_DIR },
-        };
+        const escaped = stateOptionsAt(options.stateDirectory, root);
         const shared = yield* run(
           runBundleApply(escaped, {
             ...request,
@@ -153,7 +144,7 @@ it.layer(LiveTestLayer)("content-only profile bundles", (test) => {
       const file = path.join(root, "identity.tar.gz");
       yield* runBundleExport(options, { reference: "tools:ci", output: file, apply: true });
       const { manifest } = yield* inspectBundle(file);
-      const payload = path.join(options.environment.TACK_STATE_DIR, "bundles", manifest.identity);
+      const payload = path.join(options.stateDirectory, "bundles", manifest.identity);
       yield* fs.makeDirectory(payload, { recursive: true });
       yield* fs.writeFileString(path.join(payload, "sentinel"), "foreign");
       const before = yield* readState(options);
@@ -351,10 +342,7 @@ it.layer(LiveTestLayer)("content-only profile bundles", (test) => {
         );
         const home = path.join(root, "recipient-home");
         yield* fs.makeDirectory(home);
-        const recipient = {
-          homeDirectory: home,
-          environment: { HOME: home, TACK_STATE_DIR: path.join(home, "state") },
-        };
+        const recipient = stateOptionsAt(path.join(home, "state"), home);
         yield* initializeState(recipient);
         yield* mutateStateFixture(recipient, (state) => ({
           ...state,

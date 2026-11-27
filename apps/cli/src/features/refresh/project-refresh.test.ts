@@ -5,8 +5,8 @@ import {
   managedLinksOf,
   pendingRemovalsOf,
 } from "../../domain/links/link-record-schema.ts";
-import type { ProfileApplication } from "../../domain/profiles/profile-application.ts";
-import { allSkillChoices } from "../../domain/state/state-intent.ts";
+import type { ProfileApplication } from "../../domain/state/profile-application-schema.ts";
+import { allChoices } from "../../domain/state/state-intent.ts";
 import { mutateStateFixture, projectRecords } from "../../../test/support/state-fixture.ts";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
@@ -15,7 +15,7 @@ import { Git, type GitService } from "../../services/git.ts";
 import { sortAndDedupeBy, sortAndDedupeStrings } from "../../domain/identity/ordering.ts";
 import { diffProjectRoots, type ProjectRootDiffInput } from "./project-refresh-diff.ts";
 import { ProjectRefreshEvidenceError, runProjectRefreshCommand } from "./project-refresh.ts";
-import type { ProjectRefreshScope } from "../../domain/projects/project-refresh-schema.ts";
+import type { ProjectRefreshScope } from "./project-refresh-schema.ts";
 import { ProjectRecordSchema } from "../../domain/projects/project-schema.ts";
 import { ProjectRootOwnershipError } from "../projects/project.ts";
 import { projectLifecycle } from "../../domain/projects/project-schema.ts";
@@ -163,7 +163,7 @@ const withRefreshFixture = <A, E, R>(
     const path = yield* Path.Path;
     const root = yield* fileSystem.makeTempDirectoryScoped({ prefix: "tack-refresh-test-" });
     const options = {
-      environment: { TACK_STATE_DIR: path.join(root, "state") },
+      stateDirectory: path.join(root, "state"),
       homeDirectory: path.join(root, "home"),
     } satisfies StateOptions;
     yield* initializeState(options);
@@ -418,7 +418,7 @@ it.layer(LiveTestLayer)("project worktree refresh planning", (refreshIt) => {
             projects: [{ gitCommonDirectory: anchor, name: "project", roots: [kept, missingPath] }],
           },
         }));
-        const statePath = path.join(options.environment["TACK_STATE_DIR"] ?? "", "state.json");
+        const statePath = path.join(options.stateDirectory ?? "", "state.json");
         const before = yield* fileSystem.readFileString(statePath);
         const result = yield* appliedRefresh(
           options,
@@ -433,7 +433,7 @@ it.layer(LiveTestLayer)("project worktree refresh planning", (refreshIt) => {
           { action: "deregistered", canonicalRoot: missingPath, projectName: "project" },
         ]);
         expect(state.data.projects?.at(0)?.roots).toEqual([kept, newRoot]);
-        expect(allSkillChoices(state)).toHaveLength(1);
+        expect(allChoices(state)).toHaveLength(1);
       }),
     ),
   );
@@ -502,7 +502,7 @@ it.layer(LiveTestLayer)("project worktree refresh planning", (refreshIt) => {
             roots: [kept],
           },
         ]);
-        expect(allSkillChoices(state)).toHaveLength(1);
+        expect(allChoices(state)).toHaveLength(1);
         expect(managedLinksOf(state.data.links)).toEqual([evidence]);
         expect(pendingRemovalsOf(state.data.links)).toMatchObject([
           { cause: "root-removal", evidence },
@@ -699,7 +699,7 @@ it.layer(LiveTestLayer)("project worktree refresh planning", (refreshIt) => {
           },
         }));
         const git = fakeGit(anchor, [{ path: existing }, { path: newRoot }]);
-        const statePath = path.join(options.environment["TACK_STATE_DIR"] ?? "", "state.json");
+        const statePath = path.join(options.stateDirectory ?? "", "state.json");
         const before = yield* fileSystem.readFileString(statePath);
         const dryRun = yield* runProjectRefreshCommand(options, {
           apply: false,
@@ -762,7 +762,7 @@ it.layer(LiveTestLayer)("project worktree refresh planning", (refreshIt) => {
 
         expect(result.removedProjects).toEqual(["project"]);
         expect(state.data.projects ?? []).toEqual([]);
-        expect(allSkillChoices(state) ?? []).toEqual([]);
+        expect(allChoices(state) ?? []).toEqual([]);
         expect(managedLinksOf(state.data.links)).toEqual([]);
       }),
     ),
@@ -804,7 +804,7 @@ it.layer(LiveTestLayer)("project worktree refresh planning", (refreshIt) => {
 
         expect(result.removedProjects).toEqual(["project"]);
         expect(state.data.projects ?? []).toEqual([]);
-        expect(allSkillChoices(state) ?? []).toEqual([]);
+        expect(allChoices(state) ?? []).toEqual([]);
         expect(pendingRemovalsOf(state.data.links)).toEqual([]);
       }),
     ),
@@ -868,7 +868,7 @@ it.layer(LiveTestLayer)("project worktree refresh planning", (refreshIt) => {
             projects: [{ gitCommonDirectory: anchor, name: "project", roots: [missingPath] }],
           },
         }));
-        const statePath = path.join(options.environment["TACK_STATE_DIR"] ?? "", "state.json");
+        const statePath = path.join(options.stateDirectory ?? "", "state.json");
         const before = yield* fileSystem.readFileString(statePath);
 
         const error = yield* Effect.flip(previewRefresh(options, fakeGit(anchor, [])));
@@ -1446,7 +1446,7 @@ it.layer(LiveTestLayer)("project worktree refresh planning", (refreshIt) => {
           expect(execution.applied?.removals[0]?.docsActions).toMatchObject([
             { _tag: "blocked", code: "docs-destination-modified" },
           ]);
-          expect(execution.applied?.removals[0]?.docsPending).toMatchObject([
+          expect(execution.applied?.removals[0]?.docsPendingRemovals).toMatchObject([
             { cause: "root-removal", lastResult: { _tag: "blocked" } },
           ]);
           expect(state.data.projects?.at(0)).toMatchObject({ removingRoots: [], roots: [kept] });

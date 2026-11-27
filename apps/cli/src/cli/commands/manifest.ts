@@ -1,93 +1,34 @@
-import { Console, Context, Effect, Option, Schema } from "effect";
+import { Console, Context, Effect, Option, Record, Schema } from "effect";
 import { CliConfig, CliOutput, Command, GlobalFlag, type HelpDoc } from "effect/cli";
 import { tackVersion } from "../../version.ts";
 import { tackCommand } from "./command-tree.ts";
 import { isListAlias } from "./list-alias.ts";
-import { commandNameOf, InvocationError, isCommandName } from "./model.ts";
+import { commandNameOf, commandPathOf, InvocationError } from "./model.ts";
 import { versionFlagHelp } from "./version-request.ts";
 import { InvocationReceiver } from "./invocation-receiver.ts";
 import { HelpNotesAnnotation } from "./help-notes.ts";
-import { MutationModeSchema, OperationContractAnnotation } from "./operation-contract.ts";
-
-const ResponseSlotSchema = Schema.Literals(["result", "plan", "applied"]);
-
-/** One positional operand, in declaration order. */
-const CommandArgumentSchema = Schema.Struct({
-  name: Schema.String,
-  description: Schema.optionalKey(Schema.String),
-  /** The value type, such as `string` or `choice`. */
-  type: Schema.String,
-  required: Schema.Boolean,
-  variadic: Schema.Boolean,
-});
-
-/** One accepted flag, spelled `--<name>`. */
-const CommandFlagSchema = Schema.Struct({
-  name: Schema.String,
-  description: Schema.optionalKey(Schema.String),
-  /** The value type: `boolean` flags take no value; `choice` flags list their `choices`. */
-  type: Schema.String,
-  choices: Schema.optionalKey(Schema.Array(Schema.String)),
-  required: Schema.Boolean,
-});
-
-const CommandExampleSchema = Schema.Struct({
-  command: Schema.String,
-  description: Schema.optionalKey(Schema.String),
-});
-
-/** A titled block of `term  meaning` rows, such as what each status value means. */
-const HelpNoteSchema = Schema.Struct({
-  title: Schema.String,
-  rows: Schema.Array(Schema.Struct({ term: Schema.String, text: Schema.String })),
-});
-
-const MutationSchema = MutationModeSchema;
-
-/** The grammar of one command path. */
-const CommandGrammarFields = {
-  /** The words after `tack`; empty for the root. */
-  commandPath: Schema.Array(Schema.String),
-  usage: Schema.String,
-  description: Schema.String,
-  /** Whether the path itself is an operation; a pure group only lists subcommands. */
-  executable: Schema.Boolean,
-  /** How the operation changes state, present when `executable`. */
-  mutation: Schema.optionalKey(MutationSchema),
-  arguments: Schema.Array(CommandArgumentSchema),
-  flags: Schema.Array(CommandFlagSchema),
-  examples: Schema.Array(CommandExampleSchema),
-  /** Extra blocks the help page prints after the flags; omitted when a command has none. */
-  notes: Schema.optionalKey(Schema.Array(HelpNoteSchema)),
-};
-
-/** The `help` result: the grammar of one command path and its direct subcommands. */
-export const HelpPayloadSchema = Schema.Struct({
-  kind: Schema.Literal("help"),
-  ...CommandGrammarFields,
-  subcommands: Schema.Array(
-    Schema.Struct({ name: Schema.String, description: Schema.String, executable: Schema.Boolean }),
-  ),
-});
-
-/** A help result. */
-type HelpPayload = typeof HelpPayloadSchema.Type;
+import { MutationModeSchema } from "./operation-contract.ts";
+import {
+  commandDeclarations,
+  modeOf,
+  payloadSlots,
+  stablePayloadKinds,
+  type CommandDeclaration,
+  type PayloadSlot,
+} from "./declarations.ts";
+import {
+  CommandArgumentSchema,
+  CommandFlagSchema,
+  CommandGrammarFields,
+  type HelpPayload,
+} from "./command-payloads.ts";
 
 /**
  * The payload kind filling a response slot. Only `status`, `sync`, `doctor` and `upgrade` (with
  * `upgrade status`) carry a typed, schema-backed payload. Every other command's payload is `json`:
  * it prints JSON under `--json`, with no schema and no stability promise.
  */
-const PayloadKindSchema = Schema.Literals([
-  "doctor-report",
-  "skill-status",
-  "sync-plan",
-  "sync-application",
-  "init-plan",
-  "init-application",
-  "upgrade-guide",
-  "json",
-]);
+const PayloadKindSchema = Schema.Literals([...stablePayloadKinds, "json"] as const);
 
 /** The slots one run mode fills on success or partial success, each with its payload kind. */
 const ResponseVariantSchema = Schema.Struct({
@@ -105,7 +46,7 @@ export const CommandContractSchema = Schema.Struct({
   /** The envelope `command` value: the space-joined command path. */
   command: Schema.String,
   ...CommandGrammarFields,
-  mutation: MutationSchema,
+  mutation: MutationModeSchema,
   responses: Schema.Array(ResponseVariantSchema),
 });
 
@@ -176,39 +117,57 @@ const argumentOf = (argument: HelpDoc.ArgDoc): typeof CommandArgumentSchema.Type
   variadic: argument.variadic,
 });
 
-const isExecutable = (commandPath: ReadonlyArray<string>) =>
-  commandPath.length > 0 && isCommandName(commandPath.join(" "));
+/** The declaration of the command a path selects; `state-clean` and `state-clean-pending` share theirs. */
+const declarationOf = (commandPath: ReadonlyArray<string>) => {
+  const tag = Record.keys(commandDeclarations).find((candidate) =>
+    samePath(commandPathOf(candidate), commandPath),
+  );
+  return tag === undefined ? undefined : commandDeclarations[tag];
+};
+
+/**
+ * Each declared slot with the payload kind it publishes: a stable command's schema names its kind,
+ * and every other command's payload is `json`.
+ */
+const payloadKindsOf = (
+  declaration: CommandDeclaration,
+): ReadonlyArray<readonly [PayloadSlot, typeof PayloadKindSchema.Type]> =>
+  declaration.stable === true
+    ? payloadSlots.flatMap((slot) => {
+        const schema = declaration[slot];
+        return schema === undefined ? [] : [[slot, schema.fields.kind.literal] as const];
+      })
+    : payloadSlots.flatMap((slot) =>
+        declaration[slot] === undefined ? [] : [[slot, "json"] as const],
+      );
+
+/** The slots each run mode fills: a preview leaves `applied` to its `--apply` run. */
+const responsesOf = (declaration: CommandDeclaration): CommandNode["responses"] => {
+  const kinds = payloadKindsOf(declaration);
+  return modeOf(declaration) === "preview-apply"
+    ? [
+        {
+          mode: "default",
+          slots: Object.fromEntries(kinds.filter(([slot]) => slot !== "applied")),
+        },
+        { mode: "apply", slots: Object.fromEntries(kinds) },
+      ]
+    : [{ mode: "default", slots: Object.fromEntries(kinds) }];
+};
 
 const nodeOf = Effect.fnUntraced(function* (
   command: Command.Command.Any,
   commandPath: ReadonlyArray<string>,
 ) {
   const doc = yield* helpDocOf(commandPath);
-  const executable = isExecutable(commandPath);
-  const contract = Context.getOption(command.annotations, OperationContractAnnotation);
-  // Coverage skip: every executable command declares a contract; this guards the tree invariant.
-  /* v8 ignore next -- @preserve */
-  if (executable && Option.isNone(contract))
-    return yield* Effect.die(`"${commandPath.join(" ")}" has no operation contract.`);
-  const slotsOf = (slots: ReadonlyArray<typeof ResponseSlotSchema.Type>) =>
-    Object.fromEntries(slots.map((slot) => [slot, payloadKindOf(commandPath, slot)]));
-  const responses = Option.match(contract, {
-    onNone: () => [],
-    onSome: ({ slots, applySlots }) => [
-      { mode: "default" as const, slots: slotsOf(slots) },
-      ...(applySlots === undefined ? [] : [{ mode: "apply" as const, slots: slotsOf(applySlots) }]),
-    ],
-  });
+  const declaration = declarationOf(commandPath);
   return {
     grammar: {
       commandPath,
       usage: doc.usage,
       description: doc.description,
-      executable,
-      ...Option.match(contract, {
-        onNone: () => ({}),
-        onSome: ({ mutation }) => ({ mutation }),
-      }),
+      executable: declaration !== undefined,
+      ...(declaration === undefined ? {} : { mutation: modeOf(declaration) }),
       arguments: (doc.args ?? []).map(argumentOf),
       // A command accepts its ancestors' flags too; Effect CLI lists them apart from its own.
       flags: [
@@ -232,30 +191,14 @@ const nodeOf = Effect.fnUntraced(function* (
               {
                 name: subcommand.name,
                 description: subcommand.description ?? "",
-                executable: isExecutable([...commandPath, subcommand.name]),
+                executable: declarationOf([...commandPath, subcommand.name]) !== undefined,
               },
             ],
       ),
     ),
-    responses,
+    responses: declaration === undefined ? [] : responsesOf(declaration),
   } satisfies CommandNode;
 });
-
-/** The payload contract for one command slot; `json` promises no schema. */
-const payloadKindOf = (
-  commandPath: ReadonlyArray<string>,
-  slot: typeof ResponseSlotSchema.Type,
-): typeof PayloadKindSchema.Type => {
-  const name = commandPath.join(" ");
-  if (name === commandNameOf("doctor")) return "doctor-report";
-  if (name === commandNameOf("status") && slot === "result") return "skill-status";
-  if (name === commandNameOf("sync")) return slot === "applied" ? "sync-application" : "sync-plan";
-  if (name === commandNameOf("machine-init"))
-    return slot === "applied" ? "init-application" : "init-plan";
-  if (name === commandNameOf("upgrade-status") || name === commandNameOf("upgrade"))
-    return "upgrade-guide";
-  return "json";
-};
 
 /** Every command path in the tree, parents before their subcommands, in declaration order. */
 const commandPaths = (

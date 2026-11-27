@@ -2,7 +2,7 @@ import { Effect, Option } from "effect";
 import { Argument, Command, Flag } from "effect/cli";
 import { booleanFlag, optionalStringFlag } from "./flag-utils.ts";
 import { handle, invalid, receive } from "./invocation-receiver.ts";
-import { applyFlag, previewApply, readOnly } from "./operation-contract.ts";
+import { applyFlag } from "./operation-contract.ts";
 import { exampleLocation, locationHelpText } from "../../domain/imports/providers/registry.ts";
 
 const example = exampleLocation();
@@ -62,7 +62,6 @@ const importAddCommand = Command.make(
       description: "Use a named declared skills folder",
     },
   ]),
-  previewApply,
 );
 
 const importRemoveCommand = Command.make(
@@ -83,7 +82,6 @@ const importRemoveCommand = Command.make(
     { command: "tack import remove my-skills:pdf" },
     { command: "tack import remove my-skills:pdf --apply" },
   ]),
-  previewApply,
 );
 
 const importCommand = Command.make("import", {}, () => receive({ _tag: "import-list" })).pipe(
@@ -92,7 +90,6 @@ const importCommand = Command.make("import", {}, () => receive({ _tag: "import-l
     "Copy skills from a remote location into a source you own; bare `import` lists the imported skills of every registered source, offline",
   ),
   Command.withExamples([{ command: "tack import" }]),
-  readOnly,
 );
 
 /** Commands that copy remote skills into a source. */

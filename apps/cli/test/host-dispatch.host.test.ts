@@ -1,18 +1,18 @@
 import { skillText } from "./support/source-tree.ts";
 import { fakeGit } from "./support/fake-git.ts";
-import { mutateStateFixture } from "./support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "./support/state-fixture.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, PlatformError, Predicate, Schema } from "effect";
 import { GitCommandError, type GitService } from "../src/services/git.ts";
 import { validatePublicEnvelope } from "../src/cli/host/run.ts";
-import { exitCodeForEnvelope } from "../src/cli/host/public-outcome.ts";
-import { type TerminalContextShape } from "../src/cli/host/human/terminal-context.ts";
+import { exitCodeForEnvelope } from "../src/cli/envelope/public-outcome.ts";
+import { type TerminalContextShape } from "../src/cli/human/terminal-context.ts";
 import { runHost } from "./support/host-runner.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
 import { ExecutionWorker } from "../src/services/execution-platform.ts";
 import { makeRunCancellation } from "../src/platform/execution/execution-platform.ts";
-import { initializeState, readState, type StateOptions } from "../src/services/state-store.ts";
+import { initializeState, readState } from "../src/services/state-store.ts";
 
 it.effect("redacts malformed host envelopes before they reach stdout", () =>
   Effect.gen(function* () {
@@ -22,7 +22,7 @@ it.effect("redacts malformed host envelopes before they reach stdout", () =>
       diagnostics: [{ code: "unsafe", message: "secret", severity: "invalid" }],
       version: 1,
     });
-    for (const candidate of [undefined, { command: "unsafe" }, { command: "adapter-set" }])
+    for (const candidate of [undefined, { command: "unsafe" }, { command: "adapter-enable" }])
       expect(yield* validatePublicEnvelope(candidate)).toMatchObject({
         classification: "internal",
         command: "unknown",
@@ -113,12 +113,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
         expect(sourceHuman).toContain("platform team, ada");
         expect(catalogHuman).toContain("review  personal-brain");
         expect(catalogHuman.match(/maintainers/g)).toHaveLength(1);
-        expect(
-          (yield* readState({
-            environment: { TACK_STATE_DIR: stateDirectory },
-            homeDirectory: root,
-          })).format,
-        ).toBe(1);
+        expect((yield* readState(stateOptionsAt(stateDirectory, root))).format).toBe(1);
       }),
   );
 
@@ -725,10 +720,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
         fileSystem.makeDirectory(directory, { recursive: true }),
       );
       const stateDirectory = path.join(root, "state");
-      const stateOptions = {
-        environment: { TACK_STATE_DIR: stateDirectory },
-        homeDirectory: root,
-      } satisfies StateOptions;
+      const stateOptions = stateOptionsAt(stateDirectory, root);
       const invoke = (arguments_: ReadonlyArray<string>) =>
         runJson(
           ["--state-dir", stateDirectory, ...arguments_],
@@ -1104,10 +1096,7 @@ it.layer(LiveTestLayer)("CLI host dispatch", (hostIt) => {
         path.relative(path.dirname(destinationBeta), sourceBeta),
         destinationBeta,
       );
-      const options = {
-        environment: { TACK_STATE_DIR: stateDirectory },
-        homeDirectory: "",
-      } satisfies StateOptions;
+      const options = stateOptionsAt(stateDirectory, "");
       yield* initializeState(options);
       const evidence = (name: string, sourceDirectoryPath: string) => ({
         adapter: "codex" as const,

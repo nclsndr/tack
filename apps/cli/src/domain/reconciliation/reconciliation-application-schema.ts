@@ -1,5 +1,5 @@
 import { Schema } from "effect";
-import { AgentAdapterIdSchema } from "../links/agent-adapter-schema.ts";
+import { AgentAdapterIdSchema } from "../agents/agent-adapter-schema.ts";
 import { CanonicalPathSchema } from "../identity/identity-schema.ts";
 import { ManagedLinkTargetSchema } from "../links/managed-link-schema.ts";
 import { ReconciliationActionSchema, reconciliationPlanVersion } from "./reconciliation-schema.ts";

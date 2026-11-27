@@ -1,4 +1,4 @@
-import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "../../../test/support/state-fixture.ts";
 import { fakeGit } from "../../../test/support/fake-git.ts";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
@@ -21,7 +21,7 @@ const bareWorld = Effect.gen(function* () {
   for (const directory of ["main/sub", "git", "old/nested/deeper", "outside", "gone-git"])
     yield* fs.makeDirectory(at(directory), { recursive: true });
   yield* fs.writeFileString(at("not-a-directory"), "file\n");
-  const options = { environment: { TACK_STATE_DIR: at("state") }, homeDirectory: at("home") };
+  const options = stateOptionsAt(at("state"), at("home"));
   yield* initializeState(options);
   yield* mutateStateFixture(options, (state) => ({
     ...state,

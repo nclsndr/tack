@@ -581,6 +581,22 @@ it.layer(LiveTestLayer)("import remote over real git", (remoteIt) => {
     ),
   );
 
+  remoteIt.effect("waits for a transfer that pauses for less than the idle limit", () =>
+    Effect.gen(function* () {
+      // The fetch writes nothing for a second, so the monitor samples the same size several times
+      // before the transfer ends, however slowly the machine runs.
+      const { remote: pausing } = yield* remoteWith(
+        yield* rewriting((args) => (args.includes("fetch") ? "exec sleep 1" : undefined)),
+      );
+      const session = yield* Effect.scoped(pausing.open(target, "0".repeat(40)));
+      expect(session.revision).toBe("0".repeat(40));
+    }).pipe(
+      Effect.scoped,
+      // The idle limit under test is a wall-clock timer, so the run uses the live clock.
+      TestClock.withLive,
+    ),
+  );
+
   remoteIt.effect("reports a scratch directory it cannot create or prepare", () =>
     Effect.gen(function* () {
       const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;

@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 import {
-  listSkillChoices as listSkillChoicesOf,
-  removeSkillChoice as removeSkillChoiceOn,
-  setSkillChoice as setSkillChoiceOn,
+  listChoices as listChoicesOf,
+  removeChoice as removeChoiceOn,
+  setChoice as setChoiceOn,
 } from "../../src/features/choices/choice.ts";
 import { readInvocationSnapshot } from "../../src/features/snapshot/command-snapshot.ts";
 import { inspectSourcesWithDeclarations as declarationsOf } from "../../src/features/sources/catalog.ts";
@@ -20,22 +20,22 @@ import {
  * the host does for one command.
  */
 
-type SetChoice = Parameters<typeof setSkillChoiceOn>[1];
-type RemoveChoice = Parameters<typeof removeSkillChoiceOn>[1];
+type SetChoice = Parameters<typeof setChoiceOn>[1];
+type RemoveChoice = Parameters<typeof removeChoiceOn>[1];
 
 /** Persists one exact choice in its own writer session. */
-export const setSkillChoice = (options: StateOptions, choice: SetChoice) =>
-  withStateCheckpointWriter(options, (writer) => setSkillChoiceOn(writer, choice));
+export const setChoice = (options: StateOptions, choice: SetChoice) =>
+  withStateCheckpointWriter(options, (writer) => setChoiceOn(writer, choice));
 
 /** Removes one exact choice in its own writer session. */
-export const removeSkillChoice = (options: StateOptions, remove: RemoveChoice) =>
-  withStateCheckpointWriter(options, (writer) => removeSkillChoiceOn(writer, remove));
+export const removeChoice = (options: StateOptions, remove: RemoveChoice) =>
+  withStateCheckpointWriter(options, (writer) => removeChoiceOn(writer, remove));
 
 /** Lists the choices of the state that `options` names, read once. */
-export const listSkillChoices = (
+export const listChoices = (
   options: StateOptions,
-  namespace?: Parameters<typeof listSkillChoicesOf>[1],
-) => readState(options).pipe(Effect.flatMap((state) => listSkillChoicesOf(state, namespace)));
+  namespace?: Parameters<typeof listChoicesOf>[1],
+) => readState(options).pipe(Effect.flatMap((state) => listChoicesOf(state, namespace)));
 
 /** Resolves the catalog of the state that `options` names, read once. */
 export const resolveCatalogAt = (options: StateOptions) =>

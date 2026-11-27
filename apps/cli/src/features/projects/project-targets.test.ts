@@ -1,4 +1,4 @@
-import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "../../../test/support/state-fixture.ts";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { selectTargetsAt } from "../../../test/support/snapshot-helpers.ts";
 import { expect, it } from "@effect/vitest";
@@ -15,7 +15,7 @@ it.layer(LiveTestLayer)("user target selection", (test) => {
       const linkedHome = path.join(root, "linked-home");
       yield* fs.makeDirectory(realHome);
       yield* fs.symlink(realHome, linkedHome);
-      const options = { environment: { TACK_STATE_DIR: path.join(root, "state") } };
+      const options = stateOptionsAt(path.join(root, "state"));
       yield* initializeState(options);
       yield* mutateStateFixture(options, (state) => ({
         format: 1,
@@ -65,7 +65,7 @@ it.layer(LiveTestLayer)("user target selection", (test) => {
       const root = yield* fs.realPath(yield* fs.makeTempDirectoryScoped({ prefix: "tack-bare-" }));
       const leaving = path.join(root, "leaving");
       yield* fs.makeDirectory(path.join(leaving, "inside"), { recursive: true });
-      const options = { environment: { TACK_STATE_DIR: path.join(root, "state") } };
+      const options = stateOptionsAt(path.join(root, "state"));
       yield* initializeState(options);
       yield* mutateStateFixture(options, (state) => ({
         ...state,

@@ -663,6 +663,8 @@ delivers the resource: every project's agent also loads the user's resources, an
 link one the project selects too. This is what `sync`
 would deliver, not the links on disk. A staged change follows the state, such as
 `● default → include`; an include of an active resource saves an explicit pick and changes no link.
+A project exclude of a resource the user namespace links is refused with `project-exclude-refused`,
+as `pick exclude` refuses it, in the preview and before any staged change is saved.
 A project that a fixed profile owns opens read-only: its header says `fixed by SOURCE/PROFILE`, its
 rows show `● member`, `● required` or `○ not a member`, and the staging keys say to edit the
 profile instead. A profile destination's rows use the same three words.
@@ -1263,9 +1265,9 @@ resource, destination, source directory and link text) and, once attempted, its 
 (`blocked`, `filesystem-failure` or `interrupted`, with a `message`). `sync` reports only the
 projects it covers. Each owed docs removal is also a `pending-removal` partial diagnostic in
 `status` and `sync`, and the `links` check of `doctor` counts it among its pending removals and
-names `tack state clean --pending` as its next step. A removal result carries the same array as
-`docsPending`, and `docsActions` reports each docs mount's outcome with the `blocked` tag when the
-mount stays owed.
+names `tack state clean --pending` as its next step. A removal result carries the same array under
+the same name, beside `pendingRemovals` for the agent links, and `docsActions` reports each docs
+mount's outcome with the `blocked` tag when the mount stays owed.
 
 A planned docs link that cannot proceed is a `partial` diagnostic whose `code` names its cause, in
 `sync` preview and apply alike, with the link's `resource` and `destinationPath` in `details.subject`:

@@ -1,6 +1,6 @@
 import { skillText } from "./support/source-tree.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
-import { mutateStateFixture } from "./support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "./support/state-fixture.ts";
 import { fakeGit, outsideRepositoryGit } from "./support/fake-git.ts";
 import { inDirectory, runHost } from "./support/host-runner.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
@@ -10,9 +10,9 @@ import { Effect, FileSystem, Path, Schema } from "effect";
 import { ExecutionPlatformLive } from "../src/platform/execution/execution-platform.ts";
 import { DoctorReportSchema } from "../src/domain/doctor/doctor-schema.ts";
 import { SyncPlanSchema } from "../src/domain/reconciliation/sync-schema.ts";
-import type { PublicEnvelope } from "../src/cli/host/public-outcome.ts";
+import type { PublicEnvelope } from "../src/cli/envelope/public-outcome.ts";
 import type { GitService } from "../src/services/git.ts";
-import type { TerminalContextShape } from "../src/cli/host/human/terminal-context.ts";
+import type { TerminalContextShape } from "../src/cli/human/terminal-context.ts";
 
 const pipe: TerminalContextShape = {
   columns: 120,
@@ -82,7 +82,7 @@ const machine = Effect.fnUntraced(function* () {
       cwd === undefined ? (effect) => effect : inDirectory(at(cwd)),
     );
   expect((yield* json(["state", "init"])).status).toBe("success");
-  return { at, json, text, state: { environment: { TACK_STATE_DIR: at("state") } } };
+  return { at, json, text, state: stateOptionsAt(at("state")) };
 });
 
 /** The `projects` check of a doctor envelope. */

@@ -12,7 +12,7 @@ import { agentLink, managedLinksOf } from "../../domain/links/link-record-schema
 import type { ManagedLinkEvidence } from "../../domain/links/managed-link-schema.ts";
 import { LiveTestLayer, provideTestFileSystem } from "../../../test/support/live-test-layer.ts";
 import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
-import type { ChoiceNamespace } from "../../domain/choices/choice-schema.ts";
+import type { Namespace } from "../../domain/choices/choice-schema.ts";
 import type { DependencyResolution } from "../../domain/choices/dependency-resolution.ts";
 import { withRecoveredWriter } from "../writer/recovered-writer.ts";
 import type { SkillCatalogEntry } from "../../domain/sources/catalog-schema.ts";
@@ -34,7 +34,7 @@ type SkillAddress = SkillCatalogEntry["address"];
  */
 
 const registrationId = "00000000-0000-4000-8000-000000000001";
-const userNamespace = { _tag: "user" } satisfies ChoiceNamespace;
+const userNamespace = { _tag: "user" } satisfies Namespace;
 
 const address = (name: string): SkillAddress => ({
   kind: "skill",
@@ -73,7 +73,7 @@ const makeRecorder = () => {
   return {
     events,
     options: (stateDirectory: string, homeDirectory: string): StateOptions => ({
-      environment: { TACK_STATE_DIR: stateDirectory },
+      stateDirectory,
       homeDirectory,
       observer: {
         wrote: () => {

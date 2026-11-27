@@ -3,7 +3,7 @@ import { Argument, Command } from "effect/cli";
 import { listAlias } from "./list-alias.ts";
 import { booleanFlag, cleanupDetailsFlag, optionalStringFlag } from "./flag-utils.ts";
 import { handle, invalid, receive } from "./invocation-receiver.ts";
-import { applyFlag, immediate, previewApply, readOnly } from "./operation-contract.ts";
+import { applyFlag } from "./operation-contract.ts";
 import { cwdFlag, projectFlag } from "./target-selector.ts";
 
 const repositoryCwdFlag = optionalStringFlag(
@@ -32,7 +32,6 @@ const projectAddCommand = Command.make(
     { command: "tack project add demo" },
     { command: "tack project add demo --repository-cwd /path/to/repository" },
   ]),
-  immediate,
 );
 const projectRefreshCommand = Command.make(
   "refresh",
@@ -72,7 +71,6 @@ const projectRefreshCommand = Command.make(
     { command: "tack project refresh" },
     { command: "tack project refresh --project demo --apply" },
   ]),
-  previewApply,
 );
 
 const projectRemoveCommand = Command.make(
@@ -91,7 +89,6 @@ const projectRemoveCommand = Command.make(
     { command: "tack project remove demo" },
     { command: "tack project remove demo --apply" },
   ]),
-  previewApply,
 );
 
 /** Commands owned by registered project lifecycles. */
@@ -108,5 +105,4 @@ export const projectCommand = Command.make("project", {}, () =>
     "Register, refresh and remove Git projects; bare `project` inspects every registered project, its roots and its health",
   ),
   Command.withExamples([{ command: "tack project" }]),
-  readOnly,
 );

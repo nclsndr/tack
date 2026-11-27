@@ -1,7 +1,8 @@
 import { Effect } from "effect";
 
 import type { StateOptions } from "../../services/state-store.ts";
-import { previewOrApply, type PreviewOrApplied } from "../writer/recovered-writer.ts";
+import type { PreviewOrApplied } from "../../domain/plan-and-apply.ts";
+import { previewOrApply } from "../writer/recovered-writer.ts";
 import { applyRemovalWithWriter } from "./removal-apply.ts";
 import { planRemoval } from "./removal-plan.ts";
 import type {

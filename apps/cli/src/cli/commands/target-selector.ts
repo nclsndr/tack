@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 import { Flag } from "effect/cli";
-import type { ChoiceNamespace } from "../../domain/choices/choice-schema.ts";
+import type { Namespace } from "../../domain/choices/choice-schema.ts";
 import { ProjectNameSchema } from "../../domain/projects/project-schema.ts";
-import type { TargetSelector } from "../../domain/projects/project-schema.ts";
+import type { Selector } from "../../domain/projects/project-schema.ts";
 import { booleanFlag, optionalFlag, optionalStringFlag } from "./flag-utils.ts";
 import { invalid } from "./invocation-receiver.ts";
 import type { InvocationIssue } from "./model.ts";
@@ -29,14 +29,14 @@ export const allFlag = booleanFlag("all", "Select every project and the user tar
 /** Selects one named project, or the bare current-directory scope when no project is named. */
 const projectSelectorOf = (
   projectName: string | undefined,
-): Extract<TargetSelector, { readonly _tag: "bare" | "project" }> =>
+): Extract<Selector, { readonly _tag: "bare" | "project" }> =>
   projectName === undefined ? { _tag: "bare" } : { _tag: "project", projectName };
 
 /**
  * Picks the target named by selector flags without rejecting conflicts; `--user` takes precedence
  * over `--project`. Use {@link selectorFrom} unless the command records conflicts itself.
  */
-export const selectorOf = (options: SelectorOptions): TargetSelector =>
+export const selectorOf = (options: SelectorOptions): Selector =>
   options.user === true
     ? { _tag: "user" }
     : options.all === true
@@ -44,9 +44,7 @@ export const selectorOf = (options: SelectorOptions): TargetSelector =>
       : projectSelectorOf(options.projectName);
 
 /** Translates selector flags into one target selector. */
-export const selectorFrom = (
-  options: SelectorOptions,
-): Effect.Effect<TargetSelector, InvocationIssue> =>
+export const selectorFrom = (options: SelectorOptions): Effect.Effect<Selector, InvocationIssue> =>
   Number(options.user === true) +
     Number(options.all === true) +
     Number(options.projectName !== undefined) >
@@ -60,16 +58,16 @@ export const selectorFrom = (
 export function namespaceFrom(
   options: SelectorOptions,
   required: true,
-): Effect.Effect<ChoiceNamespace, InvocationIssue>;
+): Effect.Effect<Namespace, InvocationIssue>;
 export function namespaceFrom(
   options: SelectorOptions,
   required: false,
-): Effect.Effect<ChoiceNamespace | undefined, InvocationIssue>;
+): Effect.Effect<Namespace | undefined, InvocationIssue>;
 /** Translates selector flags into one optional or required choice namespace. */
 export function namespaceFrom(
   options: SelectorOptions,
   required: boolean,
-): Effect.Effect<ChoiceNamespace | undefined, InvocationIssue> {
+): Effect.Effect<Namespace | undefined, InvocationIssue> {
   return selectorFrom(options).pipe(
     Effect.flatMap((selector) => {
       if (selector._tag === "project" || selector._tag === "user") return Effect.succeed(selector);

@@ -1,17 +1,15 @@
 import { expect, it } from "vitest";
-import { renderHuman } from "../src/cli/host/human/render.ts";
-import { runViews } from "../src/cli/host/human/run-views.ts";
-import { makeStyle } from "../src/cli/host/human/style.ts";
-import { ScriptShowPayloadSchema } from "../src/domain/execution/execution-schema.ts";
-import { resultAs, resultOutcome } from "../src/cli/host/outcomes.ts";
-import { createPublicEnvelope, type PublicEnvelope } from "../src/cli/host/public-outcome.ts";
+import { renderDedicated, renderHuman } from "../src/cli/human/render.ts";
+import { makeStyle } from "../src/cli/human/style.ts";
+import { resultAs, resultOutcome } from "../src/cli/envelope/outcomes.ts";
+import { createPublicEnvelope, type PublicEnvelope } from "../src/cli/envelope/public-outcome.ts";
 
 const style = makeStyle({ color: false, width: 80, homeDirectory: "/Users/ada" });
 const render = (envelope: PublicEnvelope) => renderHuman(envelope, style);
 const shown = (overrides: object = {}) =>
   createPublicEnvelope(
     "script show",
-    resultAs(ScriptShowPayloadSchema)({
+    resultAs("script-show")({
       address: {
         kind: "script",
         name: "report",
@@ -74,7 +72,7 @@ it("names a camel-case argument's placeholder in upper snake case", () => {
 
 it("declines an undecodable payload and frames a failure without one", () => {
   expect(
-    runViews["script show"]?.(
+    renderDedicated(
       createPublicEnvelope("script show", resultOutcome({ kind: "script-show" })),
       style,
     ),

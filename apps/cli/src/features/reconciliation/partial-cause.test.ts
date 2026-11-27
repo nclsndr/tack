@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { partialCauseDiagnostic } from "../../cli/host/partial-causes.ts";
+import { partialCauseDiagnostic } from "../../cli/envelope/partial-causes.ts";
 import type { NamespaceDependencyResolution } from "../../domain/reconciliation/reconciliation-schema.ts";
 import {
   reconciliationPlanCauses,

@@ -6,7 +6,7 @@ import type {
   AgentAdapterDestinations,
   AgentCapability,
   AgentCapabilityDecision,
-} from "../links/agent-adapter-schema.ts";
+} from "./agent-adapter-schema.ts";
 
 /**
  * The static adapter registry used by planning, reconciliation and import discovery, keyed by

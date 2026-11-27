@@ -1,6 +1,6 @@
 import { expect, it } from "@effect/vitest";
 import { Schema } from "effect";
-import type { ChoiceNamespace, SkillChoice } from "./choice-schema.ts";
+import type { Namespace, Choice } from "./choice-schema.ts";
 import {
   DependencyResolutionSchema,
   resolutionIsUnresolved,
@@ -19,8 +19,8 @@ import type {
 /** The address of a skill, as a catalog entry carries it. */
 type SkillAddress = SkillCatalogEntry["address"];
 
-const userNamespace = { _tag: "user" } satisfies ChoiceNamespace;
-const projectNamespace = { _tag: "project", projectName: "project" } satisfies ChoiceNamespace;
+const userNamespace = { _tag: "user" } satisfies Namespace;
+const projectNamespace = { _tag: "project", projectName: "project" } satisfies Namespace;
 
 const address = (name: string, owner: "shared" | "private" = "shared") =>
   ({
@@ -68,9 +68,9 @@ const entry = (
 
 const choice = (
   catalogAddress: SkillAddress,
-  decision: SkillChoice["decision"],
-  namespace: ChoiceNamespace = userNamespace,
-) => ({ address: catalogAddress, decision, namespace }) satisfies SkillChoice;
+  decision: Choice["decision"],
+  namespace: Namespace = userNamespace,
+) => ({ address: catalogAddress, decision, namespace }) satisfies Choice;
 
 const quarantine = (catalogAddress: SkillAddress) =>
   ({
@@ -92,10 +92,10 @@ const resolve = ({
   quarantined = [],
   sources = [],
 }: {
-  readonly choices?: ReadonlyArray<SkillChoice>;
+  readonly choices?: ReadonlyArray<Choice>;
   readonly entries: ReadonlyArray<SkillCatalogEntry>;
   readonly includeOptional?: boolean;
-  readonly namespace?: ChoiceNamespace;
+  readonly namespace?: Namespace;
   readonly quarantined?: ReadonlyArray<CatalogQuarantine>;
   readonly sources?: NonNullable<Catalog["sources"]>;
 }) =>

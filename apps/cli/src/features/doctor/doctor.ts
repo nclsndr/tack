@@ -26,7 +26,7 @@ import type { DoctorCheck, DoctorReport } from "../../domain/doctor/doctor-schem
 
 /** Carries `--state-dir` into a suggested command when the operator chose the state directory. */
 const withStateDirectory = (stateOptions: StateOptions, argv: ReadonlyArray<string>) => {
-  const explicit = stateOptions.environment["TACK_STATE_DIR"];
+  const explicit = stateOptions.stateDirectory;
   return explicit === undefined ? argv : [...argv, "--state-dir", explicit];
 };
 

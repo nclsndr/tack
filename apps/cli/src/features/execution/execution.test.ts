@@ -1,4 +1,4 @@
-import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "../../../test/support/state-fixture.ts";
 import { Effect, FileSystem, Path } from "effect";
 import { expect, it } from "@effect/vitest";
 import { TestClock } from "effect/testing";
@@ -53,10 +53,7 @@ const fixture = <A, E, R>(
     );
     const homeDirectory = path.join(root, "home");
     yield* fs.makeDirectory(homeDirectory);
-    const options = {
-      environment: { TACK_STATE_DIR: path.join(root, "state") },
-      homeDirectory,
-    } satisfies StateOptions;
+    const options = stateOptionsAt(path.join(root, "state"), homeDirectory);
     if (initialize === true) yield* initializeState(options);
     return yield* use(options, root);
   }).pipe(Effect.scoped, Effect.provide(ExecutionPlatformLive));
@@ -157,7 +154,7 @@ it.layer(LiveTestLayer)("operator run execution", (test) => {
               entrypoint,
               cwd: options.homeDirectory,
               input: { answer: 42 },
-              stateDirectory: options.environment["TACK_STATE_DIR"],
+              stateDirectory: options.stateDirectory,
               timeoutMs: 5000,
               quiet: true,
             },
@@ -166,7 +163,7 @@ it.layer(LiveTestLayer)("operator run execution", (test) => {
               entrypoint,
               cwd: options.homeDirectory,
               input: { answer: 42 },
-              stateDirectory: options.environment["TACK_STATE_DIR"],
+              stateDirectory: options.stateDirectory,
             },
           ]);
           expect(yield* showScriptHistory(options, result.runId)).toMatchObject({
@@ -557,7 +554,7 @@ it.layer(LiveTestLayer)("operator attempt lifetime", (test) => {
     fixture((options) =>
       Effect.gen(function* () {
         const platform = yield* RunHistory;
-        const stateDirectory = options.environment["TACK_STATE_DIR"] ?? "";
+        const stateDirectory = options.stateDirectory ?? "";
         const records: HistoryRecord[] = Array.from({ length: 35 }, (_, index) => ({
           version: 1,
           runId: crypto.randomUUID(),
@@ -608,7 +605,7 @@ it.layer(LiveTestLayer)("operator attempt lifetime", (test) => {
           const fs = yield* FileSystem.FileSystem;
           const path = yield* Path.Path;
           const platform = yield* RunHistory;
-          const stateDirectory = options.environment["TACK_STATE_DIR"] ?? "";
+          const stateDirectory = options.stateDirectory ?? "";
           const valid: HistoryRecord = {
             version: 1,
             runId: crypto.randomUUID(),
@@ -651,7 +648,7 @@ it.layer(LiveTestLayer)("operator attempt lifetime", (test) => {
       Effect.gen(function* () {
         const fs = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
-        const history = path.join(options.environment["TACK_STATE_DIR"] ?? "", "history");
+        const history = path.join(options.stateDirectory ?? "", "history");
         yield* fs.makeDirectory(history, { recursive: true });
         const later = path.join(history, "00000000-0000-4000-8000-00000000000b.json");
         const earlier = path.join(history, "00000000-0000-4000-8000-00000000000a.json");
@@ -667,7 +664,7 @@ it.layer(LiveTestLayer)("operator attempt lifetime", (test) => {
     fixture((options) =>
       Effect.gen(function* () {
         const platform = yield* RunHistory;
-        const stateDirectory = options.environment["TACK_STATE_DIR"] ?? "";
+        const stateDirectory = options.stateDirectory ?? "";
         const record: HistoryRecord = {
           version: 1,
           runId: crypto.randomUUID(),
@@ -689,10 +686,7 @@ it.layer(LiveTestLayer)("operator attempt lifetime", (test) => {
       const fs = yield* FileSystem.FileSystem;
       const path = yield* Path.Path;
       const root = yield* fs.makeTempDirectoryScoped({ prefix: "tack-operator-test-" });
-      const options = {
-        environment: { TACK_STATE_DIR: path.join(root, "state") },
-        homeDirectory: root,
-      } satisfies StateOptions;
+      const options = stateOptionsAt(path.join(root, "state"), root);
       const refusals = [
         yield* Effect.flip(listScriptHistory(options)),
         yield* Effect.flip(showScriptHistory(options, crypto.randomUUID())),

@@ -1,20 +1,15 @@
 import { Source } from "../sources/source.ts";
 import { Effect, FileSystem, Path } from "effect";
 import { agentAdapterDescriptor } from "../../domain/agents/agent-adapter.ts";
-import {
-  choiceNamespaceIdentity,
-  type ChoiceNamespace,
-} from "../../domain/choices/choice-schema.ts";
-import {
-  profileApplicationFor,
-  type ProfileApplication,
-} from "../../domain/profiles/profile-application.ts";
+import { choiceNamespaceIdentity, type Namespace } from "../../domain/choices/choice-schema.ts";
+import { profileApplicationFor } from "../../domain/profiles/profile-application.ts";
+import type { ProfileApplication } from "../../domain/state/profile-application-schema.ts";
 import type { ProfilePlanFinding } from "../../domain/profiles/profile-schema.ts";
 import type { State } from "../../domain/state/state-schema.ts";
 import type { StateOptions } from "../../services/state-store.ts";
 
 export type ProfileTargetRequest = {
-  readonly namespace: ChoiceNamespace;
+  readonly namespace: Namespace;
   readonly targetRoots: ReadonlyArray<string>;
   readonly targetHome?: string;
   readonly force: boolean;
@@ -56,7 +51,7 @@ const observeProfileTarget = Effect.fnUntraced(function* (
   } else {
     const ordinaryHome =
       options.homeDirectory === undefined ? undefined : yield* canonical(options.homeDirectory);
-    const stateDirectory = options.environment["TACK_STATE_DIR"];
+    const stateDirectory = options.stateDirectory;
     const stateRoot = stateDirectory === undefined ? undefined : yield* canonical(stateDirectory);
     if (
       home === undefined ||

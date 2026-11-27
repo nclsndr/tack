@@ -1,5 +1,5 @@
 import { Schema } from "effect";
-import type { TargetSelector } from "../projects/project-schema.ts";
+import type { Selector } from "../projects/project-schema.ts";
 import { ScriptAddressSchema } from "../sources/catalog-schema.ts";
 
 /** One argument a script declares, as `defineScript` takes it. */
@@ -144,10 +144,17 @@ export const RunResultSchema = Schema.Struct({
   ),
 });
 export type OperatorRunResult = typeof RunResultSchema.Type;
+
+/** The `script run` result: one run's result, led by its `kind`. */
+export const ScriptRunPayloadSchema = Schema.Struct({
+  kind: Schema.Literal("script-run"),
+  ...RunResultSchema.fields,
+});
+
 /** One exact operator run; input-source conflicts are recorded as attempts. */
 export type OperatorRunRequest = {
   readonly address: typeof ScriptAddressSchema.Type;
-  readonly selector: TargetSelector;
+  readonly selector: Selector;
   readonly cwd?: string;
   readonly root?: string;
   readonly targetConflict?: boolean;

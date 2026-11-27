@@ -108,9 +108,12 @@ export const reportProjectRecord = (project: ProjectRecord) => ({
 export const projectLifecycle = (project: ProjectRecord) =>
   project.roots.length === 0 ? ("removing" as const) : ("active" as const);
 
-/** A target selector understood by the application use cases. */
-export type TargetSelector =
+/** The scope a command requests: bare, one project, the user, or all. */
+export type Selector =
   | { readonly _tag: "bare" }
   | { readonly _tag: "all" }
   | { readonly _tag: "project"; readonly projectName: string }
   | { readonly _tag: "user" };
+
+/** A selector after the working directory chose the project of a bare one. */
+export type ResolvedSelector = Exclude<Selector, { readonly _tag: "bare" }>;

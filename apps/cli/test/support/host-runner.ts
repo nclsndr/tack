@@ -4,8 +4,9 @@ import { runCli } from "../../src/cli/host/run.ts";
 import {
   TerminalContext,
   type TerminalContextShape,
-} from "../../src/cli/host/human/terminal-context.ts";
+} from "../../src/cli/human/terminal-context.ts";
 import { Git, type GitService } from "../../src/services/git.ts";
+import { undeclaredPayloadsOfOutput } from "./declared-payloads.ts";
 import { isolationChanges, type TackRunOptions, type TackRun } from "./tack-process.ts";
 
 const text = (chunk: string | Uint8Array) =>
@@ -97,7 +98,9 @@ const withProcessEnv = <A, E, R>(
 
 /**
  * Runs the real CLI host in-process with captured stdio and returns how it exited and what it
- * printed. Other services come from the caller, which can also wrap the returned effect.
+ * printed. Other services come from the caller, which can also wrap the returned effect. A `--json`
+ * envelope whose payload its command's declaration does not describe fails the run, so every host
+ * test also checks the declared payload schemas against what a route produced.
  */
 export function runHost(
   input: HostInput & { readonly git: GitService },
@@ -116,7 +119,11 @@ export function runHost(input: HostInput): Effect.Effect<HostRun, never, CliServ
     const exit = yield* Effect.exit(
       withProcessEnv({ ...isolatedEnvironment, ...input.env }, withTerminal),
     );
-    return { exit, stdout: yield* capture.stdout, stderr: yield* capture.stderr };
+    const stdout = yield* capture.stdout;
+    const undeclared = undeclaredPayloadsOfOutput(stdout);
+    if (undeclared.length > 0)
+      return yield* Effect.die(new Error(`Undeclared payloads:\n${undeclared.join("\n")}`));
+    return { exit, stdout, stderr: yield* capture.stderr };
   });
 }
 

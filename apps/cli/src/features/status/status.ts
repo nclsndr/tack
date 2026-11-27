@@ -1,14 +1,11 @@
 import { profileDelivery } from "../../domain/profiles/profile-delivery.ts";
 import { resolveContextSelection } from "../../domain/profiles/profile-application.ts";
 import { pendingRemovalsOf } from "../../domain/links/link-record-schema.ts";
-import { allSkillChoices } from "../../domain/state/state-intent.ts";
+import { allChoices } from "../../domain/state/state-intent.ts";
 import { Effect, FileSystem, Path, PlatformError, Schema } from "effect";
 import { agentAdapterDescriptor } from "../../domain/agents/agent-adapter.ts";
 import { deliversKind, managedLinkDestinationPath } from "../../domain/agents/agent-layout.ts";
-import {
-  choiceNamespaceIdentity,
-  type ChoiceNamespace,
-} from "../../domain/choices/choice-schema.ts";
+import { choiceNamespaceIdentity, type Namespace } from "../../domain/choices/choice-schema.ts";
 import { selectedDependencyAddresses } from "../../domain/choices/dependency-resolution.ts";
 import { Destination } from "../../services/destination.ts";
 import {
@@ -50,7 +47,7 @@ import {
   type ProjectInspection,
   type ProjectRootInspection,
 } from "../projects/project.ts";
-import { projectLifecycle, type TargetSelector } from "../../domain/projects/project-schema.ts";
+import { projectLifecycle, type Selector } from "../../domain/projects/project-schema.ts";
 import type { ProjectRecord } from "../../domain/projects/project-schema.ts";
 import { observeImportsDisplay, type ImportsDisplay } from "../imports/import-display.ts";
 import { readInvocationSnapshot, type CommandSnapshot } from "../snapshot/command-snapshot.ts";
@@ -126,7 +123,7 @@ export type StatusOptions = {
   readonly cwd: string;
   /** Includes optional dependency closure in the desired state, as `reconcile` does. */
   readonly includeOptional?: boolean;
-  readonly selector: TargetSelector;
+  readonly selector: Selector;
   readonly userTarget?: string;
 };
 
@@ -203,36 +200,16 @@ const sourceStatuses = (
       compareCodeUnits(left.registration.canonicalPath, right.registration.canonicalPath),
     );
 
-const scopeFromSelection = Effect.fnUntraced(function* (
-  selector: TargetSelector,
-  containingRoot: { readonly projectName: string } | undefined,
-): Effect.fn.Return<StatusScope, TargetSelectionError> {
-  if (selector._tag === "user") {
-    return { _tag: "user" };
-  }
-  if (selector._tag === "project") {
-    return { _tag: "project", projectName: selector.projectName };
-  }
-  if (selector._tag === "all") return { _tag: "all" };
-  if (containingRoot === undefined)
-    return yield* new TargetSelectionError({
-      code: "bare-target-requires-registered-root",
-      message:
-        "This directory is not inside a registered project. Choose --project NAME, --user or --all.",
-    });
-  return { _tag: "project", projectName: containingRoot.projectName };
-});
-
 const statusNamespace = (
   state: State,
   catalog: Catalog,
-  namespace: ChoiceNamespace,
+  namespace: Namespace,
   project: ProjectRecord | undefined,
   includeOptional: boolean,
   actualTargets: ReadonlyArray<string>,
   userLinks: ReadonlyArray<UserLink>,
 ): StatusNamespace => {
-  const choices = allSkillChoices(state)
+  const choices = allChoices(state)
     .filter(
       (choice) => choiceNamespaceIdentity(choice.namespace) === choiceNamespaceIdentity(namespace),
     )
@@ -638,7 +615,7 @@ export const statusFromSnapshot = Effect.fn("status.statusFromSnapshot")(functio
     selector: options.selector,
     ...(options.userTarget === undefined ? {} : { userTarget: options.userTarget }),
   });
-  const scope = yield* scopeFromSelection(options.selector, selected.containingRoot);
+  const scope = selected.resolved;
   const sourceInspections = yield* snapshot.sourceInspections;
   const catalog = yield* snapshot.catalog;
   const importsDisplay = yield* observeImportsDisplay(sourceInspections, catalog);
@@ -663,7 +640,7 @@ export const statusFromSnapshot = Effect.fn("status.statusFromSnapshot")(functio
     )
     .sort((left, right) => compareCodeUnits(left.name, right.name));
   const namespaceInputs: ReadonlyArray<{
-    readonly namespace: ChoiceNamespace;
+    readonly namespace: Namespace;
     readonly project?: ProjectRecord;
   }> =
     scope._tag === "user"

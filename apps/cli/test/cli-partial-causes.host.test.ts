@@ -4,8 +4,8 @@ import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Schema } from "effect";
 import { SyncPlanSchema } from "../src/domain/reconciliation/sync-schema.ts";
-import { partialCauseRegistry } from "../src/cli/host/partial-causes.ts";
-import { type PublicEnvelope } from "../src/cli/host/public-outcome.ts";
+import { partialCauseRegistry } from "../src/cli/envelope/partial-causes.ts";
+import { type PublicEnvelope } from "../src/cli/envelope/public-outcome.ts";
 import { runHost } from "./support/host-runner.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
 

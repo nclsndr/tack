@@ -7,10 +7,10 @@ import { profileDeliveryCollisions } from "../../domain/profiles/inventory-colli
 import { Effect, FileSystem, Path, Schema } from "effect";
 import type { ResourceKind } from "../../domain/resources/kinds.ts";
 import {
-  ChoiceNamespaceSchema,
+  NamespaceSchema,
   choiceNamespaceIdentity,
-  type ChoiceNamespace,
-  type SkillChoice,
+  type Namespace,
+  type Choice,
 } from "../../domain/choices/choice-schema.ts";
 import {
   resolutionIsUnresolved,
@@ -32,11 +32,7 @@ import {
   type ResourceAddress,
   type SelectableAddress,
 } from "../../domain/sources/catalog-schema.ts";
-import {
-  allSkillChoices,
-  docsSettingsFor,
-  withDocsSettings,
-} from "../../domain/state/state-intent.ts";
+import { allChoices, docsSettingsFor, withDocsSettings } from "../../domain/state/state-intent.ts";
 import { withChoice, requireChoiceNamespace } from "../choices/choice.ts";
 import { profileContext } from "./profile-check.ts";
 import { readProfileFile } from "../sources/profile-files.ts";
@@ -100,7 +96,7 @@ type ProfileSavePlan = typeof ProfileSavePlanSchema.Type;
 export const ProfileAdoptPlanSchema = Schema.Struct({
   kind: Schema.Literal("profile-adopt"),
   reference: Schema.String,
-  namespace: ChoiceNamespaceSchema,
+  namespace: NamespaceSchema,
   includes: Schema.Array(SelectableAddressSchema),
   attachments: Schema.Array(ResourceAddressSchema),
   notes: Schema.Array(Schema.String),
@@ -109,12 +105,18 @@ export const ProfileAdoptPlanSchema = Schema.Struct({
 });
 type ProfileAdoptPlan = typeof ProfileAdoptPlanSchema.Type;
 
+/** The `profile save` application payload: the profile file was written. */
+export const ProfileSavedSchema = Schema.Struct({ saved: Schema.Literal(true) });
+
+/** The `profile adopt` application payload: the selection now holds the profile's content. */
+export const ProfileAdoptedSchema = Schema.Struct({ adopted: Schema.Literal(true) });
+
 /**
  * Each identity that keeps a selection from copying whole, with why: a pick of a resource no source
  * provides, or a member whose required dependency is blocked.
  */
 const unresolvedIdentities = (
-  unresolvedChoices: ReadonlyArray<SkillChoice>,
+  unresolvedChoices: ReadonlyArray<Choice>,
   resolution: DependencyResolution,
 ): ReadonlyArray<string> => [
   ...new Set([
@@ -142,7 +144,7 @@ export const collectProfileInput = Effect.fnUntraced(function* (
 ) {
   const catalog = yield* snapshot.catalog;
   const findings: ProfilePlanFinding[] = [];
-  const levels: ChoiceNamespace[] = [
+  const levels: Namespace[] = [
     ...(input.user ? [{ _tag: "user" as const }] : []),
     ...(input.projectName === undefined
       ? []
@@ -329,7 +331,7 @@ export const runProfileSaveSelection = Effect.fn("profiles.runProfileSaveSelecti
 
 export type ProfileAdoptRequest = {
   readonly reference: string;
-  readonly namespace: ChoiceNamespace;
+  readonly namespace: Namespace;
   readonly apply: boolean;
   readonly cwd: string;
 };
@@ -396,7 +398,7 @@ const planAdoption = Effect.fnUntraced(function* (
     });
   const copied = new Set(includes.map(resourceAddressIdentity));
   const namespaceKey = choiceNamespaceIdentity(request.namespace);
-  const choices = allSkillChoices(snapshot.state).filter(
+  const choices = allChoices(snapshot.state).filter(
     (choice) =>
       choiceNamespaceIdentity(choice.namespace) !== namespaceKey ||
       copied.has(resourceAddressIdentity(choice.address)) === false,

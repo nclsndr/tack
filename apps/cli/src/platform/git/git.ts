@@ -3,11 +3,11 @@ import { Effect, Layer, Stream } from "effect";
 import {
   Git,
   GitCommandError,
-  parseGitWorktreeList,
   GitOutputParseError,
   type GitCommand,
   type GitService,
 } from "../../services/git.ts";
+import { parseGitWorktreeList } from "./worktree-list.ts";
 
 const parseCommandOutput = (output: string, command: string) => {
   const lines = output.split(/\r?\n/);

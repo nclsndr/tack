@@ -5,7 +5,7 @@ import {
   AgentAdapterIdSchema,
   EnabledAdaptersSchema,
   type AgentAdapterId,
-} from "../../domain/links/agent-adapter-schema.ts";
+} from "../../domain/agents/agent-adapter-schema.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
 import { mutateState, type StateMutation, type StateOptions } from "../../services/state-store.ts";
 import { type State } from "../../domain/state/state-schema.ts";
@@ -26,7 +26,7 @@ export class AgentSelectionValidationError extends Schema.TaggedError<AgentSelec
   },
 ) {}
 
-/** Reports adapter-set changes that conflict with cleanup-aware disablement. */
+/** Reports `adapter enable` changes that conflict with cleanup-aware disablement. */
 export class AgentDisablementRequiredError extends Schema.TaggedError<AgentDisablementRequiredError>()(
   "AgentDisablementRequiredError",
   {

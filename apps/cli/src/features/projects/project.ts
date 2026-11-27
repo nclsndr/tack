@@ -13,7 +13,8 @@ import {
   projectRecordView,
   type ProjectRecord,
   projectLifecycle,
-  type TargetSelector,
+  type ResolvedSelector,
+  type Selector,
   type ProjectRootIssueCode,
   ProjectUnhealthyRootIssueCodeSchema,
   type ProjectUnhealthyRootIssueCode,
@@ -524,8 +525,7 @@ export type PendingRemoval =
 
 /** One selected managed destination. */
 export type ManagedTarget =
-  | { readonly _tag: "project-root"; readonly canonicalPath: string; readonly projectName: string }
-  | { readonly _tag: "user"; readonly canonicalPath: string }
+  | ManagedLinkTarget
   | {
       readonly _tag: "pending-removal";
       readonly canonicalPath: string;
@@ -535,14 +535,17 @@ export type ManagedTarget =
 /** Inputs to target selection. */
 export type SelectTargetsOptions = {
   readonly cwd: string;
-  readonly selector: TargetSelector;
+  readonly selector: Selector;
   readonly userTarget?: string;
 };
 
 /** The selected targets and retained stale-root diagnostics. */
 export type TargetSelection = {
   readonly containingRoot?: ContainingRoot;
-  readonly selector: TargetSelector;
+  /** The selector as the command requested it. */
+  readonly selector: Selector;
+  /** The selector with a bare one resolved to the project of its containing root. */
+  readonly resolved: ResolvedSelector;
   readonly staleRoots: ReadonlyArray<{
     readonly canonicalPath: string;
     readonly code: "root-missing";
@@ -635,6 +638,36 @@ export const removingContainingRoot = (state: State, canonicalCwd: string, path:
       ),
     )
     .sort((left, right) => pathDepth(path, right.root) - pathDepth(path, left.root))[0];
+
+/** A selector flag that a command can accept in place of the bare selector. */
+export type SelectorFlag = Exclude<Selector["_tag"], "bare">;
+
+const selectorFlagWords = {
+  project: "--project NAME",
+  user: "--user",
+  all: "--all",
+} satisfies Record<SelectorFlag, string>;
+
+/**
+ * Refuses a bare selector whose directory no registered project contains. The message names
+ * exactly the flags the command accepts, and `removing` names the root being removed that contains
+ * the directory, when the caller looked one up.
+ */
+export const bareSelectionRefusal = (
+  accepts: ReadonlyArray<SelectorFlag>,
+  path: string,
+  removing?: ContainingRoot,
+) => {
+  const flags = accepts.map((flag) => selectorFlagWords[flag]);
+  const choices =
+    flags.length === 1 ? flags[0] : `${flags.slice(0, -1).join(", ")} or ${flags.at(-1)}`;
+  return new TargetSelectionError({
+    code: "bare-target-requires-registered-root",
+    message: `This directory is not inside a registered project. Choose ${choices}.`,
+    path,
+    ...(removing === undefined ? {} : removing),
+  });
+};
 
 const staleRootsFrom = (projects: ReadonlyArray<ProjectInspection>) =>
   projects.flatMap((inspection) =>
@@ -741,6 +774,7 @@ const unhealthyRootIdentity = (root: TargetSelection["unhealthyRoots"][number]) 
 const normalizeTargetSelection = (selection: TargetSelection): TargetSelection => ({
   ...(selection.containingRoot === undefined ? {} : { containingRoot: selection.containingRoot }),
   selector: selection.selector,
+  resolved: selection.resolved,
   staleRoots: sortAndDedupeBy(selection.staleRoots, staleRootIdentity),
   unhealthyRoots: sortAndDedupeBy(selection.unhealthyRoots, unhealthyRootIdentity),
   targets: sortAndDedupeBy(selection.targets, managedTargetIdentity),
@@ -797,6 +831,7 @@ export const selectTargets = Effect.fnUntraced(function* (
   if (options.selector._tag === "user") {
     return normalizeTargetSelection({
       selector: options.selector,
+      resolved: options.selector,
       staleRoots: [],
       unhealthyRoots: [],
       targets: [
@@ -823,6 +858,7 @@ export const selectTargets = Effect.fnUntraced(function* (
           })
         : normalizeTargetSelection({
             selector: options.selector,
+            resolved: options.selector,
             staleRoots: [],
             targets: retainedPendingTargets,
             unhealthyRoots: [],
@@ -834,6 +870,7 @@ export const selectTargets = Effect.fnUntraced(function* (
 
     return normalizeTargetSelection({
       selector: options.selector,
+      resolved: options.selector,
       staleRoots: staleRoots.filter((root) => root.projectName === project.project.name),
       unhealthyRoots: unhealthyRoots.filter((root) => root.projectName === project.project.name),
       targets: [...activeProjectTargets([project]), ...retainedPendingTargets],
@@ -843,15 +880,11 @@ export const selectTargets = Effect.fnUntraced(function* (
   if (options.selector._tag === "bare") {
     const { canonicalCwd, containing } = yield* resolveContainingRoot(state, options.cwd);
     if (containing === undefined) {
-      const path = yield* Path.Path;
-      const removing = removingContainingRoot(state, canonicalCwd, path);
-      return yield* new TargetSelectionError({
-        code: "bare-target-requires-registered-root",
-        message:
-          "This directory is not inside a registered project. Choose --project NAME, --user or --all.",
-        path: canonicalCwd,
-        ...(removing === undefined ? {} : removing),
-      });
+      return yield* bareSelectionRefusal(
+        ["project", "user", "all"],
+        canonicalCwd,
+        removingContainingRoot(state, canonicalCwd, yield* Path.Path),
+      );
     }
     const selected = yield* selectTargets(state, stateOptions, {
       ...options,
@@ -869,6 +902,7 @@ export const selectTargets = Effect.fnUntraced(function* (
   );
   return normalizeTargetSelection({
     selector: options.selector,
+    resolved: options.selector,
     staleRoots: staleRootsFrom(projects),
     unhealthyRoots: unhealthyRootsFrom(projects),
     targets: [

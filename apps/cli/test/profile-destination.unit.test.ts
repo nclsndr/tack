@@ -1,9 +1,6 @@
 import { expect, it } from "vitest";
-import {
-  destinationMenuLines,
-  stepDestination,
-} from "../src/cli/host/human/explorer/destination.ts";
-import { initialExplorerState } from "../src/cli/host/human/explorer/model.ts";
+import { destinationMenuLines, stepDestination } from "../src/cli/explorer/destination.ts";
+import { initialExplorerState } from "../src/cli/explorer/model.ts";
 
 it("accepts q inside a profile name and keeps the selected destination visible in a long list", () => {
   const state = {
@@ -96,10 +93,10 @@ it("requires an explicit pending-edit disposition and validates names before swi
 });
 
 it("names the copy review confirmation as source/name choice before the final file save", async () => {
-  const { renderExplorerFrame } = await import("../src/cli/host/human/explorer/frame.ts");
-  const { makeStyle } = await import("../src/cli/host/human/style.ts");
-  const { withReview } = await import("../src/cli/host/human/explorer/model.ts");
-  const { initialEditState } = await import("../src/cli/host/human/explorer/edit.ts");
+  const { renderExplorerFrame } = await import("../src/cli/explorer/frame.ts");
+  const { makeStyle } = await import("../src/cli/human/style.ts");
+  const { withReview } = await import("../src/cli/explorer/model.ts");
+  const { initialEditState } = await import("../src/cli/explorer/edit.ts");
   const state = withReview(
     {
       ...initialExplorerState("Tack", []),

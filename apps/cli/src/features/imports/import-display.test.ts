@@ -11,6 +11,7 @@ import { recordFilesOf, type SkillFile } from "./import-files.ts";
 import type { ImportRecord } from "../../domain/imports/import-record.ts";
 import { writeImports } from "./import-write.ts";
 import { stagingPathOf } from "./import-write.ts";
+import { stateOptionsAt } from "../../../test/support/state-fixture.ts";
 
 const text = new TextEncoder();
 const skillFiles = (name: string): ReadonlyArray<SkillFile> => [
@@ -49,10 +50,7 @@ export const withImportedSource = <A, E, R>(
     const fs = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
     const base = yield* fs.realPath(yield* fs.makeTempDirectoryScoped({ prefix: "tack-display-" }));
-    const options = {
-      environment: { TACK_STATE_DIR: path.join(base, "state") },
-      homeDirectory: base,
-    } satisfies StateOptions;
+    const options = stateOptionsAt(path.join(base, "state"), base);
     yield* initializeState(options);
     const root = path.join(base, "personal-brain");
     yield* fs.makeDirectory(path.join(root, "skills", "mine"), { recursive: true });

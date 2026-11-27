@@ -11,10 +11,10 @@ import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { mutateStateFixture } from "./support/state-fixture.ts";
 import { readState } from "../src/services/state-store.ts";
 import { Source, makeSourceService, registerSource } from "../src/features/sources/source.ts";
-import { runProfileApply } from "../src/features/profiles/profile-apply.ts";
+import { recoverAfterPreflight, runProfileApply } from "../src/features/profiles/profile-apply.ts";
 import { runSyncCommand } from "../src/features/reconciliation/sync-command.ts";
 import { withStateCheckpointWriter } from "../src/services/state-store.ts";
-import { setSkillChoice } from "../src/features/choices/choice.ts";
+import { setChoice } from "../src/features/choices/choice.ts";
 
 it.layer(LiveTestLayer)("exact profile application", (test) => {
   test.effect("retires fixed intent when its project registration is removed", () =>
@@ -81,6 +81,37 @@ it.layer(LiveTestLayer)("exact profile application", (test) => {
       expect((yield* run(runProfileApply(options, request))).plan.existing).toContain(
         "target recovery journal",
       );
+    }),
+  );
+
+  test.effect("recovers a pending journal only after the preflight passes", () =>
+    Effect.gen(function* () {
+      const { options, sourceId, path, project } = yield* fixture;
+      const link = agentLink({
+        adapter: "codex",
+        address: { kind: "skill", name: "review", sourceRegistrationId: sourceId },
+        sourceRegistrationId: sourceId,
+        sourceDirectoryPath: path.join(project, "source"),
+        target: { _tag: "project-root", projectName: "ci", canonicalPath: project },
+      });
+      yield* mutateStateFixture(options, (state) => ({
+        ...state,
+        data: { ...state.data, journal: [{ _tag: "create", link }] },
+      }));
+      const prepare = (passes: boolean) =>
+        withStateCheckpointWriter(options, (writer) =>
+          recoverAfterPreflight(
+            writer,
+            (snapshot) => Effect.succeed({ passes, journal: snapshot.state.data.journal }),
+            (prepared) => prepared.passes,
+          ),
+        );
+      const refused = yield* prepare(false);
+      expect(refused.journal).toEqual([{ _tag: "create", link }]);
+      expect((yield* readState(options)).data.journal).toEqual([{ _tag: "create", link }]);
+      const passed = yield* prepare(true);
+      expect(passed.journal).toBeUndefined();
+      expect((yield* readState(options)).data.journal).toBeUndefined();
     }),
   );
 
@@ -486,7 +517,7 @@ it.layer(LiveTestLayer)("exact profile application", (test) => {
         const before = yield* readState(options);
         const failure = yield* Effect.flip(
           withStateCheckpointWriter(options, (writer) =>
-            setSkillChoice(writer, {
+            setChoice(writer, {
               namespace: request.namespace,
               address: { kind: "skill", name: "notes", sourceRegistrationId: sourceId },
               decision: "include",

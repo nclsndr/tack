@@ -1,4 +1,4 @@
-import { mutateStateFixture } from "../support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "../support/state-fixture.ts";
 import { BunCrypto, BunRuntime, BunServices } from "@effect/platform-bun";
 import { Effect, FileSystem, Path } from "effect";
 import { SecureRandom } from "effect/crypto";
@@ -34,10 +34,7 @@ const program = Effect.gen(function* () {
         }
       }),
   } satisfies FileSystem.FileSystem;
-  const options = {
-    environment: { TACK_STATE_DIR: stateDirectory },
-    homeDirectory: stateDirectory,
-  };
+  const options = stateOptionsAt(stateDirectory, stateDirectory);
   const work = Effect.gen(function* () {
     yield* initializeState(options);
     for (const enabledAdapters of [

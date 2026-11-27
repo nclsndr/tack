@@ -1,6 +1,6 @@
 import { profileDelivery } from "../../domain/profiles/profile-delivery.ts";
 import { Effect } from "effect";
-import type { AgentAdapterId, AgentCapability } from "../../domain/links/agent-adapter-schema.ts";
+import type { AgentAdapterId, AgentCapability } from "../../domain/agents/agent-adapter-schema.ts";
 import { resolveEffectiveAdapters } from "./agent.ts";
 import { choiceNamespaceIdentity } from "../../domain/choices/choice-schema.ts";
 import { managedLinkTargetNamespace } from "../../domain/links/managed-link-schema.ts";
@@ -11,7 +11,7 @@ import {
   selectTargets,
   type SelectionEcho,
 } from "../projects/project.ts";
-import { type TargetSelector } from "../../domain/projects/project-schema.ts";
+import { type Selector } from "../../domain/projects/project-schema.ts";
 import {
   catalogCauses,
   noAdaptersCause,
@@ -30,7 +30,7 @@ import type { ReconciliationPlan } from "../../domain/reconciliation/reconciliat
 import { selectedDependencyAddresses } from "../../domain/choices/dependency-resolution.ts";
 import { quarantineIssue } from "../../domain/sources/catalog-report.ts";
 import { resolveContextSelection } from "../../domain/profiles/profile-application.ts";
-import { allSkillChoices } from "../../domain/state/state-intent.ts";
+import { allChoices } from "../../domain/state/state-intent.ts";
 import type { StateOptions } from "../../services/state-store.ts";
 import type { CommandSnapshot } from "../snapshot/command-snapshot.ts";
 import { userLinkedExcludes, userLinksOf } from "./linked-for-user.ts";
@@ -43,7 +43,7 @@ export type ReconcileCommandOptions = {
   readonly includeOptional: boolean;
   /** A capability every adapter must support; units of adapters that lack it are blocked. */
   readonly requiredCapability?: AgentCapability;
-  readonly selector: TargetSelector;
+  readonly selector: Selector;
 };
 
 export type PreparedReconciliation = {
@@ -162,7 +162,7 @@ export const prepareReconciliation = Effect.fnUntraced(function* (
       ...reconciliationPlanCauses(plan),
       ...userLinkedExcludes(
         userLinks,
-        allSkillChoices(state).filter(
+        allChoices(state).filter(
           (choice) =>
             choice.namespace._tag === "project" &&
             projectNames.includes(choice.namespace.projectName),

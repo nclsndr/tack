@@ -4,7 +4,7 @@ import { runHost } from "./support/host-runner.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
-import type { TerminalContextShape } from "../src/cli/host/human/terminal-context.ts";
+import type { TerminalContextShape } from "../src/cli/human/terminal-context.ts";
 import type { GitService } from "../src/services/git.ts";
 
 const pipe: TerminalContextShape = {

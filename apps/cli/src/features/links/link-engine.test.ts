@@ -1,7 +1,7 @@
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, PlatformError, Schema } from "effect";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
-import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "../../../test/support/state-fixture.ts";
 import {
   initializeState,
   readState,
@@ -66,10 +66,7 @@ const withWorld = <A, E, R>(use: (world: World) => Effect.Effect<A, E, R>) =>
     yield* Effect.forEach([root, source, other], (directory) =>
       fileSystem.makeDirectory(directory, { recursive: true }),
     );
-    const options = {
-      environment: { TACK_STATE_DIR: path.join(base, "state") },
-      homeDirectory: base,
-    } satisfies StateOptions;
+    const options = stateOptionsAt(path.join(base, "state"), base);
     yield* initializeState(options);
     const link = (kind: Kind): LinkEvidence =>
       kind === "agent"

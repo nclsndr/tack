@@ -2,8 +2,8 @@ import { Schema } from "effect";
 import {
   AgentCapabilityDecisionSchema,
   AgentAdapterIdSchema,
-} from "../links/agent-adapter-schema.ts";
-import { ChoiceNamespaceSchema } from "../choices/choice-schema.ts";
+} from "../agents/agent-adapter-schema.ts";
+import { NamespaceSchema } from "../choices/choice-schema.ts";
 import {
   DependencyResolutionSchema,
   RequiredDependencyBlockerSchema,
@@ -28,7 +28,7 @@ const RelativeLinkTargetSchema = Schema.String.check(Schema.isMinLength(1)).chec
 
 /** Dependency decisions retained in the plan for one exact namespace. */
 const NamespaceDependencyResolutionSchema = Schema.Struct({
-  namespace: ChoiceNamespaceSchema,
+  namespace: NamespaceSchema,
   resolution: DependencyResolutionSchema,
 });
 

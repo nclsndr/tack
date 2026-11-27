@@ -35,15 +35,17 @@ const productionSourceFiles = () =>
  * - `services`: the declarations of every injected capability (tag and interface), over `domain`.
  * - `platform`: adapters that implement a service against files, git, processes and the reader.
  * - `features`: use cases that drive services and domain policy.
- * - `cli`: command declarations and the host. `bootstrap`: the composition root that builds live layers.
+ * - `cli`: from argv to the public envelope, in the folders of {@link cliFolders}.
+ * - `bootstrap`: the composition root that builds live layers.
  *
- * `cli/commands` parses command families into transport-free requests; `cli/host` dispatches them and
- * owns the single public envelope and exit status. Pure policy stays ordinary TypeScript in `domain`.
+ * Pure policy stays ordinary TypeScript in `domain`.
  * Add an Effect `Context.Service` capability only when a feature must replace an external action in
  * tests, choose a live implementation, or share a resource lifecycle. Declare it in `services`, keep it
  * small and named for the feature intent, and add no generic infrastructure or file-operation services.
  * Its live implementation belongs in `platform`, and `bootstrap` supplies it once. A service that a
  * feature implements itself, such as `Source`, keeps its declaration and live layer in that feature.
+ * The one implementation in `services` is `exclusive-lock.ts`: `platform/state` and two features
+ * share that lock over `FileSystem`, and a service tag for it would add a seam for one rule.
  * Feature workflows must not select production layers themselves.
  */
 const layerImports: Readonly<Record<string, ReadonlyArray<string>>> = {
@@ -54,6 +56,27 @@ const layerImports: Readonly<Record<string, ReadonlyArray<string>>> = {
   cli: ["domain", "services", "features", "cli"],
   bootstrap: ["domain", "services", "platform", "features", "cli", "bootstrap"],
 };
+
+/**
+ * The folders of `cli`, lowest first. A folder imports only the folders before it, so the order
+ * reads as the path of one command.
+ *
+ * - `commands`: command declarations that parse argv into transport-free requests.
+ * - `envelope`: the public envelope, the command line it names, and how each typed result, partial
+ *   cause and failure becomes a public outcome.
+ * - `human`: the text views of an envelope.
+ * - `explorer`: the interactive explorer session.
+ * - `routes`: one route per command, which runs its use case and returns an outcome.
+ * - `host`: dispatch, completion and the host environment; it renders and exits.
+ */
+const cliFolders: ReadonlyArray<string> = [
+  "commands",
+  "envelope",
+  "human",
+  "explorer",
+  "routes",
+  "host",
+];
 
 /**
  * The layers that may import each entry of the workspace packages the CLI uses. `domain` imports
@@ -87,10 +110,26 @@ const layerOf = (module: string) => {
   return first in layerImports ? first : undefined;
 };
 
-/** The feature folder of a `features/` module; a file directly in `features/` is a feature of its own. */
-const featureOf = (module: string) => {
+/** The folder of a module inside its layer; a file directly in the layer is a folder of its own. */
+const folderOf = (module: string) => {
   const [, second = ""] = module.split("/");
   return second.replace(/\.ts$/, "");
+};
+
+/** The imports between the folders of one layer, as a graph from folder to the folders it reads. */
+const folderGraph = (layer: string) => {
+  const graph = new Map<string, Set<string>>();
+  for (const path of productionSourceFiles()) {
+    const module = modulePath(path);
+    if (layerOf(module) !== layer) continue;
+    const folder = folderOf(module);
+    const targets = graph.get(folder) ?? new Set<string>();
+    for (const target of localImportsOf(path)) {
+      if (layerOf(target) === layer && folderOf(target) !== folder) targets.add(folderOf(target));
+    }
+    graph.set(folder, targets);
+  }
+  return graph;
 };
 
 /** One cycle through a directed graph as a path that returns to its start, or `undefined`. */
@@ -173,22 +212,24 @@ describe("CLI architecture boundaries", () => {
     ).toEqual([]);
   });
 
-  it("keeps the feature folders a directed acyclic graph", () => {
-    const graph = new Map<string, Set<string>>();
-    for (const path of productionSourceFiles()) {
-      const module = modulePath(path);
-      if (layerOf(module) !== "features") continue;
-      const feature = featureOf(module);
-      const targets = graph.get(feature) ?? new Set<string>();
-      for (const target of localImportsOf(path)) {
-        if (layerOf(target) === "features" && featureOf(target) !== feature) {
-          targets.add(featureOf(target));
-        }
-      }
-      graph.set(feature, targets);
-    }
+  // `domain` holds what is stored, or what two features share. A plan, report or result schema
+  // that one feature produces lives beside that feature, and a cycle between two domain folders
+  // means a file sits in the wrong one.
+  it.each(["domain", "features"])("keeps the %s folders a directed acyclic graph", (layer) => {
+    expect(findCycle(folderGraph(layer))).toBeUndefined();
+  });
 
-    expect(findCycle(graph)).toBeUndefined();
+  it("orders the cli folders: each imports only the folders before it", () => {
+    const graph = folderGraph("cli");
+
+    expect([...graph.keys()].toSorted()).toEqual(cliFolders.toSorted());
+    expect(
+      [...graph].flatMap(([folder, targets]) =>
+        [...targets].flatMap((target) =>
+          cliFolders.indexOf(target) < cliFolders.indexOf(folder) ? [] : [`${folder} -> ${target}`],
+        ),
+      ),
+    ).toEqual([]);
   });
 
   it("reads the state document only through the command snapshot", () => {
@@ -241,6 +282,44 @@ describe("CLI architecture boundaries", () => {
     });
 
     expect(violations).toEqual([]);
+  });
+
+  it("adds no throw: a failure goes through the Effect error channel", () => {
+    // Each file that throws today, and how often. The script worker and its protocol run outside
+    // Effect, and the bundle codec, the YAML reader and the release facts are plain functions. Lower
+    // a count when a throw goes; a new one needs a reason to throw rather than fail an Effect.
+    const allowed = {
+      "cli/explorer/profile-editor.ts": 2,
+      "domain/agents/agent-layout.ts": 1,
+      "domain/bundles/bundle-codec.ts": 4,
+      "domain/bundles/bundle-path.ts": 3,
+      "domain/bundles/bundle-registration.ts": 2,
+      "domain/bundles/tar.ts": 2,
+      "domain/links/link-record-schema.ts": 1,
+      "domain/runtime-neutral.ts": 2,
+      "platform/execution/execution-platform.ts": 7,
+      "platform/execution/history.ts": 10,
+      "platform/execution/input.ts": 9,
+      "platform/execution/protocol.ts": 8,
+      "platform/execution/script-api-adapter.ts": 3,
+      "platform/execution/script-api-hooks.ts": 1,
+      "platform/execution/script-api-loader.ts": 1,
+      "platform/execution/secrets.ts": 4,
+      "platform/execution/shell.ts": 2,
+      "platform/execution/supervisor.ts": 3,
+      "platform/execution/worker.ts": 3,
+      "release.ts": 1,
+      "version.ts": 2,
+    };
+    const throws = productionSourceFiles().flatMap((path) => {
+      const count = readFileSync(path, "utf8")
+        .split("\n")
+        .filter((line) => !/^\s*(?:\/\/|\/\*|\*)/.test(line))
+        .reduce((total, line) => total + (line.match(/\bthrow\b/g)?.length ?? 0), 0);
+      return count === 0 ? [] : [[modulePath(path), count] as const];
+    });
+
+    expect(Object.fromEntries(throws)).toEqual(allowed);
   });
 
   it("names every service identifier after the path of its declaring module", () => {

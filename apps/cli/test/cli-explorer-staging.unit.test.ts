@@ -1,17 +1,17 @@
 import { expect, it } from "vitest";
 import { builtinSkillLockReason } from "../src/domain/choices/builtin.ts";
-import type { ExplorerDestination } from "../src/cli/host/human/explorer/destination.ts";
+import type { ExplorerDestination } from "../src/cli/explorer/destination.ts";
 import {
   fixedSelectionReason,
   initialEditState,
   type PendingChange,
-} from "../src/cli/host/human/explorer/edit.ts";
+} from "../src/cli/explorer/edit.ts";
 import {
   initialExplorerState,
   pendingChanges,
   type ExplorerEntry,
   type ExplorerState,
-} from "../src/cli/host/human/explorer/model.ts";
+} from "../src/cli/explorer/model.ts";
 import {
   active,
   choice,

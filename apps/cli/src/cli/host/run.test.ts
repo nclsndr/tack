@@ -4,7 +4,7 @@ import { Effect, FileSystem, Path, Ref, Sink, Stdio, Stream } from "effect";
 import { vi } from "vitest";
 import { runTackInProcess } from "../../../test/support/host-runner.ts";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
-import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "../../../test/support/state-fixture.ts";
 import { Git } from "../../services/git.ts";
 import { decodeEnvelope } from "../../../test/support/tack-process.ts";
 import { runCli } from "./run.ts";
@@ -92,16 +92,13 @@ it.layer(LiveTestLayer)("CLI host", (test) => {
       yield* setUp;
       yield* tack(["sync", "--project", "demo", "--apply"]);
       // The mount's removal is owed, as after a removal that could not finish.
-      yield* mutateStateFixture(
-        { environment: { TACK_STATE_DIR: `${root}/state` } },
-        (current) => ({
-          ...current,
-          data: {
-            ...current.data,
-            links: current.data.links.map((record) => ({ ...record, removal: { cause: "clean" } })),
-          },
-        }),
-      );
+      yield* mutateStateFixture(stateOptionsAt(`${root}/state`), (current) => ({
+        ...current,
+        data: {
+          ...current.data,
+          links: current.data.links.map((record) => ({ ...record, removal: { cause: "clean" } })),
+        },
+      }));
       const preview = yield* tack(["sync", "--project", "demo"]);
       expect(preview).toMatchObject({
         classification: "partial",

@@ -5,8 +5,8 @@ import { PortableNameSchema } from "../identity/identity-schema.ts";
 
 /** Bundle versions evolve independently of source, profile and local state versions. */
 const bundleVersion = 1;
-export { BundleFileSchema } from "./bundle-facts.ts";
-import { BundleDigestSchema, BundleFileSchema } from "./bundle-facts.ts";
+export { BundleFileSchema } from "../sources/bundle-facts.ts";
+import { BundleDigestSchema, BundleFileSchema } from "../sources/bundle-facts.ts";
 /** Portable resource inventory and current-content provenance, not a revision lock. */
 const BundleResourceSchema = Schema.Struct({
   kind: ResourceKindSchema,

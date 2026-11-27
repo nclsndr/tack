@@ -1,5 +1,5 @@
 import { enableAdapters } from "../src/features/reconciliation/agent.ts";
-import { disableAdapter } from "../src/features/maintenance/adapter-disablement.ts";
+import { disableAdapter } from "../src/features/removal/adapter-disablement.ts";
 import { ExecutionPlatformLive } from "../src/platform/execution/execution-platform.ts";
 import { checkPaths } from "../src/features/check/check-paths.ts";
 import { expect, it } from "@effect/vitest";
@@ -16,7 +16,7 @@ import { searchReader } from "../src/features/reader/search.ts";
 import { runDoctor } from "../src/features/doctor/doctor.ts";
 import { runStatus, statusPartialCauses } from "../src/features/status/status.ts";
 import { runSyncCommand } from "../src/features/reconciliation/sync-command.ts";
-import { doctorOutcome } from "../src/cli/host/outcomes.ts";
+import { doctorOutcome } from "../src/cli/envelope/outcomes.ts";
 
 it.layer(LiveTestLayer)("profile workflow agreements", (test) => {
   for (const input of ["source", "bundle"] as const) {

@@ -3,7 +3,7 @@ import { describe, expect, it } from "@effect/vitest";
 import { Effect, Record } from "effect";
 import {
   InvocationError,
-  invocationCommandPaths,
+  commandPathOf,
   type Invocation,
   parseInvocation as parseInvocationEffect,
 } from "../src/cli/commands/index.ts";
@@ -399,18 +399,18 @@ const pickRows: Rows = [
   [
     ["pick", "include", "alpha", "--project", "workspace"],
     {
-      _tag: "choice-set",
+      _tag: "pick-include",
       reference: "alpha",
       namespace: { _tag: "project", projectName: "workspace" },
     },
   ],
   [
     ["pick", "exclude", "beta", "--user"],
-    { _tag: "choice-exclude", reference: "beta", namespace: { _tag: "user" } },
+    { _tag: "pick-exclude", reference: "beta", namespace: { _tag: "user" } },
   ],
   [
     ["pick", "remove", "alpha", "--user"],
-    { _tag: "choice-remove", reference: "alpha", namespace: { _tag: "user" } },
+    { _tag: "pick-remove", reference: "alpha", namespace: { _tag: "user" } },
   ],
   [["pick"], { _tag: "pick-list" }],
   [["pick", "list"], { _tag: "pick-list" }],
@@ -433,24 +433,24 @@ const adapterRows: Rows = [
   [["adapter"], { _tag: "adapter-list" }],
   [["adapter", "list"], { _tag: "adapter-list" }],
   [["adapter", "ls"], { _tag: "adapter-list" }],
-  [["adapter", "enable"], { _tag: "adapter-set", adapters: [] }],
-  [["adapter", "enable", "codex"], { _tag: "adapter-set", adapters: ["codex"] }],
+  [["adapter", "enable"], { _tag: "adapter-enable", adapters: [] }],
+  [["adapter", "enable", "codex"], { _tag: "adapter-enable", adapters: ["codex"] }],
   [
     ["adapter", "enable", "cursor", "codex"],
-    { _tag: "adapter-set", adapters: ["codex", "cursor"] },
+    { _tag: "adapter-enable", adapters: ["codex", "cursor"] },
   ],
   [
     ["adapter", "enable", "cursor", "claude", "codex"],
-    { _tag: "adapter-set", adapters: ["claude", "codex", "cursor"] },
+    { _tag: "adapter-enable", adapters: ["claude", "codex", "cursor"] },
   ],
   [
     ["adapter", "disable", "cursor"],
     { _tag: "adapter-disable", adapter: "cursor", apply: false, details: false },
   ],
-  [["init"], { _tag: "machine-init" }],
+  [["init"], { _tag: "init" }],
   [
     ["init", "--adapter", "cursor", "--adapter", "claude"],
-    { _tag: "machine-init", adapters: ["claude", "cursor"] },
+    { _tag: "init", adapters: ["claude", "cursor"] },
   ],
   [
     ["adapter", "disable", "codex", "--apply"],
@@ -463,12 +463,15 @@ const adapterRows: Rows = [
 ];
 
 const stateRows: Rows = [
-  [["state", "init"], { _tag: "init" }],
-  [["state", "clean"], { _tag: "clean", apply: false, details: false, selector: { _tag: "bare" } }],
+  [["state", "init"], { _tag: "state-init" }],
+  [
+    ["state", "clean"],
+    { _tag: "state-clean", apply: false, details: false, selector: { _tag: "bare" } },
+  ],
   [
     ["state", "clean", "--project", "workspace", "--apply"],
     {
-      _tag: "clean",
+      _tag: "state-clean",
       apply: true,
       details: false,
       selector: { _tag: "project", projectName: "workspace" },
@@ -476,20 +479,26 @@ const stateRows: Rows = [
   ],
   [
     ["state", "clean", "--cwd", "/elsewhere"],
-    { _tag: "clean", apply: false, details: false, cwd: "/elsewhere", selector: { _tag: "bare" } },
+    {
+      _tag: "state-clean",
+      apply: false,
+      details: false,
+      cwd: "/elsewhere",
+      selector: { _tag: "bare" },
+    },
   ],
   [
     ["state", "clean", "--pending"],
-    { _tag: "retry", apply: false, details: false, selector: { _tag: "bare" } },
+    { _tag: "state-clean-pending", apply: false, details: false, selector: { _tag: "bare" } },
   ],
   [
     ["state", "clean", "--pending", "--user"],
-    { _tag: "retry", apply: false, details: false, selector: { _tag: "user" } },
+    { _tag: "state-clean-pending", apply: false, details: false, selector: { _tag: "user" } },
   ],
   [
     ["state", "clean", "--pending", "--project", "workspace", "--apply"],
     {
-      _tag: "retry",
+      _tag: "state-clean-pending",
       apply: true,
       details: false,
       selector: { _tag: "project", projectName: "workspace" },
@@ -497,14 +506,20 @@ const stateRows: Rows = [
   ],
   [
     ["state", "clean", "--pending", "--cwd", "/elsewhere"],
-    { _tag: "retry", apply: false, details: false, cwd: "/elsewhere", selector: { _tag: "bare" } },
+    {
+      _tag: "state-clean-pending",
+      apply: false,
+      details: false,
+      cwd: "/elsewhere",
+      selector: { _tag: "bare" },
+    },
   ],
-  [["state", "reset"], { _tag: "reset", apply: false, details: false }],
-  [["state", "reset", "--apply"], { _tag: "reset", apply: true, details: false }],
-  [["state", "reset", "--details"], { _tag: "reset", apply: false, details: true }],
+  [["state", "reset"], { _tag: "state-reset", apply: false, details: false }],
+  [["state", "reset", "--apply"], { _tag: "state-reset", apply: true, details: false }],
+  [["state", "reset", "--details"], { _tag: "state-reset", apply: false, details: true }],
   [
     ["state", "clean", "--details"],
-    { _tag: "clean", apply: false, details: true, selector: { _tag: "bare" } },
+    { _tag: "state-clean", apply: false, details: true, selector: { _tag: "bare" } },
   ],
   [
     ["adapter", "disable", "cursor", "--details"],
@@ -807,29 +822,29 @@ const scriptRows: Rows = [
       },
     },
   ],
-  [["script", "history"], { _tag: "history-list", limit: 20, offset: 0 }],
-  [["script", "history", "--limit", "5"], { _tag: "history-list", limit: 5, offset: 0 }],
+  [["script", "history"], { _tag: "script-history-list", limit: 20, offset: 0 }],
+  [["script", "history", "--limit", "5"], { _tag: "script-history-list", limit: 5, offset: 0 }],
   [
     ["script", "history", "--limit", "100", "--offset", "0"],
-    { _tag: "history-list", limit: 100, offset: 0 },
+    { _tag: "script-history-list", limit: 100, offset: 0 },
   ],
   [
     ["script", "history", "--limit", "1", "--offset", "35"],
-    { _tag: "history-list", limit: 1, offset: 35 },
+    { _tag: "script-history-list", limit: 1, offset: 35 },
   ],
-  [["script", "history", "list"], { _tag: "history-list", limit: 20, offset: 0 }],
-  [["script", "history", "ls"], { _tag: "history-list", limit: 20, offset: 0 }],
+  [["script", "history", "list"], { _tag: "script-history-list", limit: 20, offset: 0 }],
+  [["script", "history", "ls"], { _tag: "script-history-list", limit: 20, offset: 0 }],
   [
     ["script", "history", "list", "--limit", "5", "--offset", "2"],
-    { _tag: "history-list", limit: 5, offset: 2 },
+    { _tag: "script-history-list", limit: 5, offset: 2 },
   ],
   [
     ["script", "history", "ls", "--limit", "1", "--offset", "35"],
-    { _tag: "history-list", limit: 1, offset: 35 },
+    { _tag: "script-history-list", limit: 1, offset: 35 },
   ],
-  [["script", "history", "show", runId], { _tag: "history-show", runId: runId }],
-  [["script", "history", "clear"], { _tag: "history-clear", apply: false }],
-  [["script", "history", "clear", "--apply"], { _tag: "history-clear", apply: true }],
+  [["script", "history", "show", runId], { _tag: "script-history-show", runId: runId }],
+  [["script", "history", "clear"], { _tag: "script-history-clear", apply: false }],
+  [["script", "history", "clear", "--apply"], { _tag: "script-history-clear", apply: true }],
 ];
 
 const profileRows: Rows = [
@@ -1136,7 +1151,7 @@ describe.each(Object.entries(families))("the %s grammar", (_family, rows) => {
 
 it.effect.each(
   labelled([
-    [["--state-dir", "/state", "state", "init"], { _tag: "init" }],
+    [["--state-dir", "/state", "state", "init"], { _tag: "state-init" }],
     [
       ["sync", "--cwd", "/elsewhere", "--state-dir", "/state"],
       {
@@ -1242,7 +1257,7 @@ it.effect.each(
 it.effect("keeps every public command path in agreement with the declared command tree", () =>
   Effect.gen(function* () {
     const operands = {
-      init: [],
+      "state-init": [],
       "source-add": ["/source"],
       check: ["/source"],
       "profile-save": ["/source", "ci", "--project", "demo"],
@@ -1262,18 +1277,18 @@ it.effect("keeps every public command path in agreement with the declared comman
       "project-refresh": [],
       "project-remove": ["demo"],
       catalog: [],
-      "choice-set": ["alpha", "--user"],
-      "choice-exclude": ["alpha", "--user"],
-      "choice-remove": ["alpha", "--user"],
+      "pick-include": ["alpha", "--user"],
+      "pick-exclude": ["alpha", "--user"],
+      "pick-remove": ["alpha", "--user"],
       "pick-list": [],
-      "adapter-set": ["codex"],
+      "adapter-enable": ["codex"],
       "adapter-list": [],
       "adapter-disable": ["codex"],
       sync: [],
       status: [],
-      clean: [],
-      retry: ["--pending"],
-      reset: [],
+      "state-clean": [],
+      "state-clean-pending": ["--pending"],
+      "state-reset": [],
       "docs-attach": [`${source}:handbook`, "--project", "demo"],
       "docs-detach": [`${source}:handbook`, "--project", "demo"],
       "docs-list": [],
@@ -1287,12 +1302,12 @@ it.effect("keeps every public command path in agreement with the declared comman
       "script-run": ["report"],
       "script-show": ["report"],
       types: [],
-      "history-list": [],
-      "history-show": [source],
-      "history-clear": [],
+      "script-history-list": [],
+      "script-history-show": [source],
+      "script-history-clear": [],
       upgrade: [],
       "upgrade-status": [],
-      "machine-init": [],
+      init: [],
       guide: ["onboarding"],
     } as const satisfies Record<
       Exclude<Invocation["_tag"], "help" | "version">,
@@ -1300,7 +1315,7 @@ it.effect("keeps every public command path in agreement with the declared comman
     >;
 
     for (const tag of Record.keys(operands)) {
-      const path = invocationCommandPaths[tag];
+      const path = commandPathOf(tag);
       const { invocation } = yield* parseInvocation([...path, ...operands[tag]]);
       expect(invocation["_tag"], path.join(" ")).toBe(tag);
     }

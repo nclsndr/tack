@@ -4,7 +4,7 @@ import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { planRemovalAt, retryPendingRemovals } from "../../../test/support/removal.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
-import type { ProfileApplication } from "../../domain/profiles/profile-application.ts";
+import type { ProfileApplication } from "../../domain/state/profile-application-schema.ts";
 import {
   initializeState,
   readState,
@@ -21,7 +21,7 @@ const linkedWorld = Effect.gen(function* () {
   const path = yield* Path.Path;
   const root = yield* fs.realPath(yield* fs.makeTempDirectoryScoped({ prefix: "tack-removal-" }));
   const options = {
-    environment: { TACK_STATE_DIR: path.join(root, "state") },
+    stateDirectory: path.join(root, "state"),
     homeDirectory: path.join(root, "home"),
   } satisfies StateOptions;
   yield* initializeState(options);

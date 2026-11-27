@@ -6,7 +6,7 @@ import { addSource, importRequest, withImportWorld } from "../../../test/support
 import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
 import { readState } from "../../services/state-store.ts";
 import { previewImport } from "./import.ts";
-import type { ChoiceNamespace } from "../../domain/choices/choice-schema.ts";
+import type { Namespace } from "../../domain/choices/choice-schema.ts";
 
 const declaration = declare("personal-brain", "skills: [{ path: skills }]");
 
@@ -146,7 +146,7 @@ it.layer(LiveTestLayer)("import reach", (test) => {
               fileSystem.makeDirectory(root(name)),
             );
             const pdf = { kind: "skill", name: "pdf", sourceRegistrationId: brain } as const;
-            const fixed = (namespace: ChoiceNamespace, inventory: ReadonlyArray<typeof pdf>) => ({
+            const fixed = (namespace: Namespace, inventory: ReadonlyArray<typeof pdf>) => ({
               namespace,
               profileName: "ci",
               sourceRegistrationId: brain,

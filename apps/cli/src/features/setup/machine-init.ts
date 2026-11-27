@@ -1,7 +1,7 @@
 import { Effect, FileSystem, Path } from "effect";
 import type { HandMadeEntry } from "../../domain/agents/hand-made-entry.ts";
 import { agentAdapterIds } from "../../domain/agents/agent-adapter.ts";
-import type { AgentAdapterId } from "../../domain/links/agent-adapter-schema.ts";
+import type { AgentAdapterId } from "../../domain/agents/agent-adapter-schema.ts";
 import type { AgentDetection } from "../../domain/setup/machine-init-schema.ts";
 import {
   initializeState,

@@ -5,6 +5,7 @@ import { type GitService } from "../src/services/git.ts";
 import { withStateCheckpointWriter } from "../src/services/state-store.ts";
 import { runHost } from "./support/host-runner.ts";
 import { LiveTestLayer, provideTestFileSystem } from "./support/live-test-layer.ts";
+import { stateOptionsAt } from "./support/state-fixture.ts";
 
 /*
  * Fixture A of the state-format-5 spec: one source with 20 skills and one docs resource, and four
@@ -207,9 +208,8 @@ it.layer(LiveTestLayer)("one snapshot per command", (snapshotIt) => {
       Effect.gen(function* () {
         const { tack, homeDirectory, statePath, stateDirectory, fileSystem } = yield* fixture;
         const before = yield* fileSystem.readFileString(statePath);
-        const result = yield* withStateCheckpointWriter(
-          { environment: { TACK_STATE_DIR: stateDirectory } },
-          () => tack(["pick", "include", "skill-1", "--project", "p1"], homeDirectory),
+        const result = yield* withStateCheckpointWriter(stateOptionsAt(stateDirectory), () =>
+          tack(["pick", "include", "skill-1", "--project", "p1"], homeDirectory),
         );
         expect(JSON.parse(result.output).diagnostics[0].code).toBe("state-busy");
         expect(yield* fileSystem.readFileString(statePath)).toBe(before);

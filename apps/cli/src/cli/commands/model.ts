@@ -1,9 +1,10 @@
-import { Schema } from "effect";
+import { Record, Schema } from "effect";
 import { NextCommandsSchema } from "../../domain/hints/next-commands.ts";
+import { commandDeclarations, type CommandDeclaration } from "./declarations.ts";
 import type { DocsResourceRequest } from "../../domain/docs/docs-schema.ts";
-import type { ChoiceNamespace } from "../../domain/choices/choice-schema.ts";
-import type { TargetSelector } from "../../domain/projects/project-schema.ts";
-import type { AgentAdapterId, AgentCapability } from "../../domain/links/agent-adapter-schema.ts";
+import type { Namespace } from "../../domain/choices/choice-schema.ts";
+import type { Selector } from "../../domain/projects/project-schema.ts";
+import type { AgentAdapterId, AgentCapability } from "../../domain/agents/agent-adapter-schema.ts";
 import type { ResourceKind, SelectableKind } from "../../domain/resources/kinds.ts";
 import type { OperatorRunRequest } from "../../domain/execution/execution-schema.ts";
 
@@ -46,7 +47,7 @@ type SelectedRemoval = {
   /** Lists every cleanup action in the text view. */
   readonly details: boolean;
   readonly cwd?: string;
-  readonly selector: TargetSelector;
+  readonly selector: Selector;
 };
 
 /** Planning inputs for selected links and attached project docs mounts. */
@@ -56,7 +57,7 @@ export type ReconcilePlanningRequest = {
   readonly includeOptional: boolean;
   readonly noDocs: boolean;
   readonly requiredCapability?: AgentCapability;
-  readonly selector: TargetSelector;
+  readonly selector: Selector;
 };
 
 /** The parsed, transport-free request handled by the CLI application boundary. */
@@ -71,9 +72,9 @@ export type Invocation =
     }
   | { readonly _tag: "script-show"; readonly reference: string }
   | { readonly _tag: "types"; readonly path?: string; readonly apply: boolean }
-  | { readonly _tag: "history-list"; readonly limit: number; readonly offset: number }
-  | { readonly _tag: "history-show"; readonly runId: string }
-  | { readonly _tag: "history-clear"; readonly apply: boolean }
+  | { readonly _tag: "script-history-list"; readonly limit: number; readonly offset: number }
+  | { readonly _tag: "script-history-show"; readonly runId: string }
+  | { readonly _tag: "script-history-clear"; readonly apply: boolean }
   | ({ readonly _tag: "docs-attach" } & DocsResourceChange)
   | ({ readonly _tag: "docs-detach" } & DocsResourceChange)
   | ({ readonly _tag: "docs-list" } & DocsSelection)
@@ -115,9 +116,9 @@ export type Invocation =
       readonly open?: boolean;
       readonly port?: number;
     }
-  | { readonly _tag: "init" }
+  | { readonly _tag: "state-init" }
   | {
-      readonly _tag: "machine-init";
+      readonly _tag: "init";
       /** The adapters `--adapter` named, replacing detection; absent when none was given. */
       readonly adapters?: ReadonlyArray<AgentAdapterId>;
     }
@@ -147,7 +148,7 @@ export type Invocation =
   | {
       readonly _tag: "profile-apply";
       readonly reference: string;
-      readonly namespace: ChoiceNamespace;
+      readonly namespace: Namespace;
       readonly targetRoots: ReadonlyArray<string>;
       readonly targetHome?: string | undefined;
       readonly force: boolean;
@@ -165,7 +166,7 @@ export type Invocation =
   | {
       readonly _tag: "profile-adopt";
       readonly reference: string;
-      readonly namespace: ChoiceNamespace;
+      readonly namespace: Namespace;
       readonly apply: boolean;
     }
   | {
@@ -178,7 +179,7 @@ export type Invocation =
   | {
       readonly _tag: "profile-apply-bundle";
       readonly file: string;
-      readonly namespace: ChoiceNamespace;
+      readonly namespace: Namespace;
       readonly targetRoots: ReadonlyArray<string>;
       readonly targetHome?: string;
       readonly force: boolean;
@@ -209,7 +210,7 @@ export type Invocation =
       readonly apply: boolean;
       readonly details: boolean;
       readonly cwd?: string;
-      readonly selector: Extract<TargetSelector, { readonly _tag: "bare" | "project" | "all" }>;
+      readonly selector: Extract<Selector, { readonly _tag: "bare" | "project" | "all" }>;
     }
   | {
       readonly _tag: "catalog";
@@ -223,28 +224,28 @@ export type Invocation =
        * The selection the explorer opens on. Absent, it opens the project that contains the
        * working directory, or else the destination chooser.
        */
-      readonly destination?: ChoiceNamespace;
+      readonly destination?: Namespace;
     }
   | {
-      readonly _tag: "choice-set";
+      readonly _tag: "pick-include";
       readonly reference: string;
       readonly kind?: SelectableKind;
-      readonly namespace: ChoiceNamespace;
+      readonly namespace: Namespace;
     }
   | {
-      readonly _tag: "choice-exclude";
+      readonly _tag: "pick-exclude";
       readonly reference: string;
       readonly kind?: SelectableKind;
-      readonly namespace: ChoiceNamespace;
+      readonly namespace: Namespace;
     }
   | {
-      readonly _tag: "choice-remove";
+      readonly _tag: "pick-remove";
       readonly reference: string;
       readonly kind?: SelectableKind;
-      readonly namespace: ChoiceNamespace;
+      readonly namespace: Namespace;
     }
-  | { readonly _tag: "pick-list"; readonly namespace?: ChoiceNamespace }
-  | { readonly _tag: "adapter-set"; readonly adapters: ReadonlyArray<AgentAdapterId> }
+  | { readonly _tag: "pick-list"; readonly namespace?: Namespace }
+  | { readonly _tag: "adapter-enable"; readonly adapters: ReadonlyArray<AgentAdapterId> }
   | {
       readonly _tag: "adapter-disable";
       readonly adapter: AgentAdapterId;
@@ -257,11 +258,11 @@ export type Invocation =
       readonly cwd?: string;
       readonly includeOptional: boolean;
       readonly details: boolean;
-      readonly selector: TargetSelector;
+      readonly selector: Selector;
     }
-  | ({ readonly _tag: "clean" } & SelectedRemoval)
-  | ({ readonly _tag: "retry" } & SelectedRemoval)
-  | { readonly _tag: "reset"; readonly apply: boolean; readonly details: boolean }
+  | ({ readonly _tag: "state-clean" } & SelectedRemoval)
+  | ({ readonly _tag: "state-clean-pending" } & SelectedRemoval)
+  | { readonly _tag: "state-reset"; readonly apply: boolean; readonly details: boolean }
   | { readonly _tag: "upgrade-status" }
   | { readonly _tag: "upgrade" }
   | ({ readonly _tag: "sync"; readonly apply: boolean } & ReconcilePlanningRequest);
@@ -278,97 +279,49 @@ export type ParsedInvocation = {
  * The invocation kinds that `--help` and `--version` select. They have no command word, so the
  * command tree does not declare them and `schema` publishes no contract for them.
  */
-type FlagRequestTag = "help" | "version";
-
-/** The envelope command names of {@link FlagRequestTag} invocations. */
-const flagRequestCommandNames = { help: "help", version: "version" } as const satisfies Record<
-  FlagRequestTag,
-  string
->;
-
-/**
- * The words after `tack` that select each invocation the command tree declares. Envelope command
- * names derive only from this table, and parser tests keep it in agreement with the tree.
- */
-export const invocationCommandPaths = {
-  "adapter-disable": ["adapter", "disable"],
-  "adapter-list": ["adapter"],
-  "adapter-set": ["adapter", "enable"],
-  catalog: ["catalog"],
-  "choice-remove": ["pick", "remove"],
-  "choice-set": ["pick", "include"],
-  "choice-exclude": ["pick", "exclude"],
-  clean: ["state", "clean"],
-  doctor: ["doctor"],
-  "docs-attach": ["docs", "attach"],
-  check: ["check"],
-  "docs-icons": ["docs", "icons"],
-  "docs-configure": ["docs", "configure"],
-  "docs-detach": ["docs", "detach"],
-  "docs-list": ["docs"],
-  "docs-search": ["docs", "search"],
-  "docs-serve": ["docs", "serve"],
-  "docs-target": ["docs", "target"],
-  explore: ["explore"],
-  guide: ["guide"],
-  "history-clear": ["script", "history", "clear"],
-  "history-list": ["script", "history"],
-  "history-show": ["script", "history", "show"],
-  "import-add": ["import", "add"],
-  "import-list": ["import"],
-  "import-remove": ["import", "remove"],
-  init: ["state", "init"],
-  "machine-init": ["init"],
-  "pick-list": ["pick"],
-  "project-add": ["project", "add"],
-  "project-list": ["project"],
-  "project-refresh": ["project", "refresh"],
-  "project-remove": ["project", "remove"],
-  reset: ["state", "reset"],
-  retry: ["state", "clean"],
-  upgrade: ["upgrade"],
-  "script-run": ["script", "run"],
-  "script-show": ["script", "show"],
-  types: ["types"],
-  "source-add": ["source", "add"],
-  "profile-apply": ["profile", "apply"],
-  "profile-save": ["profile", "save"],
-  "profile-adopt": ["profile", "adopt"],
-  "profile-export": ["profile", "export"],
-  "profile-inspect-bundle": ["profile", "inspect-bundle"],
-  "profile-apply-bundle": ["profile", "apply-bundle"],
-  "source-list": ["source"],
-  "source-relocate": ["source", "relocate"],
-  "source-remove": ["source", "remove"],
-  status: ["status"],
-  sync: ["sync"],
-  "upgrade-status": ["upgrade", "status"],
-} as const satisfies Record<
-  Exclude<Invocation["_tag"], FlagRequestTag>,
-  readonly [string, ...Array<string>]
->;
+export type FlagRequestTag = "help" | "version";
 
 /** The envelope command name used when no executable operation can be identified. */
 export const unknownCommandName = "unknown";
 
-/** Names the public operation that produces one invocation: its space-joined command path. */
+/**
+ * The words after `tack` that select one invocation: its declared path, or else the words of its
+ * tag, where a final `list` names the group's bare command (`pick-list` is `tack pick`). The flag
+ * requests are selected by no word.
+ */
+export const commandPathOf = (tag: Invocation["_tag"]): ReadonlyArray<string> => {
+  if (tag === "help" || tag === "version") return [];
+  const declaration: CommandDeclaration = commandDeclarations[tag];
+  if (declaration.path !== undefined) return declaration.path;
+  const words = tag.split("-");
+  return words.at(-1) === "list" ? words.slice(0, -1) : words;
+};
+
+/**
+ * Names the public operation that produces one invocation: its space-joined command path, or the
+ * tag itself for a {@link FlagRequestTag}.
+ */
 export const commandNameOf = (tag: Invocation["_tag"]): string =>
-  tag === "help" || tag === "version"
-    ? flagRequestCommandNames[tag]
-    : invocationCommandPaths[tag].join(" ");
+  tag === "help" || tag === "version" ? tag : commandPathOf(tag).join(" ");
 
-/** The words after `tack` that select one invocation; the flag requests are selected by no word. */
-export const commandPathOf = (tag: Invocation["_tag"]): ReadonlyArray<string> =>
-  tag === "help" || tag === "version" ? [] : invocationCommandPaths[tag];
+const invocationTags: ReadonlyArray<Invocation["_tag"]> = [
+  ...Record.keys(commandDeclarations),
+  "help",
+  "version",
+];
 
-const commandNames: ReadonlySet<string> = new Set([
-  ...Object.values(invocationCommandPaths).map((path) => path.join(" ")),
-  ...Object.values(flagRequestCommandNames),
-]);
+/** The invocation each command name names; the first tag declared wins, so `state-clean` over `state-clean-pending`. */
+const tagsByCommandName: ReadonlyMap<string, Invocation["_tag"]> = new Map(
+  invocationTags.toReversed().map((tag) => [commandNameOf(tag), tag]),
+);
+
+/** The invocation a public command name names, or `undefined` for a group or an unknown name. */
+export const commandTagOf = (name: string): Invocation["_tag"] | undefined =>
+  tagsByCommandName.get(name);
 
 /** Reports whether a value is the public name of an executable operation. */
 export const isCommandName = (value: unknown): value is string =>
-  typeof value === "string" && commandNames.has(value);
+  typeof value === "string" && tagsByCommandName.has(value);
 
 /**
  * Names the executable operation selected by the words after `tack`, or {@link unknownCommandName}

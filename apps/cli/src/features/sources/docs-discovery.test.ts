@@ -5,12 +5,13 @@ import { LiveTestLayer, provideTestFileSystem } from "../../../test/support/live
 import { initializeState, readState } from "../../services/state-store.ts";
 import { resolveCatalog } from "./catalog.ts";
 import { inspectSources, registerSource } from "./source.ts";
+import { stateOptionsAt } from "../../../test/support/state-fixture.ts";
 
 const withSources = <A, E, R>(
   use: (fixture: {
     source: string;
     other: string;
-    options: { environment: { TACK_STATE_DIR: string }; homeDirectory: string };
+    options: { stateDirectory: string; homeDirectory: string };
   }) => Effect.Effect<A, E, R>,
 ) =>
   Effect.gen(function* () {
@@ -19,10 +20,7 @@ const withSources = <A, E, R>(
     const root = yield* fs.realPath(
       yield* fs.makeTempDirectoryScoped({ prefix: "tack-docs-discovery-" }),
     );
-    const options = {
-      environment: { TACK_STATE_DIR: path.join(root, "state") },
-      homeDirectory: root,
-    };
+    const options = stateOptionsAt(path.join(root, "state"), root);
     yield* initializeState(options);
     const source = path.join(root, "source");
     const other = path.join(root, "other");

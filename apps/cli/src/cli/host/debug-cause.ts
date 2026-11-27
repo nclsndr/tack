@@ -1,7 +1,7 @@
 import { Cause, Effect, Stdio, Stream } from "effect";
-import { argvLine } from "./command-line.ts";
+import { argvLine } from "../../domain/hints/next-commands.ts";
 import { HostEnvironment } from "./host-environment.ts";
-import type { PublicEnvelope } from "./public-outcome.ts";
+import type { PublicEnvelope } from "../envelope/public-outcome.ts";
 
 /** The variable that asks the host to print the cause of an internal failure to stderr. */
 const debugVariable = "TACK_DEBUG";

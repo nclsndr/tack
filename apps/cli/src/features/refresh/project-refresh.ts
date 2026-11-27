@@ -32,14 +32,14 @@ import {
   type DirectoryObservation,
 } from "../projects/project-observation.ts";
 import {
+  bareSelectionRefusal,
   ProjectNotFoundError,
   ProjectRootOwnershipError,
   resolveContainingRoot,
   removingContainingRoot,
-  TargetSelectionError,
   projectAllRoots,
 } from "../projects/project.ts";
-import { type TargetSelector, projectLifecycle } from "../../domain/projects/project-schema.ts";
+import { type Selector, projectLifecycle } from "../../domain/projects/project-schema.ts";
 import {
   ProjectNameSchema,
   reportProjectRecord,
@@ -62,14 +62,11 @@ import {
   type ProjectRefreshResult,
   type ProjectRefreshScope,
   ProjectRefreshSelectionSchema,
-} from "../../domain/projects/project-refresh-schema.ts";
+} from "./project-refresh-schema.ts";
 import type { State } from "../../domain/state/state-schema.ts";
 import type { StateCheckpointWriter, StateOptions } from "../../services/state-store.ts";
 import type { StateProject } from "../../domain/state/state-schema.ts";
-import {
-  moveProjectRoots,
-  type ProjectRootMoves,
-} from "../../domain/projects/project-lifecycle.ts";
+import { moveProjectRoots, type ProjectRootMoves } from "../../domain/state/project-lifecycle.ts";
 
 // Observation
 
@@ -417,14 +414,8 @@ const projectRefreshStateProjection = (
 export type ProjectRefreshCommandOptions = {
   readonly apply: boolean;
   readonly scope?: ProjectRefreshScope;
-  readonly selector?: Extract<TargetSelector, { readonly _tag: "bare" | "project" | "all" }>;
+  readonly selector?: Extract<Selector, { readonly _tag: "bare" | "project" | "all" }>;
   readonly cwd?: string;
-};
-
-/** A composite refresh plan and its optional application outcome. */
-type ProjectRefreshCommandExecution = {
-  readonly applied?: ProjectRefreshCommandResult;
-  readonly plan: ProjectRefreshCommandPlan;
 };
 
 /**
@@ -531,7 +522,7 @@ export const runProjectRefreshCommand = Effect.fn("refresh.runProjectRefreshComm
   stateOptions: StateOptions,
   options: ProjectRefreshCommandOptions,
 ) {
-  const execution: ProjectRefreshCommandExecution = yield* previewOrApply(stateOptions, {
+  return yield* previewOrApply(stateOptions, {
     apply: options.apply,
     plan: (snapshot) =>
       Effect.gen(function* () {
@@ -589,16 +580,12 @@ export const runProjectRefreshCommand = Effect.fn("refresh.runProjectRefreshComm
             },
           );
         }
-        const removing = removingContainingRoot(state, canonicalCwd, yield* Path.Path);
-        return yield* new TargetSelectionError({
-          code: "bare-target-requires-registered-root",
-          message:
-            "This directory is not inside a registered project. Choose --project NAME or --all.",
-          path: canonicalCwd,
-          ...(removing === undefined ? {} : removing),
-        });
+        return yield* bareSelectionRefusal(
+          ["project", "all"],
+          canonicalCwd,
+          removingContainingRoot(state, canonicalCwd, yield* Path.Path),
+        );
       }),
     applyPlan: applyCommand,
   });
-  return execution;
 });

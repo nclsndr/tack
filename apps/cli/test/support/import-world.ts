@@ -5,6 +5,7 @@ import { fixtureRemotesVariable, ImportRemoteLive } from "../../src/platform/git
 import { initializeState, type StateOptions } from "../../src/services/state-store.ts";
 import { registerSource } from "../../src/features/sources/source.ts";
 import { makeRemoteFixture, type FixtureCommit } from "./git-remote-fixture.ts";
+import { stateOptionsAt } from "./state-fixture.ts";
 
 /** One isolated world: a state directory, a destination source and a local git remote. */
 export type ImportWorld = {
@@ -36,10 +37,7 @@ export const withImportWorld = <A, E, R>(
     const base = yield* fileSystem.realPath(
       yield* fileSystem.makeTempDirectoryScoped({ prefix: "tack-import-world-" }),
     );
-    const options = {
-      environment: { TACK_STATE_DIR: path.join(base, "state") },
-      homeDirectory: base,
-    } satisfies StateOptions;
+    const options = stateOptionsAt(path.join(base, "state"), base);
     yield* initializeState(options);
     const root = yield* seedSource(path.join(base, "personal-brain"), {
       "tack.yaml": input.declaration,

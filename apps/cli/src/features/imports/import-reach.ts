@@ -1,10 +1,10 @@
-import { type ChoiceNamespace } from "../../domain/choices/choice-schema.ts";
+import { type Namespace } from "../../domain/choices/choice-schema.ts";
 import { profileApplicationFor } from "../../domain/profiles/profile-application.ts";
 import {
   resolveInitialSelection,
   type InitialSelectionDecision,
 } from "../../domain/choices/selection.ts";
-import { allSkillChoices } from "../../domain/state/state-intent.ts";
+import { allChoices } from "../../domain/state/state-intent.ts";
 import {
   catalogSelectableEntries,
   resourceAddressIdentity,
@@ -17,11 +17,11 @@ import { compareCodeUnits } from "../../domain/identity/ordering.ts";
 import { skillFolderPath, type ImportDestination } from "./import-destination.ts";
 import type { ImportCandidate, ImportReach } from "../../domain/imports/import-schema.ts";
 
-const namespaceText = (namespace: ChoiceNamespace) =>
+const namespaceText = (namespace: Namespace) =>
   namespace._tag === "user" ? "user" : `project ${namespace.projectName}`;
 
 const reasonText = (
-  namespace: ChoiceNamespace,
+  namespace: Namespace,
   reason: Extract<InitialSelectionDecision, { readonly _tag: "not-selected" }>["reason"],
 ) =>
   reason === "exclude"
@@ -79,12 +79,12 @@ export const computeReach = (input: {
   const { state, catalog, destination, candidate } = input;
   const entry = hypotheticalEntry(destination, candidate);
   const entries = catalogSelectableEntries({ entries: [...catalog.entries, entry] });
-  const choices = allSkillChoices(state);
+  const choices = allChoices(state);
   const noAdapters = state.data.enabledAdapters.length === 0;
-  const namespaces: ReadonlyArray<ChoiceNamespace> = [
+  const namespaces: ReadonlyArray<Namespace> = [
     ...[...state.data.projects]
       .sort((left, right) => compareCodeUnits(left.name, right.name))
-      .map((project): ChoiceNamespace => ({ _tag: "project", projectName: project.name })),
+      .map((project): Namespace => ({ _tag: "project", projectName: project.name })),
     { _tag: "user" },
   ];
   const decided = namespaces.map((namespace) => {

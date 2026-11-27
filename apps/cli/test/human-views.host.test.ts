@@ -3,8 +3,8 @@ import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { decodeEnvelope } from "./support/tack-process.ts";
-import { type TerminalContextShape } from "../src/cli/host/human/terminal-context.ts";
-import { displayWidth } from "../src/cli/host/human/text.ts";
+import { type TerminalContextShape } from "../src/cli/human/terminal-context.ts";
+import { displayWidth } from "../src/cli/human/text.ts";
 import { runHost } from "./support/host-runner.ts";
 
 const interactive: TerminalContextShape = {

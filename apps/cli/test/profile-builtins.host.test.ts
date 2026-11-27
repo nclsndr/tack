@@ -1,14 +1,14 @@
 import { skillText } from "./support/source-tree.ts";
 import { builtinSkillLockReason } from "../src/domain/choices/builtin.ts";
-import { makeExplorerDestinations } from "../src/cli/host/human/explorer/profile-editor.ts";
-import { initialExplorerState } from "../src/cli/host/human/explorer/model.ts";
-import { stageChange } from "../src/cli/host/human/explorer/edit.ts";
-import { makeStyle } from "../src/cli/host/human/style.ts";
-import type { RouteServices } from "../src/cli/host/routes/route.ts";
-import type { ExplorerDestination } from "../src/cli/host/human/explorer/destination.ts";
+import { makeExplorerDestinations } from "../src/cli/explorer/profile-editor.ts";
+import { initialExplorerState } from "../src/cli/explorer/model.ts";
+import { stageChange } from "../src/cli/explorer/edit.ts";
+import { makeStyle } from "../src/cli/human/style.ts";
+import type { RouteServices } from "../src/cli/envelope/route-services.ts";
+import type { ExplorerDestination } from "../src/cli/explorer/destination.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect } from "effect";
-import { exitCodeForEnvelope } from "../src/cli/host/public-outcome.ts";
+import { exitCodeForEnvelope } from "../src/cli/envelope/public-outcome.ts";
 import { runHost } from "./support/host-runner.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
@@ -160,7 +160,7 @@ it.layer(LiveTestLayer)("release-owned profile members", (test) => {
             runHost({
               args: [
                 "--state-dir",
-                f.options.environment.TACK_STATE_DIR,
+                f.options.stateDirectory,
                 "--json",
                 "check",
                 f.path.join(f.source, "ci.yaml"),

@@ -13,6 +13,7 @@ import {
   text,
 } from "./issues.ts";
 import { oneOf } from "./authored-model.ts";
+import { type FigureCase, readCases } from "./cases.ts";
 
 const columnKeys = ["pk", "unique"] as const;
 type ColumnKey = (typeof columnKeys)[number];
@@ -116,22 +117,14 @@ export type SchemaRelation = {
   readonly label?: string;
   readonly cardinality?: Cardinality;
 };
-export type SchemaCase =
-  | {
-      readonly kind: "replay";
-      readonly id: string;
-      readonly label: string;
-      readonly steps: readonly { readonly at: readonly string[]; readonly note: string }[];
-    }
-  | {
-      readonly kind: "lens";
-      readonly id: string;
-      readonly label: string;
-      readonly note: string;
-      readonly focus: readonly string[];
-      /** By table name or `schema.*`; `undefined` for a lens without access. */
-      readonly access?: ReadonlyMap<string, Access>;
-    };
+export type SchemaCase = FigureCase<
+  { readonly at: readonly string[]; readonly note: string },
+  {
+    readonly focus: readonly string[];
+    /** By table name or `schema.*`; `undefined` for a lens without access. */
+    readonly access?: ReadonlyMap<string, Access>;
+  }
+>;
 export type SchemaModel = {
   readonly id: string;
   readonly title: string;
@@ -145,12 +138,6 @@ export type SchemaModel = {
   /** Entity cards: no column has a type. */
   readonly entities: boolean;
 };
-
-const slug = (value: string): string =>
-  value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
 
 /** `schema.table` splits into its group and its short name; an undotted name has no group. */
 function splitName(name: string): { readonly group?: string; readonly short: string } {
@@ -380,101 +367,63 @@ export function readSchema(props: unknown): {
     caseIssues.push(inputIssue(`startWith names an undeclared table "${name}"`));
     return [];
   });
-  const usedCaseIds = new Set<string>();
-  const caseId = (authored: string | undefined, label: string, fallback: string): string => {
-    const base = authored ?? (slug(label) === "" ? fallback : slug(label));
-    const id = usedCaseIds.has(base) === true ? `${base}-${usedCaseIds.size + 1}` : base;
-    usedCaseIds.add(id);
-    return id;
-  };
-  const replays = list(raw["replays"]).flatMap((value, index): SchemaCase[] => {
-    const replay = record(value) ?? {};
-    const label = text(replay["label"]);
-    const name = label === undefined ? `replay ${index + 1}` : `replay "${label}"`;
-    if (label === undefined) caseIssues.push(inputIssue(`${name} has no label`));
-    const authored = list(replay["steps"]);
-    if (authored.length === 0) caseIssues.push(inputIssue(`${name} has no steps`));
-    if (authored.length > schemaBudget.steps)
-      caseIssues.push(
-        inputIssue(`${name} has ${authored.length} steps; the budget is ${schemaBudget.steps}`),
-      );
-    const steps = authored.flatMap((entry, step) => {
-      const fields = record(entry) ?? {};
+  const knownTarget = (value: string): boolean =>
+    tableNames.has(value) === true || (value.endsWith(".*") && used.includes(value.slice(0, -2)));
+  const cases = readCases(raw, {
+    steps: schemaBudget.steps,
+    issues: caseIssues,
+    step: (fields, where) => {
       const at = (typeof fields["at"] === "string" ? [fields["at"]] : list(fields["at"])).flatMap(
         (id) => {
           const named = text(id) ?? "?";
           if (endOf(named, tables) !== undefined) return [named];
-          caseIssues.push(
-            inputIssue(`${name} step ${step + 1} names an undeclared table or column "${named}"`),
-          );
+          caseIssues.push(inputIssue(`${where} names an undeclared table or column "${named}"`));
           return [];
         },
       );
-      return at.length === 0 ? [] : [{ at, note: text(fields["note"]) ?? "" }];
-    });
-    const shown = label ?? `Replay ${index + 1}`;
-    return steps.length === 0
-      ? []
-      : [
-          {
-            kind: "replay",
-            id: caseId(text(replay["id"]), shown, `replay-${index + 1}`),
-            label: shown,
-            steps,
-          },
-        ];
-  });
-  const knownTarget = (value: string): boolean =>
-    tableNames.has(value) === true || (value.endsWith(".*") && used.includes(value.slice(0, -2)));
-  const lenses = list(raw["lenses"]).map((value, index): SchemaCase => {
-    const lens = record(value) ?? {};
-    const label = text(lens["label"]);
-    const note = text(lens["note"]);
-    const name = label === undefined ? `lens ${index + 1}` : `lens "${label}"`;
-    if (label === undefined) caseIssues.push(inputIssue(`${name} has no label`));
-    if (note === undefined) caseIssues.push(inputIssue(`${name} has no note`));
-    const focus = list(lens["focus"]).flatMap((entry) => {
-      const target = text(entry) ?? "?";
-      if (knownTarget(target) === true) return [target];
-      caseIssues.push(inputIssue(`${name} names an undeclared table or schema "${target}"`));
-      return [];
-    });
-    const grants = record(lens["access"]);
-    const access =
-      grants === undefined
-        ? undefined
-        : new Map(
-            Object.entries(grants).flatMap(([target, level]): (readonly [string, Access])[] => {
-              if (knownTarget(target) === false) {
-                caseIssues.push(
-                  inputIssue(`${name} names an undeclared table or schema "${target}"`),
-                );
-                return [];
-              }
-              if (oneOf(accessLevels, level) === false) {
-                caseIssues.push(
-                  inputIssue(
-                    `${name} gives "${target}" an unknown access "${String(level)}"; use read, write, read-write or none`,
-                  ),
-                );
-                return [];
-              }
-              return [[target, level]];
-            }),
-          );
-    const shown = label ?? `Lens ${index + 1}`;
-    return {
-      kind: "lens",
-      id: caseId(text(lens["id"]), shown, `lens-${index + 1}`),
-      label: shown,
-      note: note ?? "",
-      focus: focus.flatMap((target) =>
-        target.endsWith(".*")
-          ? tables.filter((table) => table.group === target.slice(0, -2)).map((table) => table.name)
-          : [target],
-      ),
-      ...(access === undefined ? {} : { access }),
-    };
+      return at.length === 0 ? undefined : { at, note: text(fields["note"]) ?? "" };
+    },
+    lens: (lens, name) => {
+      const focus = list(lens["focus"]).flatMap((entry) => {
+        const target = text(entry) ?? "?";
+        if (knownTarget(target) === true) return [target];
+        caseIssues.push(inputIssue(`${name} names an undeclared table or schema "${target}"`));
+        return [];
+      });
+      const grants = record(lens["access"]);
+      const access =
+        grants === undefined
+          ? undefined
+          : new Map(
+              Object.entries(grants).flatMap(([target, level]): (readonly [string, Access])[] => {
+                if (knownTarget(target) === false) {
+                  caseIssues.push(
+                    inputIssue(`${name} names an undeclared table or schema "${target}"`),
+                  );
+                  return [];
+                }
+                if (oneOf(accessLevels, level) === false) {
+                  caseIssues.push(
+                    inputIssue(
+                      `${name} gives "${target}" an unknown access "${String(level)}"; use read, write, read-write or none`,
+                    ),
+                  );
+                  return [];
+                }
+                return [[target, level]];
+              }),
+            );
+      return {
+        focus: focus.flatMap((target) =>
+          target.endsWith(".*")
+            ? tables
+                .filter((table) => table.group === target.slice(0, -2))
+                .map((table) => table.name)
+            : [target],
+        ),
+        ...(access === undefined ? {} : { access }),
+      };
+    },
   });
 
   const rule = record(raw["rule"]);
@@ -493,7 +442,7 @@ export function readSchema(props: unknown): {
       tables,
       groups,
       relations: [...keyRelations, ...links],
-      cases: [...replays, ...lenses],
+      cases,
       entities: typed.length === 0 && untyped.length > 0,
     },
     issues: [

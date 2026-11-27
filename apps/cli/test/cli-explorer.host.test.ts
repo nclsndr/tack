@@ -19,7 +19,7 @@ import {
   agentMarkers,
   TerminalContext,
   type TerminalContextShape,
-} from "../src/cli/host/human/terminal-context.ts";
+} from "../src/cli/human/terminal-context.ts";
 import { parseInvocation } from "../src/cli/commands/index.ts";
 import { Git } from "../src/services/git.ts";
 import { runHost } from "./support/host-runner.ts";
@@ -33,18 +33,19 @@ import {
   type ExplorerEntry,
   type ExplorerKey,
   type ExplorerState,
-} from "../src/cli/host/human/explorer/model.ts";
-import { renderExplorerFrame } from "../src/cli/host/human/explorer/frame.ts";
-import { runExplorer } from "../src/cli/host/human/explorer/session.ts";
-import { makeStyle } from "../src/cli/host/human/style.ts";
+} from "../src/cli/explorer/model.ts";
+import { renderExplorerFrame } from "../src/cli/explorer/frame.ts";
+import { runExplorer } from "../src/cli/explorer/session.ts";
+import { makeStyle } from "../src/cli/human/style.ts";
 import { ReaderCorpusLive } from "../src/platform/reader/search.ts";
 import { initializeState, readState } from "../src/services/state-store.ts";
 import { registerSource } from "../src/features/sources/source.ts";
-import { exploreSelection } from "../src/cli/host/routes/explore.ts";
-import { loadExplorer } from "../src/cli/host/human/explorer/editor.ts";
+import { exploreSelection } from "../src/cli/routes/explore.ts";
+import { loadExplorer } from "../src/cli/explorer/editor.ts";
 import { CatalogReportSchema } from "../src/domain/sources/catalog-report.ts";
-import { SkillChoiceSchema } from "../src/domain/choices/choice-schema.ts";
-import { explorerEntries } from "../src/cli/host/human/explorer/entries.ts";
+import { ChoiceSchema } from "../src/domain/choices/choice-schema.ts";
+import { explorerEntries } from "../src/cli/explorer/entries.ts";
+import { stateOptionsAt } from "./support/state-fixture.ts";
 
 const interactive: TerminalContextShape = {
   columns: 80,
@@ -173,7 +174,7 @@ it("shows the catalog's resource facts, explicit choices and issues", () => {
       },
     ],
   });
-  const choices = Schema.decodeUnknownSync(Schema.Array(SkillChoiceSchema))([
+  const choices = Schema.decodeUnknownSync(Schema.Array(ChoiceSchema))([
     { address, decision: "include", namespace: { _tag: "project", projectName: "demo" } },
   ]);
   const projected = explorerEntries(report, choices, (path) => path);
@@ -457,10 +458,7 @@ it.layer(LiveTestLayer)("explorer sessions", (test) => {
       const root = yield* fs.makeTempDirectoryScoped({ prefix: "tack-explore-readonly-" });
       const source = path.join(root, "source");
       const skill = path.join(source, "skills", "review");
-      const options = {
-        environment: { TACK_STATE_DIR: path.join(root, "state") },
-        homeDirectory: root,
-      };
+      const options = stateOptionsAt(path.join(root, "state"), root);
       yield* fs.makeDirectory(skill, { recursive: true });
       yield* fs.writeFileString(
         path.join(source, "tack.yaml"),
@@ -511,10 +509,7 @@ it.layer(LiveTestLayer)("explorer sessions", (test) => {
       const path = yield* Path.Path;
       const root = yield* fs.makeTempDirectoryScoped({ prefix: "tack-explore-declared-" });
       const source = path.join(root, "source");
-      const options = {
-        environment: { TACK_STATE_DIR: path.join(root, "state") },
-        homeDirectory: root,
-      };
+      const options = stateOptionsAt(path.join(root, "state"), root);
       yield* fs.makeDirectory(path.join(source, "vendor", "skills", "pdf"), { recursive: true });
       yield* fs.writeFileString(
         path.join(source, "tack.yaml"),
@@ -539,10 +534,7 @@ it.layer(LiveTestLayer)("explorer sessions", (test) => {
       const fs = yield* FileSystem.FileSystem;
       const path = yield* Path.Path;
       const root = yield* fs.makeTempDirectoryScoped({ prefix: "tack-explore-interrupt-" });
-      const options = {
-        environment: { TACK_STATE_DIR: path.join(root, "state") },
-        homeDirectory: root,
-      };
+      const options = stateOptionsAt(path.join(root, "state"), root);
       yield* initializeState(options);
       const { terminal, displayed } = yield* scriptedTerminal([input("c", "\u0003", true)]);
       const { exit, stdout } = yield* runHost({

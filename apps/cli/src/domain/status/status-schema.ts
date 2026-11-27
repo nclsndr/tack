@@ -1,10 +1,10 @@
 import { ProfileDeliverySchema } from "../profiles/profile-delivery.ts";
-import { ProfileApplicationSchema } from "../profiles/profile-application.ts";
-import { Schema } from "effect";
-import { AgentAdapterIdSchema, EnabledAdaptersSchema } from "../links/agent-adapter-schema.ts";
+import { ProfileApplicationSchema } from "../state/profile-application-schema.ts";
+import { Schema, Struct } from "effect";
+import { AgentAdapterIdSchema, EnabledAdaptersSchema } from "../agents/agent-adapter-schema.ts";
 import {
-  ChoiceNamespaceSchema,
-  SkillChoiceSchema,
+  NamespaceSchema,
+  ChoiceSchema,
   UserLinkedExcludeSchema,
   choiceNamespaceIdentity,
 } from "../choices/choice-schema.ts";
@@ -32,6 +32,7 @@ import {
 } from "../projects/project-schema.ts";
 import { InitialSelectionSchema } from "../choices/selection.ts";
 import { CatalogReportSchema } from "../sources/catalog-report.ts";
+import { sourceLabelFacts } from "../sources/source-inspection.ts";
 import { SelectableAddressSchema, resourceAddressIdentity } from "../sources/catalog-schema.ts";
 import {
   SourceIssueCodeSchema,
@@ -54,13 +55,15 @@ const StatusIssueSchema = Schema.Struct({
   message: Schema.String,
 });
 
+/** The label of a source and where it came from, as `status` reports them. */
+const statusLabelFacts = Struct.pick(sourceLabelFacts, ["label", "labelOrigin"]);
+
 /** The current health of one retained source registration. */
 const StatusSourceSchema = Schema.Union([
   Schema.Struct({
     registration: SourceRegistrationSchema,
     status: Schema.Literal("healthy"),
-    label: Schema.optionalKey(Schema.String),
-    labelOrigin: Schema.optionalKey(Schema.Literals(["declared", "derived", "none", "clashing"])),
+    ...statusLabelFacts,
     /** Heads-ups that never change health or an exit code, such as a source that declares nothing. */
     warnings: Schema.optionalKey(Schema.Array(SourceWarningSchema)),
   }),
@@ -68,8 +71,7 @@ const StatusSourceSchema = Schema.Union([
     issue: Schema.Struct({ code: SourceIssueCodeSchema, message: Schema.String }),
     registration: SourceRegistrationSchema,
     status: Schema.Literal("unhealthy"),
-    label: Schema.optionalKey(Schema.String),
-    labelOrigin: Schema.optionalKey(Schema.Literals(["declared", "derived", "none", "clashing"])),
+    ...statusLabelFacts,
   }),
 ]);
 
@@ -129,7 +131,7 @@ export const StatusNamespaceSchema = Schema.Struct({
       delivery: ProfileDeliverySchema,
     }),
   ),
-  choices: Schema.Array(SkillChoiceSchema),
+  choices: Schema.Array(ChoiceSchema),
   desired: Schema.Array(SelectableAddressSchema),
   undelivered: Schema.Array(
     Schema.Struct({
@@ -144,7 +146,7 @@ export const StatusNamespaceSchema = Schema.Struct({
     }),
   ),
   lifecycle: Schema.Literals(["active", "suspended-removing"]),
-  namespace: ChoiceNamespaceSchema,
+  namespace: NamespaceSchema,
   resolution: DependencyResolutionSchema,
   selection: InitialSelectionSchema,
 }).check(

@@ -1,7 +1,6 @@
 import { Effect } from "effect";
 import { Command } from "effect/cli";
 import { handle } from "./invocation-receiver.ts";
-import { operationContract } from "./operation-contract.ts";
 import { namespaceFrom, projectFlag, userFlag } from "./target-selector.ts";
 
 /** Opens the interactive explorer, which edits a selection or profile after a confirmed review. */
@@ -27,5 +26,4 @@ export const exploreCommand = Command.make(
     },
     { command: "tack explore --user", description: "Do the same for the user namespace" },
   ]),
-  operationContract({ mutation: "conditional", slots: ["result"] }),
 );

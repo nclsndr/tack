@@ -8,7 +8,7 @@ import {
   tableRows,
   truncate,
   wrapText,
-} from "../src/cli/host/human/text.ts";
+} from "../src/cli/human/text.ts";
 
 const widest = (lines: ReadonlyArray<string>) => Math.max(0, ...lines.map(displayWidth));
 

@@ -1,9 +1,5 @@
 import { Effect, JsonSchema, Schema } from "effect";
-import { DoctorReportSchema } from "../../domain/doctor/doctor-schema.ts";
-import { SyncApplicationSchema, SyncPlanSchema } from "../../domain/reconciliation/sync-schema.ts";
-import { InitApplicationSchema, InitPlanSchema } from "../../domain/setup/machine-init-schema.ts";
-import { UpgradeGuideSchema } from "../../domain/self/upgrade-guide.ts";
-import { StatusPayloadSchema } from "../../domain/status/status-schema.ts";
+import { commandDeclarations, payloadSlots, type CommandDeclaration } from "./declarations.ts";
 import {
   type CommandContract,
   CommandContractSchema,
@@ -93,16 +89,19 @@ export const publishedJsonSchema = (schema: Schema.Top): Schema.Json => {
   });
 };
 
-/** The payload schemas of the stable `--json` contract; no other command has one. */
-const payloadSchemas = {
-  "doctor-report": publishedJsonSchema(DoctorReportSchema),
-  "skill-status": publishedJsonSchema(StatusPayloadSchema),
-  "sync-plan": publishedJsonSchema(SyncPlanSchema),
-  "sync-application": publishedJsonSchema(SyncApplicationSchema),
-  "init-plan": publishedJsonSchema(InitPlanSchema),
-  "init-application": publishedJsonSchema(InitApplicationSchema),
-  "upgrade-guide": publishedJsonSchema(UpgradeGuideSchema),
-};
+/** The payload schemas of the stable `--json` contract, by kind; no other command has one. */
+const payloadSchemas = Object.fromEntries(
+  Object.values<CommandDeclaration>(commandDeclarations).flatMap((declaration) =>
+    declaration.stable === true
+      ? payloadSlots.flatMap((slot) => {
+          const schema = declaration[slot];
+          return schema === undefined
+            ? []
+            : [[schema.fields.kind.literal, publishedJsonSchema(schema)] as const];
+        })
+      : [],
+  ),
+);
 
 /** Describes the contracts of every executable command at or below one command path. */
 export const describeContracts = Effect.fnUntraced(function* (commandPath: ReadonlyArray<string>) {

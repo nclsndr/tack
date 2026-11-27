@@ -2,7 +2,7 @@ import { afterAll, expect } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { ChildProcessSpawner } from "effect/process";
 import { rm } from "node:fs/promises";
-import type { PublicEnvelope } from "../../src/cli/host/public-outcome.ts";
+import type { PublicEnvelope } from "../../src/cli/envelope/public-outcome.ts";
 import type { StateOptions } from "../../src/services/state-store.ts";
 import { runTackInProcess } from "./host-runner.ts";
 import {
@@ -14,6 +14,7 @@ import {
   tackProcess,
   type ProcessResult,
 } from "./tack-process.ts";
+import { stateOptionsAt } from "./state-fixture.ts";
 
 export type TackWorld = {
   readonly entrypoint: string;
@@ -165,10 +166,7 @@ export const withTackWorld = <A, E, R>(use: (fixture: TackWorld) => Effect.Effec
 
     yield* copyGitTemplate(root);
 
-    const options = {
-      environment: { TACK_STATE_DIR: stateDirectory },
-      homeDirectory,
-    } satisfies StateOptions;
+    const options = stateOptionsAt(stateDirectory, homeDirectory);
     const fixture = {
       entrypoint,
       homeDirectory,
