@@ -12,7 +12,7 @@ import { commandLine } from "../envelope/command-line.ts";
 import { argvLine } from "../../domain/hints/next-commands.ts";
 import type { PublicEnvelope } from "../envelope/public-outcome.ts";
 import { frameView } from "./frame.ts";
-import type { HumanView, HumanViewRegistry } from "./render.ts";
+import type { HumanView, HumanViewRegistry } from "./human-view.ts";
 import { uniqueHints } from "./removal-hints.ts";
 import type { Style } from "./style.ts";
 import { cell, flow, paragraph, table, tableRows, type Cell, type Paint } from "./text.ts";

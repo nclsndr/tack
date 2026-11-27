@@ -1,5 +1,5 @@
 import { Option } from "effect";
-import type { HumanView } from "./render.ts";
+import type { HumanView } from "./human-view.ts";
 
 /** Says the session closed; what it applied was reported inside the session. */
 export const renderExplore: HumanView<"explore"> = (_envelope, { result }, style) =>

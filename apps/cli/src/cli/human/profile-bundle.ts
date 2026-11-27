@@ -1,6 +1,6 @@
 import { Option } from "effect";
 import type { BundleManifest } from "../../domain/bundles/bundle-schema.ts";
-import type { HumanView } from "./render.ts";
+import type { HumanView } from "./human-view.ts";
 import { headerLines, sections, withoutPayload } from "./view.ts";
 
 const inventoryLines = (manifest: BundleManifest) => [

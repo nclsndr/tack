@@ -58,6 +58,64 @@ describe("defineScript", () => {
     ]);
   });
 
+  it("refuses a default that the argument itself would refuse", () => {
+    let thrown: unknown;
+    try {
+      defineUnchecked({
+        args: {
+          count: { type: "number", default: "many" },
+          ratio: { type: "number", default: Number.NaN },
+          tone: { type: "string", choices: ["warm", "cool"], default: "loud" },
+          tags: { type: "string", multiple: true, default: "docs" },
+          sizes: { type: "number", multiple: true, default: [1, "2"] },
+          moods: { type: "string", multiple: true, choices: ["calm"], default: ["calm", "busy"] },
+          shout: { type: "boolean", default: [true] },
+        },
+        run,
+      });
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toBeInstanceOf(ScriptDefinitionError);
+    expect(thrown instanceof Error ? thrown.message.split("\n") : []).toEqual([
+      'Argument "count" has the default "many", which is not a number.',
+      'Argument "ratio" has the default NaN, which is not a number.',
+      'Argument "tone" has the default "loud", which is not one of warm, cool.',
+      'Argument "tags" takes a list, so its default must be a list, got "docs".',
+      'Argument "sizes" has the default "2", which is not a number.',
+      'Argument "moods" has the default "busy", which is not one of calm.',
+      'Argument "shout" has the default [true], which is not a boolean.',
+    ]);
+  });
+
+  it("accepts a default that the argument takes", () => {
+    const options = {
+      args: {
+        count: { type: "number", default: 3 },
+        tone: { type: "string", choices: ["warm", "cool"], default: "cool" },
+        tags: { type: "string", multiple: true, default: [] },
+        moods: { type: "string", multiple: true, choices: ["calm"], default: ["calm"] },
+        shout: { type: "boolean", default: false },
+      },
+      run,
+    } as const;
+
+    expect(recognizeScript(defineScript(options))).toEqual(options);
+  });
+
+  it("checks no default against choices that are refused or that are not a list", () => {
+    expect(() =>
+      defineUnchecked({ args: { tone: { type: "number", choices: ["1"], default: 2 } }, run }),
+    ).toThrow(/^Argument "tone" can only list choices when its type is "string"\.$/);
+    expect(() =>
+      defineUnchecked({
+        args: { tone: { type: "string", choices: "warm", default: "cool" } },
+        run,
+      }),
+    ).not.toThrow();
+  });
+
   it("refuses a definition that is not an object, and args or secrets of the wrong shape", () => {
     expect(() => defineUnchecked("run")).toThrow("defineScript expects an object");
     expect(() => defineUnchecked({ args: [], secrets: "TOKEN", run })).toThrow(

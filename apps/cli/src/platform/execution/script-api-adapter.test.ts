@@ -453,6 +453,24 @@ describe("what a script declares", () => {
     expect(declarationsOf(42)).toMatchObject({ ok: false, code: "invalid_definition" });
   });
 
+  it("keeps every field of an argument declaration that the script API defines", () => {
+    // `Required<ArgSpec>` fails to compile when the script API gains a field this list lacks, and
+    // the declaration schema of `script show` must then keep the new field too.
+    const everyField = {
+      type: "string",
+      description: "Who",
+      multiple: true,
+      optional: true,
+      default: ["Ada"],
+      choices: ["Ada", "Grace"],
+    } as const satisfies Required<ArgSpec>;
+
+    expect(declarationsOf(defineScript({ args: { name: everyField }, run: () => null }))).toEqual({
+      ok: true,
+      declarations: { args: { name: everyField }, secrets: [] },
+    });
+  });
+
   it("keeps an unknown argument's inline value for the declarations check", () => {
     expect(inputFromWords({}, ["--colour=red", "--loud"])).toEqual({
       input: { colour: "red", loud: true },

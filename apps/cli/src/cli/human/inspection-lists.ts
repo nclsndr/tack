@@ -1,6 +1,6 @@
 import { choiceNamespaceIdentity, type Choice } from "../../domain/choices/choice-schema.ts";
 import { AgentAdapterIdSchema } from "../../domain/agents/agent-adapter-schema.ts";
-import type { HumanViewRegistry } from "./render.ts";
+import type { HumanViewRegistry } from "./human-view.ts";
 import { cell, paragraph, table } from "./text.ts";
 import { addressText, factRows, headingLines, plural } from "./view.ts";
 import { resultView } from "./inspection-support.ts";

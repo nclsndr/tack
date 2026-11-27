@@ -1,5 +1,6 @@
 import picomatch from "picomatch";
 import { Effect, FileSystem, Path, Schema } from "effect";
+import { declarationFileName } from "@tackup/reader/source-edges";
 import { publishedPackageName } from "../../domain/execution/published-name.ts";
 import { scriptApiDeclarations } from "../../domain/execution/script-api-declarations.ts";
 import { sourceFileFailure } from "../sources/source.ts";
@@ -108,7 +109,7 @@ export const writeTypes = Effect.fn("execution.writeTypes")(
     const fs = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
     const root = path.resolve(directory);
-    if ((yield* fs.exists(path.join(root, "tack.yaml"))) === false)
+    if ((yield* fs.exists(path.join(root, declarationFileName))) === false)
       return yield* new TypesTargetError({ directory: root });
     const stubPath = path.join(root, typesStubName);
     const stub = typesStub(version);

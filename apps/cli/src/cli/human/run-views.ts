@@ -1,4 +1,4 @@
-import type { HumanViewRegistry } from "./render.ts";
+import type { HumanViewRegistry } from "./human-view.ts";
 import { historyListView, historyShowView } from "./run-history.ts";
 import { docsIconsView } from "./run-icons.ts";
 import { readerSearchView, readerView } from "./run-reader.ts";

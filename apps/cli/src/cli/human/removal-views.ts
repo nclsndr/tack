@@ -22,7 +22,7 @@ import type { PublicEnvelope } from "../envelope/public-outcome.ts";
 import { commandLine, selectorFlags } from "../envelope/command-line.ts";
 import { frameView } from "./frame.ts";
 import { handMadeLines } from "./hand-made.ts";
-import type { HumanView, HumanViewRegistry } from "./render.ts";
+import type { HumanView, HumanViewRegistry } from "./human-view.ts";
 import { blockedStatusHints, retryHints, uniqueHints } from "./removal-hints.ts";
 import {
   cleanupDocsRows,

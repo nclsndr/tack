@@ -14,6 +14,7 @@ purpose. Read them there; this page says which test guards what, and how to read
 | `@tackup/reader` and `@tackup/core` entries per layer                 | `imports the reader and core packages only from the layers …` |
 | The folders of `domain` and of `features` form no cycle               | `keeps the %s folders a directed acyclic graph`               |
 | `cli` folders import only the folders before them                     | `orders the cli folders`                                      |
+| No text view imports `cli/human/render.ts`, the registry of views     | `keeps the text views below their registry …`                 |
 | The state document is read only through the command snapshot          | `reads the state document only through the command snapshot`  |
 | `cli/commands` never imports `platform`                               | `keeps CLI command declarations independent from platform …`  |
 | One function builds a resource identity key                           | `builds a resource identity key in one place …`               |
@@ -28,6 +29,8 @@ purpose. Read them there; this page says which test guards what, and how to read
 - **An upward import in `cli`** means the module belongs lower. A text view goes to `human`, a
   mapping onto the public envelope goes to `envelope`. Place a module by what it is, never by who
   calls it.
+- **A view that imports `render.ts`** closes a cycle through every view, because the registry
+  imports them all. Take the `HumanView` types from `cli/human/human-view.ts` instead.
 - **A feature that needs a CLI command line** takes it as a parameter, as `pickChoice` in
   `features/choices/pick.ts` takes the user exclude command. A feature never imports `cli`.
 - **A new workspace package entry** fails until it gets a row in `packageImports`.

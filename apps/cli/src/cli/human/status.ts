@@ -8,7 +8,7 @@ import { destinationPlace } from "../../domain/status/destination-place.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
 import { collisionExcludeCommands, userExcludeCommands } from "../envelope/collision-hints.ts";
 import { commandLine, selectorFlags } from "../envelope/command-line.ts";
-import type { HumanView } from "./render.ts";
+import type { HumanView } from "./human-view.ts";
 import type { Style } from "./style.ts";
 import { cell, sanitize, table, wrapText, type Cell } from "./text.ts";
 import {

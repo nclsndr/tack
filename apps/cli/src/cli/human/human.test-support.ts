@@ -7,7 +7,8 @@ import {
   type PublicEnvelope,
   type PublicOutcome,
 } from "../envelope/public-outcome.ts";
-import { humanViews, renderHuman, type HumanViewRegistry } from "./render.ts";
+import type { HumanViewRegistry } from "./human-view.ts";
+import { humanViews, renderHuman } from "./render.ts";
 import { makeStyle, type Style } from "./style.ts";
 import { displayWidth } from "./text.ts";
 

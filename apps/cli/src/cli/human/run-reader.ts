@@ -3,7 +3,7 @@ import { Option } from "effect";
 import type { DocsResourceReference } from "../../domain/docs/docs-schema.ts";
 import { commandLine } from "../envelope/command-line.ts";
 import { frameView } from "./frame.ts";
-import type { HumanView } from "./render.ts";
+import type { HumanView } from "./human-view.ts";
 import { oneLine } from "../envelope/one-line.ts";
 import { withoutPayload } from "./run-text.ts";
 import type { Style } from "./style.ts";

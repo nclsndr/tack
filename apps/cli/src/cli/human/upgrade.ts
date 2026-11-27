@@ -1,7 +1,7 @@
 import { Option } from "effect";
 import { commandLine } from "../envelope/command-line.ts";
 import { frameView } from "./frame.ts";
-import type { HumanView } from "./render.ts";
+import type { HumanView } from "./human-view.ts";
 import { withoutPayload } from "./run-text.ts";
 import { cell, paragraph } from "./text.ts";
 import { factRows } from "./view.ts";

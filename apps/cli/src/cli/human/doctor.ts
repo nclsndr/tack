@@ -3,7 +3,7 @@ import type { DoctorCheck, DoctorReport } from "../../domain/doctor/doctor-schem
 import { argvLine } from "../../domain/hints/next-commands.ts";
 import { frameView } from "./frame.ts";
 import { indented } from "./inspection-support.ts";
-import type { HumanView } from "./render.ts";
+import type { HumanView } from "./human-view.ts";
 import type { Style } from "./style.ts";
 import { cell, flow } from "./text.ts";
 import { headingLines, plural } from "./view.ts";

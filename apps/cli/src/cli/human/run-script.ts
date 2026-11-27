@@ -8,7 +8,7 @@ import {
 import { commandLine } from "../envelope/command-line.ts";
 import { oneLine } from "../envelope/one-line.ts";
 import { frameView, isRecord } from "./frame.ts";
-import type { HumanView } from "./render.ts";
+import type { HumanView } from "./human-view.ts";
 import { formatBytes, isRunId, timeOfDay, valueLines, withoutPayload } from "./run-text.ts";
 import type { Style } from "./style.ts";
 import { cell, paragraph, truncate } from "./text.ts";

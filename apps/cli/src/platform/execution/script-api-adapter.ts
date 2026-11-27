@@ -9,7 +9,7 @@ import {
   Shell,
   type ShellService,
 } from "@tackup/core";
-import { recognizeScript } from "@tackup/core/script-api";
+import { expectedArgumentValue, recognizeScript } from "@tackup/core/script-api";
 import {
   ScriptDeclarationsSchema,
   type ScriptDeclarations,
@@ -34,17 +34,15 @@ const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
 const describeArgument = (name: string, spec: ArgSpec) =>
   `--${name} (${spec.type}${spec.multiple === true ? " list" : ""}${spec.description === undefined ? "" : `: ${spec.description}`})`;
 
-/** The problem with one supplied value of an argument, if it has one. */
+/**
+ * The problem with one supplied value of an argument, if it has one. `defineScript` holds each
+ * default to the same rule, so a value the run fills in fits too.
+ */
 const valueProblem = (name: string, spec: ArgSpec, value: unknown): string | undefined => {
-  const typed =
-    spec.type === "number"
-      ? typeof value === "number" && Number.isFinite(value)
-      : typeof value === spec.type;
-  if (typed === false) return `--${name} must be a ${spec.type}, got ${JSON.stringify(value)}.`;
-  // `defineScript` allows choices on string arguments only, so a typed value here is a string.
-  if (spec.choices !== undefined && spec.choices.includes(String(value)) === false)
-    return `--${name} must be one of ${spec.choices.join(", ")}, got ${JSON.stringify(value)}.`;
-  return undefined;
+  const expected = expectedArgumentValue(spec, value);
+  return expected === undefined
+    ? undefined
+    : `--${name} must be ${expected}, got ${JSON.stringify(value)}.`;
 };
 
 /** Every problem with one declared argument's supplied value; a missing one may take its default. */

@@ -43,8 +43,8 @@ const freeProjectName = (folder: string, taken: ReadonlySet<string>) => {
  * as a missing directory or a folder outside any repository, reads as outside a repository: the
  * observation only chooses a hint, so it never fails the command that asked.
  */
-export const observeCheckout = (state: State, cwd: string) =>
-  Effect.gen(function* () {
+export const observeCheckout = Effect.fnUntraced(
+  function* (state: State, cwd: string) {
     const { canonicalCwd, containing } = yield* resolveContainingRoot(state, cwd);
     if (containing !== undefined)
       return { _tag: "registered-root", ...containing } satisfies CheckoutObservation;
@@ -88,7 +88,9 @@ export const observeCheckout = (state: State, cwd: string) =>
           projectName: project.name,
           root,
         } satisfies CheckoutObservation);
-  }).pipe(Effect.orElseSucceed((): CheckoutObservation => outside));
+  },
+  Effect.orElseSucceed((): CheckoutObservation => outside),
+);
 
 /**
  * Where a directory that no registered root holds sits, and the command that makes it selectable:
