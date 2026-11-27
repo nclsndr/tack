@@ -22,6 +22,7 @@ import { lucideIconsDirectory } from "./icons/catalog-builder.ts";
 import { corpusIconNames, iconModuleSource } from "./icons/collect.ts";
 import type { ReaderDocument, ReaderProjectInput } from "./types.ts";
 import type { WatcherMessage } from "./watcher.ts";
+import type { EngineStartMessage } from "./server.ts";
 import { ReaderConfigurationError } from "./config.ts";
 import { ReaderPortInUseError, readerStartupError } from "./startup-error.ts";
 
@@ -444,7 +445,7 @@ try {
   } finally {
     restarting = false;
   }
-  process.send?.({ type: "ready", url });
+  process.send?.({ type: "ready", url } satisfies EngineStartMessage);
   rebuildQueued();
 } catch (error) {
   const failure = readerStartupError(error, port);
@@ -453,7 +454,7 @@ try {
     name: failure instanceof Error ? failure.name : "Error",
     message: failure instanceof Error ? failure.message : String(failure),
     ...(failure instanceof ReaderPortInUseError ? { port: failure.port } : {}),
-  });
+  } satisfies EngineStartMessage);
   if (
     !(failure instanceof ReaderPortInUseError) &&
     !(failure instanceof ReaderConfigurationError)

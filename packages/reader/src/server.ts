@@ -41,6 +41,8 @@ const readyMessage = z.discriminatedUnion("type", [
     port: z.number().int().min(0).max(65535).optional(),
   }),
 ]);
+/** What the engine process sends once it starts: its URL, or why it could not start. */
+export type EngineStartMessage = z.input<typeof readyMessage>;
 
 /** Where one session builds: its theme, removed once the engine exits, and Rspack's build cache. */
 type BuildDirectories = { theme: string; buildCache: string };
