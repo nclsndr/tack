@@ -11,6 +11,5 @@
 
 <!-- Linked issues and PRs (e.g. #12), or "none". -->
 
-## Details
-
-<!-- The detailed changes, design notes, tests run, risks, and follow-ups. -->
+<!-- Keep Why, What and Related to first, in that order. After them, the author, human or agent,
+may add any further sections: screenshots, design notes, tests run, risks, leftovers, follow-ups. -->
