@@ -5,12 +5,7 @@ import { Installation, type BuiltInsPruneRequest } from "../../../services/insta
 import type { SyncOptions } from "../../../domain/reconciliation/sync-schema.ts";
 import type { ReconcilePlanningRequest } from "../../commands/model.ts";
 import { disableAdapter } from "../../../features/maintenance/adapter-disablement.ts";
-import {
-  AdapterListPayloadSchema,
-  AdapterSettingsPayloadSchema,
-  enableAdapters,
-  listEnabledAdapters,
-} from "../../../features/reconciliation/agent.ts";
+import { enableAdapters, listEnabledAdapters } from "../../../features/reconciliation/agent.ts";
 import { runSyncCommand } from "../../../features/reconciliation/sync-command.ts";
 import type { StateOptions } from "../../../services/state-store.ts";
 import { appliedAs, removalOutcome, resultAs, syncOutcome } from "../outcomes.ts";
@@ -92,15 +87,13 @@ export const reconciliationRoutes: RoutesFor<
     needsHome: false,
     // The named adapters replace detection, as `init --adapter` does, when this initializes state.
     run: (invocation, { initialAdapters: _detected, ...stateOptions }) =>
-      enableAdapters(stateOptions, invocation.adapters).pipe(
-        Effect.map(appliedAs(AdapterSettingsPayloadSchema)),
-      ),
+      enableAdapters(stateOptions, invocation.adapters).pipe(Effect.map(appliedAs("adapter-set"))),
   },
   "adapter-list": {
     needsHome: false,
     run: (_, stateOptions) =>
       listEnabledAdapters(stateOptions).pipe(
-        Effect.map((enabledAdapters) => resultAs(AdapterListPayloadSchema)({ enabledAdapters })),
+        Effect.map((enabledAdapters) => resultAs("adapter-list")({ enabledAdapters })),
       ),
   },
   "adapter-disable": {

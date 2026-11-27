@@ -3,8 +3,6 @@ import {
   attachDocs,
   configureDocs,
   detachDocs,
-  DocsSettingsPayloadSchema,
-  DocsTargetPayloadSchema,
   inspectDocs,
   resolveDocsTarget,
 } from "../../../features/docs/docs.ts";
@@ -31,7 +29,7 @@ export const docsRoutes: RoutesFor<
       resolveDocsTarget(stateOptions, {
         ...docsSelector(invocation),
         ...(invocation.resource === undefined ? {} : { resource: invocation.resource }),
-      }).pipe(Effect.map(resultAs(DocsTargetPayloadSchema))),
+      }).pipe(Effect.map(resultAs("docs-target"))),
   },
   "docs-configure": {
     needsHome: false,
@@ -42,20 +40,20 @@ export const docsRoutes: RoutesFor<
           ? {}
           : { defaultWritingResource: invocation.defaultWritingResource }),
         clearDefault: invocation.clearDefault,
-      }).pipe(Effect.map(appliedAs(DocsSettingsPayloadSchema))),
+      }).pipe(Effect.map(appliedAs("docs-configure"))),
   },
   "docs-attach": {
     needsHome: false,
     run: (invocation, stateOptions) =>
       attachDocs(stateOptions, docsSelector(invocation), invocation.resource).pipe(
-        Effect.map(appliedAs(DocsSettingsPayloadSchema)),
+        Effect.map(appliedAs("docs-attach")),
       ),
   },
   "docs-detach": {
     needsHome: false,
     run: (invocation, stateOptions) =>
       detachDocs(stateOptions, docsSelector(invocation), invocation.resource).pipe(
-        Effect.map(appliedAs(DocsSettingsPayloadSchema)),
+        Effect.map(appliedAs("docs-detach")),
       ),
   },
 };

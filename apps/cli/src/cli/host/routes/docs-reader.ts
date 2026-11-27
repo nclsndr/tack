@@ -6,7 +6,6 @@ import { resolveStateDirectory } from "../../../services/state-store.ts";
 import { holdReaderCache } from "../../../features/reader/reader-cache.ts";
 import { interactiveAllowed, TerminalContext } from "../human/terminal-context.ts";
 import { lookUpDocsIcons } from "../../../features/reader/icon-lookup.ts";
-import { ReaderSessionPayloadSchema } from "../../../features/reader/session.ts";
 import { docsIconsOutcome, docsSearchOutcome, resultAs } from "../outcomes.ts";
 import { type ForegroundSession, PublicExit, type RoutesFor } from "./route.ts";
 
@@ -47,7 +46,7 @@ export const docsReaderRoutes: RoutesFor<"docs-icons" | "docs-search" | "docs-se
           { interruptible: true },
         );
         return {
-          outcome: resultAs(ReaderSessionPayloadSchema)({
+          outcome: resultAs("docs-serve")({
             url: session.url,
             project: input.project,
           }),

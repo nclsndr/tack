@@ -1,7 +1,4 @@
-import {
-  BundleInspectionPayloadSchema,
-  readBundleArchive,
-} from "../../../features/profiles/bundle-read.ts";
+import { readBundleArchive } from "../../../features/profiles/bundle-read.ts";
 import { runBundleExport } from "../../../features/profiles/bundle-export.ts";
 import { runBundleApply } from "../../../features/profiles/bundle-apply.ts";
 import {
@@ -45,7 +42,7 @@ export const profileRoutes: RoutesFor<
     run: (invocation) =>
       readBundleArchive(invocation.file).pipe(
         Effect.map(({ manifest }) =>
-          resultAs(BundleInspectionPayloadSchema)({ file: invocation.file, manifest }),
+          resultAs("profile-inspect-bundle")({ file: invocation.file, manifest }),
         ),
       ),
   },

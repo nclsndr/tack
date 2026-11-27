@@ -16,7 +16,6 @@ import {
   planSourceRegistration,
   prospectiveSourceLabel,
   registerSource,
-  SourceRegistrationPayloadSchema,
   SourceRegistrationPlanSchema,
 } from "../../../features/sources/source.ts";
 import { sourceQualifier } from "../../../features/sources/resource-reference.ts";
@@ -287,7 +286,7 @@ const addSourceWith = Effect.fnUntraced(function* (
         : [["tack", "check", registered.registration.canonicalPath]]),
       next,
     ],
-    ...appliedAs(SourceRegistrationPayloadSchema)({
+    ...appliedAs("source-add")({
       ...registered,
       name,
       inspection,

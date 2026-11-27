@@ -1,9 +1,6 @@
 import { Effect } from "effect";
 import { readInvocationSnapshot } from "../../../features/snapshot/command-snapshot.ts";
-import {
-  ProjectRegistrationPayloadSchema,
-  registerProject,
-} from "../../../features/projects/project.ts";
+import { registerProject } from "../../../features/projects/project.ts";
 import { runProjectRefreshCommand } from "../../../features/refresh/project-refresh.ts";
 import { removeProject } from "../../../features/maintenance/project-removal.ts";
 import { appliedAs, projectsOutcome, removalOutcome } from "../outcomes.ts";
@@ -20,7 +17,7 @@ export const projectRoutes: RoutesFor<
         Effect.flatMap((repositoryCwd) =>
           registerProject(stateOptions, { name: invocation.name, repositoryCwd }),
         ),
-        Effect.map(appliedAs(ProjectRegistrationPayloadSchema)),
+        Effect.map(appliedAs("project-add")),
       ),
   },
   "project-list": {

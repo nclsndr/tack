@@ -4,11 +4,8 @@ import {
   resolveCatalogWithImports,
 } from "../../../features/imports/import-display.ts";
 import { catalogReport } from "../../../domain/sources/catalog-report.ts";
-import { relocateSource, SourceRelocationPayloadSchema } from "../../../features/sources/source.ts";
-import {
-  initializeState,
-  StateInitializationPayloadSchema,
-} from "../../../services/state-store.ts";
+import { relocateSource } from "../../../features/sources/source.ts";
+import { initializeState } from "../../../services/state-store.ts";
 import { removeSource } from "../../../features/maintenance/source-removal.ts";
 import { addSource } from "./source-add.ts";
 import { appliedAs, catalogOutcome, removalOutcome, sourcesOutcome } from "../outcomes.ts";
@@ -20,8 +17,7 @@ export const sourceRoutes: RoutesFor<
 > = {
   init: {
     needsHome: false,
-    run: (_, stateOptions) =>
-      initializeState(stateOptions).pipe(Effect.map(appliedAs(StateInitializationPayloadSchema))),
+    run: (_, stateOptions) => initializeState(stateOptions).pipe(Effect.map(appliedAs("init"))),
   },
   "source-add": {
     needsHome: false,
@@ -30,9 +26,7 @@ export const sourceRoutes: RoutesFor<
   "source-relocate": {
     needsHome: false,
     run: (invocation, stateOptions) =>
-      relocateSource(stateOptions, invocation).pipe(
-        Effect.map(appliedAs(SourceRelocationPayloadSchema)),
-      ),
+      relocateSource(stateOptions, invocation).pipe(Effect.map(appliedAs("source-relocate"))),
   },
   "source-remove": {
     needsHome: false,

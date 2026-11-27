@@ -6,10 +6,7 @@ import {
   runOperatorScript,
   showScriptHistory,
 } from "../../../features/execution/execution.ts";
-import {
-  RunResultSchema,
-  ScriptShowPayloadSchema,
-} from "../../../domain/execution/execution-schema.ts";
+import { RunResultSchema } from "../../../domain/execution/execution-schema.ts";
 import { ExecutionError } from "../../../services/execution-platform.ts";
 import {
   readInvocationSnapshot,
@@ -66,7 +63,7 @@ export const executionRoutes: RoutesFor<
             candidates: [],
           });
         return yield* describeScript(stateOptions, entry.address);
-      }).pipe(Effect.map(resultAs(ScriptShowPayloadSchema))),
+      }).pipe(Effect.map(resultAs("script-show"))),
   },
   "script-run": {
     // A run may target the user, and its supervisor owns signals until history settles.

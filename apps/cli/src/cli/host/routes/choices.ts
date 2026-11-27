@@ -2,9 +2,7 @@ import { requireMutableChoice } from "../../../features/choices/builtin-choice.t
 import { Effect } from "effect";
 import {
   catalogAddressCandidates,
-  ChoiceListPayloadSchema,
   ChoiceUserLinkedError,
-  ChoiceRemovalPayloadSchema,
   listSkillChoices,
   removeSkillChoice,
   setSkillChoice,
@@ -153,7 +151,7 @@ const requireVisibleExclude = Effect.fnUntraced(function* (
 const setPick = (
   stateOptions: StateOptions,
   request: {
-    readonly command: string;
+    readonly tag: "choice-set" | "choice-exclude";
     readonly decision: "include" | "exclude";
     readonly kind?: SelectableKind;
     readonly namespace: ChoiceNamespace;
@@ -167,14 +165,18 @@ const setPick = (
       const address = yield* resolvePick(
         catalog,
         request.reference,
-        request.command,
+        commandLine(request.tag),
         request.namespace,
         request.kind,
       );
       const choice = { address, decision: request.decision, namespace: request.namespace };
       yield* requireVisibleExclude(catalog, snapshot.state, choice);
       const applied = yield* setSkillChoice(writer, choice);
-      return choiceSetOutcome(applied, catalogAddressCandidates(catalog, applied.choice.address));
+      return choiceSetOutcome(
+        request.tag,
+        applied,
+        catalogAddressCandidates(catalog, applied.choice.address),
+      );
     }),
   );
 
@@ -186,7 +188,7 @@ export const choiceRoutes: RoutesFor<
     needsHome: false,
     run: (invocation, stateOptions) =>
       setPick(stateOptions, {
-        command: commandLine("choice-set"),
+        tag: "choice-set",
         decision: "include",
         namespace: invocation.namespace,
         reference: invocation.reference,
@@ -197,7 +199,7 @@ export const choiceRoutes: RoutesFor<
     needsHome: false,
     run: (invocation, stateOptions) =>
       setPick(stateOptions, {
-        command: commandLine("choice-exclude"),
+        tag: "choice-exclude",
         decision: "exclude",
         namespace: invocation.namespace,
         reference: invocation.reference,
@@ -218,7 +220,7 @@ export const choiceRoutes: RoutesFor<
             invocation.reference,
             invocation.kind,
           );
-          return appliedAs(ChoiceRemovalPayloadSchema)(
+          return appliedAs("choice-remove")(
             yield* removeSkillChoice(writer, { address, namespace: invocation.namespace }),
           );
         }),
@@ -230,7 +232,7 @@ export const choiceRoutes: RoutesFor<
       Effect.gen(function* () {
         const { state } = yield* readInvocationSnapshot(stateOptions);
         const choices = yield* listSkillChoices(state, invocation.namespace);
-        return resultAs(ChoiceListPayloadSchema)({ choices });
+        return resultAs("pick-list")({ choices });
       }),
   },
 };

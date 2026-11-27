@@ -6,7 +6,9 @@ import type { SelectionEcho } from "../../features/projects/project.ts";
 import { ExecutionError } from "../../services/execution-platform.ts";
 import { errorRegistry, outcomeForError, type HostFailure } from "./errors.ts";
 import {
+  appliedAs,
   docsSearchOutcome,
+  resultAs,
   sourcesOutcome,
   withOutsidePendingDiagnostic,
   withUnregisteredWorktree,
@@ -120,6 +122,17 @@ describe("status from an unregistered worktree", () => {
 
   it("leaves a user status alone", () => {
     expect(withUnregisteredWorktree(success, worktree, { _tag: "user" })).toBe(success);
+  });
+});
+
+describe("payloads of a declared slot", () => {
+  it("lead with the kind of the schema the command declares for the slot", () => {
+    expect(appliedAs("docs-detach")({ attachments: [], projectName: "demo" })).toEqual({
+      applied: { kind: "docs-settings", attachments: [], projectName: "demo" },
+      classification: "success",
+      diagnostics: [],
+    });
+    expect(resultAs("pick-list")({ choices: [] }).result).toEqual({ kind: "choices", choices: [] });
   });
 });
 

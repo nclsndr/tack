@@ -1,7 +1,6 @@
 import { expect, it } from "vitest";
 import { renderDedicated, renderHuman } from "../src/cli/host/human/render.ts";
 import { makeStyle } from "../src/cli/host/human/style.ts";
-import { ScriptShowPayloadSchema } from "../src/domain/execution/execution-schema.ts";
 import { resultAs, resultOutcome } from "../src/cli/host/outcomes.ts";
 import { createPublicEnvelope, type PublicEnvelope } from "../src/cli/host/public-outcome.ts";
 
@@ -10,7 +9,7 @@ const render = (envelope: PublicEnvelope) => renderHuman(envelope, style);
 const shown = (overrides: object = {}) =>
   createPublicEnvelope(
     "script show",
-    resultAs(ScriptShowPayloadSchema)({
+    resultAs("script-show")({
       address: {
         kind: "script",
         name: "report",

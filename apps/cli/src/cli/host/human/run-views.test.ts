@@ -12,7 +12,6 @@ import {
   resultOutcome,
   scriptRunOutcome,
 } from "../outcomes.ts";
-import { ReaderSessionPayloadSchema } from "../../../features/reader/session.ts";
 import { createPublicEnvelope, type PublicEnvelope } from "../public-outcome.ts";
 import {
   summarizeHistory,
@@ -67,7 +66,7 @@ const runEnvelope = (result: OperatorRunResult) =>
 const readerEnvelope = (root = "/Users/ada/Code/demo") =>
   createPublicEnvelope(
     "docs serve",
-    resultAs(ReaderSessionPayloadSchema)({
+    resultAs("docs-serve")({
       url: "http://127.0.0.1:3000",
       project: { name: "demo", root },
     }),

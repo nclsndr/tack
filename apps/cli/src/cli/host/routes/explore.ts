@@ -9,7 +9,7 @@ import { referencesOf } from "../human/catalog.ts";
 import { makeStyle, withReferences } from "../human/style.ts";
 import { colorEnabled, interactiveAllowed, TerminalContext } from "../human/terminal-context.ts";
 import type { StateOptions } from "../../../services/state-store.ts";
-import { resultOutcome } from "../outcomes.ts";
+import { resultAs } from "../outcomes.ts";
 import { resolveContainingRoot } from "../../../features/projects/project.ts";
 import { readInvocationSnapshot } from "../../../features/snapshot/command-snapshot.ts";
 import { cwdOrCurrent, type RouteServices, type RoutesFor } from "./route.ts";
@@ -86,7 +86,7 @@ export const exploreSelection = Effect.fn("explore.exploreSelection")(function* 
       code: "interrupted",
       message: "The command was interrupted.",
     });
-  return resultOutcome({ kind: "explore-session" });
+  return resultAs("explore")({});
 });
 
 /** The interactive explorer; every session can choose the user destination inside the window. */

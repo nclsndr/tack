@@ -1,19 +1,9 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Effect, Record } from "effect";
-import {
-  catalogAddressCandidates,
-  ChoiceRemovalPayloadSchema,
-} from "../../../features/choices/choice.ts";
+import { catalogAddressCandidates } from "../../../features/choices/choice.ts";
 import type { SetSkillChoiceResult } from "../../../features/choices/choice.ts";
-import { DocsSettingsPayloadSchema } from "../../../features/docs/docs.ts";
-import {
-  ProjectRegistrationPayloadSchema,
-  type RegisterProjectResult,
-} from "../../../features/projects/project.ts";
-import {
-  AdapterSettingsPayloadSchema,
-  type SetEnabledAdaptersResult,
-} from "../../../features/reconciliation/agent.ts";
+import type { RegisterProjectResult } from "../../../features/projects/project.ts";
+import type { SetEnabledAdaptersResult } from "../../../features/reconciliation/agent.ts";
 import { AgentSelectionValidationError } from "../../../features/reconciliation/agent.ts";
 import {
   ChoiceProjectNotFoundError,
@@ -24,19 +14,14 @@ import { ProjectRegistrationConflictError } from "../../../features/projects/pro
 import {
   SourcePathConflictError,
   SourceRegistrationNotFoundError,
-  SourceRegistrationPayloadSchema,
-  SourceRelocationPayloadSchema,
   SourceValidationError,
   type SourceMutationResult,
   type SourceRelocationResult,
 } from "../../../features/sources/source.ts";
-import {
-  StateInitializationPayloadSchema,
-  StateNotInitializedError,
-} from "../../../services/state-store.ts";
+import { StateNotInitializedError } from "../../../services/state-store.ts";
 import { SourceAddRequestError } from "../../../features/sources/source-scaffold.ts";
 import { outcomeForError } from "../errors.ts";
-import { appliedAs, appliedOutcome, choiceSetOutcome, type PayloadFields } from "../outcomes.ts";
+import { appliedAs, appliedOutcome, choiceSetOutcome } from "../outcomes.ts";
 import {
   expectViewContract,
   flat,
@@ -72,24 +57,11 @@ const view = (envelope: PublicEnvelope, width = 80) => renderView(envelope, { ..
 
 const style = () => styleOf(terminal);
 
-/** The payload schema each mutation's route builds its envelope from. */
-const payloadSchemas = {
-  "state init": StateInitializationPayloadSchema,
-  "source add": SourceRegistrationPayloadSchema,
-  "source relocate": SourceRelocationPayloadSchema,
-  "project add": ProjectRegistrationPayloadSchema,
-  "pick remove": ChoiceRemovalPayloadSchema,
-  "adapter enable": AdapterSettingsPayloadSchema,
-  "docs attach": DocsSettingsPayloadSchema,
-  "docs detach": DocsSettingsPayloadSchema,
-  "docs configure": DocsSettingsPayloadSchema,
-} as const;
-
 /** The envelope a mutation's route publishes for the given producer result. */
-const applied = <Command extends keyof typeof payloadSchemas>(
-  command: Command,
-  payload: PayloadFields<(typeof payloadSchemas)[Command]>,
-) => createPublicEnvelope(command, appliedAs(payloadSchemas[command])(payload));
+const applied = <Tag extends Parameters<typeof appliedAs>[0]>(
+  tag: Tag,
+  payload: Parameters<ReturnType<typeof appliedAs<Tag>>>[0],
+) => createPublicEnvelope(commandNameOf(tag), appliedAs(tag)(payload));
 
 const failed = (command: string, error: Parameters<typeof outcomeForError>[0]) =>
   createPublicEnvelope(command, outcomeForError(error));
@@ -103,7 +75,7 @@ const sourceAdded = (
   docs: SourceMutationResult["docs"] = [],
   extra: { readonly name?: string; readonly scaffolded?: string } = {},
 ) =>
-  applied("source add", {
+  applied("source-add", {
     ...({
       alreadyRegistered,
       docs,
@@ -117,7 +89,7 @@ const demoProject = (
   alreadyRegistered: boolean,
   handMade: RegisterProjectResult["handMade"] = [],
 ) =>
-  applied("project add", {
+  applied("project-add", {
     alreadyRegistered,
     project: {
       gitCommonDirectory: "/home/me/code/demo/.git",
@@ -148,9 +120,10 @@ const choiceSet = (
       { address: { kind: "script", name: "reveiw", sourceRegistrationId: registrationId } },
     ],
   };
+  const tag = decision === "exclude" ? "choice-exclude" : "choice-set";
   return createPublicEnvelope(
-    decision === "exclude" ? "pick exclude" : "pick include",
-    choiceSetOutcome(result, catalogAddressCandidates(catalog, address)),
+    commandNameOf(tag),
+    choiceSetOutcome(tag, result, catalogAddressCandidates(catalog, address)),
   );
 };
 
@@ -170,7 +143,7 @@ describe("init", () => {
   it.effect("confirms a fresh initialization and points at tack init", () =>
     Effect.gen(function* () {
       const output = view(
-        applied("state init", {
+        applied("init", {
           alreadyInitialized: false,
           stateDirectory: "/home/me/.tack",
         }),
@@ -184,7 +157,7 @@ describe("init", () => {
 
   it("says an existing state was kept, and still points at tack init", () => {
     const output = view(
-      applied("state init", { alreadyInitialized: true, stateDirectory: "/home/me/.tack" }),
+      applied("init", { alreadyInitialized: true, stateDirectory: "/home/me/.tack" }),
     );
     expect(lines(output)).toContain(
       "Tack was already initialized in ~/.tack; the existing state was kept.",
@@ -372,7 +345,7 @@ describe("source add", () => {
 
 describe("source relocate", () => {
   const relocated = (relocatedFlag: boolean) =>
-    applied("source relocate", {
+    applied("source-relocate", {
       registration: { canonicalPath: "/home/me/code/moved", id: registrationId },
       relocated: relocatedFlag,
     } satisfies SourceRelocationResult);
@@ -438,7 +411,7 @@ describe("project add", () => {
 
   it.effect("shell-quotes project names in hints", () =>
     Effect.gen(function* () {
-      const envelope = applied("project add", {
+      const envelope = applied("project-add", {
         alreadyRegistered: false,
         project: {
           gitCommonDirectory: "/home/me/code/a/.git",
@@ -512,7 +485,7 @@ describe("pick include", () => {
 
 describe("pick remove", () => {
   const removal = (removed: boolean, namespace: SetSkillChoiceResult["choice"]["namespace"]) =>
-    applied("pick remove", { address: review, namespace, removed });
+    applied("choice-remove", { address: review, namespace, removed });
 
   it.effect("confirms the removal and hints at plan", () =>
     Effect.gen(function* () {
@@ -533,7 +506,7 @@ describe("pick remove", () => {
 });
 
 describe("adapter enable", () => {
-  const adapters = (result: SetEnabledAdaptersResult) => applied("adapter enable", result);
+  const adapters = (result: SetEnabledAdaptersResult) => applied("adapter-set", result);
 
   it.effect("confirms the enabled set and hints at a plan that works outside a project", () =>
     Effect.gen(function* () {
@@ -567,7 +540,7 @@ describe("docs attach, detach and configure", () => {
 
   it.effect("attach lists the attachments and hints at sync for the project", () =>
     Effect.gen(function* () {
-      const output = view(applied("docs attach", settings));
+      const output = view(applied("docs-attach", settings));
       expect(lines(output)[0]).toBe("tack docs attach · demo · ✓ success");
       expect(lines(output)).toContain(
         "Docs attach saved for project demo; it has 2 attached resources.",
@@ -583,7 +556,7 @@ describe("docs attach, detach and configure", () => {
   it.effect("detach reports what remains attached", () =>
     Effect.gen(function* () {
       const output = view(
-        applied("docs detach", { attachments: [notes], projectName: "demo" } satisfies DocsProject),
+        applied("docs-detach", { attachments: [notes], projectName: "demo" } satisfies DocsProject),
       );
       expect(lines(output)).toContain(
         "Docs detach saved for project demo; 1 attached resource remains.",
@@ -595,7 +568,7 @@ describe("docs attach, detach and configure", () => {
 
   it("detach of the last attachment says none remain", () => {
     const output = view(
-      applied("docs detach", { attachments: [], projectName: "demo" } satisfies DocsProject),
+      applied("docs-detach", { attachments: [], projectName: "demo" } satisfies DocsProject),
     );
     expect(lines(output)).toContain(
       "Docs detach saved for project demo; no attached resources remain.",
@@ -604,7 +577,7 @@ describe("docs attach, detach and configure", () => {
   });
 
   it("configure shows the settings and offers no hint", () => {
-    const output = view(applied("docs configure", settings));
+    const output = view(applied("docs-configure", settings));
     expect(lines(output)).toContain("Docs settings saved for project demo.");
     expect(lines(output)).toContain("  destination  knowledge");
     expect(hintsIn(output)).toEqual([]);
@@ -768,7 +741,7 @@ describe("failures", () => {
 describe("layout", () => {
   const longPath = `/home/me/${"プロジェクト".repeat(4)}/${"segment-".repeat(10)}source`;
   const envelopes = {
-    "source add": applied("source add", {
+    "source add": applied("source-add", {
       ...({
         alreadyRegistered: false,
         docs: [{ name: "handbook-with-a-rather-long-name" }],
@@ -778,7 +751,7 @@ describe("layout", () => {
       name: registrationId,
     }),
     "pick include": choiceSet(true, typo),
-    "project add": applied("project add", {
+    "project add": applied("project-add", {
       alreadyRegistered: false,
       project: {
         gitCommonDirectory: `${longPath}/.git`,
@@ -794,12 +767,12 @@ describe("layout", () => {
         },
       ],
     } satisfies RegisterProjectResult),
-    "docs attach": applied("docs attach", {
+    "docs attach": applied("docs-attach", {
       attachments: [handbook, notes],
       destination: "knowledge/ドキュメント",
       projectName: "demo",
     } satisfies DocsProject),
-    "adapter enable": applied("adapter enable", {
+    "adapter enable": applied("adapter-set", {
       changed: true,
       enabledAdapters: ["claude", "codex", "cursor"],
     } satisfies SetEnabledAdaptersResult),

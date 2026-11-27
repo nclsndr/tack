@@ -1,10 +1,5 @@
 import { Schema } from "effect";
-import {
-  HistoryListPayloadSchema,
-  ScriptRunPayloadSchema,
-  type HistoryList,
-  type OperatorRunResult,
-} from "../../domain/execution/execution-schema.ts";
+import type { HistoryList, OperatorRunResult } from "../../domain/execution/execution-schema.ts";
 import { statusPayload, type StatusReport } from "../../domain/status/status-schema.ts";
 import {
   DocsLinkApplicationSchema,
@@ -14,12 +9,7 @@ import {
 } from "../../domain/docs/docs-schema.ts";
 import { ReconciliationApplyResultSchema } from "../../domain/reconciliation/reconciliation-application-schema.ts";
 import { ReconciliationCommandPlanSchema } from "../../domain/reconciliation/reconciliation-schema.ts";
-import {
-  SyncApplicationSchema,
-  SyncPlanSchema,
-  type SyncOptions,
-} from "../../domain/reconciliation/sync-schema.ts";
-import { CatalogReportSchema } from "../../domain/sources/catalog-report.ts";
+import type { SyncOptions } from "../../domain/reconciliation/sync-schema.ts";
 import { statusPartialCauses } from "../../features/status/status.ts";
 import {
   projectInspectionCauses,
@@ -33,30 +23,26 @@ import type {
   ProfileApplyPlan,
 } from "../../features/profiles/profile-apply.ts";
 import type { BundleApplyPlan } from "../../features/profiles/bundle-apply.ts";
-import {
-  ProjectInspectionsPayloadSchema,
-  type ProjectInspection,
-} from "../../features/projects/project.ts";
-import type { SelectionEcho } from "../../features/projects/project.ts";
+import type { ProjectInspection, SelectionEcho } from "../../features/projects/project.ts";
 import type { CheckoutObservation } from "../../features/projects/checkout.ts";
 import type { State } from "../../domain/state/state-schema.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
-import {
-  SourceListPayloadSchema,
-  sourceLoadsNothing,
-  type SourceListEntry,
-} from "../../features/imports/import-display.ts";
+import { sourceLoadsNothing, type SourceListEntry } from "../../features/imports/import-display.ts";
 import type { RemovalPlan, RemovalResult } from "../../domain/reconciliation/removal-schema.ts";
-import { DoctorReportSchema, type DoctorReport } from "../../domain/doctor/doctor-schema.ts";
-import { DocsIconsPayloadSchema, type DocsIconLookup } from "../../features/reader/icon-lookup.ts";
-import { ReaderSearchPayloadSchema, type ReaderSearch } from "../../features/reader/search.ts";
-import { DocsListPayloadSchema, type DocsList } from "../../features/docs/docs.ts";
-import {
-  ChoiceChangePayloadSchema,
-  type ChoiceAddressCandidates,
-  type SetSkillChoiceResult,
+import type { DoctorReport } from "../../domain/doctor/doctor-schema.ts";
+import type { DocsIconLookup } from "../../features/reader/icon-lookup.ts";
+import type { ReaderSearch } from "../../features/reader/search.ts";
+import type { DocsList } from "../../features/docs/docs.ts";
+import type {
+  ChoiceAddressCandidates,
+  SetSkillChoiceResult,
 } from "../../features/choices/choice.ts";
 import type { SelectableAddress } from "../../domain/sources/catalog-schema.ts";
+import {
+  commandDeclarations,
+  type DeclaredPayload,
+  type PayloadSlot,
+} from "../commands/declarations.ts";
 import { commandLine } from "./command-line.ts";
 import { partialCauseDiagnostic } from "./partial-causes.ts";
 import type { PublicDiagnosticSchema, PublicOutcome } from "./public-outcome.ts";
@@ -80,36 +66,51 @@ export const appliedOutcome = (applied: unknown): PublicOutcome => ({
   diagnostics: [],
 });
 
-/** Names the response family of a payload; `kind` leads the serialized object. */
-const kinded = <const Kind extends string, Value extends object>(kind: Kind, value: Value) => ({
-  kind,
-  ...value,
-});
-
 /** A payload schema whose `kind` literal names the response family and leads the payload. */
-type KindedPayloadSchema = {
-  readonly Type: { readonly kind: string };
-  readonly fields: { readonly kind: Schema.Literal<string> };
-};
+type KindedPayloadSchema = { readonly fields: { readonly kind: Schema.Literal<string> } };
 
-/** What a producer returns for a payload schema: every field but the `kind` the schema adds. */
-export type PayloadFields<S extends KindedPayloadSchema> = Omit<S["Type"], "kind">;
+type Declarations = typeof commandDeclarations;
 
-/** The payload a producer's fields make under the given schema, with its `kind` leading. */
-const payloadAs = <S extends KindedPayloadSchema>(schema: S, fields: PayloadFields<S>) =>
-  kinded(schema.fields.kind.literal, fields);
+/** The commands that declare, for one slot, a schema led by a `kind` literal. */
+type KindedTag<Slot extends PayloadSlot> = {
+  readonly [Tag in keyof Declarations]: Declarations[Tag] extends {
+    readonly [K in Slot]: KindedPayloadSchema;
+  }
+    ? Tag
+    : never;
+}[keyof Declarations];
 
-/** A successful read-only observation whose payload follows the given schema. */
+/** The declarations of each slot, seen only through their kinded schema for that slot. */
+const kindedDeclarations: {
+  readonly [Slot in PayloadSlot]: {
+    readonly [Tag in KindedTag<Slot>]: { readonly [K in Slot]: KindedPayloadSchema };
+  };
+} = { result: commandDeclarations, plan: commandDeclarations, applied: commandDeclarations };
+
+/** What a producer returns for a declared slot: every field but the `kind` the schema adds. */
+type PayloadFields<Tag extends KindedTag<Slot>, Slot extends PayloadSlot> = Omit<
+  DeclaredPayload<Tag, Slot>,
+  "kind"
+>;
+
+/** The payload of one command's slot, led by the `kind` of the schema its declaration names. */
+const payloadAs = <Slot extends PayloadSlot, Tag extends KindedTag<Slot>>(
+  tag: Tag,
+  slot: Slot,
+  fields: PayloadFields<Tag, Slot>,
+) => ({ kind: kindedDeclarations[slot][tag][slot].fields.kind.literal, ...fields });
+
+/** A successful read-only observation whose payload follows the command's declared schema. */
 export const resultAs =
-  <S extends KindedPayloadSchema>(schema: S) =>
-  (result: PayloadFields<S>): PublicOutcome =>
-    resultOutcome(payloadAs(schema, result));
+  <Tag extends KindedTag<"result">>(tag: Tag) =>
+  (result: PayloadFields<Tag, "result">): PublicOutcome =>
+    resultOutcome(payloadAs(tag, "result", result));
 
-/** A successful immediate mutation whose payload follows the given schema. */
+/** A successful immediate mutation whose payload follows the command's declared schema. */
 export const appliedAs =
-  <S extends KindedPayloadSchema>(schema: S) =>
-  (applied: PayloadFields<S>): PublicOutcome =>
-    appliedOutcome(payloadAs(schema, applied));
+  <Tag extends KindedTag<"applied">>(tag: Tag) =>
+  (applied: PayloadFields<Tag, "applied">): PublicOutcome =>
+    appliedOutcome(payloadAs(tag, "applied", applied));
 
 /**
  * Presents a persisted choice. A choice whose address the catalog lacks is still kept, since a
@@ -117,10 +118,11 @@ export const appliedAs =
  * the catalog addresses the operator probably meant.
  */
 export const choiceSetOutcome = (
+  tag: "choice-set" | "choice-exclude",
   applied: SetSkillChoiceResult,
   candidates: ReadonlyArray<SelectableAddress> | undefined,
 ): PublicOutcome => ({
-  ...appliedAs(ChoiceChangePayloadSchema)(applied),
+  ...appliedAs(tag)(applied),
   diagnostics:
     candidates === undefined
       ? []
@@ -266,7 +268,7 @@ export const syncOutcome = (
       ),
     ]),
     plan: toJson(
-      payloadAs(SyncPlanSchema, {
+      payloadAs("sync", "plan", {
         resources:
           plan.resources === undefined
             ? null
@@ -278,7 +280,7 @@ export const syncOutcome = (
     ),
     ...(application === undefined
       ? {}
-      : { applied: toJson(payloadAs(SyncApplicationSchema, { ...application, ...pendingField })) }),
+      : { applied: toJson(payloadAs("sync", "applied", { ...application, ...pendingField })) }),
   };
 };
 
@@ -334,12 +336,10 @@ export const docsListOutcome = (result: DocsList): PublicOutcome => ({
           },
         ]),
   ]),
-  result: toJson(payloadAs(DocsListPayloadSchema, result)),
+  result: toJson(payloadAs("docs-list", "result", result)),
 });
 
-const validCatalogReport = Schema.decodeUnknownSync(CatalogReportSchema, {
-  onExcessProperty: "error",
-});
+const validCatalogReport = Schema.decodeUnknownSync(commandDeclarations.catalog.result, strict);
 
 /**
  * Presents a catalog report, partial when it is incomplete. The summary diagnostic counts the
@@ -392,7 +392,7 @@ export const sourcesOutcome = (sources: ReadonlyArray<SourceListEntry>): PublicO
       })),
     ),
   ]),
-  result: toJson(payloadAs(SourceListPayloadSchema, { sources })),
+  result: toJson(payloadAs("source-list", "result", { sources })),
 });
 
 /**
@@ -401,7 +401,7 @@ export const sourcesOutcome = (sources: ReadonlyArray<SourceListEntry>): PublicO
  */
 export const projectsOutcome = (projects: ReadonlyArray<ProjectInspection>): PublicOutcome => ({
   ...partialWhen(projects.flatMap(projectInspectionCauses).map(partialCauseDiagnostic)),
-  result: toJson(payloadAs(ProjectInspectionsPayloadSchema, { projects })),
+  result: toJson(payloadAs("project-list", "result", { projects })),
 });
 
 /** Presents status, partial with one warning per unhealthy, unresolved or unreconciled cause. */
@@ -496,7 +496,7 @@ export const docsSearchOutcome = (result: ReaderSearch): PublicOutcome => ({
           ]
         : [setupWarning(result.setup)],
   ),
-  result: toJson(payloadAs(ReaderSearchPayloadSchema, result)),
+  result: toJson(payloadAs("docs-search", "result", result)),
 });
 
 /** Presents one script run; a failed run keeps its run-outcome code and its full result. */
@@ -516,7 +516,7 @@ export const scriptRunOutcome = (result: OperatorRunResult): PublicOutcome => ({
             },
           },
         ],
-  result: toJson(payloadAs(ScriptRunPayloadSchema, result)),
+  result: toJson(payloadAs("script-run", "result", result)),
 });
 
 /** Presents one history page, partial when some retained records could not be read. */
@@ -532,7 +532,7 @@ export const historyListOutcome = (list: HistoryList): PublicOutcome => ({
         ]
       : [],
   ),
-  result: toJson(payloadAs(HistoryListPayloadSchema, list)),
+  result: toJson(payloadAs("history-list", "result", list)),
 });
 
 /**
@@ -540,9 +540,7 @@ export const historyListOutcome = (list: HistoryList): PublicOutcome => ({
  * check is a domain failure that still carries the complete report and one error per failed check.
  */
 export const doctorOutcome = (candidate: DoctorReport): PublicOutcome => {
-  const report = Schema.decodeUnknownSync(DoctorReportSchema, { onExcessProperty: "error" })(
-    candidate,
-  );
+  const report = Schema.decodeUnknownSync(commandDeclarations.doctor.result, strict)(candidate);
   const failed = report.checks.filter((check) => check.outcome === "failed");
   return {
     classification: failed.length > 0 ? "domain" : "success",
@@ -569,5 +567,5 @@ export const docsIconsOutcome = (lookup: DocsIconLookup): PublicOutcome => ({
           },
         ]
       : [],
-  result: toJson(payloadAs(DocsIconsPayloadSchema, lookup)),
+  result: toJson(payloadAs("docs-icons", "result", lookup)),
 });
