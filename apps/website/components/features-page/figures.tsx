@@ -74,9 +74,8 @@ function Origin({ children }: { readonly children: ReactNode }) {
 }
 
 /**
- * A figure in the landing's link manner: an origin with a brass dot, a spine, and one row per
- * thing it reaches, each with a plus mark and a label on the right. It reuses the landing's
- * `links-*` styles, so the page and the landing draw links the same way.
+ * A link figure: an origin with a brass dot, a spine, and one row per thing it reaches, each with
+ * a plus mark and a label on the right, in the `links-*` styles of `landing-features.css`.
  */
 function LinkFigure({
   origin,

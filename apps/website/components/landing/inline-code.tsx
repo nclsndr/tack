@@ -10,7 +10,8 @@ export function InlineCode({ text }: { readonly text: string }) {
 /**
  * A proof point: one command or fact a reader can check, in monospace. A Tack command gets a
  * prompt in front of it. It wraps only between words, so a flag such as `--project` never breaks
- * after its hyphens.
+ * after its hyphens. A quoted argument, such as the JSON `--config` takes, is data rather than a
+ * word: it may break anywhere, so a narrow card holds it.
  */
 export function Proof({ text, className }: { readonly text: string; readonly className?: string }) {
   return (
@@ -23,7 +24,7 @@ export function Proof({ text, className }: { readonly text: string; readonly cla
       {text.split(" ").map((word, index) => (
         <span key={index}>
           {index === 0 ? "" : " "}
-          <span className="proof-word">{word}</span>
+          <span className={/^['"]/u.test(word) ? "proof-data" : "proof-word"}>{word}</span>
         </span>
       ))}
     </code>
