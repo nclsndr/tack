@@ -3,7 +3,7 @@ import { listSources, resolveCatalogWithImports } from "../../features/imports/i
 import { catalogReport } from "../../domain/sources/catalog-report.ts";
 import { relocateSource } from "../../features/sources/source.ts";
 import { removeSource } from "../../features/removal/source-removal.ts";
-import { addSource } from "./source-add.ts";
+import { sourceAddOutcome } from "./source-add.ts";
 import { appliedAs, catalogOutcome, removalOutcome, sourcesOutcome } from "../envelope/outcomes.ts";
 import type { RoutesFor } from "./route.ts";
 
@@ -13,7 +13,7 @@ export const sourceRoutes: RoutesFor<
 > = {
   "source-add": {
     needsHome: false,
-    run: (invocation, stateOptions) => addSource(stateOptions, invocation),
+    run: (invocation, stateOptions) => sourceAddOutcome(stateOptions, invocation),
   },
   "source-relocate": {
     needsHome: false,
