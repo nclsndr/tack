@@ -1,7 +1,7 @@
 import { Argument, Command, Flag } from "effect/cli";
 import { ResourceKindSchema } from "../../domain/resources/kinds.ts";
 import { listAlias } from "./list-alias.ts";
-import { booleanFlag, optionalFlag, optionalStringFlag } from "./flag-utils.ts";
+import { booleanFlag, cleanupDetailsFlag, optionalFlag, optionalStringFlag } from "./flag-utils.ts";
 import { receive } from "./invocation-receiver.ts";
 import { applyFlag, immediate, previewApply, readOnly } from "./operation-contract.ts";
 
@@ -107,8 +107,9 @@ const sourceRemoveCommand = Command.make(
       ),
     ),
     apply: applyFlag,
+    details: cleanupDetailsFlag,
   },
-  ({ source, apply }) => receive({ _tag: "source-remove", source, apply }),
+  ({ source, apply, details }) => receive({ _tag: "source-remove", source, apply, details }),
 ).pipe(
   Command.withDescription(
     "Preview removing a registered source: every link and docs mount of its resources, its picks in every namespace, its docs attachments and the fixed profile applications it publishes; --apply removes them, then the registration. The source directory is never touched.",

@@ -351,9 +351,9 @@ export const mutationViews: HumanViewRegistry = {
   "docs detach": docsDetachView,
   "state init": initView,
   "project add": projectAddView,
-  "source add": (envelope, style) =>
-    renderSourceScaffold(envelope, style) ??
-    renderSourceRegistrationPlan(envelope, style) ??
-    sourceRegistrationView(envelope, style),
+  "source add": (envelope, style, details) =>
+    renderSourceScaffold(envelope, style, details) ??
+    renderSourceRegistrationPlan(envelope, style, details) ??
+    sourceRegistrationView(envelope, style, details),
   "source relocate": sourceRelocateView,
 };

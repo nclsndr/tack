@@ -50,6 +50,8 @@ it.layer(LiveTestLayer)("maintenance commands", (maintenanceIt) => {
             yield* hostTack(fixture, ["adapter", "disable", "cursor", "--apply"]),
           );
           expect(applied.plan).toEqual(dryRun.plan);
+          expect(dryRun.next).toEqual(["tack adapter disable cursor --apply"]);
+          expect(applied.next).toEqual(["tack status --all"]);
           expect(yield* fileSystem.exists(cursorDestination)).toBe(false);
           expect(yield* fileSystem.exists(codexDestination)).toBe(true);
           expect(yield* fileSystem.exists(path.dirname(cursorDestination))).toBe(true);

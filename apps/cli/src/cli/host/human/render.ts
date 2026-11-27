@@ -21,8 +21,15 @@ import type { Style } from "./style.ts";
 import { diagnosticLines, headerLines, sections, withoutPayload } from "./view.ts";
 import { renderExplore } from "./explorer/result.ts";
 
-/** A dedicated view can decline an envelope it cannot decode. */
-export type HumanView = (envelope: PublicEnvelope, style: Style) => string | undefined;
+/**
+ * A dedicated view can decline an envelope it cannot decode. `details` is true under `--details`:
+ * the view shows every row it would otherwise cap. A view that caps nothing ignores it.
+ */
+export type HumanView = (
+  envelope: PublicEnvelope,
+  style: Style,
+  details?: boolean,
+) => string | undefined;
 export type HumanViewRegistry = Readonly<Partial<Record<string, HumanView>>>;
 
 /** Dedicated views register here; the generic view serves any operation without one. */
@@ -48,7 +55,7 @@ export const humanViews: HumanViewRegistry = {
   sync: renderSync,
   "upgrade status": renderUpgradeGuide,
   upgrade: renderUpgradeGuide,
-  status: renderStatus,
+  status: (envelope, style, details) => renderStatus(envelope, style, details === true),
   version: renderVersion,
 };
 
@@ -72,15 +79,14 @@ export const renderHuman = (
   envelope: PublicEnvelope,
   style: Style,
   views: HumanViewRegistry = humanViews,
-  options: { readonly statusDetails?: boolean } = {},
+  options: { readonly details?: boolean } = {},
 ): string =>
   // An internal failure carries no payload a dedicated view could read, and every command shows
   // it the same way: the redacted diagnostic and the rerun that prints its cause.
   envelope.classification === "internal"
     ? (withoutPayload(envelope, undefined, style) ?? renderGeneric(envelope, style))
-    : envelope.command === "status" && options.statusDetails === true
-      ? (renderStatus(envelope, style, true) ?? renderGeneric(envelope, style))
-      : (views[envelope.command]?.(envelope, style) ?? renderGeneric(envelope, style));
+    : (views[envelope.command]?.(envelope, style, options.details === true) ??
+      renderGeneric(envelope, style));
 
 /**
  * The commands a view lists under Next, in order and without repeats. An envelope publishes them

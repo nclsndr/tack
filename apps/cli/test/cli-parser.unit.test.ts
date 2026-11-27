@@ -443,7 +443,10 @@ const adapterRows: Rows = [
     ["adapter", "enable", "cursor", "claude", "codex"],
     { _tag: "adapter-set", adapters: ["claude", "codex", "cursor"] },
   ],
-  [["adapter", "disable", "cursor"], { _tag: "adapter-disable", adapter: "cursor", apply: false }],
+  [
+    ["adapter", "disable", "cursor"],
+    { _tag: "adapter-disable", adapter: "cursor", apply: false, details: false },
+  ],
   [["init"], { _tag: "machine-init" }],
   [
     ["init", "--adapter", "cursor", "--adapter", "claude"],
@@ -451,40 +454,62 @@ const adapterRows: Rows = [
   ],
   [
     ["adapter", "disable", "codex", "--apply"],
-    { _tag: "adapter-disable", adapter: "codex", apply: true },
+    { _tag: "adapter-disable", adapter: "codex", apply: true, details: false },
   ],
   [
     ["adapter", "disable", "claude", "--apply"],
-    { _tag: "adapter-disable", adapter: "claude", apply: true },
+    { _tag: "adapter-disable", adapter: "claude", apply: true, details: false },
   ],
 ];
 
 const stateRows: Rows = [
   [["state", "init"], { _tag: "init" }],
-  [["state", "clean"], { _tag: "clean", apply: false, selector: { _tag: "bare" } }],
+  [["state", "clean"], { _tag: "clean", apply: false, details: false, selector: { _tag: "bare" } }],
   [
     ["state", "clean", "--project", "workspace", "--apply"],
-    { _tag: "clean", apply: true, selector: { _tag: "project", projectName: "workspace" } },
+    {
+      _tag: "clean",
+      apply: true,
+      details: false,
+      selector: { _tag: "project", projectName: "workspace" },
+    },
   ],
   [
     ["state", "clean", "--cwd", "/elsewhere"],
-    { _tag: "clean", apply: false, cwd: "/elsewhere", selector: { _tag: "bare" } },
+    { _tag: "clean", apply: false, details: false, cwd: "/elsewhere", selector: { _tag: "bare" } },
   ],
-  [["state", "clean", "--pending"], { _tag: "retry", apply: false, selector: { _tag: "bare" } }],
+  [
+    ["state", "clean", "--pending"],
+    { _tag: "retry", apply: false, details: false, selector: { _tag: "bare" } },
+  ],
   [
     ["state", "clean", "--pending", "--user"],
-    { _tag: "retry", apply: false, selector: { _tag: "user" } },
+    { _tag: "retry", apply: false, details: false, selector: { _tag: "user" } },
   ],
   [
     ["state", "clean", "--pending", "--project", "workspace", "--apply"],
-    { _tag: "retry", apply: true, selector: { _tag: "project", projectName: "workspace" } },
+    {
+      _tag: "retry",
+      apply: true,
+      details: false,
+      selector: { _tag: "project", projectName: "workspace" },
+    },
   ],
   [
     ["state", "clean", "--pending", "--cwd", "/elsewhere"],
-    { _tag: "retry", apply: false, cwd: "/elsewhere", selector: { _tag: "bare" } },
+    { _tag: "retry", apply: false, details: false, cwd: "/elsewhere", selector: { _tag: "bare" } },
   ],
-  [["state", "reset"], { _tag: "reset", apply: false }],
-  [["state", "reset", "--apply"], { _tag: "reset", apply: true }],
+  [["state", "reset"], { _tag: "reset", apply: false, details: false }],
+  [["state", "reset", "--apply"], { _tag: "reset", apply: true, details: false }],
+  [["state", "reset", "--details"], { _tag: "reset", apply: false, details: true }],
+  [
+    ["state", "clean", "--details"],
+    { _tag: "clean", apply: false, details: true, selector: { _tag: "bare" } },
+  ],
+  [
+    ["adapter", "disable", "cursor", "--details"],
+    { _tag: "adapter-disable", adapter: "cursor", apply: false, details: true },
+  ],
 ];
 
 const projectRows: Rows = [
@@ -492,24 +517,48 @@ const projectRows: Rows = [
   [["project", "list"], { _tag: "project-list" }],
   [["project", "ls"], { _tag: "project-list" }],
   [["project", "add", "workspace"], { _tag: "project-add", name: "workspace" }],
-  [["project", "refresh"], { _tag: "project-refresh", apply: false, selector: { _tag: "bare" } }],
-  [["project", "remove", "demo"], { _tag: "project-remove", name: "demo", apply: false }],
-  [["project", "remove", "demo", "--apply"], { _tag: "project-remove", name: "demo", apply: true }],
+  [
+    ["project", "refresh"],
+    { _tag: "project-refresh", apply: false, details: false, selector: { _tag: "bare" } },
+  ],
+  [
+    ["project", "remove", "demo"],
+    { _tag: "project-remove", name: "demo", apply: false, details: false },
+  ],
+  [
+    ["project", "remove", "demo", "--apply"],
+    { _tag: "project-remove", name: "demo", apply: true, details: false },
+  ],
+  [
+    ["project", "remove", "demo", "--details"],
+    { _tag: "project-remove", name: "demo", apply: false, details: true },
+  ],
+  [
+    ["project", "refresh", "--details"],
+    { _tag: "project-refresh", apply: false, details: true, selector: { _tag: "bare" } },
+  ],
   [
     ["project", "refresh", "--project", "workspace", "--apply"],
     {
       _tag: "project-refresh",
       apply: true,
+      details: false,
       selector: { _tag: "project", projectName: "workspace" },
     },
   ],
   [
     ["project", "refresh", "--all", "--apply"],
-    { _tag: "project-refresh", apply: true, selector: { _tag: "all" } },
+    { _tag: "project-refresh", apply: true, details: false, selector: { _tag: "all" } },
   ],
   [
     ["project", "refresh", "--cwd", "/worktree"],
-    { _tag: "project-refresh", apply: false, cwd: "/worktree", selector: { _tag: "bare" } },
+    {
+      _tag: "project-refresh",
+      apply: false,
+      details: false,
+      cwd: "/worktree",
+      selector: { _tag: "bare" },
+    },
   ],
 ];
 
@@ -542,10 +591,13 @@ const sourceRows: Rows = [
     ["source", "relocate", "source-id", "/source"],
     { _tag: "source-relocate", registrationId: "source-id", sourcePath: "/source" },
   ],
-  [["source", "remove", "brain"], { _tag: "source-remove", source: "brain", apply: false }],
+  [
+    ["source", "remove", "brain"],
+    { _tag: "source-remove", source: "brain", apply: false, details: false },
+  ],
   [
     ["source", "remove", "brain", "--apply"],
-    { _tag: "source-remove", source: "brain", apply: true },
+    { _tag: "source-remove", source: "brain", apply: true, details: false },
   ],
 ];
 
@@ -1088,7 +1140,7 @@ it.effect.each(
     ],
     [
       ["--state-dir", "/state", "adapter", "disable", "codex", "--apply"],
-      { _tag: "adapter-disable", adapter: "codex", apply: true },
+      { _tag: "adapter-disable", adapter: "codex", apply: true, details: false },
     ],
   ] as const),
 )("reads --state-dir before or after the command in `%s`", ([, [argv, invocation]]) =>

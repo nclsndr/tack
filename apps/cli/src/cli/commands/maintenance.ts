@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 import { Command } from "effect/cli";
-import { booleanFlag } from "./flag-utils.ts";
+import { booleanFlag, cleanupDetailsFlag } from "./flag-utils.ts";
 import { helpNotes } from "./help-notes.ts";
 import { handle, receive } from "./invocation-receiver.ts";
 import { applyFlag, immediate, previewApply, readOnly } from "./operation-contract.ts";
@@ -90,13 +90,15 @@ const cleanCommand = Command.make(
     all: allFlag,
     projectName: projectFlag,
     user: userFlag,
+    details: cleanupDetailsFlag,
   },
   handle(
     "clean",
-    Effect.fnUntraced(function* ({ apply, pending, cwd, all, projectName, user }) {
+    Effect.fnUntraced(function* ({ apply, pending, cwd, all, projectName, user, details }) {
       return {
         _tag: pending ? "retry" : "clean",
         apply,
+        details,
         ...(cwd === undefined ? {} : { cwd }),
         selector: yield* selectorFrom({ projectName, user, all, cwd }),
       };
@@ -114,8 +116,10 @@ const cleanCommand = Command.make(
 );
 const targetRule =
   "Bare selects the containing project; --all selects every project and the user target.";
-const resetCommand = Command.make("reset", { apply: applyFlag }, ({ apply }) =>
-  receive({ _tag: "reset", apply }),
+const resetCommand = Command.make(
+  "reset",
+  { apply: applyFlag, details: cleanupDetailsFlag },
+  ({ apply, details }) => receive({ _tag: "reset", apply, details }),
 ).pipe(
   Command.withDescription(
     "Preview removing every managed link and all Tack state; --apply deletes state only after cleanup settles",

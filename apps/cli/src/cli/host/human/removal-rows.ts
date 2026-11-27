@@ -12,11 +12,15 @@ import type {
   RemovalResult,
   RemovalScope,
 } from "../../../domain/reconciliation/removal-schema.ts";
-import type { ManagedLinkTarget } from "../../../domain/links/managed-link-schema.ts";
+import { compareCodeUnits } from "../../../domain/identity/ordering.ts";
+import type {
+  ManagedLinkEvidence,
+  ManagedLinkTarget,
+} from "../../../domain/links/managed-link-schema.ts";
 import type { ReportedPendingRemoval as PendingRemoval } from "../../../domain/links/pending-removal-schema.ts";
 import type { Style } from "./style.ts";
-import { cell, paragraph, table, tableRows, type Cell, type Paint } from "./text.ts";
-import { addressText, plural } from "./view.ts";
+import { cell, flow, paragraph, table, tableRows, type Cell, type Paint } from "./text.ts";
+import { addressText, capRows, plural } from "./view.ts";
 
 /**
  * One row of a removal block: its cells (what happens, to which path, about which resource) and the
@@ -232,25 +236,92 @@ export const docsSummary = (
 
 // Removal actions
 
-/** The rows of one removal plan, or of its outcomes after an application. */
+/** The items of a list that need the operator first, then the rest, each part in its own order. */
+const attentionFirst = <A>(items: ReadonlyArray<A>, needsAttention: (item: A) => boolean) => [
+  ...items.filter((item) => needsAttention(item) === true),
+  ...items.filter((item) => needsAttention(item) === false),
+];
+
+/**
+ * The rows of one removal plan, or of its outcomes after an application: those that need the
+ * operator first (blocked, failed, skipped), then the first others up to the cap, unless `details`.
+ */
 export const removalRows = (
   plan: RemovalPlan,
   applied: RemovalResult | undefined,
   style: Style,
   showTarget: boolean,
+  details: boolean,
 ): ReadonlyArray<string> => {
   const pendingAt = (destinationPath: string) =>
     plan.expectedPendingRemovals.find((pending) => pending.destinationPath === destinationPath);
-  return rowLines(
+  const { shown, more } = capRows(
     applied === undefined
-      ? plan.actions.map((action) =>
+      ? attentionFirst(plan.actions, (action) => action._tag === "blocked").map((action) =>
           previewRow(action, pendingAt(action.destinationPath), showTarget, style),
         )
-      : applied.actions.map((outcome) =>
+      : attentionFirst(applied.actions, (outcome) => outcome._tag !== "applied").map((outcome) =>
           outcomeRow(outcome, pendingAt(outcome.action.destinationPath), showTarget, style),
         ),
-    style,
+    details,
   );
+  return [...rowLines(shown, style), ...more];
+};
+
+/** What the target summary of a removal groups by: the adapter and the user or the project. */
+const tallyKey = ({ adapter, target }: ManagedLinkEvidence) =>
+  `${adapter}\u0000${target._tag === "user" ? "" : target.projectName}`;
+
+/**
+ * `cursor → user`, `cursor → app`, or `cursor → app (3 roots)` when the links of a group span several
+ * worktrees. Any link of the group names it; `roots` counts the roots its links are in.
+ */
+const tallyLabel = ({ adapter, target }: ManagedLinkEvidence, roots: number) =>
+  `${adapter} → ${
+    target._tag === "user" ? "user" : `${target.projectName}${roots > 1 ? ` (${roots} roots)` : ""}`
+  }`;
+
+/**
+ * One line per adapter and target before the rows of a removal, in the words `tack sync` heads its
+ * units with: `cursor → user · 5 to remove`, `cursor → app (3 roots) · 36 removed`. The user target
+ * comes before the projects of each adapter.
+ */
+export const targetSummaryLines = (
+  plan: RemovalPlan,
+  applied: RemovalResult | undefined,
+  style: Style,
+): ReadonlyArray<string> => {
+  const evidence =
+    applied === undefined
+      ? plan.actions.map((action) => action.evidence)
+      : applied.actions.map((outcome) => outcome.action.evidence);
+  const phrasesOf = (key: string) =>
+    applied === undefined
+      ? actionPhrases(plan.actions.filter((action) => tallyKey(action.evidence) === key))
+      : outcomePhrases(
+          applied.actions.filter((outcome) => tallyKey(outcome.action.evidence) === key),
+        );
+  // One link stands for each group: all its links share the adapter and the user or project.
+  const groups = new Map(evidence.map((item) => [tallyKey(item), item] as const));
+  return [...groups]
+    .sort(([left], [right]) => compareCodeUnits(left, right))
+    .flatMap(([key, one]) => {
+      const summary = phrasesOf(key);
+      const roots = new Set(
+        evidence.flatMap((item) => (tallyKey(item) === key ? [item.target.canonicalPath] : [])),
+      ).size;
+      return flow(
+        [
+          cell(tallyLabel(one, roots), style.bold),
+          cell("·", style.dim),
+          ...summary
+            .join(", ")
+            .split(" ")
+            .map((word) => cell(word)),
+        ],
+        { width: style.width, indent: 0, hang: 2 },
+      );
+    });
 };
 
 /** Whether the actions of a plan, or of several, span more than one target. */
@@ -317,10 +388,10 @@ export const pendingRows = (
     style,
   );
 
-/** Summary phrases of a removal preview: `3 to remove`, `1 blocked`. */
-export const removalPreviewSummary = (plan: Pick<RemovalPlan, "actions">) => {
+/** Phrases counting planned removal actions: `3 to remove`, `1 blocked`. */
+const actionPhrases = (actions: ReadonlyArray<RemovalAction>) => {
   const count = (tag: RemovalAction["_tag"]) =>
-    plan.actions.filter((action) => action._tag === tag).length;
+    actions.filter((action) => action._tag === tag).length;
   return [
     ...(count("remove") === 0 ? [] : [`${count("remove")} to remove`]),
     ...(count("retire") === 0 ? [] : [`${count("retire")} to forget`]),
@@ -328,10 +399,10 @@ export const removalPreviewSummary = (plan: Pick<RemovalPlan, "actions">) => {
   ];
 };
 
-/** Summary phrases of a removal application: `2 removed`, `1 failed`. */
-export const removalAppliedSummary = (result: RemovalResult) => {
+/** Phrases counting removal outcomes: `2 removed`, `1 failed`. */
+const outcomePhrases = (outcomes: ReadonlyArray<RemovalActionOutcome>) => {
   const count = (select: (outcome: RemovalActionOutcome) => boolean) =>
-    result.actions.filter(select).length;
+    outcomes.filter(select).length;
   const removed = count(
     (outcome) => outcome._tag === "applied" && outcome.action._tag === "remove",
   );
@@ -345,6 +416,17 @@ export const removalAppliedSummary = (result: RemovalResult) => {
     ...(forgotten === 0 ? [] : [`${forgotten} forgotten`]),
     ...(failed === 0 ? [] : [`${failed} failed`]),
     ...(skipped === 0 ? [] : [`${skipped} skipped`]),
+  ];
+};
+
+/** Summary phrases of a removal preview: `3 to remove`, `1 blocked`. */
+export const removalPreviewSummary = (plan: Pick<RemovalPlan, "actions">) =>
+  actionPhrases(plan.actions);
+
+/** Summary phrases of a removal application: `2 removed`, `1 failed`. */
+export const removalAppliedSummary = (result: RemovalResult) => {
+  return [
+    ...outcomePhrases(result.actions),
     ...(result.finalizedProject ? ["1 project registration removed"] : []),
     ...(result.pending.length === 0
       ? []
@@ -414,7 +496,8 @@ export const removalScopeBlock = (
     );
   if (scope._tag === "project")
     return scopeLines(`every root of project ${scope.projectName}`, style);
-  if (scope._tag === "adapter") return scopeLines(`adapter ${scope.adapter}`, style);
+  if (scope._tag === "adapter" || scope._tag === "source")
+    return scopeLines("every project and the user target", style);
   return scopeLines(
     scope._tag === "maintenance"
       ? "retained cleanup of projects and roots being removed"

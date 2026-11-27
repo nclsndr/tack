@@ -1019,6 +1019,12 @@ tack adapter disable cursor --apply
 `adapter` returns `{ "kind": "adapters", "enabledAdapters": [...] }`: the enabled adapters, not
 every known one.
 
+An adapter is machine-wide, so the disable preview covers every project and the user target. Like
+every cleanup view (`state clean`, `state reset`, `source remove`, `project remove`, `project
+refresh`), it counts the actions per adapter and target, such as `cursor → user · 5 to remove` and
+`cursor → app (3 roots) · 36 to remove`, then lists the first 10 actions; `--details` lists them
+all. After a settled `--apply`, its Next is `tack status --all`.
+
 ## Run Tack scripts
 
 Tack runs trusted local scripts declared by a registered source. Each declared `.ts` entrypoint

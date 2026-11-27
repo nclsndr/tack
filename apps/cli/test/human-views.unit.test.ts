@@ -63,7 +63,7 @@ it.each(fixtureNames)("%s is a valid envelope with a dedicated view", (name) => 
 });
 
 const view = (name: (typeof fixtureNames)[number], width = 80) =>
-  renderHuman(fixture(name), plainStyle(width), undefined, { statusDetails: true });
+  renderHuman(fixture(name), plainStyle(width), undefined, { details: true });
 
 it("renders status before the first reconcile as rows and the plan and apply hints", () => {
   const text = view("status-before");
@@ -104,7 +104,7 @@ it("names each destination's resource through the catalog the style carries, not
       },
     });
   const render = (style: ReturnType<typeof makeStyle>) =>
-    renderHuman(fixture("status-before"), style, undefined, { statusDetails: true });
+    renderHuman(fixture("status-before"), style, undefined, { details: true });
   // `localized` is unique in this catalog, so it keeps its bare name.
   expect(render(referenced(["localized", "review"], "team"))).toContain("skill localized");
   // A resource the catalog does not list keeps its source qualifier: the bare name could mean another.
@@ -463,7 +463,7 @@ it("labels a changed, deselected link as changed and points at the sync that rel
       ),
     }),
   });
-  const text = renderHuman(changed, plainStyle(120), undefined, { statusDetails: true });
+  const text = renderHuman(changed, plainStyle(120), undefined, { details: true });
   const rows = linesOf(text).filter((line) => line.startsWith("  changed "));
   expect(rows).toHaveLength(2);
   expect(text).not.toContain("drifted");

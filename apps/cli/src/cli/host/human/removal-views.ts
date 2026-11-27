@@ -60,6 +60,7 @@ import {
   rowLines,
   spansTargets,
   statementLines,
+  targetSummaryLines,
   type Row,
 } from "./removal-rows.ts";
 import type { Style } from "./style.ts";
@@ -86,10 +87,10 @@ const decodeSlots = <Plan, Applied>(
 /** A failure carries no payload: it shows its diagnostics and the commands they name as the fix. */
 const withFailure =
   (view: HumanView): HumanView =>
-  (envelope, style) =>
+  (envelope, style, details) =>
     envelope.status === "failure" && envelope.plan === null && envelope.applied === null
       ? frameView(envelope, style, { body: [], hints: envelope.next })
-      : view(envelope, style);
+      : view(envelope, style, details);
 
 const decodeSelectedRemovalPlan = Schema.decodeUnknownOption(SelectedRemovalPlanSchema);
 const decodeRemovalResult = Schema.decodeUnknownOption(RemovalResultSchema);
@@ -118,17 +119,22 @@ const cleanupSummary = (plan: RemovalPlan, applied: RemovalResult | undefined) =
     ? [...removalPreviewSummary(plan), ...cleanupDocsSummary(plan, applied)]
     : [...removalAppliedSummary(applied), ...cleanupDocsSummary(plan, applied)];
 
-/** The action rows, docs rows and retained obligations of one cleanup. */
+/**
+ * The count per adapter and target, the action rows (capped unless `details`), docs rows and
+ * retained obligations of one cleanup.
+ */
 const cleanupBlocks = (
   plan: RemovalPlan,
   applied: RemovalResult | undefined,
   style: Style,
   showTarget: boolean,
+  details: boolean,
 ): ReadonlyArray<ReadonlyArray<string>> => {
-  const actions = removalRows(plan, applied, style, showTarget);
+  const actions = removalRows(plan, applied, style, showTarget, details);
   const docs = cleanupDocsRows(plan, applied, style);
   const docsPending = applied?.docsPending ?? [];
   return [
+    targetSummaryLines(plan, applied, style),
     actions.length === 0 ? [] : [style.bold("Actions"), ...actions],
     docs.length === 0 ? [] : [style.bold("Docs links"), ...docs],
     applied === undefined || (applied.pending.length === 0 && docsPending.length === 0)
@@ -166,7 +172,7 @@ const selectionArgs = (selection: (typeof SelectedRemovalPlanSchema.Type)["selec
 };
 
 const selectedRemovalView = (command: SelectedCommand): HumanView =>
-  withFailure((envelope, style) =>
+  withFailure((envelope, style, details) =>
     Option.match(decodeSlots(envelope, decodeSelectedRemovalPlan, decodeRemovalResult), {
       onNone: () => undefined,
       onSome: ({ plan, applied }) => {
@@ -203,7 +209,7 @@ const selectedRemovalView = (command: SelectedCommand): HumanView =>
                   ),
                 ]
               : []),
-            ...cleanupBlocks(plan, applied, style, spansTargets([plan])),
+            ...cleanupBlocks(plan, applied, style, spansTargets([plan]), details === true),
             applied === undefined ? finalizeLines(plan, style) : [],
           ],
           hints: uniqueHints(
@@ -241,7 +247,7 @@ const selectedRemovalView = (command: SelectedCommand): HumanView =>
 const enabledText = (adapters: ReadonlyArray<string>) =>
   adapters.length === 0 ? "none" : adapters.join(", ");
 
-const adapterDisableView: HumanView = withFailure((envelope, style) =>
+const adapterDisableView: HumanView = withFailure((envelope, style, details) =>
   Option.match(decodeSlots(envelope, decodeAdapterPlan, decodeAdapterResult), {
     onNone: () => undefined,
     onSome: ({ plan, applied }) => {
@@ -262,8 +268,17 @@ const adapterDisableView: HumanView = withFailure((envelope, style) =>
             "Nothing to remove.",
             style,
           ),
-          labelLines("Enabled adapters", enabledValue, style),
-          ...cleanupBlocks(plan.removal, removal, style, spansTargets([plan.removal])),
+          [
+            ...removalScopeBlock(plan.removal.scope, undefined, style),
+            ...labelLines("Enabled adapters", enabledValue, style),
+          ],
+          ...cleanupBlocks(
+            plan.removal,
+            removal,
+            style,
+            spansTargets([plan.removal]),
+            details === true,
+          ),
         ],
         hints: uniqueHints(
           removal === undefined
@@ -273,7 +288,10 @@ const adapterDisableView: HumanView = withFailure((envelope, style) =>
                   : []),
                 ...blockedStatusHints([plan.removal]),
               ]
-            : retryHints([removal]),
+            : // Every target can hold links of the adapter, so a settled disable is checked everywhere.
+              retryHints([removal]).length === 0
+              ? [commandLine("status", "--all")]
+              : retryHints([removal]),
         ),
       });
     },
@@ -393,7 +411,7 @@ const dependantRows = (plan: SourceRemovalPlan, style: Style): ReadonlyArray<str
         ),
       ];
 
-const sourceRemoveView: HumanView = withFailure((envelope, style) =>
+const sourceRemoveView: HumanView = withFailure((envelope, style, details) =>
   Option.match(decodeSlots(envelope, decodeSourcePlan, decodeSourceResult), {
     onNone: () => undefined,
     onSome: ({ plan, applied }) => {
@@ -415,8 +433,17 @@ const sourceRemoveView: HumanView = withFailure((envelope, style) =>
             style,
             "Add --apply to remove the source.",
           ),
-          labelLines("Source", `${name}  ${style.path(plan.source.canonicalPath)}`, style),
-          ...cleanupBlocks(plan.removal, removal, style, spansTargets([plan.removal])),
+          [
+            ...labelLines("Source", `${name}  ${style.path(plan.source.canonicalPath)}`, style),
+            ...removalScopeBlock(plan.removal.scope, undefined, style),
+          ],
+          ...cleanupBlocks(
+            plan.removal,
+            removal,
+            style,
+            spansTargets([plan.removal]),
+            details === true,
+          ),
           ...intentBlocks(plan.picks, plan.docsAttachments, style),
           profileRows(plan, style),
           dependantRows(plan, style),
@@ -431,7 +458,7 @@ const sourceRemoveView: HumanView = withFailure((envelope, style) =>
   }),
 );
 
-const projectRemoveView: HumanView = withFailure((envelope, style) =>
+const projectRemoveView: HumanView = withFailure((envelope, style, details) =>
   Option.match(decodeSlots(envelope, decodeProjectPlan, decodeProjectResult), {
     onNone: () => undefined,
     onSome: ({ plan, applied }) => {
@@ -453,7 +480,14 @@ const projectRemoveView: HumanView = withFailure((envelope, style) =>
             "The project holds no links, picks or docs attachments.",
             style,
           ),
-          ...cleanupBlocks(plan.removal, removal, style, spansTargets([plan.removal])),
+          removalScopeBlock(plan.removal.scope, undefined, style),
+          ...cleanupBlocks(
+            plan.removal,
+            removal,
+            style,
+            spansTargets([plan.removal]),
+            details === true,
+          ),
           ...intentBlocks(plan.picks, plan.docsAttachments, style),
           application === undefined
             ? []
@@ -667,38 +701,48 @@ const refreshChangeRows = (changes: ReadonlyArray<ProjectRefreshChange>, style: 
     style,
   );
 
+/** One project's block: its heading with the number of root changes, then their rows. */
+const projectBlock = (
+  name: string,
+  count: number,
+  rows: ReadonlyArray<string>,
+  style: Style,
+): ReadonlyArray<string> => [
+  ...headingLines(
+    `Project ${name}`,
+    count === 0 ? "no root changes" : plural(count, "root change"),
+    style,
+  ),
+  ...rows,
+];
+
+/**
+ * One block per project: the root changes a preview plans, or those an application made, which
+ * can name a project the plan did not.
+ */
 const projectBlocks = (
   plan: typeof ProjectRefreshCommandPlanSchema.Type,
   applied: typeof ProjectRefreshCommandResultSchema.Type | undefined,
   style: Style,
 ): ReadonlyArray<ReadonlyArray<string>> => {
+  if (applied === undefined)
+    return plan.refresh.projects.map((project) =>
+      projectBlock(
+        project.expectedProject.name,
+        changeCount(project),
+        refreshPreviewRows(project, style),
+        style,
+      ),
+    );
   const names = [
     ...new Set([
       ...plan.refresh.projects.map((project) => project.expectedProject.name),
-      ...(applied?.refresh.changes ?? []).map((change) => change.projectName),
+      ...applied.refresh.changes.map((change) => change.projectName),
     ]),
   ];
   return names.map((name) => {
-    const planned = plan.refresh.projects.find((project) => project.expectedProject.name === name);
-    const changes = (applied?.refresh.changes ?? []).filter(
-      (change) => change.projectName === name,
-    );
-    const rows =
-      applied === undefined
-        ? planned === undefined
-          ? []
-          : refreshPreviewRows(planned, style)
-        : refreshChangeRows(changes, style);
-    const count =
-      applied === undefined ? (planned === undefined ? 0 : changeCount(planned)) : changes.length;
-    return [
-      ...headingLines(
-        `Project ${name}`,
-        count === 0 ? "no root changes" : plural(count, "root change"),
-        style,
-      ),
-      ...rows,
-    ];
+    const changes = applied.refresh.changes.filter((change) => change.projectName === name);
+    return projectBlock(name, changes.length, refreshChangeRows(changes, style), style);
   });
 };
 
@@ -706,6 +750,7 @@ const refreshCleanupBlocks = (
   plan: typeof ProjectRefreshCommandPlanSchema.Type,
   applied: typeof ProjectRefreshCommandResultSchema.Type | undefined,
   style: Style,
+  details: boolean,
 ): ReadonlyArray<ReadonlyArray<string>> =>
   plan.removals.flatMap((removal, index) => {
     const result = applied?.removals[index];
@@ -720,7 +765,7 @@ const refreshCleanupBlocks = (
             })
           : []),
       ],
-      ...cleanupBlocks(removal, result, style, spansTargets([removal])),
+      ...cleanupBlocks(removal, result, style, spansTargets([removal]), details),
     ];
   });
 
@@ -737,7 +782,7 @@ const linkNewRootHints = (changes: ReadonlyArray<ProjectRefreshChange>) =>
     commandLine("sync", "--project", name, "--apply"),
   ]);
 
-const projectRefreshView: HumanView = withFailure((envelope, style) =>
+const projectRefreshView: HumanView = withFailure((envelope, style, details) =>
   Option.match(decodeSlots(envelope, decodeRefreshPlan, decodeRefreshResult), {
     onNone: () => undefined,
     onSome: ({ plan, applied }) => {
@@ -779,7 +824,7 @@ const projectRefreshView: HumanView = withFailure((envelope, style) =>
           statementLines(applied !== undefined, summary, "Everything is up to date.", style),
           ...projectBlocks(plan, applied, style),
           handMadeLines(plan.handMade, style),
-          ...refreshCleanupBlocks(plan, applied, style),
+          ...refreshCleanupBlocks(plan, applied, style, details === true),
           docsBlock.length === 0 ? [] : [style.bold("Docs links"), ...docsBlock],
           docsIssueLines((applied ?? plan).docs.issues, style),
         ],
