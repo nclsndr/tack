@@ -13,6 +13,7 @@ import {
   projectRecordView,
   type ProjectRecord,
   projectLifecycle,
+  type ResolvedSelector,
   type Selector,
   type ProjectRootIssueCode,
   ProjectUnhealthyRootIssueCodeSchema,
@@ -524,8 +525,7 @@ export type PendingRemoval =
 
 /** One selected managed destination. */
 export type ManagedTarget =
-  | { readonly _tag: "project-root"; readonly canonicalPath: string; readonly projectName: string }
-  | { readonly _tag: "user"; readonly canonicalPath: string }
+  | ManagedLinkTarget
   | {
       readonly _tag: "pending-removal";
       readonly canonicalPath: string;
@@ -542,7 +542,10 @@ export type SelectTargetsOptions = {
 /** The selected targets and retained stale-root diagnostics. */
 export type TargetSelection = {
   readonly containingRoot?: ContainingRoot;
+  /** The selector as the command requested it. */
   readonly selector: Selector;
+  /** The selector with a bare one resolved to the project of its containing root. */
+  readonly resolved: ResolvedSelector;
   readonly staleRoots: ReadonlyArray<{
     readonly canonicalPath: string;
     readonly code: "root-missing";
@@ -771,6 +774,7 @@ const unhealthyRootIdentity = (root: TargetSelection["unhealthyRoots"][number]) 
 const normalizeTargetSelection = (selection: TargetSelection): TargetSelection => ({
   ...(selection.containingRoot === undefined ? {} : { containingRoot: selection.containingRoot }),
   selector: selection.selector,
+  resolved: selection.resolved,
   staleRoots: sortAndDedupeBy(selection.staleRoots, staleRootIdentity),
   unhealthyRoots: sortAndDedupeBy(selection.unhealthyRoots, unhealthyRootIdentity),
   targets: sortAndDedupeBy(selection.targets, managedTargetIdentity),
@@ -827,6 +831,7 @@ export const selectTargets = Effect.fnUntraced(function* (
   if (options.selector._tag === "user") {
     return normalizeTargetSelection({
       selector: options.selector,
+      resolved: options.selector,
       staleRoots: [],
       unhealthyRoots: [],
       targets: [
@@ -853,6 +858,7 @@ export const selectTargets = Effect.fnUntraced(function* (
           })
         : normalizeTargetSelection({
             selector: options.selector,
+            resolved: options.selector,
             staleRoots: [],
             targets: retainedPendingTargets,
             unhealthyRoots: [],
@@ -864,6 +870,7 @@ export const selectTargets = Effect.fnUntraced(function* (
 
     return normalizeTargetSelection({
       selector: options.selector,
+      resolved: options.selector,
       staleRoots: staleRoots.filter((root) => root.projectName === project.project.name),
       unhealthyRoots: unhealthyRoots.filter((root) => root.projectName === project.project.name),
       targets: [...activeProjectTargets([project]), ...retainedPendingTargets],
@@ -895,6 +902,7 @@ export const selectTargets = Effect.fnUntraced(function* (
   );
   return normalizeTargetSelection({
     selector: options.selector,
+    resolved: options.selector,
     staleRoots: staleRootsFrom(projects),
     unhealthyRoots: unhealthyRootsFrom(projects),
     targets: [

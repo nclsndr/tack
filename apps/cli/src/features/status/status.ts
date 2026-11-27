@@ -200,26 +200,6 @@ const sourceStatuses = (
       compareCodeUnits(left.registration.canonicalPath, right.registration.canonicalPath),
     );
 
-const scopeFromSelection = Effect.fnUntraced(function* (
-  selector: Selector,
-  containingRoot: { readonly projectName: string } | undefined,
-): Effect.fn.Return<StatusScope, TargetSelectionError> {
-  if (selector._tag === "user") {
-    return { _tag: "user" };
-  }
-  if (selector._tag === "project") {
-    return { _tag: "project", projectName: selector.projectName };
-  }
-  if (selector._tag === "all") return { _tag: "all" };
-  if (containingRoot === undefined)
-    return yield* new TargetSelectionError({
-      code: "bare-target-requires-registered-root",
-      message:
-        "This directory is not inside a registered project. Choose --project NAME, --user or --all.",
-    });
-  return { _tag: "project", projectName: containingRoot.projectName };
-});
-
 const statusNamespace = (
   state: State,
   catalog: Catalog,
@@ -635,7 +615,7 @@ export const statusFromSnapshot = Effect.fn("status.statusFromSnapshot")(functio
     selector: options.selector,
     ...(options.userTarget === undefined ? {} : { userTarget: options.userTarget }),
   });
-  const scope = yield* scopeFromSelection(options.selector, selected.containingRoot);
+  const scope = selected.resolved;
   const sourceInspections = yield* snapshot.sourceInspections;
   const catalog = yield* snapshot.catalog;
   const importsDisplay = yield* observeImportsDisplay(sourceInspections, catalog);

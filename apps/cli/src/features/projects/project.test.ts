@@ -559,6 +559,10 @@ it.layer(LiveTestLayer)("project registration and targeting", (projectIt) => {
             canonicalPath: path.join(root, "pending-other"),
           }),
         ]);
+        expect([project.resolved, user.resolved]).toEqual([
+          { _tag: "project", projectName: "project" },
+          { _tag: "user" },
+        ]);
         expect(bareError).toBeInstanceOf(TargetSelectionError);
         expect(bareError).toMatchObject({ code: "bare-target-requires-registered-root" });
         expect(missingProject).toMatchObject({ code: "project-not-found", projectName: "missing" });
@@ -804,6 +808,9 @@ it.layer(LiveTestLayer)("project registration and targeting", (projectIt) => {
           projectName: "nested",
           root: yield* fileSystem.realPath(inner),
         });
+        // The requested selector stays bare; the resolved one names the project it chose.
+        expect(selection.selector).toEqual({ _tag: "bare" });
+        expect(selection.resolved).toEqual({ _tag: "project", projectName: "nested" });
         expect(selection.targets).toHaveLength(2);
       }),
     ),

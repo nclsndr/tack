@@ -67,10 +67,7 @@ const selectedRequest = Effect.fnUntraced(function* (
     selector: options.selector,
   });
   const echo = selectionEcho(selection);
-  const selector =
-    options.selector._tag === "bare"
-      ? { _tag: "project" as const, projectName: echo.containingRoot!.projectName }
-      : options.selector;
+  const selector = selection.resolved;
   if (mode === "retry" && selector._tag === "all") {
     return {
       request: { scope: { _tag: "maintenance" } },
