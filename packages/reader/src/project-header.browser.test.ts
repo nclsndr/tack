@@ -1,27 +1,12 @@
 // @vitest-environment jsdom
 import { act, createElement } from "react";
-import { createRoot } from "react-dom/client";
-import type { Root } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { press, pressKey, settle } from "./popover.test-support.ts";
 import { IssueNotice, ProjectHeader } from "./project-header.tsx";
 import type { ReaderDocument, ReaderResourceIssue } from "./types.ts";
+import { testRoot } from "./react.test-support.ts";
 
-let container: HTMLDivElement;
-let root: Root;
-
-beforeEach(() => {
-  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
-  container = document.createElement("div");
-  document.body.append(container);
-  root = createRoot(container);
-});
-
-afterEach(async () => {
-  await act(async () => root.unmount());
-  container.remove();
-  vi.unstubAllGlobals();
-});
+const ui = testRoot();
 
 const specs = {
   sourceRegistrationId: "source-1",
@@ -62,7 +47,7 @@ const header = {
 };
 
 async function render(element: ReturnType<typeof createElement>): Promise<void> {
-  await act(async () => root.render(element));
+  await ui.render(element);
 }
 
 /** Finds an element in the document: an open panel renders in a portal outside the container. */
@@ -73,7 +58,7 @@ function query(selector: string): HTMLElement {
 }
 
 function trigger(): HTMLButtonElement {
-  const found = container.querySelector("button");
+  const found = ui.container.querySelector("button");
   if (found === null) throw new Error("Missing popover trigger");
   return found;
 }
@@ -99,7 +84,7 @@ describe("ProjectHeader", () => {
     expect(query(".tack-project-place").title).toBe("Branch feat/billing-export");
     expect(isOpen()).toBe(false);
     expect(panel()).toBeNull();
-    expect(container.textContent).not.toContain("Tack");
+    expect(ui.container.textContent).not.toContain("Tack");
   });
 
   it("opens a popover with the branch, the root, each attached resource and the release", async () => {
@@ -171,7 +156,7 @@ describe("ProjectHeader", () => {
 
   it("keeps only a small red indicator in the header when documentation is unavailable", async () => {
     await render(createElement(ProjectHeader, header));
-    expect(container.querySelector(".tack-project-attention")).toBeNull();
+    expect(ui.container.querySelector(".tack-project-attention")).toBeNull();
 
     await render(createElement(ProjectHeader, { ...header, attention: "1 doc skipped" }));
     const indicator = query(".tack-project-attention");
@@ -201,7 +186,7 @@ describe("IssueNotice", () => {
   it("renders nothing while every document is available", async () => {
     await render(createElement(IssueNotice, { issues: [], failure: "" }));
 
-    expect(container.innerHTML).toBe("");
+    expect(ui.container.innerHTML).toBe("");
   });
 
   it("counts issues on a closed notice and lists each by file and first clause when opened", async () => {

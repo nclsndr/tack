@@ -1,7 +1,5 @@
 // @vitest-environment jsdom
 import { act, createElement } from "react";
-import { createRoot } from "react-dom/client";
-import type { Root } from "react-dom/client";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { generatedCorpus } from "./generated-corpus.test-support.ts";
 import { loadProjectCorpus } from "./project-corpus.ts";
@@ -9,6 +7,7 @@ import { readerRoutes } from "./routes.ts";
 import { ReaderLayout } from "./runtime.tsx";
 import type { ReaderBoot } from "./runtime.tsx";
 import type { ReaderProjectCorpus } from "./types.ts";
+import { testRoot } from "./react.test-support.ts";
 
 const route = vi.hoisted(() => ({ pathname: "/" }));
 vi.mock("@rspress/core/runtime", () => ({
@@ -29,27 +28,19 @@ const idleChecks = 30;
 const statusBudget = 256;
 
 let corpus: ReaderProjectCorpus;
-let container: HTMLDivElement;
-let root: Root;
+const ui = testRoot();
 
 beforeAll(async () => {
   corpus = await loadProjectCorpus(await generatedCorpus());
 });
 
 beforeEach(() => {
-  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] });
   route.pathname = corpus.documents[0]?.route ?? "/";
-  container = document.createElement("div");
-  document.body.append(container);
-  root = createRoot(container);
 });
 
-afterEach(async () => {
-  await act(async () => root.unmount());
-  container.remove();
+afterEach(() => {
   vi.useRealTimers();
-  vi.unstubAllGlobals();
 });
 
 /**
@@ -111,9 +102,7 @@ async function idle(milliseconds: number): Promise<void> {
 describe("idle reader status checks", () => {
   it("transfer only a small status body, revalidate, and rebuild no corpus after readiness", async () => {
     const session = readerSession();
-    await act(async () =>
-      root.render(createElement(ReaderLayout, { boot: session.boot, customization: {} })),
-    );
+    await ui.render(createElement(ReaderLayout, { boot: session.boot, customization: {} }));
     await idle(idleChecks * 1000);
 
     // Freshness stays at about one check per second.
@@ -128,27 +117,23 @@ describe("idle reader status checks", () => {
     // costs an empty 304.
     expect(session.checks.slice(1).every((check) => check.validator !== null)).toBe(true);
     expect(session.checks.slice(1).every((check) => check.status === 304)).toBe(true);
-    expect(container.querySelector(".tack-live")?.textContent).toBe("Live");
+    expect(ui.container.querySelector(".tack-live")?.textContent).toBe("Live");
   });
 
   it("restores the live state when an unchanged check follows a failed one", async () => {
     const session = readerSession(0, new Set([2]));
-    await act(async () =>
-      root.render(createElement(ReaderLayout, { boot: session.boot, customization: {} })),
-    );
+    await ui.render(createElement(ReaderLayout, { boot: session.boot, customization: {} }));
     await idle(2000);
-    expect(container.querySelector(".tack-live")?.textContent).toBe("Reconnecting");
+    expect(ui.container.querySelector(".tack-live")?.textContent).toBe("Reconnecting");
     await idle(1000);
 
     expect(session.checks.at(-1)?.status).toBe(304);
-    expect(container.querySelector(".tack-live")?.textContent).toBe("Live");
+    expect(ui.container.querySelector(".tack-live")?.textContent).toBe("Live");
   });
 
   it("never stacks a slow check on top of the one still in flight", async () => {
     const session = readerSession(2500);
-    await act(async () =>
-      root.render(createElement(ReaderLayout, { boot: session.boot, customization: {} })),
-    );
+    await ui.render(createElement(ReaderLayout, { boot: session.boot, customization: {} }));
     await idle(10_000);
 
     expect(session.checks.length).toBeGreaterThanOrEqual(2);
@@ -157,11 +142,9 @@ describe("idle reader status checks", () => {
 
   it("cancels the outstanding check when the reader goes away", async () => {
     const session = readerSession(60_000);
-    await act(async () =>
-      root.render(createElement(ReaderLayout, { boot: session.boot, customization: {} })),
-    );
+    await ui.render(createElement(ReaderLayout, { boot: session.boot, customization: {} }));
     await idle(1000);
-    await act(async () => root.unmount());
+    await ui.unmount();
 
     expect(session.signals.length).toBe(1);
     expect(session.signals[0]?.aborted).toBe(true);

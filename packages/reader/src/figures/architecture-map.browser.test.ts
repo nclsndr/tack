@@ -1,30 +1,18 @@
 // @vitest-environment jsdom
 import { act, createElement } from "react";
-import { createRoot } from "react-dom/client";
-import type { Root } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { links as tackLinks } from "../../fixtures/figures/cli-imports.ts";
 import { interactionContext } from "../browser.ts";
 import { ArchitectureMap } from "./architecture-map.tsx";
 import type { ArchitectureMapProps } from "./architecture-map-model.ts";
 import { architectureMapIssues } from "./catalog.ts";
 import { issueLine } from "./issues.ts";
+import { testRoot } from "../react.test-support.ts";
 
-let container: HTMLDivElement;
-let root: Root;
+const ui = testRoot();
 
 beforeEach(() => {
-  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   window.history.replaceState(null, "", "/map");
-  container = document.createElement("div");
-  document.body.append(container);
-  root = createRoot(container);
-});
-
-afterEach(async () => {
-  await act(async () => root.unmount());
-  container.remove();
-  vi.unstubAllGlobals();
 });
 
 const small: ArchitectureMapProps = {
@@ -74,28 +62,28 @@ const small: ArchitectureMapProps = {
 };
 
 async function render(props: ArchitectureMapProps): Promise<void> {
-  await act(async () => root.render(createElement(ArchitectureMap, props)));
+  await ui.render(createElement(ArchitectureMap, props));
 }
 
 const box = (label: string): SVGGElement => {
-  const element = container.querySelector<SVGGElement>(`g.tack-map-box[aria-label^="${label}"]`);
+  const element = ui.container.querySelector<SVGGElement>(`g.tack-map-box[aria-label^="${label}"]`);
   if (element === null) throw new Error(`Missing box ${label}`);
   return element;
 };
 const button = (text: string): HTMLButtonElement => {
-  const element = [...container.querySelectorAll("button")].find(
+  const element = [...ui.container.querySelectorAll("button")].find(
     (item) => item.textContent === text || item.firstChild?.textContent === text,
   );
   if (element === undefined) throw new Error(`Missing button ${text}`);
   return element;
 };
 const required = (selector: string): Element => {
-  const found = container.querySelector(selector);
+  const found = ui.container.querySelector(selector);
   if (found === null) throw new Error(`Missing ${selector}`);
   return found;
 };
 const figure = (): HTMLElement => {
-  const element = container.querySelector("figure");
+  const element = ui.container.querySelector("figure");
   if (element === null) throw new Error("Missing figure");
   return element;
 };
@@ -108,7 +96,7 @@ const click = (element: Element) => fire(element, new MouseEvent("click", { bubb
 const key = (element: Element, value: string) =>
   fire(element, new KeyboardEvent("keydown", { key: value, bubbles: true }));
 const links = () =>
-  [...container.querySelectorAll("path.tack-map-link")].map((path) =>
+  [...ui.container.querySelectorAll("path.tack-map-link")].map((path) =>
     path.getAttribute("data-kind"),
   );
 
@@ -118,11 +106,11 @@ describe("ArchitectureMap", () => {
     expect(figure().getAttribute("data-ground")).toBe("quad-ruled");
     expect(figure().getAttribute("data-card")).toBe("none");
     expect(figure().querySelector("figcaption")?.textContent).toBe(small.title);
-    expect(container.querySelectorAll("g.tack-map-box")).toHaveLength(4);
+    expect(ui.container.querySelectorAll("g.tack-map-box")).toHaveLength(4);
     expect(links()).toEqual([]);
-    expect(container.querySelector(".tack-map-wall text")?.textContent).toBe("share nothing");
-    expect(container.querySelector(".tack-figure-issues")).toBeNull();
-    expect(container.textContent).toContain("Point at a box to see its links.");
+    expect(ui.container.querySelector(".tack-map-wall text")?.textContent).toBe("share nothing");
+    expect(ui.container.querySelector(".tack-figure-issues")).toBeNull();
+    expect(ui.container.textContent).toContain("Point at a box to see its links.");
   });
 
   it("previews a box on pointer and keyboard focus, and pins it in the URL", async () => {
@@ -140,14 +128,14 @@ describe("ArchitectureMap", () => {
     await fire(box("pages/home"), new FocusEvent("focusout", { bubbles: true }));
     expect(window.location.search).toBe("?reader.web-map.pin=home");
     expect(box("pages/home").getAttribute("aria-pressed")).toBe("true");
-    expect(container.textContent).toContain("Pinned, in Pages");
+    expect(ui.container.textContent).toContain("Pinned, in Pages");
     expect(interactionContext(figure()).state).toEqual({
       "web-map": { pin: "home", case: null, step: null },
     });
     expect(interactionContext(figure()).readable).toContain("View: pinned pages/home");
     await click(button("orders"));
     expect(window.location.search).toBe("?reader.web-map.pin=orders");
-    expect(container.textContent).toContain("Owns every query.");
+    expect(ui.container.textContent).toContain("Owns every query.");
     await key(box("orders"), "Escape");
     expect(window.location.search).toBe("");
     await click(button("pages/home"));
@@ -167,14 +155,14 @@ describe("ArchitectureMap", () => {
     await click(button("Next"));
     await click(button("Next"));
     expect(button("Next").disabled).toBe(true);
-    expect(container.querySelector(".tack-figure-count")?.textContent).toBe("Step 3 of 3");
+    expect(ui.container.querySelector(".tack-figure-count")?.textContent).toBe("Step 3 of 3");
     expect(
-      [...container.querySelectorAll(".tack-map-badge text")].map((text) => text.textContent),
+      [...ui.container.querySelectorAll(".tack-map-badge text")].map((text) => text.textContent),
     ).toEqual(["1", "2", "3"]);
     expect(links()).toEqual(["step", "step"]);
     expect(box("db").getAttribute("data-ink")).toBe("focus");
     expect(box("billing").getAttribute("data-ink")).toBe("dim");
-    expect(container.textContent).toContain("Inserts the row.");
+    expect(ui.container.textContent).toContain("Inserts the row.");
     expect(interactionContext(figure()).state).toEqual({
       "web-map": { pin: null, case: "order", step: 3 },
     });
@@ -195,9 +183,9 @@ describe("ArchitectureMap", () => {
     expect(box("db").getAttribute("data-ink")).toBe("blocked");
     expect(box("db").querySelector(".tack-map-blocked")).not.toBeNull();
     expect(box("pages/home").getAttribute("data-ink")).toBe("off");
-    expect(container.textContent).toContain("Orders fail.");
+    expect(ui.container.textContent).toContain("Orders fail.");
     expect(interactionContext(figure()).readable).toContain("View: lens Database down");
-    const legend = [...container.querySelectorAll(".tack-figure-legend li")].map(
+    const legend = [...ui.container.querySelectorAll(".tack-figure-legend li")].map(
       (item) => item.textContent,
     );
     expect(legend).toEqual(
@@ -209,16 +197,16 @@ describe("ArchitectureMap", () => {
     await render(small);
     const expand = button("Expand");
     await click(expand);
-    const overlay = container.querySelector(".tack-figure-overlay");
+    const overlay = ui.container.querySelector(".tack-figure-overlay");
     expect(overlay?.getAttribute("role")).toBe("dialog");
-    expect(container.querySelectorAll("svg.tack-map")).toHaveLength(2);
+    expect(ui.container.querySelectorAll("svg.tack-map")).toHaveLength(2);
     expect(overlay?.querySelector(".tack-figure-panel")).not.toBeNull();
     await key(required(".tack-figure-overlay"), "Escape");
-    expect(container.querySelector(".tack-figure-overlay")).toBeNull();
+    expect(ui.container.querySelector(".tack-figure-overlay")).toBeNull();
     expect(document.activeElement).toBe(expand);
     await click(button("Expand"));
     await click(button("Close"));
-    expect(container.querySelector(".tack-figure-overlay")).toBeNull();
+    expect(ui.container.querySelector(".tack-figure-overlay")).toBeNull();
   });
 
   it("bundles a hub's links per tier and lists every one in the panel", async () => {
@@ -246,9 +234,9 @@ describe("ArchitectureMap", () => {
     });
     expect(links().filter((kind) => kind === "bundle")).toHaveLength(3);
     expect(
-      [...container.querySelectorAll(".tack-map-link-label")].map((label) => label.textContent),
+      [...ui.container.querySelectorAll(".tack-map-link-label")].map((label) => label.textContent),
     ).toEqual(expect.arrayContaining(["16 uses", "7 uses", "13 uses"]));
-    expect(container.textContent).toContain("Uses 37");
+    expect(ui.container.textContent).toContain("Uses 37");
   });
 
   it("bundles a hub's incoming links from another tier as its users", async () => {
@@ -266,7 +254,7 @@ describe("ArchitectureMap", () => {
     });
     expect(links()).toEqual(["bundle"]);
     expect(
-      [...container.querySelectorAll(".tack-map-link-label")].map((label) => label.textContent),
+      [...ui.container.querySelectorAll(".tack-map-link-label")].map((label) => label.textContent),
     ).toEqual(["25 users"]);
   });
 
@@ -282,14 +270,14 @@ describe("ArchitectureMap", () => {
       ],
     };
     await render(broken);
-    const listed = [...container.querySelectorAll(".tack-figure-issues li")].map(
+    const listed = [...ui.container.querySelectorAll(".tack-figure-issues li")].map(
       (item) => item.textContent,
     );
     expect(listed).toEqual(architectureMapIssues(broken).map(issueLine));
     expect(listed).toHaveLength(4);
     await fire(box("db"), new MouseEvent("mouseover", { bubbles: true }));
-    expect(container.querySelector('path.tack-map-link[data-warning="up"]')).not.toBeNull();
-    const legend = [...container.querySelectorAll(".tack-figure-legend li")].map(
+    expect(ui.container.querySelector('path.tack-map-link[data-warning="up"]')).not.toBeNull();
+    const legend = [...ui.container.querySelectorAll(".tack-figure-legend li")].map(
       (item) => item.textContent,
     );
     expect(legend).toContain("against the rule");

@@ -1,9 +1,7 @@
 // @vitest-environment jsdom
 import { act, createElement, Fragment } from "react";
 import type { ReactNode } from "react";
-import { createRoot } from "react-dom/client";
-import type { Root } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { interactionContext } from "../browser.ts";
 import {
   Badge,
@@ -18,22 +16,12 @@ import {
 } from "./figure.tsx";
 import { authoredFigureIssues } from "./catalog.ts";
 import { issueLine } from "./issues.ts";
+import { testRoot } from "../react.test-support.ts";
 
-let container: HTMLDivElement;
-let root: Root;
+const ui = testRoot();
 
 beforeEach(() => {
-  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   window.history.replaceState(null, "", "/figure");
-  container = document.createElement("div");
-  document.body.append(container);
-  root = createRoot(container);
-});
-
-afterEach(async () => {
-  await act(async () => root.unmount());
-  container.remove();
-  vi.unstubAllGlobals();
 });
 
 const frame: Omit<FigureProps, "children"> = {
@@ -105,22 +93,22 @@ async function render(
   props: Omit<FigureProps, "children">,
   children: ReactNode = drawing(),
 ): Promise<void> {
-  await act(async () => root.render(createElement(Figure, props, children)));
+  await ui.render(createElement(Figure, props, children));
 }
 const box = (id: string): SVGGElement => {
-  const element = container.querySelector<SVGGElement>(`g.tack-map-box[data-box="${id}"]`);
+  const element = ui.container.querySelector<SVGGElement>(`g.tack-map-box[data-box="${id}"]`);
   if (element === null) throw new Error(`Missing box ${id}`);
   return element;
 };
 const button = (text: string): HTMLButtonElement => {
-  const element = [...container.querySelectorAll("button")].find(
+  const element = [...ui.container.querySelectorAll("button")].find(
     (item) => item.firstChild?.textContent === text,
   );
   if (element === undefined) throw new Error(`Missing button ${text}`);
   return element;
 };
 const figure = (): HTMLElement => {
-  const element = container.querySelector("figure");
+  const element = ui.container.querySelector("figure");
   if (element === null) throw new Error("Missing figure");
   return element;
 };
@@ -131,7 +119,7 @@ async function fire(element: Element, event: Event): Promise<void> {
 }
 const click = (element: Element) => fire(element, new MouseEvent("click", { bubbles: true }));
 const links = () =>
-  [...container.querySelectorAll(".tack-map-links path")].map((path) =>
+  [...ui.container.querySelectorAll(".tack-map-links path")].map((path) =>
     path.getAttribute("data-kind"),
   );
 
@@ -139,25 +127,25 @@ describe("an authored figure", () => {
   it("draws its kit elements and raw SVG at rest, with links, a legend and its text equivalent", async () => {
     await render(frame);
     expect(figure().getAttribute("data-ground")).toBe("quad-ruled");
-    expect(container.querySelectorAll("g.tack-map-box")).toHaveLength(3);
+    expect(ui.container.querySelectorAll("g.tack-map-box")).toHaveLength(3);
     expect(box("swap").getAttribute("data-shape")).toBe("store");
     expect(box("swap").getAttribute("data-tint")).toBe("1");
     expect(links()).toEqual(["rest", "rest"]);
     expect(
-      [...container.querySelectorAll(".tack-map-link-label")].map((item) => item.textContent),
+      [...ui.container.querySelectorAll(".tack-map-link-label")].map((item) => item.textContent),
     ).toEqual(["staging/", "a copy"]);
-    expect(container.querySelector(".tack-kit-band text")?.textContent).toBe("staging");
-    expect(container.querySelector(".tack-kit-raw path.tank")).not.toBeNull();
-    expect(container.querySelector(".tack-kit-note line")).not.toBeNull();
-    expect(container.querySelector(".tack-kit-label")?.textContent).toBe("Build");
-    expect(container.querySelector(".tack-map-badge text")?.textContent).toBe("7");
+    expect(ui.container.querySelector(".tack-kit-band text")?.textContent).toBe("staging");
+    expect(ui.container.querySelector(".tack-kit-raw path.tank")).not.toBeNull();
+    expect(ui.container.querySelector(".tack-kit-note line")).not.toBeNull();
+    expect(ui.container.querySelector(".tack-kit-label")?.textContent).toBe("Build");
+    expect(ui.container.querySelector(".tack-map-badge text")?.textContent).toBe("7");
     expect(
-      [...container.querySelectorAll(".tack-figure-legend li")].map((item) => item.textContent),
+      [...ui.container.querySelectorAll(".tack-figure-legend li")].map((item) => item.textContent),
     ).toEqual(["writes outside staging/", "a copy", "replay path", "blocked", "broken"]);
     expect(interactionContext(figure()).readable).toContain(
       "git archive -> gate-release: staging/",
     );
-    expect(container.querySelector(".tack-figure-issues")).toBeNull();
+    expect(ui.container.querySelector(".tack-figure-issues")).toBeNull();
   });
 
   it("previews and pins a box with no handler from its author", async () => {
@@ -169,9 +157,9 @@ describe("an authored figure", () => {
     await fire(box("gate"), new MouseEvent("mouseout", { bubbles: true }));
     await click(box("gate"));
     expect(window.location.search).toBe("?reader.pipeline.pin=gate");
-    expect(container.textContent).toContain("Runs it.");
-    expect(container.textContent).toContain("Uses 1");
-    expect(container.textContent).toContain("Used by 1");
+    expect(ui.container.textContent).toContain("Runs it.");
+    expect(ui.container.textContent).toContain("Uses 1");
+    expect(ui.container.textContent).toContain("Used by 1");
     await click(button("git archive"));
     expect(window.location.search).toBe("?reader.pipeline.pin=export");
     expect(interactionContext(figure()).readable).toContain("View: pinned git archive");
@@ -188,7 +176,7 @@ describe("an authored figure", () => {
     expect(box("export").getAttribute("data-ink")).toBe("visited");
     expect(box("swap").getAttribute("data-ink")).toBe("dim");
     expect(links()).toEqual(["fade", "fade", "step"]);
-    expect(container.textContent).toContain("The release is run for real.");
+    expect(ui.container.textContent).toContain("The release is run for real.");
     expect(interactionContext(figure()).readable).toContain(
       "View: replay A good update, step 2 of 3",
     );
@@ -275,7 +263,7 @@ describe("an authored figure", () => {
         createElement(Note, { x: 32, y: 180, text: "a free note" }),
       ),
     );
-    const leaders = [...container.querySelectorAll(".tack-kit-note")].map((note) => {
+    const leaders = [...ui.container.querySelectorAll(".tack-kit-note")].map((note) => {
       const line = note.querySelector("line");
       return line === null
         ? null
@@ -288,13 +276,13 @@ describe("an authored figure", () => {
     expect(right).toEqual([636, 36]);
     expect(above?.[1]).toBe(34);
     expect(free).toBeNull();
-    expect(container.querySelector(".tack-figure-summary")?.textContent).toBe(
+    expect(ui.container.querySelector(".tack-figure-summary")?.textContent).toBe(
       "Three notes around one box.",
     );
     expect(
-      [...container.querySelectorAll(".tack-figure-legend li")].map((item) => item.textContent),
+      [...ui.container.querySelectorAll(".tack-figure-legend li")].map((item) => item.textContent),
     ).toEqual(["a store"]);
-    expect(container.querySelectorAll(".tack-map-link-label")).toHaveLength(0);
+    expect(ui.container.querySelectorAll(".tack-map-link-label")).toHaveLength(0);
   });
 
   it("lists unlabelled links in a pinned box's details and releases the pin from the drawing", async () => {
@@ -314,7 +302,7 @@ describe("an authored figure", () => {
     expect(window.location.search).toBe("?reader.plain.pin=b");
     expect(button("first")).not.toBeNull();
     expect(button("third")).not.toBeNull();
-    const drawn = container.querySelector('svg[role="group"]');
+    const drawn = ui.container.querySelector('svg[role="group"]');
     if (drawn === null) throw new Error("Missing drawing");
     await click(drawn);
     expect(window.location.search).toBe("");
@@ -330,7 +318,7 @@ describe("an authored figure", () => {
         createElement(Box, { id: "", x: 300, y: 40, label: "unnamed" }),
       ),
     );
-    const unnamed = [...container.querySelectorAll("g.tack-map-box")].find((item) =>
+    const unnamed = [...ui.container.querySelectorAll("g.tack-map-box")].find((item) =>
       item.textContent?.includes("unnamed"),
     );
     if (unnamed === undefined) throw new Error("Missing unnamed box");
@@ -343,7 +331,7 @@ describe("an authored figure", () => {
   it("shows no details for a pinned box the drawing does not have", async () => {
     window.history.replaceState(null, "", "/figure?reader.pipeline.pin=gone");
     await render(frame);
-    expect(container.textContent).not.toContain("Uses 1");
+    expect(ui.container.textContent).not.toContain("Uses 1");
     expect(box("gate").getAttribute("data-ink")).toBeNull();
     expect(links()).toEqual(["rest", "rest"]);
   });
@@ -351,7 +339,7 @@ describe("an authored figure", () => {
   it("renders what it can and lists the same issues the figure check prints", async () => {
     const overlapping = createElement(Box, { id: "over", x: 40, y: 70, label: "over" });
     await render({ ...frame, title: "Broken" }, drawing(overlapping));
-    const listed = [...container.querySelectorAll(".tack-figure-issues li")].map(
+    const listed = [...ui.container.querySelectorAll(".tack-figure-issues li")].map(
       (item) => item.textContent,
     );
     expect(listed).toEqual([
@@ -389,14 +377,14 @@ describe("an authored figure", () => {
       { id: "empty", title: "This figure forgot its drawing" },
       createElement("p", null, "text"),
     );
-    expect(container.textContent).not.toContain("How to read this");
+    expect(ui.container.textContent).not.toContain("How to read this");
     expect(
-      [...container.querySelectorAll(".tack-figure-issues li")].map((item) => item.textContent),
+      [...ui.container.querySelectorAll(".tack-figure-issues li")].map((item) => item.textContent),
     ).toEqual(["input: the figure has no <Drawing height={...}>; give the drawing and its height"]);
-    await act(async () => root.render(createElement(Box, { id: "a", x: 0, y: 0, label: "a" })));
-    expect(container.innerHTML).toBe("");
-    await act(async () => root.render(createElement(Drawing, { height: 100 })));
-    expect(container.innerHTML).toBe("");
+    await ui.render(createElement(Box, { id: "a", x: 0, y: 0, label: "a" }));
+    expect(ui.container.innerHTML).toBe("");
+    await ui.render(createElement(Drawing, { height: 100 }));
+    expect(ui.container.innerHTML).toBe("");
   });
 
   it("draws every box shape with the kit's outline", async () => {

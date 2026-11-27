@@ -1,46 +1,34 @@
 // @vitest-environment jsdom
 import { act, createElement } from "react";
-import { createRoot } from "react-dom/client";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { beforeEach, expect, it } from "vitest";
 import { menuPanel, menuTrigger, ReaderPopover } from "./menu.tsx";
 import { press, pressKey, settle, tabOut } from "./popover.test-support.ts";
+import { testRoot } from "./react.test-support.ts";
 
-let container: HTMLDivElement;
-let root: ReturnType<typeof createRoot>;
+const ui = testRoot();
 beforeEach(async () => {
-  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
-  container = document.createElement("div");
-  document.body.append(container);
-  root = createRoot(container);
-  await act(async () =>
-    root.render(
-      createElement(
-        "div",
-        null,
-        createElement(ReaderPopover, {
-          summary: "Options",
-          summaryClassName: menuTrigger,
-          panelClassName: menuPanel,
-          children: createElement("input", { "aria-label": "Option" }),
-        }),
-        createElement(ReaderPopover, {
-          summary: "Other",
-          summaryClassName: menuTrigger,
-          panelClassName: menuPanel,
-          children: createElement("input", { "aria-label": "Other option" }),
-        }),
-        createElement("button", { type: "button" }, "Outside"),
-      ),
+  await ui.render(
+    createElement(
+      "div",
+      null,
+      createElement(ReaderPopover, {
+        summary: "Options",
+        summaryClassName: menuTrigger,
+        panelClassName: menuPanel,
+        children: createElement("input", { "aria-label": "Option" }),
+      }),
+      createElement(ReaderPopover, {
+        summary: "Other",
+        summaryClassName: menuTrigger,
+        panelClassName: menuPanel,
+        children: createElement("input", { "aria-label": "Other option" }),
+      }),
+      createElement("button", { type: "button" }, "Outside"),
     ),
   );
 });
-afterEach(async () => {
-  await act(async () => root.unmount());
-  container.remove();
-  vi.unstubAllGlobals();
-});
 function trigger(name: string): HTMLButtonElement {
-  const found = Array.from(container.querySelectorAll("button")).find(
+  const found = Array.from(ui.container.querySelectorAll("button")).find(
     (button) => button.textContent === name,
   );
   if (found === undefined) throw new Error(`Missing trigger: ${name}`);
@@ -66,7 +54,7 @@ it("opens a floating panel on the trigger and moves keyboard focus into it", asy
   expect(trigger("Options").getAttribute("aria-expanded")).toBe("true");
   expect(panel()?.contains(input("Option"))).toBe(true);
   expect(panel()?.contains(document.activeElement)).toBe(true);
-  expect(container.contains(panel())).toBe(false);
+  expect(ui.container.contains(panel())).toBe(false);
 });
 
 it("keeps the panel open for inside interaction and closes on an outside pointer", async () => {

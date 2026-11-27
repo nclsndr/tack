@@ -2,11 +2,11 @@
 import { mkdtemp, writeFile, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { act, createElement, type ComponentType } from "react";
-import { createRoot } from "react-dom/client";
+import { createElement, type ComponentType } from "react";
 import { expect, it, vi } from "vitest";
 import { z } from "zod";
 import { writePageProxies } from "./page-proxy.ts";
+import { testRoot } from "./react.test-support.ts";
 import { ReaderLayout, type ReaderBoot } from "./runtime.tsx";
 const selected = vi.hoisted(() => ({ component: undefined as ComponentType | undefined }));
 vi.mock("@rspress/core/runtime", () => ({
@@ -17,12 +17,9 @@ vi.mock("@rspress/core/runtime", () => ({
   NavigationType: { Pop: "POP", Push: "PUSH", Replace: "REPLACE" },
   pathnameToRouteService: () => undefined,
 }));
+const ui = testRoot();
 it("preloads a safe route before catching the source module evaluation failure inside the reader", async () => {
   const root = await mkdtemp(join(tmpdir(), "tack-page-proxy-"));
-  const container = document.createElement("div");
-  document.body.append(container);
-  const reactRoot = createRoot(container);
-  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   const errors = vi.spyOn(console, "error").mockImplementation(() => undefined);
   try {
     const physical = join(root, "throwing.tsx");
@@ -87,20 +84,16 @@ it("preloads a safe route before catching the source module evaluation failure i
         presets: { navigation: "folders" },
         archive: [],
       };
-      await act(async () => {
-        reactRoot.render(createElement(ReaderLayout, { boot, customization: {} }));
-      });
-      expect(container.textContent).toContain("Source module evaluation failed");
-      expect(container.querySelector('[aria-label="Search documents"]')).not.toBeNull();
-      expect(container.querySelector('nav[aria-label="Folders"]')).not.toBeNull();
+      await ui.render(createElement(ReaderLayout, { boot, customization: {} }));
+      expect(ui.container.textContent).toContain("Source module evaluation failed");
+      expect(ui.container.querySelector('[aria-label="Search documents"]')).not.toBeNull();
+      expect(ui.container.querySelector('nav[aria-label="Folders"]')).not.toBeNull();
     } finally {
       await Promise.all([bundle, eagerBundle].map((path) => rm(path, { force: true })));
     }
   } finally {
-    await act(async () => reactRoot.unmount());
+    await ui.unmount();
     errors.mockRestore();
-    vi.unstubAllGlobals();
-    container.remove();
     selected.component = undefined;
     await rm(root, { recursive: true, force: true });
   }

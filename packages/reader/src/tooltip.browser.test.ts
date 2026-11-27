@@ -1,40 +1,30 @@
 // @vitest-environment jsdom
 import { act, createElement, createRef } from "react";
-import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ReaderTooltip } from "./tooltip.tsx";
+import { testRoot } from "./react.test-support.ts";
 
-let container: HTMLDivElement;
-let root: ReturnType<typeof createRoot>;
+const ui = testRoot();
 const ref = createRef<HTMLButtonElement>();
 const onClick = vi.fn();
 
 beforeEach(async () => {
-  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   onClick.mockClear();
-  container = document.createElement("div");
-  document.body.append(container);
-  root = createRoot(container);
-  await act(async () =>
-    root.render(
-      createElement(ReaderTooltip, {
-        label: "Hide documents (⌘B)",
-        children: createElement("button", {
-          ref,
-          type: "button",
-          "aria-label": "Hide documents",
-          onClick,
-        }),
+  await ui.render(
+    createElement(ReaderTooltip, {
+      label: "Hide documents (⌘B)",
+      children: createElement("button", {
+        ref,
+        type: "button",
+        "aria-label": "Hide documents",
+        onClick,
       }),
-    ),
+    }),
   );
 });
 
-afterEach(async () => {
-  await act(async () => root.unmount());
-  container.remove();
+afterEach(() => {
   vi.useRealTimers();
-  vi.unstubAllGlobals();
 });
 
 const tip = () =>

@@ -1,33 +1,25 @@
 // @vitest-environment jsdom
 import { act, createElement } from "react";
-import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { AppearanceControl } from "./appearance.tsx";
+import { testRoot } from "./react.test-support.ts";
 
-let container: HTMLDivElement;
-let root: ReturnType<typeof createRoot>;
+const ui = testRoot();
 
 beforeEach(() => {
-  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   localStorage.clear();
-  container = document.createElement("div");
-  document.body.append(container);
-  root = createRoot(container);
 });
 
-afterEach(async () => {
-  await act(async () => root.unmount());
-  container.remove();
+afterEach(() => {
   localStorage.clear();
-  vi.unstubAllGlobals();
 });
 
 async function mount() {
-  await act(async () => root.render(createElement(AppearanceControl)));
+  await ui.render(createElement(AppearanceControl));
 }
 
 function button(label: string) {
-  const selected = Array.from(container.querySelectorAll("button")).find(
+  const selected = Array.from(ui.container.querySelectorAll("button")).find(
     (candidate) => candidate.getAttribute("aria-label") === label,
   );
   if (selected === undefined) throw new Error(`Missing appearance button: ${label}`);
@@ -102,8 +94,7 @@ it("reflects preferences changed in another tab and removes its listener on unmo
   });
   expect(button("System").getAttribute("aria-pressed")).toBe("true");
   const remove = vi.spyOn(window, "removeEventListener");
-  await act(async () => root.unmount());
+  await ui.unmount();
   expect(remove).toHaveBeenCalledWith("storage", expect.any(Function));
   remove.mockRestore();
-  root = createRoot(container);
 });

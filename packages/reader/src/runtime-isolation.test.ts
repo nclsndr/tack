@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import { act, createElement } from "react";
-import { createRoot, type Root } from "react-dom/client";
+import { createElement } from "react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ReaderLayout, type ReaderBoot, type ReaderCustomization } from "./runtime.tsx";
+import { testRoot } from "./react.test-support.ts";
 const route = vi.hoisted(() => ({ pathname: "/broken", failContent: false }));
 vi.mock("@rspress/core/runtime", () => ({
   Content: () => {
@@ -44,72 +44,62 @@ const boot: ReaderBoot = {
     },
   })),
 };
-let root: Root;
-let container: HTMLDivElement;
+const ui = testRoot();
 beforeEach(() => {
   route.pathname = "/broken";
   route.failContent = false;
-  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   vi.spyOn(console, "error").mockImplementation(() => undefined);
   window.localStorage.clear();
-  container = document.createElement("div");
-  document.body.append(container);
-  root = createRoot(container);
 });
-afterEach(async () => {
-  await act(async () => root.unmount());
-  container.remove();
+afterEach(() => {
   vi.restoreAllMocks();
-  vi.unstubAllGlobals();
 });
 const render = async (customization: ReaderCustomization = {}, revision = "one") => {
-  await act(async () =>
-    root.render(createElement(ReaderLayout, { boot: { ...boot, revision }, customization })),
-  );
+  await ui.render(createElement(ReaderLayout, { boot: { ...boot, revision }, customization }));
 };
 const fail = () => {
   throw new Error("Source presentation failed");
 };
 it("falls back to project navigation after a source navigation render throws", async () => {
   await render({ customizations: { "broken:docs": { Navigation: fail } } });
-  expect(container.querySelector('nav[aria-label="Folders"] a[href="/healthy"]')).not.toBeNull();
-  expect(container.textContent).toContain("Source presentation failed");
-  expect(container.textContent).toContain("Rendered document");
+  expect(ui.container.querySelector('nav[aria-label="Folders"] a[href="/healthy"]')).not.toBeNull();
+  expect(ui.container.textContent).toContain("Source presentation failed");
+  expect(ui.container.textContent).toContain("Rendered document");
 });
 it("keeps the shell after layout failure and recovers on healthy resource selection", async () => {
   const customization = {
     customizations: { "broken:docs": { layouts: { default: fail } } },
   };
   await render(customization);
-  expect(container.textContent).toContain("broken / docs");
-  expect(container.querySelector('[aria-label="Search documents"]')).not.toBeNull();
-  expect(container.textContent).toContain("Source presentation failed");
+  expect(ui.container.textContent).toContain("broken / docs");
+  expect(ui.container.querySelector('[aria-label="Search documents"]')).not.toBeNull();
+  expect(ui.container.textContent).toContain("Source presentation failed");
   route.pathname = "/healthy";
   await render(customization);
-  expect(container.textContent).toContain("Rendered document");
-  expect(container.textContent).not.toContain("Source presentation failed");
+  expect(ui.container.textContent).toContain("Rendered document");
+  expect(ui.container.textContent).not.toContain("Source presentation failed");
 });
 it("isolates MDX rendering and retries the resource after a new saved revision", async () => {
   route.failContent = true;
   await render();
-  expect(container.textContent).toContain("MDX render failed");
-  expect(container.querySelector('nav[aria-label="Folders"] a[href="/healthy"]')).not.toBeNull();
+  expect(ui.container.textContent).toContain("MDX render failed");
+  expect(ui.container.querySelector('nav[aria-label="Folders"] a[href="/healthy"]')).not.toBeNull();
   route.failContent = false;
   await render({}, "two");
-  expect(container.textContent).toContain("Rendered document");
+  expect(ui.container.textContent).toContain("Rendered document");
 });
 it("keeps pending and rejected source modules out of the document render", async () => {
   route.failContent = true;
   await render({ pendingResources: ["broken:docs"] });
-  expect(container.textContent).toContain("Loading source presentation");
-  expect(container.textContent).not.toContain("MDX render failed");
+  expect(ui.container.textContent).toContain("Loading source presentation");
+  expect(ui.container.textContent).not.toContain("MDX render failed");
   await render({ resourceErrors: { "broken:docs": "Source module failed to initialize" } });
-  expect(container.textContent).toContain("Source module failed to initialize");
-  expect(container.querySelector('nav[aria-label="Folders"] a[href="/healthy"]')).not.toBeNull();
+  expect(ui.container.textContent).toContain("Source module failed to initialize");
+  expect(ui.container.querySelector('nav[aria-label="Folders"] a[href="/healthy"]')).not.toBeNull();
   route.pathname = "/healthy";
   route.failContent = false;
   await render({ resourceErrors: { "broken:docs": "Source module failed to initialize" } });
-  expect(container.textContent).toContain("Rendered document");
+  expect(ui.container.textContent).toContain("Rendered document");
 });
 it("names a thrown non-error value from a source layout in the presentation error", async () => {
   await render({
@@ -124,6 +114,6 @@ it("names a thrown non-error value from a source layout in the presentation erro
       },
     },
   });
-  expect(container.querySelector('[role="alert"]')?.textContent).toContain("layout exploded");
-  expect(container.querySelector('[aria-label="Search documents"]')).not.toBeNull();
+  expect(ui.container.querySelector('[role="alert"]')?.textContent).toContain("layout exploded");
+  expect(ui.container.querySelector('[aria-label="Search documents"]')).not.toBeNull();
 });

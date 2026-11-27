@@ -1,29 +1,18 @@
 // @vitest-environment jsdom
 import { act, createElement, useState } from "react";
-import { createRoot } from "react-dom/client";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 import { CopyControl } from "./copy-control.tsx";
 import { pressKey, settle } from "./popover.test-support.ts";
 import type { CopyMode } from "./types.ts";
+import { testRoot } from "./react.test-support.ts";
 
-let container: HTMLDivElement;
-let root: ReturnType<typeof createRoot>;
+const ui = testRoot();
 const copy = vi.fn();
 const modes = vi.fn();
 const implementations = vi.fn();
 
-beforeEach(() => {
-  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
-  container = document.createElement("div");
-  document.body.append(container);
-  root = createRoot(container);
-});
-
-afterEach(async () => {
-  await act(async () => root.unmount());
-  container.remove();
+afterEach(() => {
   vi.clearAllMocks();
-  vi.unstubAllGlobals();
 });
 
 /** Owns the copy settings the way the reader does, reporting each change to the spies. */
@@ -47,11 +36,11 @@ function Harness({ selectedBlocks }: { selectedBlocks: number }) {
 }
 
 async function mount(selectedBlocks = 0) {
-  await act(async () => root.render(createElement(Harness, { selectedBlocks })));
+  await ui.render(createElement(Harness, { selectedBlocks }));
 }
 
 function parts() {
-  const [primary, chevron] = Array.from(container.querySelectorAll("button"));
+  const [primary, chevron] = Array.from(ui.container.querySelectorAll("button"));
   if (primary === undefined || chevron === undefined) throw new Error("Missing split button parts");
   return { primary, chevron, open: chevron.getAttribute("aria-expanded") === "true" };
 }
