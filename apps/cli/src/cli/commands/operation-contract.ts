@@ -17,6 +17,9 @@ export const MutationModeSchema = Schema.Literals([
   "conditional",
 ]);
 
+/** How an operation changes state. */
+export type MutationMode = typeof MutationModeSchema.Type;
+
 /** How an operation changes state and which envelope slots it can fill. */
 export type OperationContract = {
   /** The slots a successful run without --apply may fill. */
@@ -24,7 +27,7 @@ export type OperationContract = {
   /** The slots an --apply run may fill, for preview-apply or conditional operations. */
   readonly applySlots?: ReadonlyArray<ResponseSlot>;
   /** preview-apply changes nothing without --apply; immediate persists at once. */
-  readonly mutation: typeof MutationModeSchema.Type;
+  readonly mutation: MutationMode;
 };
 
 /** Annotates each executable command with its {@link OperationContract} for help and schema. */

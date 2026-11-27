@@ -3,7 +3,7 @@ import { HelpPayloadSchema } from "../../commands/index.ts";
 import { argvLine } from "../command-line.ts";
 import type { PublicEnvelope } from "../public-outcome.ts";
 import type { Style } from "./style.ts";
-import { mapModes, operationMap } from "./help-map.ts";
+import { mapModes, mapModeWords, operationMap } from "./help-map.ts";
 import { cell, flow, paragraph, table, type Cell } from "./text.ts";
 import {
   diagnosticLines,
@@ -66,14 +66,18 @@ const mapLines = (style: Style): ReadonlyArray<string> => [
   "",
   style.bold("Modes"),
   ...table(
-    mapModes.map(([mode, meaning]) => [cell(mode), cell(meaning)]),
+    mapModes.map(({ word, meaning }) => [cell(word), cell(meaning)]),
     { width: style.width },
   ),
   ...operationMap.flatMap(({ title, rows }) => [
     "",
     style.bold(title),
     ...table(
-      rows.map(({ usage, mode, summary }) => [cell(usage), cell(mode, style.dim), cell(summary)]),
+      rows.map(({ usage, mode, summary }) => [
+        cell(usage),
+        cell(mapModeWords[mode].word, style.dim),
+        cell(summary),
+      ]),
       { width: style.width },
     ),
   ]),

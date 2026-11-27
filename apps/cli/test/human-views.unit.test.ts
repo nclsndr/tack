@@ -4,7 +4,7 @@ import { Effect, Schema } from "effect";
 import { readFileSync } from "node:fs";
 import { HelpPayloadSchema, parseInvocation } from "../src/cli/commands/index.ts";
 import { rootFlagNames } from "../src/cli/host/human/help.ts";
-import { operationMap } from "../src/cli/host/human/help-map.ts";
+import { mapModeWords, operationMap } from "../src/cli/host/human/help-map.ts";
 import { renderGeneric, renderHuman } from "../src/cli/host/human/render.ts";
 import { makeStyle } from "../src/cli/host/human/style.ts";
 import { shellWord } from "../src/cli/host/command-line.ts";
@@ -488,7 +488,9 @@ it("renders the root help as the operation map, grouped by task, with no schema 
     expect(linesOf(text), title).toContain(title);
     for (const { usage, mode } of rows)
       expect(
-        linesOf(text).some((line) => line.startsWith(`  ${usage} `) && line.includes(` ${mode} `)),
+        linesOf(text).some(
+          (line) => line.startsWith(`  ${usage} `) && line.includes(` ${mapModeWords[mode].word} `),
+        ),
         usage,
       ).toBe(true);
   }
