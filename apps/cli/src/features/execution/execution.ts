@@ -9,6 +9,7 @@ import {
 } from "../../services/execution-platform.ts";
 import { resolveStateDirectory, type StateOptions } from "../../services/state-store.ts";
 import { type State } from "../../domain/state/state-schema.ts";
+import type { PreviewOrApplied } from "../../domain/plan-and-apply.ts";
 import { readInvocationSnapshot, resolveInvocationCatalog } from "../snapshot/command-snapshot.ts";
 import { isEntryOfKind, resourceAddressIdentity } from "../../domain/sources/catalog-schema.ts";
 import { resolveContainingRoot, selectTargets } from "../projects/project.ts";
@@ -436,10 +437,10 @@ export const HistoryClearApplicationSchema = Schema.Struct({
 });
 
 /** A history clear preview, plus its application when one ran. */
-type HistoryClearExecution = {
-  readonly plan: typeof HistoryClearPlanSchema.Type;
-  readonly applied?: typeof HistoryClearApplicationSchema.Type;
-};
+type HistoryClearExecution = PreviewOrApplied<
+  typeof HistoryClearPlanSchema.Type,
+  typeof HistoryClearApplicationSchema.Type
+>;
 
 /** Previews the retained record count, then removes every record file when explicitly applied. */
 export const clearScriptHistory = Effect.fn("execution.clearScriptHistory")(function* (

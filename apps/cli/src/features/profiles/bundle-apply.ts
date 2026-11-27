@@ -11,18 +11,15 @@ import {
 import { planBundleRetention, writeBundlePayload } from "./bundle-retention.ts";
 import { inspectBundleProjection, withBundleSources } from "./bundle-snapshot.ts";
 import {
+  isApplicablePlan,
   planProfileApply,
   profileApplyPlanFields,
+  recoverAfterPreflight,
   type ProfileApplyExecution,
   type ProfileApplyPlan,
 } from "./profile-apply.ts";
 import { applySyncPlan } from "../reconciliation/sync-command.ts";
-import { recoverLinkJournal } from "../links/link-settlement.ts";
-import {
-  readInvocationSnapshot,
-  writerInvocationSnapshot,
-  type CommandSnapshot,
-} from "../snapshot/command-snapshot.ts";
+import { readInvocationSnapshot, type CommandSnapshot } from "../snapshot/command-snapshot.ts";
 import { withStateCheckpointWriter, type StateOptions } from "../../services/state-store.ts";
 
 export type BundleApplyRequest = ProfileTargetRequest & {
@@ -117,28 +114,12 @@ export const runBundleApply = Effect.fn("profiles.runBundleApply")(function* (
       if (request.apply === false || preview.plan.refused === true) return { plan: preview.plan };
       return yield* withStateCheckpointWriter(options, (writer) =>
         Effect.gen(function* () {
-          let prepared = yield* prepareBundleApply(
-            options,
-            request,
-            yield* writerInvocationSnapshot(writer.current()),
+          const { retention, plan } = yield* recoverAfterPreflight(
+            writer,
+            (snapshot) => prepareBundleApply(options, request, snapshot),
+            (prepared) => prepared.retention !== undefined && isApplicablePlan(prepared.plan),
           );
-          if (prepared.plan.refused === true || prepared.retention === undefined)
-            return { plan: prepared.plan };
-          // Recovery is authorized only after the entire target and incoming projection pass preflight.
-          yield* recoverLinkJournal(writer);
-          prepared = yield* prepareBundleApply(
-            options,
-            request,
-            yield* writerInvocationSnapshot(writer.current()),
-          );
-          const { retention, plan } = prepared;
-          if (
-            plan.refused === true ||
-            retention === undefined ||
-            plan.application === undefined ||
-            plan.sync === undefined
-          )
-            return { plan };
+          if (retention === undefined || isApplicablePlan(plan) === false) return { plan };
           if (retention.reuse === false) {
             const fs = yield* FileSystem.FileSystem;
             const path = yield* Path.Path;
@@ -149,12 +130,11 @@ export const runBundleApply = Effect.fn("profiles.runBundleApply")(function* (
               retention.archive.manifest,
             );
           }
-          const application = plan.application;
           yield* writer.checkpoint((state) =>
             Effect.succeed({
               state: withProfileApplication(
                 withBundleSources(state, retention.registrations),
-                application,
+                plan.application,
               ),
               value: undefined,
             }),

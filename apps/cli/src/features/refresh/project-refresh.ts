@@ -418,12 +418,6 @@ export type ProjectRefreshCommandOptions = {
   readonly cwd?: string;
 };
 
-/** A composite refresh plan and its optional application outcome. */
-type ProjectRefreshCommandExecution = {
-  readonly applied?: ProjectRefreshCommandResult;
-  readonly plan: ProjectRefreshCommandPlan;
-};
-
 /**
  * Roots whose retained evidence the refresh cleanup must settle: every handed-off root, plus a
  * deregistered root that still owns docs links, so its docs evidence retires with the removal
@@ -528,7 +522,7 @@ export const runProjectRefreshCommand = Effect.fn("refresh.runProjectRefreshComm
   stateOptions: StateOptions,
   options: ProjectRefreshCommandOptions,
 ) {
-  const execution: ProjectRefreshCommandExecution = yield* previewOrApply(stateOptions, {
+  return yield* previewOrApply(stateOptions, {
     apply: options.apply,
     plan: (snapshot) =>
       Effect.gen(function* () {
@@ -594,5 +588,4 @@ export const runProjectRefreshCommand = Effect.fn("refresh.runProjectRefreshComm
       }),
     applyPlan: applyCommand,
   });
-  return execution;
 });

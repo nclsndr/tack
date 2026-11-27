@@ -32,8 +32,13 @@ import {
   type SyncApplication,
   type SyncPlan,
 } from "../reconciliation/sync-command.ts";
+import type { PreviewOrApplied } from "../../domain/plan-and-apply.ts";
 import { recoverLinkJournal } from "../links/link-settlement.ts";
-import { withStateCheckpointWriter, type StateOptions } from "../../services/state-store.ts";
+import {
+  withStateCheckpointWriter,
+  type StateCheckpointWriter,
+  type StateOptions,
+} from "../../services/state-store.ts";
 
 export type ProfileApplyRequest = ProfileTargetRequest & {
   readonly reference: string;
@@ -84,10 +89,8 @@ export const ProfileDeliveryApplicationSchema = Schema.Struct({
 });
 
 /** A fixed profile application's plan, and what its delivery did once applied. */
-export type ProfileApplyExecution<Plan extends { readonly sync?: SyncPlan } = ProfileApplyPlan> = {
-  readonly plan: Plan;
-  readonly applied?: SyncApplication;
-};
+export type ProfileApplyExecution<Plan extends { readonly sync?: SyncPlan } = ProfileApplyPlan> =
+  PreviewOrApplied<Plan, SyncApplication>;
 
 /** Validates reachable registered sources and the complete target before preparing fixed delivery. */
 export const planProfileApply = Effect.fnUntraced(function* (
@@ -207,6 +210,35 @@ export const planProfileApply = Effect.fnUntraced(function* (
   } satisfies ProfileApplyPlan;
 });
 
+/**
+ * A pending link journal is an input to a profile preflight: an entry of another context refuses
+ * the profile, and an entry of its target counts as existing selection. So the plan under the
+ * writer lock reads the journal as it is, and only a plan that `passes` recovers it; the use case
+ * then replans from the recovered document. A refused plan leaves the journal untouched.
+ */
+export const recoverAfterPreflight = Effect.fnUntraced(function* <Prepared, E, R>(
+  writer: StateCheckpointWriter,
+  prepare: (snapshot: CommandSnapshot) => Effect.Effect<Prepared, E, R>,
+  passes: (prepared: Prepared) => boolean,
+) {
+  const preflight = yield* prepare(yield* writerInvocationSnapshot(writer.current()));
+  if (passes(preflight) === false) return preflight;
+  yield* recoverLinkJournal(writer);
+  return yield* prepare(yield* writerInvocationSnapshot(writer.current()));
+});
+
+/** A plan that passed, so it carries the intent it retains and the delivery it applies. */
+export const isApplicablePlan = <
+  Plan extends {
+    readonly refused: boolean;
+    readonly application?: ProfileApplication;
+    readonly sync?: SyncPlan;
+  },
+>(
+  plan: Plan,
+): plan is Plan & { readonly application: ProfileApplication; readonly sync: SyncPlan } =>
+  plan.refused === false && plan.application !== undefined && plan.sync !== undefined;
+
 /** Replans under the writer lock, retains exact intent, then uses ordinary ownership-safe delivery. */
 export const runProfileApply = Effect.fn("profiles.runProfileApply")(function* (
   options: StateOptions,
@@ -220,23 +252,17 @@ export const runProfileApply = Effect.fn("profiles.runProfileApply")(function* (
   if (request.apply === false || preview.refused === true) return { plan: preview };
   return yield* withStateCheckpointWriter(options, (writer) =>
     Effect.gen(function* () {
-      let plan: ProfileApplyPlan = yield* planProfileApply(
-        options,
-        request,
-        yield* writerInvocationSnapshot(writer.current()),
+      const plan: ProfileApplyPlan = yield* recoverAfterPreflight(
+        writer,
+        (snapshot) => planProfileApply(options, request, snapshot),
+        isApplicablePlan,
       );
-      if (plan.refused === true || plan.application === undefined) return { plan };
-      yield* recoverLinkJournal(writer);
-      plan = yield* planProfileApply(
-        options,
-        request,
-        yield* writerInvocationSnapshot(writer.current()),
-      );
-      if (plan.refused === true || plan.application === undefined || plan.sync === undefined)
-        return { plan };
-      const application = plan.application;
+      if (isApplicablePlan(plan) === false) return { plan };
       yield* writer.checkpoint((state) =>
-        Effect.succeed({ state: withProfileApplication(state, application), value: undefined }),
+        Effect.succeed({
+          state: withProfileApplication(state, plan.application),
+          value: undefined,
+        }),
       );
       return { plan, applied: yield* applySyncPlan(writer, plan.sync) };
     }),

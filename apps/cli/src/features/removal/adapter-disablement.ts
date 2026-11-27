@@ -40,12 +40,6 @@ export type AdapterDisablementPlan = typeof AdapterDisablementPlanSchema.Type;
 /** A validated adapter disablement application result. */
 export type AdapterDisablementResult = typeof AdapterDisablementResultSchema.Type;
 
-/** One adapter disablement plan and its optional application outcome. */
-type AdapterDisablementExecution = {
-  readonly applied?: AdapterDisablementResult;
-  readonly plan: AdapterDisablementPlan;
-};
-
 /** Reports a malformed adapter ID. */
 export class AdapterDisablementValidationError extends Schema.TaggedError<AdapterDisablementValidationError>()(
   "AdapterDisablementValidationError",
@@ -103,10 +97,9 @@ export const disableAdapter = Effect.fn("removal.disableAdapter")(function* (
   options: { readonly apply: boolean },
 ) {
   const adapter = yield* decodeAdapter(adapterCandidate);
-  const execution: AdapterDisablementExecution = yield* previewOrApply(stateOptions, {
+  return yield* previewOrApply(stateOptions, {
     apply: options.apply,
     plan: ({ state }) => planFromState(state, adapter),
     applyPlan,
   });
-  return execution;
 });
