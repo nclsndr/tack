@@ -1,7 +1,5 @@
 import { Option, Schema } from "effect";
 import {
-  HistoryListPayloadSchema,
-  HistoryRecordSchema,
   historyListBounds,
   RunTargetSchema,
   type HistorySummary,
@@ -24,9 +22,6 @@ import { instant, isRunId, period, withoutPayload } from "./run-text.ts";
 import type { Style } from "./style.ts";
 import { cell, paragraph, table, type Cell } from "./text.ts";
 import { addressText, type FactRow, factRows, plural } from "./view.ts";
-
-const decodeList = Schema.decodeUnknownOption(HistoryListPayloadSchema);
-const decodeRecord = Schema.decodeUnknownOption(HistoryRecordSchema);
 
 /** `✗ timeout (domain)`: the mark and the words that name a run's outcome, painted together. */
 const outcomeCell = (run: HistorySummary, style: Style): Cell => {
@@ -57,10 +52,10 @@ const pageFlags = (limit: number, offset: number) => [
 ];
 
 /** Retained run summaries newest first, with the paging facts and any skipped record files. */
-export const historyListView: HumanView = (envelope, style) => {
+export const historyListView: HumanView<"history-list"> = (envelope, { result }, style) => {
   if (envelope.result === null) return withoutPayload(envelope, style);
-  const list = Option.getOrUndefined(decodeList(envelope.result));
-  if (list === undefined) return undefined;
+  if (Option.isNone(result) === true) return undefined;
+  const list = result.value;
 
   const first = list.runs[0];
   const range =
@@ -106,7 +101,7 @@ export const historyListView: HumanView = (envelope, style) => {
 const decodeTarget = Schema.decodeUnknownOption(RunTargetSchema);
 
 /** One retained run in full; large values are cut to the width with a pointer to `--json`. */
-export const historyShowView: HumanView = (envelope, style) => {
+export const historyShowView: HumanView<"history-show"> = (envelope, payloads, style) => {
   if (envelope.result === null)
     return withoutPayload(
       envelope,
@@ -115,8 +110,8 @@ export const historyShowView: HumanView = (envelope, style) => {
         ? [commandLine("history-list")]
         : [],
     );
-  const record = Option.getOrUndefined(decodeRecord(envelope.result));
-  if (record === undefined) return undefined;
+  if (Option.isNone(payloads.result) === true) return undefined;
+  const record = payloads.result.value;
   const { result } = record;
 
   const target =

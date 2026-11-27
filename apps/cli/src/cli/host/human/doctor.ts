@@ -1,13 +1,12 @@
-import { DoctorReportSchema, type DoctorCheck } from "../../../domain/doctor/doctor-schema.ts";
+import { Option } from "effect";
+import type { DoctorCheck, DoctorReport } from "../../../domain/doctor/doctor-schema.ts";
 import { argvLine } from "../command-line.ts";
 import { frameView } from "./frame.ts";
-import { decoderFor, indented } from "./inspection-support.ts";
+import { indented } from "./inspection-support.ts";
 import type { HumanView } from "./render.ts";
 import type { Style } from "./style.ts";
 import { cell, flow } from "./text.ts";
 import { headingLines, plural } from "./view.ts";
-
-const decodeReport = decoderFor(DoctorReportSchema);
 
 const markOf = (check: DoctorCheck, style: Style) =>
   check.outcome === "failed"
@@ -28,7 +27,7 @@ const checkLines = (check: DoctorCheck, style: Style): ReadonlyArray<string> => 
   ...(commandOf(check) === undefined ? [] : [`    ${style.cyan(commandOf(check) ?? "")}`]),
 ];
 
-const countsText = (report: NonNullable<ReturnType<typeof decodeReport>>) =>
+const countsText = (report: DoctorReport) =>
   [
     report.release.stamp,
     ...(report.summary.failed === 0 ? [] : [`${report.summary.failed} failed`]),
@@ -41,9 +40,9 @@ const countsText = (report: NonNullable<ReturnType<typeof decodeReport>>) =>
  * Renders `doctor`: the release stamp and counts first, then the problems with the command that
  * addresses each, then what was fine or not observed. Failed checks are shown once, as checks.
  */
-export const renderDoctor: HumanView = (envelope, style) => {
-  const report = decodeReport(envelope.result);
-  if (report === undefined) return undefined;
+export const renderDoctor: HumanView<"doctor"> = (envelope, { result }, style) => {
+  if (Option.isNone(result) === true) return undefined;
+  const report = result.value;
   const problems = report.checks.filter(
     ({ outcome }) => outcome === "failed" || outcome === "warning",
   );

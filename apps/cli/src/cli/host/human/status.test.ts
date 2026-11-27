@@ -3,7 +3,7 @@ import { posix } from "node:path";
 import { describe, expect, it } from "vitest";
 import { StatusPayloadSchema, type StatusPayload } from "../../../domain/status/status-schema.ts";
 import { envelopeOf, flat, hintRecorder, humanFixture } from "./human.test-support.ts";
-import { renderStatus } from "./status.ts";
+import { humanViews, renderDedicated } from "./render.ts";
 
 const trouble = humanFixture("status-trouble");
 const payload = Schema.decodeUnknownSync(StatusPayloadSchema)(trouble.result);
@@ -15,7 +15,7 @@ if (namespace === undefined) throw new Error("The status-trouble fixture has no 
 /** Renders the fixture's status with `changes` applied, recording the Next hints. */
 const render = (changes: Partial<StatusPayload>, details = false) => {
   const { hints, style } = hintRecorder();
-  const text = renderStatus(
+  const text = renderDedicated(
     envelopeOf({
       command: "status",
       classification: trouble.classification,
@@ -23,6 +23,7 @@ const render = (changes: Partial<StatusPayload>, details = false) => {
       result: { ...payload, ...changes },
     }),
     style,
+    humanViews,
     details,
   );
   if (text === undefined) throw new Error("The changed status payload no longer decodes.");
@@ -136,7 +137,7 @@ describe("status view", () => {
 
   it("prints no .gitignore lines for the user's links", () => {
     const user = humanFixture("status-user");
-    const text = renderStatus(user, hintRecorder().style, true);
+    const text = renderDedicated(user, hintRecorder().style, humanViews, true);
     expect(text).not.toContain("For .gitignore");
   });
 

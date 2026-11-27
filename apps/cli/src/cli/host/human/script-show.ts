@@ -1,5 +1,5 @@
-import { Option, Schema } from "effect";
-import { ScriptShowPayloadSchema } from "../../../domain/execution/execution-schema.ts";
+import { Option } from "effect";
+import type { ScriptShowPayloadSchema } from "../../../domain/execution/execution-schema.ts";
 import { commandLine } from "../command-line.ts";
 import { frameView } from "./frame.ts";
 import type { HumanView } from "./render.ts";
@@ -7,7 +7,6 @@ import { withoutPayload } from "./run-text.ts";
 import { cell, table } from "./text.ts";
 import { factRows } from "./view.ts";
 
-const decodeShow = Schema.decodeUnknownOption(ScriptShowPayloadSchema);
 type Declared = (typeof ScriptShowPayloadSchema.Type)["arguments"][number];
 
 /** How an argument is spelled on the command line, such as `--state open|closed`. */
@@ -45,10 +44,10 @@ const isRequired = (argument: Declared) =>
   argument.default === undefined && argument.optional !== true;
 
 /** One declared script: what it does, its file, the arguments it takes and the secrets it reads. */
-export const scriptShowView: HumanView = (envelope, style) => {
+export const scriptShowView: HumanView<"script-show"> = (envelope, { result }, style) => {
   if (envelope.result === null) return withoutPayload(envelope, style);
-  const shown = Option.getOrUndefined(decodeShow(envelope.result));
-  if (shown === undefined) return undefined;
+  if (Option.isNone(result) === true) return undefined;
+  const shown = result.value;
   const required = shown.arguments.filter(isRequired);
   return frameView(envelope, style, {
     body: [

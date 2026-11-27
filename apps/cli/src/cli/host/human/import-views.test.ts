@@ -12,7 +12,7 @@ import {
   testHome,
 } from "./human.test-support.ts";
 import { importViews } from "./import-views.ts";
-import { viewOf } from "./render.ts";
+import { renderDedicated } from "./render.ts";
 import { ImportError } from "../../../features/imports/import-error.ts";
 import type {
   ImportApplication,
@@ -712,23 +712,26 @@ describe("import human views", () => {
       diagnostics: [],
       plan: { kind: "import-plan" },
     });
-    expect(importViews["import-add"](undecodable, styleOf(terminal))).toBeUndefined();
+    expect(renderDedicated(undecodable, styleOf(terminal), importViews)).toBeUndefined();
     const brokenApplied = createPublicEnvelope("import add", {
       classification: "success",
       diagnostics: [],
       plan: toJson(basePlan),
       applied: { kind: "nonsense" },
     });
-    expect(importViews["import-add"](brokenApplied, styleOf(terminal))).toBeUndefined();
-    expect(importViews["import-list"](undecodable, styleOf(terminal))).toBeUndefined();
-    expect(importViews["import-remove"](undecodable, styleOf(terminal))).toBeUndefined();
+    expect(renderDedicated(brokenApplied, styleOf(terminal), importViews)).toBeUndefined();
+    for (const command of ["import", "import remove"])
+      expect(
+        renderDedicated({ ...undecodable, command }, styleOf(terminal), importViews),
+        command,
+      ).toBeUndefined();
     const brokenRemoval = createPublicEnvelope("import remove", {
       classification: "success",
       diagnostics: [],
       plan: toJson(removalPlan),
       applied: { kind: "nonsense" },
     });
-    expect(importViews["import-remove"](brokenRemoval, styleOf(terminal))).toBeUndefined();
+    expect(renderDedicated(brokenRemoval, styleOf(terminal), importViews)).toBeUndefined();
   });
 });
 
@@ -770,10 +773,8 @@ const plan = (overrides: Partial<ImportPlan>): ImportPlan => ({
 });
 
 const renderRecorded = (command: string, input: { plan?: unknown; applied?: unknown }) => {
-  const view = viewOf(importViews, command);
-  if (view === undefined) throw new Error(`No import view for ${command}.`);
   const { hints, style } = hintRecorder();
-  const text = view(envelopeOf({ command, ...input }), style);
+  const text = renderDedicated(envelopeOf({ command, ...input }), style, importViews);
   return { hints, text: text ?? "", flatText: flat(text) };
 };
 

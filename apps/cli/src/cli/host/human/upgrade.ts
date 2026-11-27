@@ -1,13 +1,10 @@
-import { Option, Schema } from "effect";
-import { UpgradeGuideSchema } from "../../../domain/self/upgrade-guide.ts";
+import { Option } from "effect";
 import { commandLine } from "../command-line.ts";
 import { frameView } from "./frame.ts";
 import type { HumanView } from "./render.ts";
 import { withoutPayload } from "./run-text.ts";
 import { cell, paragraph } from "./text.ts";
 import { factRows } from "./view.ts";
-
-const decodeGuide = Schema.decodeUnknownOption(UpgradeGuideSchema);
 
 const installed = {
   npm: "npm package",
@@ -16,10 +13,14 @@ const installed = {
 } as const;
 
 /** How to upgrade the running Tack: its version, how it was installed, and the command to run. */
-export const renderUpgradeGuide: HumanView = (envelope, style) => {
+export const renderUpgradeGuide: HumanView<"upgrade" | "upgrade-status"> = (
+  envelope,
+  { result },
+  style,
+) => {
   if (envelope.result === null) return withoutPayload(envelope, style);
-  const guide = Option.getOrUndefined(decodeGuide(envelope.result));
-  if (guide === undefined) return undefined;
+  if (Option.isNone(result) === true) return undefined;
+  const guide = result.value;
   return frameView(envelope, style, {
     body: [
       factRows(

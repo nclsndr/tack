@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { envelopeOf, expectViewContract, hintRecorder, styleOf } from "./human.test-support.ts";
-import { renderGuide } from "./guide.ts";
+import { renderDedicated } from "./render.ts";
 
 const markdown = [
   "# Onboard a machine to Tack",
@@ -30,7 +30,7 @@ const index = envelopeOf({
 describe("guide view", () => {
   it("prints the guide as it ships, after the version and how to read the lines a tool cut", () => {
     const { hints, style } = hintRecorder(styleOf({ width: 80 }));
-    expect(renderGuide(guide, style)).toBe(
+    expect(renderDedicated(guide, style)).toBe(
       [
         "tack guide · onboarding · tack 0.5.0+dev · ✓ success",
         "",
@@ -45,7 +45,7 @@ describe("guide view", () => {
   });
 
   it("wraps only its own lines: the guide keeps the line breaks it ships with", () => {
-    const narrow = renderGuide(guide, styleOf({ width: 40 })) ?? "";
+    const narrow = renderDedicated(guide, styleOf({ width: 40 })) ?? "";
     expect(narrow.endsWith(`\n\n${markdown}`)).toBe(true);
     expect(
       narrow
@@ -57,7 +57,7 @@ describe("guide view", () => {
 
   it("lists the guides by title and names the onboarding guide next", () => {
     const { hints, style } = hintRecorder(styleOf({ width: 80 }));
-    expect(renderGuide(index, style)).toBe(
+    expect(renderDedicated(index, style)).toBe(
       [
         "tack guide · ✓ success",
         "",
@@ -88,12 +88,12 @@ describe("guide view", () => {
       ],
     });
     const { hints, style } = hintRecorder(styleOf({ width: 80 }));
-    expect(renderGuide({ ...refused, next: ["tack guide"] }, style)).toContain(
+    expect(renderDedicated({ ...refused, next: ["tack guide"] }, style)).toContain(
       'Tack has no guide named "setup". The guides are onboarding, day-two.',
     );
     expect(hints).toEqual(["tack guide"]);
     expect(
-      renderGuide(envelopeOf({ command: "guide", result: { kind: "other" } }), styleOf()),
+      renderDedicated(envelopeOf({ command: "guide", result: { kind: "other" } }), styleOf()),
     ).toBeUndefined();
   });
 });

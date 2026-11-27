@@ -1,17 +1,13 @@
-import { Option, Predicate, Schema } from "effect";
-import {
-  ImportApplicationSchema,
-  ImportListSchema,
-  ImportPlanSchema,
-  ImportRemovalApplicationSchema,
-  ImportRemovalPlanSchema,
-  type ImportApplication,
-  type ImportCandidate,
-  type ImportPlan,
-  type ImportReach,
-  type ImportState,
-  type ImportSummary,
+import { Option, Predicate } from "effect";
+import type {
+  ImportApplication,
+  ImportCandidate,
+  ImportPlan,
+  ImportReach,
+  ImportState,
+  ImportSummary,
 } from "../../../domain/imports/import-schema.ts";
+import type { Invocation } from "../../commands/index.ts";
 import { argvLine, commandLine } from "../command-line.ts";
 import type { PublicEnvelope } from "../public-outcome.ts";
 import { frameView } from "./frame.ts";
@@ -21,12 +17,6 @@ import type { Style } from "./style.ts";
 import { cell, flow, paragraph, table, tableRows, type Cell, type Paint } from "./text.ts";
 import { factRows, plural } from "./view.ts";
 import { declarationFileName } from "../../../features/sources/declaration-file.ts";
-
-const decodePlan = Schema.decodeUnknownOption(ImportPlanSchema);
-const decodeApplication = Schema.decodeUnknownOption(ImportApplicationSchema);
-const decodeList = Schema.decodeUnknownOption(ImportListSchema);
-const decodeRemovalPlan = Schema.decodeUnknownOption(ImportRemovalPlanSchema);
-const decodeRemovalApplication = Schema.decodeUnknownOption(ImportRemovalApplicationSchema);
 
 /** The diagnostics the views state in the body instead, so no fact appears twice. */
 const bodyDiagnosticCodes: ReadonlySet<string> = new Set([
@@ -119,14 +109,14 @@ const failureView = (envelope: PublicEnvelope, style: Style): string =>
 
 /** Dedicated views take a failure envelope first: it carries no plan, applied or result. */
 const withFailure =
-  (view: HumanView): HumanView =>
-  (envelope, style, details) =>
+  <Tag extends Invocation["_tag"]>(view: HumanView<Tag>): HumanView<Tag> =>
+  (envelope, payloads, style, details) =>
     envelope.status === "failure" &&
     envelope.plan === null &&
     envelope.applied === null &&
     envelope.result === null
       ? failureView(envelope, style)
-      : view(envelope, style, details);
+      : view(envelope, payloads, style, details);
 
 const candidateFacts = (candidate: ImportCandidate) =>
   [
@@ -441,11 +431,11 @@ const applyView = (envelope: PublicEnvelope, applied: ImportApplication, style: 
   });
 };
 
-const importAddView: HumanView = withFailure((envelope, style) => {
-  const plan = Option.getOrUndefined(decodePlan(envelope.plan));
+const importAddView = withFailure<"import-add">((envelope, payloads, style) => {
+  const plan = Option.getOrUndefined(payloads.plan);
   if (plan === undefined) return undefined;
   if (envelope.applied === null) return previewView(envelope, plan, style);
-  const applied = Option.getOrUndefined(decodeApplication(envelope.applied));
+  const applied = Option.getOrUndefined(payloads.applied);
   return applied === undefined ? undefined : applyView(envelope, applied, style);
 });
 
@@ -498,8 +488,8 @@ const summaryLines = (summary: ImportSummary, style: Style) => [
     : []),
 ];
 
-const importListView: HumanView = withFailure((envelope, style) =>
-  Option.match(decodeList(envelope.result), {
+const importListView = withFailure<"import-list">((envelope, { result }, style) =>
+  Option.match(result, {
     onNone: () => undefined,
     onSome: (list) =>
       frameView(envelope, style, {
@@ -544,12 +534,12 @@ const importListView: HumanView = withFailure((envelope, style) =>
 const removalHint = (reference: string, force: boolean) =>
   commandLine("import-remove", reference, ...(force ? ["--force"] : []), "--apply");
 
-const importRemoveView: HumanView = withFailure((envelope, style) => {
-  const plan = Option.getOrUndefined(decodeRemovalPlan(envelope.plan));
+const importRemoveView = withFailure<"import-remove">((envelope, payloads, style) => {
+  const plan = Option.getOrUndefined(payloads.plan);
   // An apply that only finished an interrupted removal carries no plan.
   if (plan === undefined && envelope.applied === null) return undefined;
   if (envelope.applied !== null) {
-    const applied = Option.getOrUndefined(decodeRemovalApplication(envelope.applied));
+    const applied = Option.getOrUndefined(payloads.applied);
     if (applied === undefined) return undefined;
     return frameView(envelope, style, {
       scope: "applied",

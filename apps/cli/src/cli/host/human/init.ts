@@ -1,7 +1,7 @@
-import { Option, Schema } from "effect";
+import { Option } from "effect";
 import type { ReconciliationApplyResult } from "../../../domain/reconciliation/reconciliation-application-schema.ts";
 import type { ReconciliationUnitPlan } from "../../../domain/reconciliation/reconciliation-schema.ts";
-import {
+import type {
   InitApplicationSchema,
   InitPlanSchema,
 } from "../../../domain/setup/machine-init-schema.ts";
@@ -21,9 +21,6 @@ import {
   sections,
   withoutPayload,
 } from "./view.ts";
-
-const decodePlan = Schema.decodeUnknownOption(InitPlanSchema);
-const decodeApplied = Schema.decodeUnknownOption(InitApplicationSchema);
 
 type InitPlan = typeof InitPlanSchema.Type;
 type InitApplication = typeof InitApplicationSchema.Type;
@@ -105,10 +102,10 @@ const nextCommands = (plan: InitPlan, applied: InitApplication, attention: numbe
  * `tack init`: what setting up this machine wrote, the agents it found, the user links in the same
  * rows as `sync`, the hand-made entries it leaves alone, and what to run next.
  */
-export const renderInit: HumanView = (envelope, style) => {
+export const renderInit: HumanView<"machine-init"> = (envelope, payloads, style) => {
   if (envelope.plan === null) return withoutPayload(envelope, undefined, style);
-  const plan = Option.getOrUndefined(decodePlan(envelope.plan));
-  const applied = Option.getOrUndefined(decodeApplied(envelope.applied));
+  const plan = Option.getOrUndefined(payloads.plan);
+  const applied = Option.getOrUndefined(payloads.applied);
   if (plan === undefined || applied === undefined) return undefined;
   const resources = plan.user.resources;
   const units = resources?.units ?? [];

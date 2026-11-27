@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { lookUpDocsIcons } from "../../../features/reader/icon-lookup.ts";
 import { docsIconsOutcome } from "../outcomes.ts";
 import { createPublicEnvelope } from "../public-outcome.ts";
-import { docsIconsView } from "./run-icons.ts";
+import { renderDedicated } from "./render.ts";
 import { makeStyle } from "./style.ts";
 
 const style = makeStyle({ color: false, homeDirectory: "/home/me", width: 100 });
 const view = (word: string | undefined) =>
-  docsIconsView(
+  renderDedicated(
     createPublicEnvelope("docs icons", docsIconsOutcome(lookUpDocsIcons(word))),
     style,
   ) ?? "";

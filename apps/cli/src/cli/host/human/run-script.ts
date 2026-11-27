@@ -4,7 +4,6 @@ import {
   type OperatorRunResult,
   type RunFailure,
   RunFailureSchema,
-  RunResultSchema,
 } from "../../../domain/execution/execution-schema.ts";
 import { commandLine } from "../command-line.ts";
 import { frameView, isRecord } from "./frame.ts";
@@ -21,7 +20,6 @@ import type { Style } from "./style.ts";
 import { cell, paragraph, truncate } from "./text.ts";
 import { type FactRow, factRows, plural } from "./view.ts";
 
-const decodeRun = Schema.decodeUnknownOption(RunResultSchema);
 const decodeFailure = Schema.decodeUnknownOption(RunFailureSchema);
 
 export const markOf = (classification: RunFailure["classification"]) =>
@@ -146,10 +144,10 @@ const runOutcomeBeforeHistory = (result: OperatorRunResult): RunFailure | undefi
 };
 
 /** One script run: outcome and stage, finalization, history status, value and log limits. */
-export const scriptRunView: HumanView = (envelope, style) => {
+export const scriptRunView: HumanView<"script-run"> = (envelope, payloads, style) => {
   if (envelope.result === null) return withoutPayload(envelope, style);
-  const result = Option.getOrUndefined(decodeRun(envelope.result));
-  if (result === undefined) return undefined;
+  if (Option.isNone(payloads.result) === true) return undefined;
+  const result = payloads.result.value;
 
   const { outcome } = result;
   const reported = envelope.diagnostics.some(

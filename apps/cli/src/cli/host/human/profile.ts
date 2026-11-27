@@ -1,12 +1,9 @@
 import { Option, Schema } from "effect";
 import type { ProfileCheckReport } from "../../../domain/profiles/profile-schema.ts";
 import type { Style } from "./style.ts";
+import type { PublicEnvelope } from "../public-outcome.ts";
 import type { HumanView } from "./render.ts";
-import {
-  ProfileApplyPlanSchema,
-  ProfileDeliveryApplicationSchema,
-} from "../../../features/profiles/profile-apply.ts";
-import { BundleApplyPlanSchema } from "../../../features/profiles/bundle-apply.ts";
+import { ProfileDeliveryApplicationSchema } from "../../../features/profiles/profile-apply.ts";
 import {
   deliveryMemberName,
   skipNote,
@@ -73,10 +70,6 @@ export const profileCheckLines = (
   ]),
 ];
 
-const decodeApplyPlan = Schema.decodeUnknownOption(
-  Schema.Union([ProfileApplyPlanSchema, BundleApplyPlanSchema]),
-);
-
 /**
  * The sync plan a profile application carries and the sync it applied, as its payload publishes
  * them. A refused application carries no sync plan.
@@ -101,7 +94,7 @@ const decodeDelivery = Schema.decodeUnknownOption(
  * adapter and target with each destination relative to that target, then the docs links.
  */
 const deliverySections = (
-  envelope: Parameters<HumanView>[0],
+  envelope: PublicEnvelope,
   style: Style,
 ): ReadonlyArray<ReadonlyArray<string>> => {
   const decoded = decodeDelivery({
@@ -176,10 +169,13 @@ const skippedSections = (
   ]);
 
 /** Renders fixed intent, physical destinations and the ownership-safe delivery diff. */
-export const renderProfileApply: HumanView = (envelope, base) => {
-  const decoded = decodeApplyPlan(envelope.plan);
-  if (Option.isNone(decoded)) return undefined;
-  const report = decoded.value;
+export const renderProfileApply: HumanView<"profile-apply" | "profile-apply-bundle"> = (
+  envelope,
+  payloads,
+  base,
+) => {
+  if (Option.isNone(payloads.plan)) return undefined;
+  const report = payloads.plan.value;
   const style =
     report.kind === "profile-apply" || report.bundle === undefined
       ? base

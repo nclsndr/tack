@@ -10,6 +10,7 @@ import {
   styleOf,
 } from "./human.test-support.ts";
 import { inspectionViews } from "./inspection-views.ts";
+import { renderDedicated } from "./render.ts";
 import { commandNameOf } from "../../commands/index.ts";
 import { createPublicEnvelope, type PublicEnvelope } from "../public-outcome.ts";
 import { docsListOutcome, projectsOutcome, resultOutcome, sourcesOutcome } from "../outcomes.ts";
@@ -600,7 +601,7 @@ describe("undecodable payloads", () => {
       const command = commandNameOf(tag);
       for (const payload of [{ unexpected: true }, [], null]) {
         const envelope = createPublicEnvelope(command, resultOutcome(payload));
-        expect(inspectionViews[tag](envelope, styleOf()), command).toBeUndefined();
+        expect(renderDedicated(envelope, styleOf(), inspectionViews), command).toBeUndefined();
         expect(render(envelope)).toContain(`tack ${command}`);
       }
     }

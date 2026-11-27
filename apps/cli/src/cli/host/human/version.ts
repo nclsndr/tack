@@ -1,15 +1,12 @@
-import { Option, Schema } from "effect";
-import { VersionReportSchema } from "../../../version.ts";
+import { Option } from "effect";
 import type { HumanView } from "./render.ts";
 import { cell } from "./text.ts";
 import { factRows, headerLines, sections } from "./view.ts";
 
-const decodeReport = Schema.decodeUnknownOption(VersionReportSchema);
-
 /** Shows the running version, its commit, and whether it is a source run or a release. */
-export const renderVersion: HumanView = (envelope, style) => {
-  const report = Option.getOrUndefined(decodeReport(envelope.result));
-  if (report === undefined) return undefined;
+export const renderVersion: HumanView<"version"> = (envelope, { result }, style) => {
+  if (Option.isNone(result) === true) return undefined;
+  const report = result.value;
   return sections(
     headerLines(envelope, undefined, style),
     factRows(

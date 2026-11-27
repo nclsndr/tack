@@ -1,21 +1,10 @@
 import type { DocsResourceReference as Reference } from "../../../domain/docs/docs-schema.ts";
-import {
-  DocsListPayloadSchema,
-  DocsTargetPayloadSchema,
-  type DocsList,
-} from "../../../features/docs/docs.ts";
+import type { DocsList } from "../../../features/docs/docs.ts";
 import type { HumanViewRegistry } from "./render.ts";
 import type { Style } from "./style.ts";
 import { cell, paragraph } from "./text.ts";
 import { factRows, headingLines, plural } from "./view.ts";
-import {
-  decoderFor,
-  type Entry,
-  entryLines,
-  facts,
-  indented,
-  resultView,
-} from "./inspection-support.ts";
+import { type Entry, entryLines, facts, indented, resultView } from "./inspection-support.ts";
 import { commandLine } from "../command-line.ts";
 
 const referenceText = (resource: Reference, style: Style) =>
@@ -58,7 +47,7 @@ const docsListHints = (
 const writingMark = (resource: Reference, writing: Reference | undefined, style: Style) =>
   sameResource(resource, writing) ? [`    ${style.cyan("default writing resource")}`] : [];
 
-const docsListView = resultView(decoderFor(DocsListPayloadSchema), (docs, _envelope, style) => {
+const docsListView = resultView<"docs-list">((docs, _envelope, style) => {
   const { project, resources, issues, settings } = docs;
   const writing = settings.defaultWritingResource;
   const resourceEntries = resources.map((resource): Entry => ({
@@ -191,27 +180,24 @@ const docsListView = resultView(decoderFor(DocsListPayloadSchema), (docs, _envel
   };
 });
 
-const docsTargetView = resultView(
-  decoderFor(DocsTargetPayloadSchema),
-  (target, _envelope, style) => ({
-    scope: `project ${target.projectName}`,
-    body: [
-      [
-        style.bold("Verified writing target"),
-        ...factRows(
-          [
-            ["mount", [cell(style.path(target.destinationPath))]],
-            ["resource", [cell(referenceText(target.resource, style))]],
-            ["source", [cell(style.source(target.resource.sourceRegistrationId))]],
-            ["docs directory", [cell(style.path(target.sourceDirectoryPath))]],
-            ["project root", [cell(style.path(target.root))]],
-          ],
-          style,
-        ),
-      ],
+const docsTargetView = resultView<"docs-target">((target, _envelope, style) => ({
+  scope: `project ${target.projectName}`,
+  body: [
+    [
+      style.bold("Verified writing target"),
+      ...factRows(
+        [
+          ["mount", [cell(style.path(target.destinationPath))]],
+          ["resource", [cell(referenceText(target.resource, style))]],
+          ["source", [cell(style.source(target.resource.sourceRegistrationId))]],
+          ["docs directory", [cell(style.path(target.sourceDirectoryPath))]],
+          ["project root", [cell(style.path(target.root))]],
+        ],
+        style,
+      ),
     ],
-  }),
-);
+  ],
+}));
 
 /** Docs list and docs target views. */
 export const docsViews = {

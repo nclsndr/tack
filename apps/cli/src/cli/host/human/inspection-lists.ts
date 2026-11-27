@@ -3,12 +3,10 @@ import {
   type SkillChoice,
 } from "../../../domain/choices/choice-schema.ts";
 import { AgentAdapterIdSchema } from "../../../domain/agents/agent-adapter-schema.ts";
-import { ChoiceListPayloadSchema } from "../../../features/choices/choice.ts";
-import { AdapterListPayloadSchema } from "../../../features/reconciliation/agent.ts";
 import type { HumanViewRegistry } from "./render.ts";
 import { cell, paragraph, table } from "./text.ts";
 import { addressText, factRows, headingLines, plural } from "./view.ts";
-import { decoderFor, resultView } from "./inspection-support.ts";
+import { resultView } from "./inspection-support.ts";
 import { commandLine } from "../command-line.ts";
 
 const namespaceTitle = (namespace: SkillChoice["namespace"]) =>
@@ -26,40 +24,36 @@ const groupByNamespace = (choices: ReadonlyArray<SkillChoice>) => {
   return [...groups.values()];
 };
 
-const choiceListView = resultView(
-  decoderFor(ChoiceListPayloadSchema),
-  ({ choices }, _envelope, style) => {
-    const groups = groupByNamespace(choices);
-    const [first] = groups;
-    return {
-      scope: plural(choices.length, "choice"),
-      body:
-        groups.length === 0
-          ? [paragraph("No choices are stored.", { width: style.width })]
-          : groups.map(({ namespace, choices: members }) => [
-              ...headingLines(namespaceTitle(namespace), plural(members.length, "choice"), style),
-              ...table(
-                members.map((choice) => [
-                  cell(choice.decision === "include" ? "+ include" : "− exclude"),
-                  cell(addressText(choice.address, style)),
-                ]),
-                { width: style.width },
-              ),
-            ]),
-      hints:
-        first === undefined
-          ? [commandLine("catalog")]
-          : [
-              first.namespace._tag === "project"
-                ? commandLine("sync", "--project", first.namespace.projectName)
-                : commandLine("sync", "--user"),
-            ],
-    };
-  },
-);
+const choiceListView = resultView<"pick-list">(({ choices }, _envelope, style) => {
+  const groups = groupByNamespace(choices);
+  const [first] = groups;
+  return {
+    scope: plural(choices.length, "choice"),
+    body:
+      groups.length === 0
+        ? [paragraph("No choices are stored.", { width: style.width })]
+        : groups.map(({ namespace, choices: members }) => [
+            ...headingLines(namespaceTitle(namespace), plural(members.length, "choice"), style),
+            ...table(
+              members.map((choice) => [
+                cell(choice.decision === "include" ? "+ include" : "− exclude"),
+                cell(addressText(choice.address, style)),
+              ]),
+              { width: style.width },
+            ),
+          ]),
+    hints:
+      first === undefined
+        ? [commandLine("catalog")]
+        : [
+            first.namespace._tag === "project"
+              ? commandLine("sync", "--project", first.namespace.projectName)
+              : commandLine("sync", "--user"),
+          ],
+  };
+});
 
-const adapterListView = resultView(
-  decoderFor(AdapterListPayloadSchema),
+const adapterListView = resultView<"adapter-list">(
   ({ enabledAdapters: enabled }, _envelope, style) => {
     const known = AgentAdapterIdSchema.literals;
     const disabled = known.filter((adapter) => !enabled.includes(adapter));

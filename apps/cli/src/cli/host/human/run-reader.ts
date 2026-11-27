@@ -1,8 +1,6 @@
 import { maximumSearchLimit } from "@tackup/reader/search-core";
-import { Option, Schema } from "effect";
+import { Option } from "effect";
 import type { DocsResourceReference } from "../../../domain/docs/docs-schema.ts";
-import { ReaderSearchPayloadSchema } from "../../../features/reader/search.ts";
-import { ReaderSessionPayloadSchema } from "../../../features/reader/session.ts";
 import { commandLine } from "../command-line.ts";
 import { frameView } from "./frame.ts";
 import type { HumanView } from "./render.ts";
@@ -11,14 +9,11 @@ import type { Style } from "./style.ts";
 import { cell, flow, paragraph, truncate, wrapText } from "./text.ts";
 import { type FactRow, factRows, plural } from "./view.ts";
 
-const decodeStarted = Schema.decodeUnknownOption(ReaderSessionPayloadSchema);
-const decodeSearch = Schema.decodeUnknownOption(ReaderSearchPayloadSchema);
-
 /** Startup readiness: the URL the reader serves on, written once when it is ready. */
-export const readerView: HumanView = (envelope, style) => {
+export const readerView: HumanView<"docs-serve"> = (envelope, { result }, style) => {
   if (envelope.result === null) return withoutPayload(envelope, style);
-  const started = Option.getOrUndefined(decodeStarted(envelope.result));
-  if (started === undefined) return undefined;
+  if (Option.isNone(result) === true) return undefined;
+  const started = result.value;
   return frameView(envelope, style, {
     scope: started.project.name,
     body: [
@@ -56,10 +51,10 @@ const referenceText = (
   }`;
 
 /** Search hits with their resource and file location, the total, and the completeness of the search. */
-export const readerSearchView: HumanView = (envelope, style) => {
+export const readerSearchView: HumanView<"docs-search"> = (envelope, { result }, style) => {
   if (envelope.result === null) return withoutPayload(envelope, style);
-  const search = Option.getOrUndefined(decodeSearch(envelope.result));
-  if (search === undefined) return undefined;
+  if (Option.isNone(result) === true) return undefined;
+  const search = result.value;
 
   const { hits } = search;
   const resultsText =

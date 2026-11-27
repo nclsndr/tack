@@ -1,6 +1,5 @@
 import { expect, it } from "vitest";
-import { renderHuman } from "../src/cli/host/human/render.ts";
-import { runViews } from "../src/cli/host/human/run-views.ts";
+import { renderDedicated, renderHuman } from "../src/cli/host/human/render.ts";
 import { makeStyle } from "../src/cli/host/human/style.ts";
 import { ScriptShowPayloadSchema } from "../src/domain/execution/execution-schema.ts";
 import { resultAs, resultOutcome } from "../src/cli/host/outcomes.ts";
@@ -74,7 +73,7 @@ it("names a camel-case argument's placeholder in upper snake case", () => {
 
 it("declines an undecodable payload and frames a failure without one", () => {
   expect(
-    runViews["script-show"](
+    renderDedicated(
       createPublicEnvelope("script show", resultOutcome({ kind: "script-show" })),
       style,
     ),

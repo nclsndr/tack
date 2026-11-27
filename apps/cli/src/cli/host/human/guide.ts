@@ -1,13 +1,9 @@
-import { Option, Schema } from "effect";
-import { GuideIndexSchema, GuideSchema } from "../../../domain/guides/guide-schema.ts";
+import { Option } from "effect";
 import { commandLine } from "../command-line.ts";
 import type { HumanView } from "./render.ts";
 import type { Style } from "./style.ts";
 import { cell, flow, paragraph, table } from "./text.ts";
 import { headerLines, hintLines, sections, withoutPayload } from "./view.ts";
-
-const decodeGuide = Schema.decodeUnknownOption(GuideSchema);
-const decodeIndex = Schema.decodeUnknownOption(GuideIndexSchema);
 
 /**
  * Tells the reader to read every line, and how to print the lines a tool cut from a long output.
@@ -31,10 +27,11 @@ const readAllLines = (topic: string, lineCount: number, style: Style) => [
  * TOPIC`: the guide as it ships, after a header that names the running version. The guide keeps its
  * own line breaks at any width, so that what an agent reads is the file the skill reads.
  */
-export const renderGuide: HumanView = (envelope, style) => {
+export const renderGuide: HumanView<"guide"> = (envelope, { result }, style) => {
   if (envelope.result === null) return withoutPayload(envelope, undefined, style);
-  const guide = Option.getOrUndefined(decodeGuide(envelope.result));
-  if (guide !== undefined) {
+  if (Option.isNone(result) === true) return undefined;
+  const guide = result.value;
+  if (guide.kind === "guide") {
     const lines = guide.markdown.replace(/\n$/, "").split("\n");
     return sections(
       headerLines(envelope, `${guide.topic} · tack ${guide.version}`, style),
@@ -42,14 +39,12 @@ export const renderGuide: HumanView = (envelope, style) => {
       lines,
     );
   }
-  const index = Option.getOrUndefined(decodeIndex(envelope.result));
-  if (index === undefined) return undefined;
   return sections(
     headerLines(envelope, undefined, style),
     [
       style.bold("Guides"),
       ...table(
-        index.guides.map(({ topic, title }) => [cell(topic), cell(title)]),
+        guide.guides.map(({ topic, title }) => [cell(topic), cell(title)]),
         { width: style.width },
       ),
     ],

@@ -1,7 +1,7 @@
-import { Option, Schema } from "effect";
-import { HelpPayloadSchema } from "../../commands/index.ts";
+import { Option } from "effect";
+import type { HelpPayloadSchema } from "../../commands/index.ts";
 import { argvLine } from "../command-line.ts";
-import type { PublicEnvelope } from "../public-outcome.ts";
+import type { HumanView } from "./render.ts";
 import type { Style } from "./style.ts";
 import { mapModes, mapModeWords, operationMap } from "./help-map.ts";
 import { cell, flow, paragraph, table, type Cell } from "./text.ts";
@@ -13,8 +13,6 @@ import {
   sections,
   withoutPayload,
 } from "./view.ts";
-
-const decodeHelp = Schema.decodeUnknownOption(HelpPayloadSchema);
 
 type Help = typeof HelpPayloadSchema.Type;
 
@@ -116,8 +114,8 @@ const noteBlocks = (help: Help, style: Style): ReadonlyArray<ReadonlyArray<strin
   ]);
 
 /** Renders `help` and `--help` as a one-screen summary of a command path. */
-export const renderHelp = (envelope: PublicEnvelope, style: Style): string | undefined =>
-  Option.match(decodeHelp(envelope.result), {
+export const renderHelp: HumanView<"help"> = (envelope, { result }, style) =>
+  Option.match(result, {
     onNone: () => withoutPayload(envelope, undefined, style),
     onSome: (help) => {
       const ownFlags = help.flags.filter(({ name }) => !rootFlagNames.includes(name));

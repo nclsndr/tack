@@ -2,28 +2,27 @@ import { Schema } from "effect";
 import { describe, expect, it } from "vitest";
 import { agentAdapterIds } from "../../../domain/agents/agent-adapter.ts";
 import { HelpPayloadSchema } from "../../commands/index.ts";
-import { renderCheck } from "./check.ts";
-import { renderDoctor } from "./doctor.ts";
-import { renderHelp } from "./help.ts";
 import { envelopeOf, flat, hintRecorder, humanFixture, plainStyle } from "./human.test-support.ts";
-import { listViews } from "./inspection-lists.ts";
-import { mutationViews } from "./mutation-views.ts";
+import { renderDedicated } from "./render.ts";
 import { diagnosticLines } from "./view.ts";
-import { docsIconsView } from "./run-icons.ts";
 import { period } from "./run-text.ts";
 import { withReferences } from "./style.ts";
-import { renderSync } from "./sync.ts";
 import { displayWidth, truncate } from "./text.ts";
 
 const sourceId = "00000000-0000-4000-8000-000000000001";
 
-describe("check view", () => {
-  it("declines a result it cannot decode", () => {
-    expect(
-      renderCheck(envelopeOf({ command: "check", result: { kind: "other" } }), plainStyle),
-    ).toBe(undefined);
-  });
+describe("dedicated result views", () => {
+  it.each(["check", "doctor", "upgrade", "upgrade status"])(
+    "%s declines a result it cannot decode",
+    (command) => {
+      expect(renderDedicated(envelopeOf({ command, result: { kind: "other" } }), plainStyle)).toBe(
+        undefined,
+      );
+    },
+  );
+});
 
+describe("check view", () => {
   const finding = {
     code: "skill-name-mismatch",
     severity: "error",
@@ -35,7 +34,7 @@ describe("check view", () => {
     { findings: [], loop: false },
     { findings: [finding], loop: true },
   ])("asks to repeat until clean only while findings remain: $loop", ({ findings, loop }) => {
-    const text = renderCheck(
+    const text = renderDedicated(
       envelopeOf({
         command: "check",
         result: {
@@ -72,7 +71,7 @@ describe("doctor view", () => {
   };
 
   it("says no problems were found and counts what was skipped", () => {
-    const text = renderDoctor(
+    const text = renderDedicated(
       envelopeOf({
         command: "doctor",
         result: report([
@@ -91,7 +90,7 @@ describe("doctor view", () => {
 
   it("lists a warning without a command and no checked section when every check needs a look", () => {
     const { hints, style } = hintRecorder();
-    const text = renderDoctor(
+    const text = renderDedicated(
       envelopeOf({
         command: "doctor",
         result: report([{ id: "links", outcome: "warning", message: "A link drifted." }]),
@@ -104,12 +103,6 @@ describe("doctor view", () => {
     expect(text).toContain("Problems");
     expect(text).not.toContain("Checked");
     expect(hints).toEqual([]);
-  });
-
-  it("declines a result it cannot decode", () => {
-    expect(
-      renderDoctor(envelopeOf({ command: "doctor", result: { kind: "other" } }), plainStyle),
-    ).toBe(undefined);
   });
 });
 
@@ -161,7 +154,7 @@ describe("help view", () => {
     const result = Schema.decodeUnknownSync(HelpPayloadSchema)(
       humanFixture("help-choice-set").result,
     );
-    const text = renderHelp(
+    const text = renderDedicated(
       envelopeOf({
         command: "help",
         result: {
@@ -192,7 +185,7 @@ describe("help view", () => {
     const result = Schema.decodeUnknownSync(HelpPayloadSchema)(
       humanFixture("help-choice-set").result,
     );
-    const text = renderHelp(
+    const text = renderDedicated(
       envelopeOf({
         command: "help",
         result: {
@@ -216,7 +209,7 @@ describe("help view", () => {
       const result = Schema.decodeUnknownSync(HelpPayloadSchema)(
         humanFixture("help-choice-set").result,
       );
-      const text = renderHelp(
+      const text = renderDedicated(
         envelopeOf({
           command: "help",
           result: {
@@ -239,7 +232,7 @@ describe("help view", () => {
 
 describe("docs icons view", () => {
   it("shows a failure without a payload", () => {
-    const failure = docsIconsView(
+    const failure = renderDedicated(
       envelopeOf({
         command: "docs icons",
         classification: "invalid-invocation",
@@ -253,7 +246,7 @@ describe("docs icons view", () => {
 
 describe("docs icons lookup", () => {
   it("lists an icon that was never renamed by its name alone", () => {
-    const text = docsIconsView(
+    const text = renderDedicated(
       envelopeOf({
         command: "docs icons",
         result: {
@@ -294,9 +287,8 @@ describe("display width", () => {
 
 describe("adapter list view", () => {
   it("lists no disabled adapters when all are on", () => {
-    const view = listViews["adapter-list"];
     const { hints, style } = hintRecorder();
-    const text = view(
+    const text = renderDedicated(
       envelopeOf({
         command: "adapter",
         result: {
@@ -316,9 +308,8 @@ describe("adapter list view", () => {
 
 describe("mutation failure hints", () => {
   it("offers no command when a failure's details cannot be read", () => {
-    const view = mutationViews["adapter-set"];
     const { hints, style } = hintRecorder();
-    const text = view(
+    const text = renderDedicated(
       envelopeOf({
         command: "adapter enable",
         classification: "domain",
@@ -353,7 +344,7 @@ describe("references", () => {
 describe("sync view", () => {
   it("says no docs mounts are attached when a docs-only sync has nothing to plan", () => {
     expect(
-      renderSync(
+      renderDedicated(
         envelopeOf({ command: "sync", plan: { kind: "sync-plan", resources: null, docs: [] } }),
         plainStyle,
       ),

@@ -2,27 +2,16 @@ import { projectLifecycle } from "../../../domain/projects/project-schema.ts";
 import type { DeclarationFacts } from "../../../domain/sources/declaration-facts.ts";
 import { resourceKinds } from "../../../domain/resources/kinds.ts";
 import {
-  SourceListPayloadSchema,
   sourceLoadsNothing,
   type SourceImportFacts,
   type SourceListEntry,
 } from "../../../features/imports/import-display.ts";
-import {
-  ProjectInspectionsPayloadSchema,
-  type ProjectInspection,
-} from "../../../features/projects/project.ts";
+import type { ProjectInspection } from "../../../features/projects/project.ts";
 import type { HumanViewRegistry } from "./render.ts";
 import type { Style } from "./style.ts";
 import { cell, paragraph, tableRows } from "./text.ts";
 import { headingLines, needAttention, plural } from "./view.ts";
-import {
-  decoderFor,
-  type Entry,
-  entryLines,
-  facts,
-  indented,
-  resultView,
-} from "./inspection-support.ts";
+import { type Entry, entryLines, facts, indented, resultView } from "./inspection-support.ts";
 import { commandLine } from "../command-line.ts";
 
 const issueLine = (
@@ -139,45 +128,42 @@ const sourceEntry = (source: SourceListEntry, style: Style): Entry => {
   };
 };
 
-const sourceInspectView = resultView(
-  decoderFor(SourceListPayloadSchema),
-  ({ sources }, _envelope, style) => {
-    const unhealthy = sources.filter(({ status }) => status === "unhealthy").length;
-    const broken = sources.filter(sourceLoadsNothing);
-    const healthy = sources.length - unhealthy - broken.length;
-    return {
-      scope: plural(sources.length, "source"),
-      body: [
-        sources.length === 0
-          ? paragraph("No sources are registered.", { width: style.width })
-          : [
-              ...headingLines(
-                "Sources",
-                healthy === sources.length
-                  ? "all healthy"
-                  : [
-                      `${healthy} healthy`,
-                      ...(broken.length === 0 ? [] : [`${broken.length} broken`]),
-                      ...(unhealthy === 0 ? [] : [`${unhealthy} unhealthy`]),
-                    ].join(" · "),
-                style,
-              ),
-              ...entryLines(
-                sources.map((source) => sourceEntry(source, style)),
-                style,
-              ),
-            ],
-      ],
-      hints:
-        sources.length === 0
-          ? []
-          : [
-              ...broken.map(({ registration }) => `tack check ${registration.canonicalPath}`),
-              commandLine("catalog"),
-            ],
-    };
-  },
-);
+const sourceInspectView = resultView<"source-list">(({ sources }, _envelope, style) => {
+  const unhealthy = sources.filter(({ status }) => status === "unhealthy").length;
+  const broken = sources.filter(sourceLoadsNothing);
+  const healthy = sources.length - unhealthy - broken.length;
+  return {
+    scope: plural(sources.length, "source"),
+    body: [
+      sources.length === 0
+        ? paragraph("No sources are registered.", { width: style.width })
+        : [
+            ...headingLines(
+              "Sources",
+              healthy === sources.length
+                ? "all healthy"
+                : [
+                    `${healthy} healthy`,
+                    ...(broken.length === 0 ? [] : [`${broken.length} broken`]),
+                    ...(unhealthy === 0 ? [] : [`${unhealthy} unhealthy`]),
+                  ].join(" · "),
+              style,
+            ),
+            ...entryLines(
+              sources.map((source) => sourceEntry(source, style)),
+              style,
+            ),
+          ],
+    ],
+    hints:
+      sources.length === 0
+        ? []
+        : [
+            ...broken.map(({ registration }) => `tack check ${registration.canonicalPath}`),
+            commandLine("catalog"),
+          ],
+  };
+});
 
 const rootMark = (status: "active" | "stale" | "unhealthy", style: Style) =>
   status === "active"
@@ -232,39 +218,36 @@ const projectEntry = ({ anchor, project, roots }: ProjectInspection, style: Styl
   };
 };
 
-const projectInspectView = resultView(
-  decoderFor(ProjectInspectionsPayloadSchema),
-  ({ projects }, _envelope, style) => {
-    const attention = projects.filter(needsAttention);
-    const [firstAttention] = attention;
-    return {
-      scope: plural(projects.length, "project"),
-      body: [
-        projects.length === 0
-          ? paragraph("No projects are registered.", { width: style.width })
-          : [
-              ...headingLines(
-                "Projects",
-                attention.length === 0
-                  ? "all healthy"
-                  : `${projects.length - attention.length} healthy · ${needAttention(attention.length)}`,
-                style,
-              ),
-              ...entryLines(
-                projects.map((project) => projectEntry(project, style)),
-                style,
-              ),
-            ],
-      ],
-      hints:
-        firstAttention === undefined
-          ? projects.length === 0
-            ? []
-            : [commandLine("status")]
-          : [commandLine("project-refresh", "--project", firstAttention.project.name)],
-    };
-  },
-);
+const projectInspectView = resultView<"project-list">(({ projects }, _envelope, style) => {
+  const attention = projects.filter(needsAttention);
+  const [firstAttention] = attention;
+  return {
+    scope: plural(projects.length, "project"),
+    body: [
+      projects.length === 0
+        ? paragraph("No projects are registered.", { width: style.width })
+        : [
+            ...headingLines(
+              "Projects",
+              attention.length === 0
+                ? "all healthy"
+                : `${projects.length - attention.length} healthy · ${needAttention(attention.length)}`,
+              style,
+            ),
+            ...entryLines(
+              projects.map((project) => projectEntry(project, style)),
+              style,
+            ),
+          ],
+    ],
+    hints:
+      firstAttention === undefined
+        ? projects.length === 0
+          ? []
+          : [commandLine("status")]
+        : [commandLine("project-refresh", "--project", firstAttention.project.name)],
+  };
+});
 
 /** Source and project inspection views. */
 export const sourceInspectionViews = {

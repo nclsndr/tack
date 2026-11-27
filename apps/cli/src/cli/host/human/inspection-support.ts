@@ -1,15 +1,11 @@
-import { Option, Schema } from "effect";
+import { Option } from "effect";
+import type { DeclaredPayload } from "../../commands/declarations.ts";
+import type { Invocation } from "../../commands/index.ts";
 import type { PublicEnvelope } from "../public-outcome.ts";
 import { frameView } from "./frame.ts";
 import type { HumanView } from "./render.ts";
 import type { Style } from "./style.ts";
 import { cell, paragraph, table, tableRows, type Cell } from "./text.ts";
-
-/** Decodes an unknown envelope slot, returning `undefined` when the payload has another shape. */
-export const decoderFor = <S extends Schema.ConstraintDecoder<unknown>>(schema: S) => {
-  const decode = Schema.decodeUnknownOption(schema);
-  return (value: unknown): S["Type"] | undefined => Option.getOrUndefined(decode(value));
-};
 
 /** Plain sentences wrapped to the terminal width at `indent`; long tokens break at `/ - _`. */
 export const indented = (text: string, indent: number, style: Style): ReadonlyArray<string> =>
@@ -62,17 +58,19 @@ export type ViewParts = {
  * payload of another shape returns `undefined`, which selects the generic view.
  */
 export const resultView =
-  <T>(
-    decode: (value: unknown) => T | undefined,
-    parts: (payload: T, envelope: PublicEnvelope, style: Style) => ViewParts,
-  ): HumanView =>
-  (envelope, style) => {
+  <Tag extends Invocation["_tag"]>(
+    parts: (
+      payload: DeclaredPayload<Tag, "result">,
+      envelope: PublicEnvelope,
+      style: Style,
+    ) => ViewParts,
+  ): HumanView<Tag> =>
+  (envelope, { result }, style) => {
     if (envelope.result === null)
       return envelope.status === "failure"
         ? frameView(envelope, style, { body: [], hints: envelope.next })
         : undefined;
-    const payload = decode(envelope.result);
-    if (payload === undefined) return undefined;
-    const { scope, body, hints = [] } = parts(payload, envelope, style);
+    if (Option.isNone(result) === true) return undefined;
+    const { scope, body, hints = [] } = parts(result.value, envelope, style);
     return frameView(envelope, style, { ...(scope === undefined ? {} : { scope }), body, hints });
   };

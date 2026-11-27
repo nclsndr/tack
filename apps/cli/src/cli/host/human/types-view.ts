@@ -1,5 +1,5 @@
-import { Option, Schema } from "effect";
-import { TypesPlanSchema } from "../../../features/execution/script-types.ts";
+import { Option } from "effect";
+import type { TypesPlanSchema } from "../../../features/execution/script-types.ts";
 import { commandLine } from "../command-line.ts";
 import { frameView } from "./frame.ts";
 import type { HumanView } from "./render.ts";
@@ -7,7 +7,6 @@ import { withoutPayload } from "./run-text.ts";
 import { cell, table } from "./text.ts";
 import { factRows } from "./view.ts";
 
-const decodePlan = Schema.decodeUnknownOption(TypesPlanSchema);
 type Action = (typeof TypesPlanSchema.Type)["files"][number]["action"];
 
 const planned: Record<Action, string> = {
@@ -24,9 +23,9 @@ const done: Record<Action, string> = {
 };
 
 /** The editor types `tack types` would write, or wrote, into one source folder. */
-export const typesView: HumanView = (envelope, style) => {
+export const typesView: HumanView<"types"> = (envelope, payloads, style) => {
   const applied = envelope.applied !== null;
-  const plan = Option.getOrUndefined(decodePlan(applied ? envelope.applied : envelope.plan));
+  const plan = Option.getOrUndefined(applied ? payloads.applied : payloads.plan);
   if (plan === undefined) return withoutPayload(envelope, style);
   const writes = plan.files.some(({ action }) => action === "create" || action === "update");
   return frameView(envelope, style, {

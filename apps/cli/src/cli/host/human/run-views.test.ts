@@ -2,6 +2,7 @@ import { searchDocuments, type ReaderDocument } from "@tackup/reader/search-core
 import { expect, it } from "@effect/vitest";
 import { Effect, Record, type Schema } from "effect";
 import { expectViewContract, flat, lines, renderView, styleOf } from "./human.test-support.ts";
+import { renderDedicated } from "./render.ts";
 import { runViews } from "./run-views.ts";
 import { commandNameOf } from "../../commands/index.ts";
 import {
@@ -737,7 +738,7 @@ it("returns undefined for an undecodable payload so the generic view is used", (
     const command = commandNameOf(tag);
     for (const payload of [{ unexpected: true }, { runId: otherRunId }, [], null]) {
       const envelope = createPublicEnvelope(command, resultOutcome(payload));
-      expect(runViews[tag](envelope, styleOf(terminal)), command).toBeUndefined();
+      expect(renderDedicated(envelope, styleOf(terminal), runViews), command).toBeUndefined();
       expect(render(envelope)).toContain(`tack ${command}`);
     }
   }

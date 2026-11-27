@@ -1,43 +1,23 @@
-import { Option, Schema } from "effect";
+import { Option } from "effect";
 import type {
   DocsLinkAction,
   DocsLinkApplication,
   DocsLinkOutcome,
   DocsLinkReport,
 } from "../../../domain/docs/docs-schema.ts";
-import {
-  AdapterDisablementPlanSchema,
-  AdapterDisablementResultSchema,
-} from "../../../features/maintenance/adapter-disablement.ts";
-import {
-  SourceRemovalPlanSchema,
-  SourceRemovalResultSchema,
-  type SourceRemovalPlan,
-} from "../../../features/maintenance/source-removal.ts";
-import {
-  ProjectRemovalPlanSchema,
-  ProjectRemovalResultSchema,
-} from "../../../features/maintenance/project-removal.ts";
+import type { SourceRemovalPlan } from "../../../features/maintenance/source-removal.ts";
 import type {
   DroppedDocsAttachment,
   DroppedPick,
 } from "../../../domain/reconciliation/dropped-intent-schema.ts";
-import {
-  ProjectRefreshCommandPlanSchema,
-  ProjectRefreshCommandResultSchema,
-  type ProjectRefreshChange,
-  type ProjectRefreshProject,
+import type {
+  ProjectRefreshChange,
+  ProjectRefreshProject,
 } from "../../../features/refresh/project-refresh-schema.ts";
-import {
-  RemovalResultSchema,
-  type RemovalPlan,
-  type RemovalResult,
-} from "../../../domain/reconciliation/removal-schema.ts";
-import {
-  HistoryClearApplicationSchema,
-  HistoryClearPlanSchema,
-} from "../../../features/execution/execution.ts";
-import { SelectedRemovalPlanSchema } from "../../../features/maintenance/selected-removal.ts";
+import type { RemovalPlan, RemovalResult } from "../../../domain/reconciliation/removal-schema.ts";
+import type { SelectedRemovalPlanSchema } from "../../../features/maintenance/selected-removal.ts";
+import type { DeclaredPayload } from "../../commands/declarations.ts";
+import type { Invocation } from "../../commands/index.ts";
 import type { PublicEnvelope } from "../public-outcome.ts";
 import { commandLine, selectorFlags } from "../command-line.ts";
 import { frameView } from "./frame.ts";
@@ -67,43 +47,34 @@ import type { Style } from "./style.ts";
 import { cell, flow, paragraph, type Paint } from "./text.ts";
 import { headingLines, namespaceText, plural } from "./view.ts";
 
-// Decoding
+// The view builder
 
-/** The decoded payload slots of a preview/apply envelope. */
-type Slots<Plan, Applied> = { readonly plan: Plan; readonly applied: Applied | undefined };
+/** The decoded plan of a preview/apply envelope, and its application once applied. */
+type Slots<Tag extends Invocation["_tag"]> = {
+  readonly plan: DeclaredPayload<Tag, "plan">;
+  readonly applied: DeclaredPayload<Tag, "applied"> | undefined;
+};
 
-/** Decodes the plan slot, and the applied slot when it is filled; either failing declines. */
-const decodeSlots = <Plan, Applied>(
-  envelope: PublicEnvelope,
-  decodePlan: (input: unknown) => Option.Option<Plan>,
-  decodeApplied: (input: unknown) => Option.Option<Applied>,
-): Option.Option<Slots<Plan, Applied>> =>
-  Option.flatMap(decodePlan(envelope.plan), (plan): Option.Option<Slots<Plan, Applied>> =>
-    envelope.applied === null
-      ? Option.some({ plan, applied: undefined })
-      : Option.map(decodeApplied(envelope.applied), (applied) => ({ plan, applied })),
-  );
-
-/** A failure carries no payload: it shows its diagnostics and the commands they name as the fix. */
-const withFailure =
-  (view: HumanView): HumanView =>
-  (envelope, style, details) =>
-    envelope.status === "failure" && envelope.plan === null && envelope.applied === null
-      ? frameView(envelope, style, { body: [], hints: envelope.next })
-      : view(envelope, style, details);
-
-const decodeSelectedRemovalPlan = Schema.decodeUnknownOption(SelectedRemovalPlanSchema);
-const decodeRemovalResult = Schema.decodeUnknownOption(RemovalResultSchema);
-const decodeAdapterPlan = Schema.decodeUnknownOption(AdapterDisablementPlanSchema);
-const decodeAdapterResult = Schema.decodeUnknownOption(AdapterDisablementResultSchema);
-const decodeSourcePlan = Schema.decodeUnknownOption(SourceRemovalPlanSchema);
-const decodeSourceResult = Schema.decodeUnknownOption(SourceRemovalResultSchema);
-const decodeProjectPlan = Schema.decodeUnknownOption(ProjectRemovalPlanSchema);
-const decodeProjectResult = Schema.decodeUnknownOption(ProjectRemovalResultSchema);
-const decodeRefreshPlan = Schema.decodeUnknownOption(ProjectRefreshCommandPlanSchema);
-const decodeRefreshResult = Schema.decodeUnknownOption(ProjectRefreshCommandResultSchema);
-const decodeHistoryPlan = Schema.decodeUnknownOption(HistoryClearPlanSchema);
-const decodeHistoryResult = Schema.decodeUnknownOption(HistoryClearApplicationSchema);
+/**
+ * Builds one preview/apply view. A failure carries no payload: it shows its diagnostics and the
+ * commands they name as the fix. Otherwise the plan must decode, and the application too when the
+ * slot is filled; either failing declines.
+ */
+const removalView =
+  <Tag extends Invocation["_tag"]>(
+    view: (slots: Slots<Tag>, envelope: PublicEnvelope, style: Style, details: boolean) => string,
+  ): HumanView<Tag> =>
+  (envelope, payloads, style, details) => {
+    if (envelope.status === "failure" && envelope.plan === null && envelope.applied === null)
+      return frameView(envelope, style, { body: [], hints: envelope.next });
+    if (Option.isNone(payloads.plan)) return undefined;
+    const plan = payloads.plan.value;
+    if (envelope.applied === null)
+      return view({ plan, applied: undefined }, envelope, style, details);
+    return Option.isNone(payloads.applied)
+      ? undefined
+      : view({ plan, applied: payloads.applied.value }, envelope, style, details);
+  };
 
 // Shared cleanup body
 
@@ -171,131 +142,112 @@ const selectionArgs = (selection: (typeof SelectedRemovalPlanSchema.Type)["selec
   return selection.containingRoot === undefined ? [] : ["--cwd", selection.containingRoot.root];
 };
 
-const selectedRemovalView = (command: SelectedCommand): HumanView =>
-  withFailure((envelope, style, details) =>
-    Option.match(decodeSlots(envelope, decodeSelectedRemovalPlan, decodeRemovalResult), {
-      onNone: () => undefined,
-      onSome: ({ plan, applied }) => {
-        const selection = plan.selection;
-        const summary = cleanupSummary(plan, applied);
-        const stateDeleted =
-          applied !== undefined &&
-          command === "reset" &&
-          applied.pending.length === 0 &&
-          (applied.docsPending ?? []).length === 0 &&
-          applied.actions.every((outcome) => outcome._tag === "applied");
-        return frameView(envelope, style, {
-          scope:
-            selection?.selector._tag === "bare"
-              ? `project ${selection.containingRoot?.projectName ?? "unknown"}`
-              : selection?.selector._tag === "all"
-                ? "all projects and user"
-                : removalScopeText(plan.scope),
-          body: [
-            statementLines(
-              applied !== undefined,
-              stateDeleted ? [...summary, "Tack state deleted"] : summary,
-              "Nothing to remove.",
-              style,
-            ),
-            removalScopeBlock(plan.scope, selection?.containingRoot?.root, style),
-            ...(selection?.containingRoot !== undefined &&
-            plan.scope._tag !== "selected-targets" &&
-            plan.scope._tag !== "retry-targets"
-              ? [
-                  paragraph(
-                    `selected from the containing root ${style.path(selection.containingRoot.root)}`,
-                    { width: style.width, paint: style.dim },
-                  ),
-                ]
-              : []),
-            ...cleanupBlocks(plan, applied, style, spansTargets([plan]), details === true),
-            applied === undefined ? finalizeLines(plan, style) : [],
-          ],
-          hints: uniqueHints(
-            applied === undefined
-              ? [
-                  ...(removalHasChanges(plan)
-                    ? [
-                        command === "reset"
-                          ? commandLine("reset", ...selectionArgs(selection), "--apply")
-                          : plan.scope._tag === "retry-targets" || plan.scope._tag === "maintenance"
-                            ? commandLine(
-                                "retry",
-                                "--pending",
-                                ...selectionArgs(selection),
-                                "--apply",
-                              )
-                            : commandLine("clean", ...selectionArgs(selection), "--apply"),
-                      ]
-                    : []),
-                  ...blockedStatusHints([plan]),
-                ]
-              : command === "reset"
-                ? applied.actions.some((outcome) => outcome._tag !== "applied")
-                  ? [commandLine("reset", "--apply")]
-                  : []
-                : retryHints([applied]),
-          ),
-        });
-      },
-    }),
-  );
+const selectedRemovalView = (command: SelectedCommand) =>
+  removalView<SelectedCommand>(({ plan, applied }, envelope, style, details) => {
+    const selection = plan.selection;
+    const summary = cleanupSummary(plan, applied);
+    const stateDeleted =
+      applied !== undefined &&
+      command === "reset" &&
+      applied.pending.length === 0 &&
+      (applied.docsPending ?? []).length === 0 &&
+      applied.actions.every((outcome) => outcome._tag === "applied");
+    return frameView(envelope, style, {
+      scope:
+        selection?.selector._tag === "bare"
+          ? `project ${selection.containingRoot?.projectName ?? "unknown"}`
+          : selection?.selector._tag === "all"
+            ? "all projects and user"
+            : removalScopeText(plan.scope),
+      body: [
+        statementLines(
+          applied !== undefined,
+          stateDeleted ? [...summary, "Tack state deleted"] : summary,
+          "Nothing to remove.",
+          style,
+        ),
+        removalScopeBlock(plan.scope, selection?.containingRoot?.root, style),
+        ...(selection?.containingRoot !== undefined &&
+        plan.scope._tag !== "selected-targets" &&
+        plan.scope._tag !== "retry-targets"
+          ? [
+              paragraph(
+                `selected from the containing root ${style.path(selection.containingRoot.root)}`,
+                { width: style.width, paint: style.dim },
+              ),
+            ]
+          : []),
+        ...cleanupBlocks(plan, applied, style, spansTargets([plan]), details),
+        applied === undefined ? finalizeLines(plan, style) : [],
+      ],
+      hints: uniqueHints(
+        applied === undefined
+          ? [
+              ...(removalHasChanges(plan)
+                ? [
+                    command === "reset"
+                      ? commandLine("reset", ...selectionArgs(selection), "--apply")
+                      : plan.scope._tag === "retry-targets" || plan.scope._tag === "maintenance"
+                        ? commandLine("retry", "--pending", ...selectionArgs(selection), "--apply")
+                        : commandLine("clean", ...selectionArgs(selection), "--apply"),
+                  ]
+                : []),
+              ...blockedStatusHints([plan]),
+            ]
+          : command === "reset"
+            ? applied.actions.some((outcome) => outcome._tag !== "applied")
+              ? [commandLine("reset", "--apply")]
+              : []
+            : retryHints([applied]),
+      ),
+    });
+  });
 
 // adapter disable
 
 const enabledText = (adapters: ReadonlyArray<string>) =>
   adapters.length === 0 ? "none" : adapters.join(", ");
 
-const adapterDisableView: HumanView = withFailure((envelope, style, details) =>
-  Option.match(decodeSlots(envelope, decodeAdapterPlan, decodeAdapterResult), {
-    onNone: () => undefined,
-    onSome: ({ plan, applied }) => {
-      const removal = applied?.removal;
-      const enabledValue =
-        applied !== undefined
-          ? `now ${enabledText(applied.enabledAdapters)}`
-          : plan.expectedEnabledAdapters.includes(plan.adapter)
-            ? `${enabledText(plan.expectedEnabledAdapters)} → ${enabledText(plan.enabledAdapters)}`
-            : `${enabledText(plan.expectedEnabledAdapters)} (${plan.adapter} is not enabled)`;
-      const settingChanges = plan.enabledAdapters.length !== plan.expectedEnabledAdapters.length;
-      return frameView(envelope, style, {
-        scope: `adapter ${plan.adapter}`,
-        body: [
-          statementLines(
-            applied !== undefined,
-            cleanupSummary(plan.removal, removal),
-            "Nothing to remove.",
-            style,
-          ),
-          [
-            ...removalScopeBlock(plan.removal.scope, undefined, style),
-            ...labelLines("Enabled adapters", enabledValue, style),
-          ],
-          ...cleanupBlocks(
-            plan.removal,
-            removal,
-            style,
-            spansTargets([plan.removal]),
-            details === true,
-          ),
-        ],
-        hints: uniqueHints(
-          removal === undefined
-            ? [
-                ...(removalHasChanges(plan.removal) || settingChanges
-                  ? [commandLine("adapter-disable", plan.adapter, "--apply")]
-                  : []),
-                ...blockedStatusHints([plan.removal]),
-              ]
-            : // Every target can hold links of the adapter, so a settled disable is checked everywhere.
-              retryHints([removal]).length === 0
-              ? [commandLine("status", "--all")]
-              : retryHints([removal]),
+const adapterDisableView = removalView<"adapter-disable">(
+  ({ plan, applied }, envelope, style, details) => {
+    const removal = applied?.removal;
+    const enabledValue =
+      applied !== undefined
+        ? `now ${enabledText(applied.enabledAdapters)}`
+        : plan.expectedEnabledAdapters.includes(plan.adapter)
+          ? `${enabledText(plan.expectedEnabledAdapters)} → ${enabledText(plan.enabledAdapters)}`
+          : `${enabledText(plan.expectedEnabledAdapters)} (${plan.adapter} is not enabled)`;
+    const settingChanges = plan.enabledAdapters.length !== plan.expectedEnabledAdapters.length;
+    return frameView(envelope, style, {
+      scope: `adapter ${plan.adapter}`,
+      body: [
+        statementLines(
+          applied !== undefined,
+          cleanupSummary(plan.removal, removal),
+          "Nothing to remove.",
+          style,
         ),
-      });
-    },
-  }),
+        [
+          ...removalScopeBlock(plan.removal.scope, undefined, style),
+          ...labelLines("Enabled adapters", enabledValue, style),
+        ],
+        ...cleanupBlocks(plan.removal, removal, style, spansTargets([plan.removal]), details),
+      ],
+      hints: uniqueHints(
+        removal === undefined
+          ? [
+              ...(removalHasChanges(plan.removal) || settingChanges
+                ? [commandLine("adapter-disable", plan.adapter, "--apply")]
+                : []),
+              ...blockedStatusHints([plan.removal]),
+            ]
+          : // Every target can hold links of the adapter, so a settled disable is checked everywhere.
+            retryHints([removal]).length === 0
+            ? [commandLine("status", "--all")]
+            : retryHints([removal]),
+      ),
+    });
+  },
 );
 
 // source remove, project remove
@@ -411,102 +363,84 @@ const dependantRows = (plan: SourceRemovalPlan, style: Style): ReadonlyArray<str
         ),
       ];
 
-const sourceRemoveView: HumanView = withFailure((envelope, style, details) =>
-  Option.match(decodeSlots(envelope, decodeSourcePlan, decodeSourceResult), {
-    onNone: () => undefined,
-    onSome: ({ plan, applied }) => {
-      const removal = applied?.removal;
-      const name = plan.source.label ?? plan.source.id;
-      return frameView(envelope, style, {
-        scope: `source ${name}`,
-        body: [
-          statementLines(
-            applied !== undefined,
-            [
-              ...cleanupSummary(plan.removal, removal),
-              ...intentSummary(plan.picks, plan.docsAttachments, applied !== undefined),
-              applied === undefined
-                ? "1 source registration to remove"
-                : "1 source registration removed",
-            ],
-            "Nothing to remove.",
-            style,
-            "Add --apply to remove the source.",
-          ),
+const sourceRemoveView = removalView<"source-remove">(
+  ({ plan, applied }, envelope, style, details) => {
+    const removal = applied?.removal;
+    const name = plan.source.label ?? plan.source.id;
+    return frameView(envelope, style, {
+      scope: `source ${name}`,
+      body: [
+        statementLines(
+          applied !== undefined,
           [
-            ...labelLines("Source", `${name}  ${style.path(plan.source.canonicalPath)}`, style),
-            ...removalScopeBlock(plan.removal.scope, undefined, style),
+            ...cleanupSummary(plan.removal, removal),
+            ...intentSummary(plan.picks, plan.docsAttachments, applied !== undefined),
+            applied === undefined
+              ? "1 source registration to remove"
+              : "1 source registration removed",
           ],
-          ...cleanupBlocks(
-            plan.removal,
-            removal,
-            style,
-            spansTargets([plan.removal]),
-            details === true,
-          ),
-          ...intentBlocks(plan.picks, plan.docsAttachments, style),
-          profileRows(plan, style),
-          dependantRows(plan, style),
-        ],
-        hints: uniqueHints(
-          removal === undefined
-            ? [commandLine("source-remove", name, "--apply"), ...blockedStatusHints([plan.removal])]
-            : retryHints([removal]),
+          "Nothing to remove.",
+          style,
+          "Add --apply to remove the source.",
         ),
-      });
-    },
-  }),
+        [
+          ...labelLines("Source", `${name}  ${style.path(plan.source.canonicalPath)}`, style),
+          ...removalScopeBlock(plan.removal.scope, undefined, style),
+        ],
+        ...cleanupBlocks(plan.removal, removal, style, spansTargets([plan.removal]), details),
+        ...intentBlocks(plan.picks, plan.docsAttachments, style),
+        profileRows(plan, style),
+        dependantRows(plan, style),
+      ],
+      hints: uniqueHints(
+        removal === undefined
+          ? [commandLine("source-remove", name, "--apply"), ...blockedStatusHints([plan.removal])]
+          : retryHints([removal]),
+      ),
+    });
+  },
 );
 
-const projectRemoveView: HumanView = withFailure((envelope, style, details) =>
-  Option.match(decodeSlots(envelope, decodeProjectPlan, decodeProjectResult), {
-    onNone: () => undefined,
-    onSome: ({ plan, applied }) => {
-      const removal = applied?.removal;
-      const application = plan.profileApplication;
-      return frameView(envelope, style, {
-        scope: `project ${plan.project}`,
-        body: [
-          statementLines(
-            applied !== undefined,
-            [
-              ...cleanupSummary(plan.removal, removal),
-              ...intentSummary(plan.picks, plan.docsAttachments, applied !== undefined),
-              // A finalized removal already says "1 project registration removed".
-              ...(removal === undefined || removal.finalizedProject
-                ? []
-                : ["project kept until its cleanup settles"]),
-            ],
-            "The project holds no links, picks or docs attachments.",
-            style,
-          ),
-          removalScopeBlock(plan.removal.scope, undefined, style),
-          ...cleanupBlocks(
-            plan.removal,
-            removal,
-            style,
-            spansTargets([plan.removal]),
-            details === true,
-          ),
-          ...intentBlocks(plan.picks, plan.docsAttachments, style),
-          application === undefined
-            ? []
-            : labelLines("Fixed profile application", `${application.profileName}, dropped`, style),
-          applied === undefined ? finalizeLines(plan.removal, style) : [],
-        ],
-        hints: uniqueHints(
-          removal === undefined
-            ? [
-                commandLine("project-remove", plan.project, "--apply"),
-                ...blockedStatusHints([plan.removal]),
-              ]
-            : removal.finalizedProject
+const projectRemoveView = removalView<"project-remove">(
+  ({ plan, applied }, envelope, style, details) => {
+    const removal = applied?.removal;
+    const application = plan.profileApplication;
+    return frameView(envelope, style, {
+      scope: `project ${plan.project}`,
+      body: [
+        statementLines(
+          applied !== undefined,
+          [
+            ...cleanupSummary(plan.removal, removal),
+            ...intentSummary(plan.picks, plan.docsAttachments, applied !== undefined),
+            // A finalized removal already says "1 project registration removed".
+            ...(removal === undefined || removal.finalizedProject
               ? []
-              : [commandLine("project-remove", plan.project, "--apply")],
+              : ["project kept until its cleanup settles"]),
+          ],
+          "The project holds no links, picks or docs attachments.",
+          style,
         ),
-      });
-    },
-  }),
+        removalScopeBlock(plan.removal.scope, undefined, style),
+        ...cleanupBlocks(plan.removal, removal, style, spansTargets([plan.removal]), details),
+        ...intentBlocks(plan.picks, plan.docsAttachments, style),
+        application === undefined
+          ? []
+          : labelLines("Fixed profile application", `${application.profileName}, dropped`, style),
+        applied === undefined ? finalizeLines(plan.removal, style) : [],
+      ],
+      hints: uniqueHints(
+        removal === undefined
+          ? [
+              commandLine("project-remove", plan.project, "--apply"),
+              ...blockedStatusHints([plan.removal]),
+            ]
+          : removal.finalizedProject
+            ? []
+            : [commandLine("project-remove", plan.project, "--apply")],
+      ),
+    });
+  },
 );
 
 // docs reconcile
@@ -615,36 +549,31 @@ export const docsSyncPart = (
 
 // history clear
 
-const historyClearView: HumanView = withFailure((envelope, style) =>
-  Option.match(decodeSlots(envelope, decodeHistoryPlan, decodeHistoryResult), {
-    onNone: () => undefined,
-    onSome: ({ plan, applied }) =>
-      frameView(envelope, style, {
-        body: [
-          statementLines(
-            applied !== undefined,
-            applied === undefined
-              ? plan.count === 0
-                ? []
-                : [`${plural(plan.count, "run record")} would be removed`]
-              : applied.removedCount === 0
-                ? []
-                : [
-                    `${plural(applied.removedCount, "run record")} removed${
-                      applied.removedCount === plan.count ? "" : ` (${plan.count} were planned)`
-                    }`,
-                  ],
-            applied === undefined
-              ? "There is no run history to clear."
-              : plan.count === 0
-                ? "There was no run history to clear."
-                : `No run records were removed (${plan.count} were planned).`,
-            style,
-          ),
-        ],
-        hints:
-          applied === undefined && plan.count > 0 ? [commandLine("history-clear", "--apply")] : [],
-      }),
+const historyClearView = removalView<"history-clear">(({ plan, applied }, envelope, style) =>
+  frameView(envelope, style, {
+    body: [
+      statementLines(
+        applied !== undefined,
+        applied === undefined
+          ? plan.count === 0
+            ? []
+            : [`${plural(plan.count, "run record")} would be removed`]
+          : applied.removedCount === 0
+            ? []
+            : [
+                `${plural(applied.removedCount, "run record")} removed${
+                  applied.removedCount === plan.count ? "" : ` (${plan.count} were planned)`
+                }`,
+              ],
+        applied === undefined
+          ? "There is no run history to clear."
+          : plan.count === 0
+            ? "There was no run history to clear."
+            : `No run records were removed (${plan.count} were planned).`,
+        style,
+      ),
+    ],
+    hints: applied === undefined && plan.count > 0 ? [commandLine("history-clear", "--apply")] : [],
   }),
 );
 
@@ -721,8 +650,7 @@ const projectBlock = (
  * can name a project the plan did not.
  */
 const projectBlocks = (
-  plan: typeof ProjectRefreshCommandPlanSchema.Type,
-  applied: typeof ProjectRefreshCommandResultSchema.Type | undefined,
+  { plan, applied }: Slots<"project-refresh">,
   style: Style,
 ): ReadonlyArray<ReadonlyArray<string>> => {
   if (applied === undefined)
@@ -747,8 +675,7 @@ const projectBlocks = (
 };
 
 const refreshCleanupBlocks = (
-  plan: typeof ProjectRefreshCommandPlanSchema.Type,
-  applied: typeof ProjectRefreshCommandResultSchema.Type | undefined,
+  { plan, applied }: Slots<"project-refresh">,
   style: Style,
   details: boolean,
 ): ReadonlyArray<ReadonlyArray<string>> =>
@@ -782,73 +709,70 @@ const linkNewRootHints = (changes: ReadonlyArray<ProjectRefreshChange>) =>
     commandLine("sync", "--project", name, "--apply"),
   ]);
 
-const projectRefreshView: HumanView = withFailure((envelope, style, details) =>
-  Option.match(decodeSlots(envelope, decodeRefreshPlan, decodeRefreshResult), {
-    onNone: () => undefined,
-    onSome: ({ plan, applied }) => {
-      const rootChanges =
+const projectRefreshView = removalView<"project-refresh">(
+  ({ plan, applied }, envelope, style, details) => {
+    const rootChanges =
+      applied === undefined
+        ? plan.refresh.projects.reduce((total, project) => total + changeCount(project), 0)
+        : applied.refresh.changes.length;
+    const summary = [
+      ...(rootChanges === 0 ? [] : [plural(rootChanges, "root change")]),
+      ...plan.removals.flatMap((removal, index) =>
+        cleanupSummary(removal, applied?.removals[index]),
+      ),
+      ...(applied === undefined
+        ? docsSummary(plan.docs, false)
+        : docsAppliedSummary(applied.docs.actions)),
+      ...(applied !== undefined && applied.refresh.removedProjects.length > 0
+        ? [
+            `${plural(applied.refresh.removedProjects.length, "project")} removed (${applied.refresh.removedProjects.join(", ")})`,
+          ]
+        : []),
+    ];
+    const docsBlock = docsRows(plan.docs.actions, applied?.docs.actions, style);
+    const scopeArgs =
+      plan.selection.selector._tag !== "bare"
+        ? selectorFlags(plan.selection.selector)
+        : plan.selection.cwd === undefined
+          ? []
+          : ["--cwd", plan.selection.cwd];
+    const hasChanges =
+      plan.refresh.projects.some((project) => changeCount(project) > 0) ||
+      plan.removals.some(removalHasChanges) ||
+      docsChanges(plan.docs.actions) > 0;
+    return frameView(envelope, style, {
+      scope:
+        plan.refresh.scope._tag === "project"
+          ? `project ${plan.refresh.scope.projectName}`
+          : "all projects",
+      body: [
+        statementLines(applied !== undefined, summary, "Everything is up to date.", style),
+        ...projectBlocks({ plan, applied }, style),
+        handMadeLines(plan.handMade, style),
+        ...refreshCleanupBlocks({ plan, applied }, style, details),
+        docsBlock.length === 0 ? [] : [style.bold("Docs links"), ...docsBlock],
+        docsIssueLines((applied ?? plan).docs.issues, style),
+      ],
+      hints: uniqueHints(
         applied === undefined
-          ? plan.refresh.projects.reduce((total, project) => total + changeCount(project), 0)
-          : applied.refresh.changes.length;
-      const summary = [
-        ...(rootChanges === 0 ? [] : [plural(rootChanges, "root change")]),
-        ...plan.removals.flatMap((removal, index) =>
-          cleanupSummary(removal, applied?.removals[index]),
-        ),
-        ...(applied === undefined
-          ? docsSummary(plan.docs, false)
-          : docsAppliedSummary(applied.docs.actions)),
-        ...(applied !== undefined && applied.refresh.removedProjects.length > 0
           ? [
-              `${plural(applied.refresh.removedProjects.length, "project")} removed (${applied.refresh.removedProjects.join(", ")})`,
+              ...(hasChanges ? [commandLine("project-refresh", ...scopeArgs, "--apply")] : []),
+              ...blockedStatusHints(plan.removals),
             ]
-          : []),
-      ];
-      const docsBlock = docsRows(plan.docs.actions, applied?.docs.actions, style);
-      const scopeArgs =
-        plan.selection.selector._tag !== "bare"
-          ? selectorFlags(plan.selection.selector)
-          : plan.selection.cwd === undefined
-            ? []
-            : ["--cwd", plan.selection.cwd];
-      const hasChanges =
-        plan.refresh.projects.some((project) => changeCount(project) > 0) ||
-        plan.removals.some(removalHasChanges) ||
-        docsChanges(plan.docs.actions) > 0;
-      return frameView(envelope, style, {
-        scope:
-          plan.refresh.scope._tag === "project"
-            ? `project ${plan.refresh.scope.projectName}`
-            : "all projects",
-        body: [
-          statementLines(applied !== undefined, summary, "Everything is up to date.", style),
-          ...projectBlocks(plan, applied, style),
-          handMadeLines(plan.handMade, style),
-          ...refreshCleanupBlocks(plan, applied, style, details === true),
-          docsBlock.length === 0 ? [] : [style.bold("Docs links"), ...docsBlock],
-          docsIssueLines((applied ?? plan).docs.issues, style),
-        ],
-        hints: uniqueHints(
-          applied === undefined
-            ? [
-                ...(hasChanges ? [commandLine("project-refresh", ...scopeArgs, "--apply")] : []),
-                ...blockedStatusHints(plan.removals),
-              ]
-            : [
-                ...retryHints(applied.removals, applied.refresh.removedProjects),
-                ...[
-                  ...new Set(
-                    applied.docs.actions.flatMap((action) =>
-                      action._tag !== "applied" ? [action.action.evidence.projectName] : [],
-                    ),
+          : [
+              ...retryHints(applied.removals, applied.refresh.removedProjects),
+              ...[
+                ...new Set(
+                  applied.docs.actions.flatMap((action) =>
+                    action._tag !== "applied" ? [action.action.evidence.projectName] : [],
                   ),
-                ].map((name) => commandLine("sync", "--no-adapters", "--project", name)),
-                ...linkNewRootHints(applied.refresh.changes),
-              ],
-        ),
-      });
-    },
-  }),
+                ),
+              ].map((name) => commandLine("sync", "--no-adapters", "--project", name)),
+              ...linkNewRootHints(applied.refresh.changes),
+            ],
+      ),
+    });
+  },
 );
 
 const stateCleanView = selectedRemovalView("clean");

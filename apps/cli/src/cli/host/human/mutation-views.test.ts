@@ -46,7 +46,7 @@ import {
   testHome,
 } from "./human.test-support.ts";
 import { mutationViews } from "./mutation-views.ts";
-import { renderHuman } from "./render.ts";
+import { renderDedicated, renderHuman } from "./render.ts";
 import { commandNameOf } from "../../commands/index.ts";
 import { createPublicEnvelope, type PublicEnvelope } from "../public-outcome.ts";
 import { hintsIn, parseHintsIn } from "../../../../test/support/hints.ts";
@@ -821,10 +821,10 @@ describe("undecodable payloads", () => {
     for (const tag of Record.keys(mutationViews)) {
       const command = commandNameOf(tag);
       const envelope = createPublicEnvelope(command, appliedOutcome({ unexpected: true }));
-      expect(mutationViews[tag](envelope, style())).toBeUndefined();
+      expect(renderDedicated(envelope, style(), mutationViews)).toBeUndefined();
       expect(renderHuman(envelope, style())).toContain(`tack ${command}`);
       const empty = createPublicEnvelope(command, { classification: "success", diagnostics: [] });
-      expect(mutationViews[tag](empty, style())).toBeUndefined();
+      expect(renderDedicated(empty, style(), mutationViews)).toBeUndefined();
     }
   });
 

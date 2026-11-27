@@ -1,8 +1,7 @@
-import { Option, Schema } from "effect";
 import type { SourceCheckReport, SourceFinding } from "../../../domain/sources/source-check.ts";
-import { SourceScaffoldPlanSchema } from "../../../features/sources/source-scaffold.ts";
-import { SourceRegistrationPlanSchema } from "../../../features/sources/source.ts";
-import type { HumanView } from "./render.ts";
+import type { SourceScaffoldPlanSchema } from "../../../features/sources/source-scaffold.ts";
+import type { SourceRegistrationPlanSchema } from "../../../features/sources/source.ts";
+import type { PublicEnvelope } from "../public-outcome.ts";
 import { diagnosticLines, headerLines, hintLines, kindPlurals, sections, plural } from "./view.ts";
 import { ResourceKindSchema, resourceKinds } from "../../../domain/resources/kinds.ts";
 import type { Style } from "./style.ts";
@@ -28,18 +27,15 @@ export const sourceCheckLines = (
   ...report.findings.flatMap((finding) => findingLines(finding, style)),
 ];
 
-const decodeScaffold = Schema.decodeUnknownOption(SourceScaffoldPlanSchema);
-const decodeRegistrationPlan = Schema.decodeUnknownOption(SourceRegistrationPlanSchema);
-
 /**
  * The preview of registering a source that has its tack.yaml: what would be registered, or that it
  * is registered already, then its counts and warnings. Errors are listed under Problems.
  */
-export const renderSourceRegistrationPlan: HumanView = (envelope, style) => {
-  if (envelope.applied !== null) return undefined;
-  const decoded = decodeRegistrationPlan(envelope.plan);
-  if (Option.isNone(decoded)) return undefined;
-  const plan = decoded.value;
+export const renderSourceRegistrationPlan = (
+  envelope: PublicEnvelope,
+  plan: typeof SourceRegistrationPlanSchema.Type,
+  style: Style,
+): string => {
   const folder = style.path(plan.sourcePath);
   const source = plan.name === undefined ? folder : `${plan.name} (${folder})`;
   return sections(
@@ -65,11 +61,11 @@ export const renderSourceRegistrationPlan: HumanView = (envelope, style) => {
  * what each entry finds, with the names of its resources and its problems, then why it would not
  * apply when it loads nothing, or else how to apply it.
  */
-export const renderSourceScaffold: HumanView = (envelope, style) => {
-  if (envelope.applied !== null) return undefined;
-  const decoded = decodeScaffold(envelope.plan);
-  if (Option.isNone(decoded)) return undefined;
-  const plan = decoded.value;
+export const renderSourceScaffold = (
+  envelope: PublicEnvelope,
+  plan: typeof SourceScaffoldPlanSchema.Type,
+  style: Style,
+): string => {
   /** Wraps one line of prose at `indent`, its continuation two columns further in. */
   const wrap = (line: string, indent = 0) =>
     paragraph(line, { width: style.width, indent, hang: indent + 2 });

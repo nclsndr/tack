@@ -1,7 +1,14 @@
 import { renderCheck } from "./check.ts";
 import { renderBundleExport, renderBundleInspection } from "./profile-bundle.ts";
 import { renderProfileSave, renderProfileAdopt } from "./profile-copy.ts";
+import { Option, Schema } from "effect";
 import { commandTagOf, type Invocation } from "../../commands/index.ts";
+import {
+  payloadSchemasOf,
+  payloadSlots,
+  type DeclaredPayload,
+  type PayloadSlot,
+} from "../../commands/declarations.ts";
 import type { PublicEnvelope } from "../public-outcome.ts";
 import { renderProfileApply } from "./profile.ts";
 import { renderCatalog } from "./catalog.ts";
@@ -22,17 +29,29 @@ import type { Style } from "./style.ts";
 import { diagnosticLines, headerLines, sections, withoutPayload } from "./view.ts";
 import { renderExplore } from "./explorer/result.ts";
 
+type InvocationTag = Invocation["_tag"];
+
 /**
- * A dedicated view can decline an envelope it cannot decode. `details` is true under `--details`:
- * the view shows every row it would otherwise cap. A view that caps nothing ignores it.
+ * The payload slots of an envelope, decoded with the schemas its invocation declares. A slot that
+ * is empty, undeclared or of another shape is `None`.
  */
-export type HumanView = (
+type Payloads<Tag extends InvocationTag> = {
+  readonly [Slot in PayloadSlot]: Option.Option<DeclaredPayload<Tag, Slot>>;
+};
+
+/**
+ * The dedicated view of one invocation. It declines a payload it cannot show, such as a `None`
+ * slot, and the generic view shows it instead. `details` is true under `--details`: the view shows
+ * every row it would otherwise cap. A view that caps nothing ignores it.
+ */
+export type HumanView<Tag extends InvocationTag = InvocationTag> = (
   envelope: PublicEnvelope,
+  payloads: Payloads<Tag>,
   style: Style,
-  details?: boolean,
+  details: boolean,
 ) => string | undefined;
 /** The view of every invocation, by tag. */
-export type HumanViews = { readonly [Tag in Invocation["_tag"]]: HumanView };
+export type HumanViews = { readonly [Tag in InvocationTag]: HumanView<Tag> };
 
 /** Views for some invocations; an invocation without one renders through the generic view. */
 export type HumanViewRegistry = Partial<HumanViews>;
@@ -60,7 +79,7 @@ export const humanViews = {
   sync: renderSync,
   "upgrade-status": renderUpgradeGuide,
   upgrade: renderUpgradeGuide,
-  status: (envelope, style, details) => renderStatus(envelope, style, details === true),
+  status: renderStatus,
   version: renderVersion,
 } satisfies HumanViews;
 
@@ -79,10 +98,44 @@ export const renderGeneric = (envelope: PublicEnvelope, style: Style): string =>
     ),
   );
 
-/** The view of the invocation a command name names; `undefined` for a name that names none. */
-export const viewOf = (views: HumanViewRegistry, command: string) => {
-  const tag = commandTagOf(command);
-  return tag === undefined ? undefined : views[tag];
+/** Decodes each slot of an envelope once, with the schema its invocation declares for it. */
+const payloadsOf = <Tag extends InvocationTag>(tag: Tag, envelope: PublicEnvelope) => {
+  const schemas = payloadSchemasOf(tag);
+  const payloads = Object.fromEntries(
+    payloadSlots.map((slot) => {
+      const schema = schemas[slot];
+      return [
+        slot,
+        schema === undefined ? Option.none() : Schema.decodeUnknownOption(schema)(envelope[slot]),
+      ];
+    }),
+  );
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Each slot was decoded with the schema the declaration of `tag` names for it.
+  return payloads as Payloads<Tag>;
+};
+
+/** Shows an envelope through the view of its invocation, with the payloads decoded for it. */
+// oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- `Tag` ties the view to its payloads; a union tag would not type the call.
+const renderAs = <Tag extends InvocationTag>(
+  tag: Tag,
+  views: HumanViewRegistry,
+  envelope: PublicEnvelope,
+  style: Style,
+  details: boolean,
+) => views[tag]?.(envelope, payloadsOf(tag, envelope), style, details);
+
+/**
+ * Shows an envelope through the dedicated view of the invocation its command names; `undefined`
+ * when no view shows that command or the view declines the payload.
+ */
+export const renderDedicated = (
+  envelope: PublicEnvelope,
+  style: Style,
+  views: HumanViewRegistry = humanViews,
+  details = false,
+): string | undefined => {
+  const tag = commandTagOf(envelope.command);
+  return tag === undefined ? undefined : renderAs(tag, views, envelope, style, details);
 };
 
 /** Renders a validated envelope through its dedicated view, or the generic view. */
@@ -96,7 +149,7 @@ export const renderHuman = (
   // it the same way: the redacted diagnostic and the rerun that prints its cause.
   envelope.classification === "internal"
     ? (withoutPayload(envelope, undefined, style) ?? renderGeneric(envelope, style))
-    : (viewOf(views, envelope.command)?.(envelope, style, options.details === true) ??
+    : (renderDedicated(envelope, style, views, options.details === true) ??
       renderGeneric(envelope, style));
 
 /**

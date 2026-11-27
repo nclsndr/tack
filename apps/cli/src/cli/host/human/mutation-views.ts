@@ -6,22 +6,11 @@ import {
 } from "./source-authoring.ts";
 import type { DocsResourceReference } from "../../../domain/docs/docs-schema.ts";
 import type { SelectableAddress } from "../../../domain/sources/catalog-schema.ts";
-import {
-  ChoiceAddressCandidatesSchema,
-  ChoiceChangePayloadSchema,
-  ChoiceRemovalPayloadSchema,
-} from "../../../features/choices/choice.ts";
-import { DocsSettingsPayloadSchema } from "../../../features/docs/docs.ts";
-import {
-  ProjectRegistrationConflictDetailsSchema,
-  ProjectRegistrationPayloadSchema,
-} from "../../../features/projects/project.ts";
-import { AdapterSettingsPayloadSchema } from "../../../features/reconciliation/agent.ts";
-import {
-  SourceRegistrationPayloadSchema,
-  SourceRelocationPayloadSchema,
-} from "../../../features/sources/source.ts";
-import { StateInitializationPayloadSchema } from "../../../services/state-store.ts";
+import { ChoiceAddressCandidatesSchema } from "../../../features/choices/choice.ts";
+import type { DocsSettingsPayloadSchema } from "../../../features/docs/docs.ts";
+import { ProjectRegistrationConflictDetailsSchema } from "../../../features/projects/project.ts";
+import type { DeclaredPayload } from "../../commands/declarations.ts";
+import type { Invocation } from "../../commands/index.ts";
 import { commandLine, selectorFlags } from "../command-line.ts";
 import type { PublicEnvelope } from "../public-outcome.ts";
 import { handMadeLines } from "./hand-made.ts";
@@ -141,24 +130,25 @@ const failureView = (envelope: PublicEnvelope, style: Style): string => {
 };
 
 /**
- * Builds one mutation view: failures keep header and diagnostics; successes read `applied` through
- * the payload schema its producer builds it from, and leave any other payload to the generic view.
+ * Builds one mutation view: failures keep header and diagnostics; successes read the decoded
+ * `applied` payload, and leave a payload of another shape to the generic view.
  */
-const mutationView = <S extends Schema.ConstraintDecoder<unknown>>(
-  schema: S,
-  build: (applied: S["Type"], style: Style, envelope: PublicEnvelope) => Parts,
-): HumanView => {
-  const decode = Schema.decodeUnknownOption(schema);
-  return (envelope, style) => {
+const mutationView =
+  <Tag extends Invocation["_tag"]>(
+    build: (
+      applied: DeclaredPayload<Tag, "applied">,
+      style: Style,
+      envelope: PublicEnvelope,
+    ) => Parts,
+  ): HumanView<Tag> =>
+  (envelope, { applied }, style) => {
     if (envelope.status === "failure") return failureView(envelope, style);
-    const applied = decode(envelope.applied);
     return Option.isSome(applied)
       ? compose(envelope, style, build(applied.value, style, envelope))
       : undefined;
   };
-};
 
-const initView = mutationView(StateInitializationPayloadSchema, (applied, style) => {
+const initView = mutationView<"init">((applied, style) => {
   const directory = style.path(applied.stateDirectory);
   return {
     confirmation: applied.alreadyInitialized
@@ -169,34 +159,30 @@ const initView = mutationView(StateInitializationPayloadSchema, (applied, style)
   };
 });
 
-const sourceRegistrationView = mutationView(
-  SourceRegistrationPayloadSchema,
-  (applied, style, envelope) => {
-    // The name a reference types, beside the path; the ID row already shows a source without a label.
-    const folder = style.path(applied.registration.canonicalPath);
-    const source =
-      applied.name === applied.registration.id ? folder : `${applied.name} (${folder})`;
-    return {
-      confirmation:
-        applied.scaffolded !== undefined
-          ? `Created ${style.path(applied.scaffolded)}. Registered source ${source}.`
-          : applied.alreadyRegistered
-            ? `Source ${source} is already registered; nothing changed.`
-            : `Registered source ${source}.`,
-      facts: [
-        ["id", [applied.registration.id]],
-        ["docs", applied.docs.map((docs) => docs.name)],
-      ],
-      // The route names where the new resources go next: a project to register or to sync.
-      hints: envelope.next,
-      ...(applied.inspection === undefined
-        ? {}
-        : { after: sourceCheckLines(applied.inspection, style) }),
-    };
-  },
-);
+const sourceRegistrationView = mutationView<"source-add">((applied, style, envelope) => {
+  // The name a reference types, beside the path; the ID row already shows a source without a label.
+  const folder = style.path(applied.registration.canonicalPath);
+  const source = applied.name === applied.registration.id ? folder : `${applied.name} (${folder})`;
+  return {
+    confirmation:
+      applied.scaffolded !== undefined
+        ? `Created ${style.path(applied.scaffolded)}. Registered source ${source}.`
+        : applied.alreadyRegistered
+          ? `Source ${source} is already registered; nothing changed.`
+          : `Registered source ${source}.`,
+    facts: [
+      ["id", [applied.registration.id]],
+      ["docs", applied.docs.map((docs) => docs.name)],
+    ],
+    // The route names where the new resources go next: a project to register or to sync.
+    hints: envelope.next,
+    ...(applied.inspection === undefined
+      ? {}
+      : { after: sourceCheckLines(applied.inspection, style) }),
+  };
+});
 
-const sourceRelocateView = mutationView(SourceRelocationPayloadSchema, (applied, style) => {
+const sourceRelocateView = mutationView<"source-relocate">((applied, style) => {
   const path = style.path(applied.registration.canonicalPath);
   const id = applied.registration.id;
   return {
@@ -206,7 +192,7 @@ const sourceRelocateView = mutationView(SourceRelocationPayloadSchema, (applied,
   };
 });
 
-const projectAddView = mutationView(ProjectRegistrationPayloadSchema, (applied, style) => {
+const projectAddView = mutationView<"project-add">((applied, style) => {
   return {
     scope: applied.project.name,
     confirmation: applied.alreadyRegistered
@@ -231,8 +217,7 @@ const warnedCandidates = (envelope: PublicEnvelope) =>
     decodeCandidates,
   );
 
-const choiceSetView = mutationView(
-  ChoiceChangePayloadSchema,
+const choiceSetView = mutationView<"choice-set" | "choice-exclude">(
   ({ changed, choice }, style, envelope) => {
     const subject = addressText(choice.address, style);
     const where = namespaceText(choice.namespace, "prose");
@@ -271,7 +256,7 @@ const choiceSetView = mutationView(
   },
 );
 
-const choiceRemoveView = mutationView(ChoiceRemovalPayloadSchema, (applied, style) => {
+const choiceRemoveView = mutationView<"choice-remove">((applied, style) => {
   const subject = addressText(applied.address, style);
   const where = namespaceText(applied.namespace, "prose");
   return {
@@ -283,7 +268,7 @@ const choiceRemoveView = mutationView(ChoiceRemovalPayloadSchema, (applied, styl
   };
 });
 
-const adapterSetView = mutationView(AdapterSettingsPayloadSchema, (applied) => ({
+const adapterSetView = mutationView<"adapter-set">((applied) => ({
   confirmation: applied.changed
     ? `Enabled adapters are now ${adaptersText(applied.enabledAdapters)}.`
     : `Enabled adapters are already ${adaptersText(applied.enabledAdapters)}; nothing changed.`,
@@ -316,14 +301,14 @@ const docsReconcileHint = (projectName: string) =>
 
 // The envelope returns the project's docs settings, not which resource the call named or whether
 // the settings changed, so these confirmations state only what is certain after the call.
-const docsAttachView = mutationView(DocsSettingsPayloadSchema, (settings, style) => ({
+const docsAttachView = mutationView<"docs-attach">((settings, style) => ({
   scope: settings.projectName,
   confirmation: `Docs attach saved for project ${settings.projectName}; it has ${plural(settings.attachments.length, "attached resource")}.`,
   facts: docsFacts(settings, style),
   hints: [docsReconcileHint(settings.projectName)],
 }));
 
-const docsDetachView = mutationView(DocsSettingsPayloadSchema, (settings, style) => ({
+const docsDetachView = mutationView<"docs-detach">((settings, style) => ({
   scope: settings.projectName,
   confirmation: `Docs detach saved for project ${settings.projectName}; ${
     settings.attachments.length === 0
@@ -334,17 +319,20 @@ const docsDetachView = mutationView(DocsSettingsPayloadSchema, (settings, style)
   hints: [docsReconcileHint(settings.projectName)],
 }));
 
-const docsConfigureView = mutationView(DocsSettingsPayloadSchema, (settings, style) => ({
+const docsConfigureView = mutationView<"docs-configure">((settings, style) => ({
   scope: settings.projectName,
   confirmation: `Docs settings saved for project ${settings.projectName}.`,
   facts: docsFacts(settings, style),
 }));
 
 /** `source add` plans a scaffold or a registration, then applies a registration. */
-const sourceAddView: HumanView = (envelope, style, details) =>
-  renderSourceScaffold(envelope, style, details) ??
-  renderSourceRegistrationPlan(envelope, style, details) ??
-  sourceRegistrationView(envelope, style, details);
+const sourceAddView: HumanView<"source-add"> = (envelope, payloads, style, details) => {
+  const plan = envelope.applied === null ? Option.getOrUndefined(payloads.plan) : undefined;
+  if (plan === undefined) return sourceRegistrationView(envelope, payloads, style, details);
+  return plan.kind === "source-scaffold"
+    ? renderSourceScaffold(envelope, plan, style)
+    : renderSourceRegistrationPlan(envelope, plan, style);
+};
 
 /** Dedicated views for the immediate mutations. */
 export const mutationViews = {

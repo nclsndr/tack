@@ -11,14 +11,14 @@ import {
   hintRecorder,
   humanFixture,
 } from "./human.test-support.ts";
-import { renderInit } from "./init.ts";
+import { renderDedicated } from "./render.ts";
 import { makeStyle } from "./style.ts";
 
 const style = makeStyle({ color: false, homeDirectory: "/fx/home", width: 160 });
 
 const render = (input: Parameters<typeof envelopeOf>[0]) => {
   const { hints, style: recording } = hintRecorder(style);
-  const text = renderInit(envelopeOf(input), recording);
+  const text = renderDedicated(envelopeOf(input), recording);
   return { hints, text: text ?? "", flatText: flat(text) };
 };
 
@@ -149,7 +149,7 @@ describe("init view", () => {
 
   it("leaves an envelope it cannot read to the generic view", () => {
     expect(
-      renderInit(envelopeOf({ command: "init", plan: { kind: "something-else" } }), style),
+      renderDedicated(envelopeOf({ command: "init", plan: { kind: "something-else" } }), style),
     ).toBeUndefined();
   });
 

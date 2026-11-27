@@ -15,9 +15,8 @@ import {
 } from "./human.test-support.ts";
 import { docsSummary, removalScopeBlock, removalScopeText } from "./removal-rows.ts";
 import { removalViews } from "./removal-views.ts";
-import { nextCommandsOf, viewOf } from "./render.ts";
+import { nextCommandsOf, renderDedicated } from "./render.ts";
 import { commandNameOf } from "../../commands/index.ts";
-import { renderSync } from "./sync.ts";
 import { previewOutcome, removalOutcome, syncOutcome } from "../outcomes.ts";
 import { createPublicEnvelope, type PublicEnvelope } from "../public-outcome.ts";
 import {
@@ -1814,14 +1813,14 @@ describe("undecodable payloads", () => {
       const command = commandNameOf(tag);
       for (const payload of [{ unexpected: true }, { kind: "other" }, [], null]) {
         const envelope = createPublicEnvelope(command, previewOutcome({ plan: payload }));
-        expect(removalViews[tag](envelope, styleOf()), command).toBeUndefined();
+        expect(renderDedicated(envelope, styleOf(), removalViews), command).toBeUndefined();
         expect(render(envelope)).toContain(`tack ${command}`);
       }
     }
     // A readable plan with an unreadable application is declined too.
     const cleaned = cleanupEnvelope("clean", mixedPlan, undefined, projectSelection);
     expect(
-      removalViews.clean({ ...cleaned, applied: { kind: "other" } }, styleOf()),
+      renderDedicated({ ...cleaned, applied: { kind: "other" } }, styleOf(), removalViews),
     ).toBeUndefined();
   });
 });
@@ -1901,10 +1900,8 @@ const rawRemovalPlan = (scope: unknown, overrides: Record<string, unknown> = {})
 });
 
 const recorded = (command: string, plan: unknown, applied?: unknown) => {
-  const view = viewOf(removalViews, command);
-  if (view === undefined) throw new Error(`No removal view for ${command}.`);
   const { hints, style } = hintRecorder();
-  const text = view(envelopeOf({ command, plan, applied }), style);
+  const text = renderDedicated(envelopeOf({ command, plan, applied }), style, removalViews);
   return { hints, text: text ?? "", flatText: flat(text) };
 };
 
@@ -2140,7 +2137,7 @@ describe("docs-only sync view", () => {
 
   it("offers nothing to apply when every docs link is already in place", () => {
     const { hints, style } = hintRecorder();
-    const text = renderSync(
+    const text = renderDedicated(
       docsOnly({
         plan: docsPlan([{ action: "keep", evidence: mountedDocsLink("demo", "/home/me/demo") }]),
       }),
@@ -2153,7 +2150,7 @@ describe("docs-only sync view", () => {
   it("offers nothing more once every docs link applied", () => {
     const { hints, style } = hintRecorder();
     const docs = mountedDocsLink("demo", "/home/me/demo");
-    const text = renderSync(
+    const text = renderDedicated(
       docsOnly({
         plan: docsPlan([{ action: "create", evidence: docs }]),
         applied: {
@@ -2170,7 +2167,7 @@ describe("docs-only sync view", () => {
   });
 
   it("names no project when the actions span several", () => {
-    const text = renderSync(
+    const text = renderDedicated(
       docsOnly({
         plan: docsPlan([
           { action: "create", evidence: mountedDocsLink("demo", "/home/me/demo") },

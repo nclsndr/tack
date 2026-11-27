@@ -1,16 +1,6 @@
 import { Result, Schema } from "effect";
-import {
-  commandDeclarations,
-  flagRequestPayloads,
-  payloadSlots,
-  type PayloadSchemas,
-} from "../../src/cli/commands/declarations.ts";
-
-/** The declared slot schemas of the command an envelope names, or `undefined` for none. */
-const declaredSchemasOf = (command: string): PayloadSchemas | undefined =>
-  command === "help" || command === "version"
-    ? flagRequestPayloads[command]
-    : Object.values(commandDeclarations).find(({ path }) => path.join(" ") === command);
+import { payloadSchemasOf, payloadSlots } from "../../src/cli/commands/declarations.ts";
+import { commandTagOf } from "../../src/cli/commands/model.ts";
 
 const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
   typeof value === "object" && value !== null && Array.isArray(value) === false;
@@ -24,8 +14,9 @@ const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
 export const undeclaredPayloads = (envelope: unknown): ReadonlyArray<string> => {
   if (isRecord(envelope) === false || typeof envelope["command"] !== "string") return [];
   const command = envelope["command"];
-  const declared = declaredSchemasOf(command);
-  if (declared === undefined) return [];
+  const tag = commandTagOf(command);
+  if (tag === undefined) return [];
+  const declared = payloadSchemasOf(tag);
   return payloadSlots.flatMap((slot) => {
     const payload = envelope[slot];
     if (payload === null || payload === undefined) return [];

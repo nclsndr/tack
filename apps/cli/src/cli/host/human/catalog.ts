@@ -1,10 +1,9 @@
-import { Option, Schema } from "effect";
-import {
-  type CatalogIssue,
-  type ImportedSkillSchema,
-  type CatalogReport,
-  type CatalogResource,
-  CatalogReportSchema,
+import { Option } from "effect";
+import type {
+  CatalogIssue,
+  ImportedSkillSchema,
+  CatalogReport,
+  CatalogResource,
 } from "../../../domain/sources/catalog-report.ts";
 import { activationIn } from "../../../domain/choices/selection.ts";
 import {
@@ -13,8 +12,8 @@ import {
   resourceKinds,
   type ResourceKind,
 } from "../../../domain/resources/kinds.ts";
-import type { PublicEnvelope } from "../public-outcome.ts";
 import { referenceFor, type ReferenceIndex } from "../../../features/sources/resource-reference.ts";
+import type { HumanView } from "./render.ts";
 import { withReferences, type Style } from "./style.ts";
 import { cell, flow, table, wrapText, type Cell } from "./text.ts";
 import {
@@ -26,8 +25,6 @@ import {
   sections,
   withoutPayload,
 } from "./view.ts";
-
-const decodeCatalog = Schema.decodeUnknownOption(CatalogReportSchema);
 
 /** The references a catalog report implies: its own resources, labelled by its own sources. */
 export const referencesOf = (report: CatalogReport): ReferenceIndex => ({
@@ -258,8 +255,8 @@ const summaryText = (report: CatalogReport) =>
  * Renders `catalog`, with or without `--kind`, or `undefined` when the payload is present but is not a
  * catalog report. The catalog summary diagnostic is dropped because the issues section explains it.
  */
-export const renderCatalog = (envelope: PublicEnvelope, style: Style): string | undefined =>
-  Option.match(decodeCatalog(envelope.result), {
+export const renderCatalog: HumanView<"catalog"> = (envelope, { result }, style) =>
+  Option.match(result, {
     onNone: () => withoutPayload(envelope, undefined, style),
     onSome: (report) =>
       sections(

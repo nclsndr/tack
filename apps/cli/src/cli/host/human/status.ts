@@ -1,15 +1,14 @@
-import { Option, Schema } from "effect";
-import {
-  type StatusNamespace,
-  type StatusPayload,
-  type StatusPayloadDestination,
-  StatusPayloadSchema,
+import { Option } from "effect";
+import type {
+  StatusNamespace,
+  StatusPayload,
+  StatusPayloadDestination,
 } from "../../../domain/status/status-schema.ts";
 import { destinationPlace } from "../../../domain/status/destination-place.ts";
 import { compareCodeUnits } from "../../../domain/identity/ordering.ts";
 import { collisionExcludeCommands, userExcludeCommands } from "../collision-hints.ts";
 import { commandLine, selectorFlags } from "../command-line.ts";
-import type { PublicEnvelope } from "../public-outcome.ts";
+import type { HumanView } from "./render.ts";
 import type { Style } from "./style.ts";
 import { cell, sanitize, table, wrapText, type Cell } from "./text.ts";
 import {
@@ -25,8 +24,6 @@ import {
   sections,
   withoutPayload,
 } from "./view.ts";
-
-const decodeStatus = Schema.decodeUnknownOption(StatusPayloadSchema);
 
 type StatusAddress = {
   readonly kind: string;
@@ -434,12 +431,8 @@ const nextSteps = (report: StatusPayload, style: Style): ReadonlyArray<string> =
 };
 
 /** Renders `status`, or `undefined` when the payload is present but is not a status report. */
-export const renderStatus = (
-  envelope: PublicEnvelope,
-  style: Style,
-  details: boolean,
-): string | undefined =>
-  Option.match(decodeStatus(envelope.result), {
+export const renderStatus: HumanView<"status"> = (envelope, { result }, style, details) =>
+  Option.match(result, {
     onNone: () => withoutPayload(envelope, undefined, style),
     onSome: (report) =>
       sections(

@@ -1,12 +1,7 @@
-import { Option, Schema } from "effect";
+import { Option } from "effect";
 import type { BundleManifest } from "../../../domain/bundles/bundle-schema.ts";
-import { BundleExportPlanSchema } from "../../../features/profiles/bundle-export.ts";
-import { BundleInspectionPayloadSchema } from "../../../features/profiles/bundle-read.ts";
 import type { HumanView } from "./render.ts";
 import { headerLines, sections, withoutPayload } from "./view.ts";
-
-const decodeExportPlan = Schema.decodeUnknownOption(BundleExportPlanSchema);
-const decodeInspection = Schema.decodeUnknownOption(BundleInspectionPayloadSchema);
 
 const inventoryLines = (manifest: BundleManifest) => [
   `Bundle version ${manifest.version} · ${manifest.identity}`,
@@ -31,10 +26,9 @@ const fileLines = (files: BundleManifest["files"]) => [
   ),
 ];
 /** Shows exact exported bytes and known sensitive/completeness refusals before writing an artifact. */
-export const renderBundleExport: HumanView = (envelope, style) => {
-  const decoded = decodeExportPlan(envelope.plan);
-  if (Option.isNone(decoded)) return undefined;
-  const plan = decoded.value;
+export const renderBundleExport: HumanView<"profile-export"> = (envelope, payloads, style) => {
+  if (Option.isNone(payloads.plan)) return undefined;
+  const plan = payloads.plan.value;
   return sections(
     headerLines(envelope, undefined, style),
     [
@@ -51,15 +45,18 @@ export const renderBundleExport: HumanView = (envelope, style) => {
   );
 };
 /** Inspects the independently versioned manifest without state, original sources, fetches or execution. */
-export const renderBundleInspection: HumanView = (envelope, style) => {
-  const decoded = decodeInspection(envelope.result);
+export const renderBundleInspection: HumanView<"profile-inspect-bundle"> = (
+  envelope,
+  { result },
+  style,
+) => {
   // A bundle that cannot be read ends with the command its failure names as the fix.
-  if (Option.isNone(decoded)) return withoutPayload(envelope, undefined, style);
+  if (Option.isNone(result)) return withoutPayload(envelope, undefined, style);
   return sections(
     headerLines(envelope, undefined, style),
-    [`Content bundle inventory · ${style.path(decoded.value.file)}`],
-    inventoryLines(decoded.value.manifest),
-    fileLines(decoded.value.manifest.files),
+    [`Content bundle inventory · ${style.path(result.value.file)}`],
+    inventoryLines(result.value.manifest),
+    fileLines(result.value.manifest.files),
     [
       "Inventory read-out only. Run tack check with this artifact path for complete validation.",
       "Checksums establish integrity, not publisher authenticity. Supplied code and installers never run.",

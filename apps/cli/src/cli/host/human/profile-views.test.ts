@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { bundleSourceLabel } from "../../../domain/bundles/bundle-registration.ts";
 import { envelopeOf, flat, plainStyle, styleOf, testHome } from "./human.test-support.ts";
-import { renderBundleExport, renderBundleInspection } from "./profile-bundle.ts";
-import { renderProfileAdopt, renderProfileSave } from "./profile-copy.ts";
-import { profileCheckLines, renderProfileApply } from "./profile.ts";
+import { profileCheckLines } from "./profile.ts";
+import { renderDedicated } from "./render.ts";
 
 const sourceId = "00000000-0000-4000-8000-000000000001";
 const skill = (name: string) => ({ kind: "skill", name, sourceRegistrationId: sourceId }) as const;
@@ -157,7 +156,7 @@ const applyPlan = (overrides: Record<string, unknown> = {}) => ({
 
 describe("profile apply view", () => {
   it("previews the fixed members, target and delivery effects", () => {
-    const text = renderProfileApply(
+    const text = renderDedicated(
       envelopeOf({
         command: "profile apply",
         plan: applyPlan({
@@ -205,7 +204,7 @@ describe("profile apply view", () => {
       adapter,
       reason: `Tack does not link commands for ${adapter}`,
     });
-    const text = renderProfileApply(
+    const text = renderDedicated(
       envelopeOf({
         command: "profile apply",
         plan: applyPlan({
@@ -237,7 +236,7 @@ describe("profile apply view", () => {
   });
 
   it("names the verified bundle, its retained sources and the existing selection once applied", () => {
-    const text = renderProfileApply(
+    const text = renderDedicated(
       envelopeOf({
         command: "profile apply-bundle",
         plan: applyPlan({
@@ -271,7 +270,7 @@ describe("profile apply view", () => {
   });
 
   it("says a refused apply stopped before mutation, even without listed sources", () => {
-    const text = renderProfileApply(
+    const text = renderDedicated(
       envelopeOf({
         command: "profile apply-bundle",
         classification: "domain",
@@ -289,7 +288,7 @@ describe("profile apply view", () => {
   });
 
   it("shows each delivery action's outcome once applied, never the raw effects", () => {
-    const text = renderProfileApply(
+    const text = renderDedicated(
       envelopeOf({
         command: "profile apply",
         plan: applyPlan(),
@@ -332,7 +331,7 @@ describe("profile apply view", () => {
   ])(
     "shows a delivery note's destination relative to its one target: $targets",
     ({ targets, shown }) => {
-      const text = renderProfileApply(
+      const text = renderDedicated(
         envelopeOf({
           command: "profile apply",
           plan: applyPlan({
@@ -387,7 +386,7 @@ describe("profile apply view", () => {
   ])(
     "lists the docs links a profile delivers beside its agent links, $state",
     ({ applied, row }) => {
-      const text = renderProfileApply(
+      const text = renderDedicated(
         envelopeOf({
           command: "profile apply",
           plan: applyPlan({
@@ -437,7 +436,7 @@ describe("profile apply view", () => {
   ])(
     "names a bundle's members and sources by label when the catalog $catalog",
     ({ style, source, member }) => {
-      const text = renderProfileApply(
+      const text = renderDedicated(
         envelopeOf({
           command: "profile apply-bundle",
           plan: applyPlan({
@@ -497,7 +496,7 @@ const savePlan = (overrides: Record<string, unknown> = {}) => ({
 describe("profile save view", () => {
   it("previews the new profile file and the publication change", () => {
     expect(
-      renderProfileSave(envelopeOf({ command: "profile save", plan: savePlan() }), labelled),
+      renderDedicated(envelopeOf({ command: "profile save", plan: savePlan() }), labelled),
     ).toBe(
       [
         "tack profile save · ✓ success",
@@ -531,7 +530,7 @@ describe("profile save view", () => {
   });
 
   it("shows the old profile and an unchanged publication once saved", () => {
-    const text = renderProfileSave(
+    const text = renderDedicated(
       envelopeOf({
         command: "profile save",
         plan: savePlan({
@@ -563,7 +562,7 @@ describe("profile adopt view", () => {
 
   it("previews what the daily selection would include and attach, and what still blocks it", () => {
     expect(
-      renderProfileAdopt(envelopeOf({ command: "profile adopt", plan: adoptPlan }), labelled),
+      renderDedicated(envelopeOf({ command: "profile adopt", plan: adoptPlan }), labelled),
     ).toBe(
       [
         "tack profile adopt · ✓ success",
@@ -585,7 +584,7 @@ describe("profile adopt view", () => {
 
   it("says adopted once applied", () => {
     expect(
-      renderProfileAdopt(
+      renderDedicated(
         envelopeOf({ command: "profile adopt", plan: adoptPlan, applied: { done: true } }),
         plainStyle,
       ),
@@ -649,7 +648,7 @@ const payload = [
 
 describe("profile export view", () => {
   it("previews the inventory and exact payload of the snapshot", () => {
-    const text = renderBundleExport(
+    const text = renderDedicated(
       envelopeOf({
         command: "profile export",
         plan: {
@@ -669,7 +668,7 @@ describe("profile export view", () => {
   });
 
   it("shows refusals without an inventory when no manifest could be built", () => {
-    const text = renderBundleExport(
+    const text = renderDedicated(
       envelopeOf({
         command: "profile export",
         classification: "domain",
@@ -697,7 +696,7 @@ describe("profile export view", () => {
 
 describe("profile inspect-bundle view", () => {
   it("reads out the inventory and payload without validating them", () => {
-    const text = renderBundleInspection(
+    const text = renderDedicated(
       envelopeOf({
         command: "profile inspect-bundle",
         result: { kind: "profile-bundle-inspection", file: "/home/me/daily.tackbundle", manifest },
@@ -713,15 +712,15 @@ describe("profile inspect-bundle view", () => {
 
 describe("profile views", () => {
   it("decline a payload their producer's schema does not decode", () => {
-    const views = {
-      "profile apply": renderProfileApply,
-      "profile apply-bundle": renderProfileApply,
-      "profile save": renderProfileSave,
-      "profile adopt": renderProfileAdopt,
-      "profile export": renderBundleExport,
-      "profile inspect-bundle": renderBundleInspection,
-    };
-    for (const [commandPath, view] of Object.entries(views)) {
+    const commandPaths = [
+      "profile apply",
+      "profile apply-bundle",
+      "profile save",
+      "profile adopt",
+      "profile export",
+      "profile inspect-bundle",
+    ];
+    for (const commandPath of commandPaths) {
       // An inspection with no payload at all is a failure, which its own view shows.
       const candidates =
         commandPath === "profile inspect-bundle"
@@ -729,7 +728,7 @@ describe("profile views", () => {
           : [{ unexpected: true }, { kind: "other" }, [], null];
       for (const candidate of candidates) {
         const envelope = envelopeOf({ command: commandPath, plan: candidate, result: candidate });
-        expect(view(envelope, plainStyle), commandPath).toBeUndefined();
+        expect(renderDedicated(envelope, plainStyle), commandPath).toBeUndefined();
       }
     }
   });
@@ -746,10 +745,7 @@ describe("profile views", () => {
         },
       ],
     });
-    const text = renderBundleInspection(
-      { ...failure, next: ["tack profile export --help"] },
-      plainStyle,
-    );
+    const text = renderDedicated({ ...failure, next: ["tack profile export --help"] }, plainStyle);
     expect(text?.trimEnd().split("\n").slice(-2)).toEqual(["Next", "  tack profile export --help"]);
   });
 });

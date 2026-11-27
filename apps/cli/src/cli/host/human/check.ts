@@ -1,13 +1,11 @@
-import { Option, Schema } from "effect";
-import { CheckReportSchema } from "../../../domain/check/check-schema.ts";
+import { Option } from "effect";
 import { headerLines, hintLines, sections } from "./view.ts";
 import type { HumanView } from "./render.ts";
 
 /** Shows one combined file:line authoring report, using the same findings that determine exit status. */
-export const renderCheck: HumanView = (envelope, style) => {
-  const decoded = Schema.decodeUnknownOption(CheckReportSchema)(envelope.result);
-  if (Option.isNone(decoded) === true) return undefined;
-  const report = decoded.value;
+export const renderCheck: HumanView<"check"> = (envelope, { result }, style) => {
+  if (Option.isNone(result) === true) return undefined;
+  const report = result.value;
   return sections(
     headerLines(envelope, undefined, style),
     [

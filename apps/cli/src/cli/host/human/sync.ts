@@ -1,8 +1,4 @@
-import { Option, Schema } from "effect";
-import {
-  SyncApplicationSchema,
-  SyncPlanSchema,
-} from "../../../domain/reconciliation/sync-schema.ts";
+import { Option } from "effect";
 import { frameView } from "./frame.ts";
 import type { HumanView } from "./render.ts";
 import { renderPlan } from "./plan.ts";
@@ -37,12 +33,11 @@ const docsSections = (
 };
 
 /** Shows both parts of a sync in one frame, with every docs mount action named. */
-export const renderSync: HumanView = (envelope, style) => {
-  const plan = Option.getOrUndefined(Schema.decodeUnknownOption(SyncPlanSchema)(envelope.plan));
+export const renderSync: HumanView<"sync"> = (envelope, payloads, style) => {
+  const plan = Option.getOrUndefined(payloads.plan);
+  // A plan of another shape, such as the agent links alone, is read as a reconciliation plan.
   if (plan === undefined) return renderPlan(envelope, style);
-  const applied = Option.getOrUndefined(
-    Schema.decodeUnknownOption(SyncApplicationSchema)(envelope.applied),
-  );
+  const applied = Option.getOrUndefined(payloads.applied);
   const flags = syncFlagWords(plan);
   const parts = plan.docs.map((entry, index) =>
     docsSyncPart(entry, applied?.docs[index], flags, style),

@@ -285,7 +285,23 @@ export const commandDeclarations = {
 } as const satisfies Record<Exclude<Invocation["_tag"], FlagRequestTag>, CommandDeclaration>;
 
 /** The payload schemas of the `--help` and `--version` requests, which no command word selects. */
-export const flagRequestPayloads = {
+const flagRequestPayloads = {
   help: { result: HelpPayloadSchema },
   version: { result: VersionReportSchema },
 } as const satisfies Record<FlagRequestTag, PayloadSchemas>;
+
+type InvocationPayloads = typeof commandDeclarations & typeof flagRequestPayloads;
+
+/** The payload schemas of one invocation, a command or a flag request. */
+export const payloadSchemasOf = (tag: Invocation["_tag"]): PayloadSchemas =>
+  tag === "help" || tag === "version" ? flagRequestPayloads[tag] : commandDeclarations[tag];
+
+/** The decoded type of what an invocation declares for one slot; `never` for a slot it never fills. */
+export type DeclaredPayload<
+  Tag extends Invocation["_tag"],
+  Slot extends PayloadSlot,
+> = Tag extends unknown
+  ? InvocationPayloads[Tag] extends { readonly [K in Slot]: { readonly Type: infer A } }
+    ? A
+    : never
+  : never;
