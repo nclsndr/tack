@@ -1,7 +1,7 @@
 import { Cause, Exit, Option, Schema } from "effect";
 import { compareCodeUnits, sortAndDedupeBy } from "../../domain/identity/ordering.ts";
 import type { NextCommands } from "../../domain/hints/next-commands.ts";
-import { argvLine } from "./command-line.ts";
+import { argvLine } from "../../domain/hints/next-commands.ts";
 
 /** The only public command-envelope format supported by this Tack release. */
 const publicEnvelopeVersion = 1 as const;

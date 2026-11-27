@@ -1,15 +1,9 @@
 import type { commandDeclarations } from "../commands/declarations.ts";
 import { commandPathOf } from "../commands/model.ts";
+import { argvLine } from "../../domain/hints/next-commands.ts";
 
 /** An operation a printed command can name: every invocation the command tree declares. */
 export type CommandName = keyof typeof commandDeclarations;
-
-/** `tack sync --project demo`; a word is quoted only when a shell would otherwise split or expand it. */
-export const shellWord = (word: string): string =>
-  /^[A-Za-z0-9_@%+=:,./-]+$/.test(word) ? word : `'${word.replaceAll("'", `'\\''`)}'`;
-
-/** A whole argument vector as one shell line, such as a doctor check's `next`. */
-export const argvLine = (argv: ReadonlyArray<string>): string => argv.map(shellWord).join(" ");
 
 /**
  * The argv that runs one operation: `tack`, its command path from the command model, then the given
@@ -42,3 +36,10 @@ export const selectorFlags = (selector: {
       : selector._tag === "all"
         ? ["--all"]
         : [];
+
+/**
+ * The user exclude that turns a resource off everywhere: the fix a refused project exclude names,
+ * from the pick route and from the explorer alike.
+ */
+export const userExcludeCommand = (reference: string, kind: string): ReadonlyArray<string> =>
+  invocation("pick-exclude", reference, "--kind", kind, "--user");

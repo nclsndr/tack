@@ -1,5 +1,5 @@
 import { Cause, Effect, Stdio, Stream } from "effect";
-import { argvLine } from "../envelope/command-line.ts";
+import { argvLine } from "../../domain/hints/next-commands.ts";
 import { HostEnvironment } from "./host-environment.ts";
 import type { PublicEnvelope } from "../envelope/public-outcome.ts";
 

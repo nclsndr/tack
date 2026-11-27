@@ -16,7 +16,8 @@ import {
   ResourceReferenceError,
   resolveResourceReference,
 } from "../../features/sources/resource-reference.ts";
-import { commandLine, selectorFlags, shellWord } from "../envelope/command-line.ts";
+import { commandLine, selectorFlags } from "../envelope/command-line.ts";
+import { shellWord } from "../../domain/hints/next-commands.ts";
 import { notRegistered } from "../envelope/errors.ts";
 import {
   historyListOutcome,

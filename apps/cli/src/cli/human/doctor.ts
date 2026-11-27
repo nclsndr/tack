@@ -1,6 +1,6 @@
 import { Option } from "effect";
 import type { DoctorCheck, DoctorReport } from "../../domain/doctor/doctor-schema.ts";
-import { argvLine } from "../envelope/command-line.ts";
+import { argvLine } from "../../domain/hints/next-commands.ts";
 import { frameView } from "./frame.ts";
 import { indented } from "./inspection-support.ts";
 import type { HumanView } from "./render.ts";

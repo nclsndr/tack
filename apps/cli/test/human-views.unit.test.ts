@@ -7,7 +7,7 @@ import { rootFlagNames } from "../src/cli/human/help.ts";
 import { mapModeWords, operationMap } from "../src/cli/human/help-map.ts";
 import { renderGeneric, renderHuman } from "../src/cli/human/render.ts";
 import { makeStyle } from "../src/cli/human/style.ts";
-import { shellWord } from "../src/cli/envelope/command-line.ts";
+import { shellWord } from "../src/domain/hints/next-commands.ts";
 import { expectViewContract } from "../src/cli/human/human.test-support.ts";
 import { displayWidth } from "../src/cli/human/text.ts";
 import { PublicEnvelopeSchema, type PublicEnvelope } from "../src/cli/envelope/public-outcome.ts";

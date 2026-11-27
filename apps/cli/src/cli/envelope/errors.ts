@@ -57,7 +57,8 @@ import type {
   StateStorageError,
 } from "../../services/state-store.ts";
 import type { NextCommands } from "../../domain/hints/next-commands.ts";
-import { argvLine, invocation } from "./command-line.ts";
+import { invocation } from "./command-line.ts";
+import { argvLine } from "../../domain/hints/next-commands.ts";
 import { oneLine } from "./one-line.ts";
 import type { PublicOutcome } from "./public-outcome.ts";
 

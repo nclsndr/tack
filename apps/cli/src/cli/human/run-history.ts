@@ -4,7 +4,8 @@ import {
   RunTargetSchema,
   type HistorySummary,
 } from "../../domain/execution/execution-schema.ts";
-import { commandLine, shellWord } from "../envelope/command-line.ts";
+import { commandLine } from "../envelope/command-line.ts";
+import { shellWord } from "../../domain/hints/next-commands.ts";
 import { frameView } from "./frame.ts";
 import type { HumanView } from "./render.ts";
 import {

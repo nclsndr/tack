@@ -322,6 +322,36 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
     }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
   );
 
+  test.effect("refuses a project exclude of a user-linked skill before saving any change", () =>
+    Effect.gen(function* () {
+      const { options, editorFor } = yield* workspace();
+      const user = yield* editorFor({ _tag: "user" });
+      yield* user.editor.apply([{ kind: "choice", address: user.review, decision: "include" }]);
+      const { editor, review, handbook } = yield* editorFor({
+        _tag: "project",
+        projectName: "demo",
+      });
+      const batch: ReadonlyArray<PendingChange> = [
+        {
+          kind: "docs",
+          resource: { sourceRegistrationId: handbook.sourceRegistrationId, name: handbook.name },
+          attached: true,
+        },
+        { kind: "choice", address: review, decision: "exclude" },
+      ];
+      const refusal =
+        "Project demo cannot hide skill review: the user namespace links it, so every agent in the project would still see it. Nothing was recorded. Run `tack pick exclude source:review --kind skill --user` to turn it off everywhere.";
+      expect(yield* editor.preview(batch)).toEqual([`Cannot preview these changes: ${refusal}`]);
+      const before = yield* readState(options);
+      const applied = yield* editor.apply(batch);
+      expect(applied.lines).toEqual([
+        `stopped ${refusal}`,
+        "Changes saved before this point remain; rerun to finish.",
+      ]);
+      expect((yield* readState(options)).data).toEqual(before.data);
+    }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
+  );
+
   test.effect("previews relinking a link removed by hand as a replacement", () =>
     Effect.gen(function* () {
       const { fs, path, root, editorFor } = yield* workspace();

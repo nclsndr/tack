@@ -1,7 +1,7 @@
 import { Predicate } from "effect";
 import type { Namespace } from "../../domain/choices/choice-schema.ts";
 import type { ResourceKind } from "../../domain/resources/kinds.ts";
-import { argvLine } from "../envelope/command-line.ts";
+import { argvLine } from "../../domain/hints/next-commands.ts";
 import type { PublicEnvelope } from "../envelope/public-outcome.ts";
 import { dependencyBlockerSentences } from "./dependency-blockers.ts";
 import type { ReferenceAddress, Style } from "./style.ts";

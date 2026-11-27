@@ -663,6 +663,8 @@ delivers the resource: every project's agent also loads the user's resources, an
 link one the project selects too. This is what `sync`
 would deliver, not the links on disk. A staged change follows the state, such as
 `● default → include`; an include of an active resource saves an explicit pick and changes no link.
+A project exclude of a resource the user namespace links is refused with `project-exclude-refused`,
+as `pick exclude` refuses it, in the preview and before any staged change is saved.
 A project that a fixed profile owns opens read-only: its header says `fixed by SOURCE/PROFILE`, its
 rows show `● member`, `● required` or `○ not a member`, and the staging keys say to edit the
 profile instead. A profile destination's rows use the same three words.

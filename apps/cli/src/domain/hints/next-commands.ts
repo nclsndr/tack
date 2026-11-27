@@ -11,3 +11,10 @@ export const NextCommandsSchema = Schema.Array(
 
 /** Commands a failure names as its fix; see {@link NextCommandsSchema}. */
 export type NextCommands = typeof NextCommandsSchema.Type;
+
+/** `tack sync --project demo`; a word is quoted only when a shell would otherwise split or expand it. */
+export const shellWord = (word: string): string =>
+  /^[A-Za-z0-9_@%+=:,./-]+$/.test(word) ? word : `'${word.replaceAll("'", `'\\''`)}'`;
+
+/** A whole argument vector as one shell line, such as a doctor check's `next`. */
+export const argvLine = (argv: ReadonlyArray<string>): string => argv.map(shellWord).join(" ");

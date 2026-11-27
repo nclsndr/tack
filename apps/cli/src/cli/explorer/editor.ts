@@ -1,4 +1,5 @@
 import { requireMutableChoice } from "../../features/choices/builtin-choice.ts";
+import { requirePickable } from "../../features/choices/pick.ts";
 import { Effect, type Context } from "effect";
 import {
   listSkillChoices,
@@ -28,6 +29,8 @@ import { unitSummary } from "../human/plan.ts";
 import { namespaceText } from "../human/view.ts";
 import type { ExplorerState, ExplorerEntry } from "./model.ts";
 import type { RouteServices } from "../envelope/route-services.ts";
+import { userExcludeCommand } from "../envelope/command-line.ts";
+import type { State } from "../../domain/state/state-schema.ts";
 
 /** The effects the session runs for edit mode, with every service already provided. */
 export type ExplorerEditor = {
@@ -175,6 +178,24 @@ export const makeExplorerEditor = (options: {
         : { _tag: "project", projectName: namespace.projectName },
   };
   const projectName = namespace._tag === "project" ? namespace.projectName : undefined;
+  // The checks `tack pick` runs, on every staged choice before the first write, so a refused
+  // change leaves no half-saved batch. A reset only needs the resource to be mutable.
+  const requireBatch = Effect.fnUntraced(function* (
+    catalog: Catalog,
+    state: State,
+    pending: ReadonlyArray<PendingChange>,
+  ) {
+    for (const change of pending)
+      if (change.kind === "choice")
+        yield* change.decision === "unset"
+          ? requireMutableChoice(catalog, change.address)
+          : requirePickable(
+              catalog,
+              state,
+              { address: change.address, decision: change.decision, namespace },
+              userExcludeCommand,
+            );
+  });
 
   const preview: ExplorerEditor["preview"] = (pending) =>
     run(
@@ -182,8 +203,7 @@ export const makeExplorerEditor = (options: {
         const current = yield* readInvocationSnapshot(stateOptions);
         const catalog = yield* current.catalog;
         const style = named(catalog);
-        for (const change of pending)
-          if (change.kind === "choice") yield* requireMutableChoice(catalog, change.address);
+        yield* requireBatch(catalog, current.state, pending);
         // Staging changes picks and docs, never sources, so the staged snapshot shares the catalog.
         const staged = yield* makeCommandSnapshot(
           stagedState(current.state, namespace, pending),
@@ -247,8 +267,7 @@ export const makeExplorerEditor = (options: {
         const catalog = yield* snapshot.catalog;
         const style = named(catalog);
         // Validate the whole batch before its first write, including forged or stale staging.
-        for (const change of pending)
-          if (change.kind === "choice") yield* requireMutableChoice(catalog, change.address);
+        yield* requireBatch(catalog, snapshot.state, pending);
         for (const change of pending) {
           if (change.kind === "choice") {
             if (change.decision === "unset")

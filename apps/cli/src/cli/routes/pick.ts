@@ -2,12 +2,10 @@ import { requireMutableChoice } from "../../features/choices/builtin-choice.ts";
 import { Effect } from "effect";
 import {
   catalogAddressCandidates,
-  ChoiceUserLinkedError,
   listSkillChoices,
   removeSkillChoice,
-  setSkillChoice,
 } from "../../features/choices/choice.ts";
-import { userLinkedExcludes, userLinksOf } from "../../features/reconciliation/linked-for-user.ts";
+import { pickChoice } from "../../features/choices/pick.ts";
 import { withCommandWriter } from "../../features/writer/recovered-writer.ts";
 import { readInvocationSnapshot } from "../../features/snapshot/command-snapshot.ts";
 import type { StateOptions } from "../../services/state-store.ts";
@@ -19,14 +17,8 @@ import {
 import { isSelectableAddress, type Catalog } from "../../domain/sources/catalog-schema.ts";
 import { selectableKinds, type SelectableKind } from "../../domain/resources/kinds.ts";
 import type { Namespace, SkillChoice } from "../../domain/choices/choice-schema.ts";
-import {
-  argvLine,
-  commandLine,
-  invocation as commandInvocation,
-  selectorFlags,
-  shellWord,
-} from "../envelope/command-line.ts";
-import type { State } from "../../domain/state/state-schema.ts";
+import { commandLine, selectorFlags, userExcludeCommand } from "../envelope/command-line.ts";
+import { argvLine, shellWord } from "../../domain/hints/next-commands.ts";
 import { appliedAs, choiceSetOutcome, resultAs } from "../envelope/outcomes.ts";
 import type { RoutesFor } from "./route.ts";
 
@@ -45,10 +37,7 @@ const resolvePick = Effect.fnUntraced(function* (
     kind,
     selectorFlags(namespace).map(shellWord),
   );
-  if (isSelectableAddress(entry.address)) {
-    yield* requireMutableChoice(catalog, entry.address);
-    return entry.address;
-  }
+  if (isSelectableAddress(entry.address)) return entry.address;
   // Coverage skip: the reference resolves only pick kinds; this narrows the type for the compiler.
   /* v8 ignore next -- @preserve */
   return yield* new ResourceReferenceError({
@@ -116,34 +105,6 @@ const resolveStoredPick = Effect.fnUntraced(function* (
   });
 });
 
-/**
- * Refuses a project exclude that would hide nothing because the user namespace links the resource,
- * before anything is recorded. Its fix is the user exclude, named by source and kind.
- */
-const requireVisibleExclude = Effect.fnUntraced(function* (
-  catalog: Catalog,
-  state: State,
-  choice: SkillChoice,
-) {
-  const [refused] = userLinkedExcludes(userLinksOf(state, catalog, false), [choice]);
-  if (refused === undefined) return undefined;
-  const { address, projectName } = refused;
-  const command = commandInvocation(
-    "pick-exclude",
-    `${sourceQualifier(catalog, address.sourceRegistrationId)}:${address.name}`,
-    "--kind",
-    address.kind,
-    "--user",
-  );
-  return yield* new ChoiceUserLinkedError({
-    code: "project-exclude-refused",
-    address,
-    projectName,
-    message: `Project ${projectName} cannot hide ${address.kind} ${address.name}: the user namespace links it, so every agent in the project would still see it. Nothing was recorded. Run \`${argvLine(command)}\` to turn it off everywhere.`,
-    next: [command],
-  });
-});
-
 /** Sets one pick after resolving its reference, from the document the writer holds. */
 const setPick = (
   stateOptions: StateOptions,
@@ -166,9 +127,12 @@ const setPick = (
         request.namespace,
         request.kind,
       );
-      const choice = { address, decision: request.decision, namespace: request.namespace };
-      yield* requireVisibleExclude(catalog, snapshot.state, choice);
-      const applied = yield* setSkillChoice(writer, choice);
+      const applied = yield* pickChoice(
+        writer,
+        { catalog, state: snapshot.state },
+        { address, decision: request.decision, namespace: request.namespace },
+        userExcludeCommand,
+      );
       return choiceSetOutcome(
         request.tag,
         applied,

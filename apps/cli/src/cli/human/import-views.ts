@@ -8,7 +8,8 @@ import type {
   ImportSummary,
 } from "../../domain/imports/import-schema.ts";
 import type { Invocation } from "../commands/index.ts";
-import { argvLine, commandLine } from "../envelope/command-line.ts";
+import { commandLine } from "../envelope/command-line.ts";
+import { argvLine } from "../../domain/hints/next-commands.ts";
 import type { PublicEnvelope } from "../envelope/public-outcome.ts";
 import { frameView } from "./frame.ts";
 import type { HumanView, HumanViewRegistry } from "./render.ts";
