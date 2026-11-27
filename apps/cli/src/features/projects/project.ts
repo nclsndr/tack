@@ -636,6 +636,36 @@ export const removingContainingRoot = (state: State, canonicalCwd: string, path:
     )
     .sort((left, right) => pathDepth(path, right.root) - pathDepth(path, left.root))[0];
 
+/** A selector flag that a command can accept in place of the bare selector. */
+export type SelectorFlag = Exclude<Selector["_tag"], "bare">;
+
+const selectorFlagWords = {
+  project: "--project NAME",
+  user: "--user",
+  all: "--all",
+} satisfies Record<SelectorFlag, string>;
+
+/**
+ * Refuses a bare selector whose directory no registered project contains. The message names
+ * exactly the flags the command accepts, and `removing` names the root being removed that contains
+ * the directory, when the caller looked one up.
+ */
+export const bareSelectionRefusal = (
+  accepts: ReadonlyArray<SelectorFlag>,
+  path: string,
+  removing?: ContainingRoot,
+) => {
+  const flags = accepts.map((flag) => selectorFlagWords[flag]);
+  const choices =
+    flags.length === 1 ? flags[0] : `${flags.slice(0, -1).join(", ")} or ${flags.at(-1)}`;
+  return new TargetSelectionError({
+    code: "bare-target-requires-registered-root",
+    message: `This directory is not inside a registered project. Choose ${choices}.`,
+    path,
+    ...(removing === undefined ? {} : removing),
+  });
+};
+
 const staleRootsFrom = (projects: ReadonlyArray<ProjectInspection>) =>
   projects.flatMap((inspection) =>
     inspection.roots.flatMap((root) =>
@@ -843,15 +873,11 @@ export const selectTargets = Effect.fnUntraced(function* (
   if (options.selector._tag === "bare") {
     const { canonicalCwd, containing } = yield* resolveContainingRoot(state, options.cwd);
     if (containing === undefined) {
-      const path = yield* Path.Path;
-      const removing = removingContainingRoot(state, canonicalCwd, path);
-      return yield* new TargetSelectionError({
-        code: "bare-target-requires-registered-root",
-        message:
-          "This directory is not inside a registered project. Choose --project NAME, --user or --all.",
-        path: canonicalCwd,
-        ...(removing === undefined ? {} : removing),
-      });
+      return yield* bareSelectionRefusal(
+        ["project", "user", "all"],
+        canonicalCwd,
+        removingContainingRoot(state, canonicalCwd, yield* Path.Path),
+      );
     }
     const selected = yield* selectTargets(state, stateOptions, {
       ...options,

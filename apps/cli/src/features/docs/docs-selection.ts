@@ -10,9 +10,9 @@ import { readInvocationSnapshot } from "../snapshot/command-snapshot.ts";
 import { docsSettingsFor } from "../../domain/state/state-intent.ts";
 import {
   activeProjects,
+  bareSelectionRefusal,
   ProjectNotFoundError,
   resolveContainingRoot,
-  TargetSelectionError,
 } from "../projects/project.ts";
 import type { Catalog } from "../../domain/sources/catalog-schema.ts";
 import { shortestReference } from "../sources/resource-reference.ts";
@@ -23,12 +23,7 @@ export type DocsSelector = { readonly projectName?: string; readonly cwd?: strin
 
 const projectNotFound = (selector: DocsSelector, canonicalCwd: string) =>
   selector.projectName === undefined
-    ? new TargetSelectionError({
-        code: "bare-target-requires-registered-root",
-        message:
-          "Choose an active registered project with --project, or run inside a registered project root.",
-        path: canonicalCwd,
-      })
+    ? bareSelectionRefusal(["project"], canonicalCwd)
     : new ProjectNotFoundError({ code: "project-not-found", projectName: selector.projectName });
 
 /**

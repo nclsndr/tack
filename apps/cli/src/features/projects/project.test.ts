@@ -11,6 +11,7 @@ import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { Git } from "../../services/git.ts";
 import {
+  bareSelectionRefusal,
   ProjectRegistrationConflictError,
   ProjectValidationError,
   ProjectRootOwnershipError,
@@ -902,4 +903,27 @@ it.layer(LiveTestLayer)("project registration outside a repository", (outsideIt)
       }),
     ),
   );
+});
+
+it.each([
+  {
+    accepts: ["project", "user", "all"] as const,
+    choose: "Choose --project NAME, --user or --all.",
+  },
+  { accepts: ["project", "all"] as const, choose: "Choose --project NAME or --all." },
+  { accepts: ["project"] as const, choose: "Choose --project NAME." },
+])("refuses a bare selector by naming exactly the flags $accepts", ({ accepts, choose }) => {
+  expect(bareSelectionRefusal(accepts, "/outside")).toEqual(
+    new TargetSelectionError({
+      code: "bare-target-requires-registered-root",
+      message: `This directory is not inside a registered project. ${choose}`,
+      path: "/outside",
+    }),
+  );
+});
+
+it("names the root being removed that contains the refused directory", () => {
+  expect(
+    bareSelectionRefusal(["project"], "/old/nested", { projectName: "gone", root: "/old" }),
+  ).toMatchObject({ path: "/old/nested", projectName: "gone", root: "/old" });
 });

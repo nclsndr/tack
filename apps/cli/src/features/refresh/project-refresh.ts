@@ -32,11 +32,11 @@ import {
   type DirectoryObservation,
 } from "../projects/project-observation.ts";
 import {
+  bareSelectionRefusal,
   ProjectNotFoundError,
   ProjectRootOwnershipError,
   resolveContainingRoot,
   removingContainingRoot,
-  TargetSelectionError,
   projectAllRoots,
 } from "../projects/project.ts";
 import { type Selector, projectLifecycle } from "../../domain/projects/project-schema.ts";
@@ -586,14 +586,11 @@ export const runProjectRefreshCommand = Effect.fn("refresh.runProjectRefreshComm
             },
           );
         }
-        const removing = removingContainingRoot(state, canonicalCwd, yield* Path.Path);
-        return yield* new TargetSelectionError({
-          code: "bare-target-requires-registered-root",
-          message:
-            "This directory is not inside a registered project. Choose --project NAME or --all.",
-          path: canonicalCwd,
-          ...(removing === undefined ? {} : removing),
-        });
+        return yield* bareSelectionRefusal(
+          ["project", "all"],
+          canonicalCwd,
+          removingContainingRoot(state, canonicalCwd, yield* Path.Path),
+        );
       }),
     applyPlan: applyCommand,
   });
