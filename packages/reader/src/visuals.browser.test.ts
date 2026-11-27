@@ -1,29 +1,17 @@
 // @vitest-environment jsdom
 import { act, createElement } from "react";
-import { createRoot } from "react-dom/client";
-import type { Root } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { Chart, Walkthrough } from "./visuals.tsx";
+import { testRoot } from "./react.test-support.ts";
 
-let container: HTMLDivElement;
-let root: Root;
+const ui = testRoot();
 
 beforeEach(() => {
-  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   window.history.replaceState({ router: "retained" }, "", "/guide#part");
-  container = document.createElement("div");
-  document.body.append(container);
-  root = createRoot(container);
-});
-
-afterEach(async () => {
-  await act(async () => root.unmount());
-  container.remove();
-  vi.unstubAllGlobals();
 });
 
 function button(label: string): HTMLButtonElement {
-  const element = [...container.querySelectorAll("button")].find(
+  const element = [...ui.container.querySelectorAll("button")].find(
     (item) => item.getAttribute("aria-label") === label || item.textContent === label,
   );
   if (element === undefined) throw new Error(`Missing button: ${label}`);
@@ -52,23 +40,21 @@ async function restore(url: string): Promise<void> {
 
 describe("reproducible visual interactions", () => {
   it("replays walkthrough URL state on popstate and retains router history data", async () => {
-    await act(async () =>
-      root.render(
-        createElement(Walkthrough, {
-          id: "flow",
-          steps: [
-            { title: "Register", body: "Sources" },
-            { title: "Apply", body: "Links" },
-          ],
-        }),
-      ),
+    await ui.render(
+      createElement(Walkthrough, {
+        id: "flow",
+        steps: [
+          { title: "Register", body: "Sources" },
+          { title: "Apply", body: "Links" },
+        ],
+      }),
     );
     expect(button("Previous step").disabled).toBe(true);
     await click(button("Next step"));
     expect(window.location.search).toBe("?reader.flow.step=2");
     expect(window.location.hash).toBe("#part");
     expect(window.history.state).toEqual({ router: "retained" });
-    expect(container.querySelector('section[aria-label="Apply"]')?.hasAttribute("hidden")).toBe(
+    expect(ui.container.querySelector('section[aria-label="Apply"]')?.hasAttribute("hidden")).toBe(
       false,
     );
     expect(button("Next step").disabled).toBe(true);
@@ -76,38 +62,38 @@ describe("reproducible visual interactions", () => {
     expect(window.location.search).toBe("?reader.flow.step=1");
     await click(button("2. Apply"));
     await restore("/guide?reader.flow.step=1#part");
-    expect(container.querySelector('section[aria-label="Register"]')?.hasAttribute("hidden")).toBe(
-      false,
-    );
+    expect(
+      ui.container.querySelector('section[aria-label="Register"]')?.hasAttribute("hidden"),
+    ).toBe(false);
     await restore("/guide?reader.flow.step=999#part");
-    expect(container.querySelector("figure")?.getAttribute("data-reader-state")).toBe('{"step":2}');
+    expect(ui.container.querySelector("figure")?.getAttribute("data-reader-state")).toBe(
+      '{"step":2}',
+    );
   });
 
   it("copies chart scenario and parameter effects from the displayed values", async () => {
-    await act(async () =>
-      root.render(
-        createElement(Chart, {
-          id: "cost",
-          data: [
-            { label: "Page", value: 10 },
-            { label: "Shared setup", value: 40 },
-          ],
-          unit: "lines",
-          scenarios: [
-            { id: "base", label: "Baseline", multiplier: 1 },
-            { id: "double", label: "Double", multiplier: 2 },
-          ],
-        }),
-      ),
+    await ui.render(
+      createElement(Chart, {
+        id: "cost",
+        data: [
+          { label: "Page", value: 10 },
+          { label: "Shared setup", value: 40 },
+        ],
+        unit: "lines",
+        scenarios: [
+          { id: "base", label: "Baseline", multiplier: 1 },
+          { id: "double", label: "Double", multiplier: 2 },
+        ],
+      }),
     );
-    const scenario = container.querySelector<HTMLSelectElement>("select");
-    const scale = container.querySelectorAll<HTMLSelectElement>("select")[1];
-    const bar = container.querySelector('[aria-label="Page: 10 lines"]');
+    const scenario = ui.container.querySelector<HTMLSelectElement>("select");
+    const scale = ui.container.querySelectorAll<HTMLSelectElement>("select")[1];
+    const bar = ui.container.querySelector('[aria-label="Page: 10 lines"]');
     if (scenario === null || scale === undefined || bar === null)
       throw new Error("Expected chart controls");
     await change(scenario, "double");
     expect(window.location.search).toContain("reader.cost.scenario=double");
-    expect(container.querySelector("figure")?.getAttribute("data-reader-readable")).toContain(
+    expect(ui.container.querySelector("figure")?.getAttribute("data-reader-readable")).toContain(
       "Page: 20 lines",
     );
     await change(scale, "sqrt");
@@ -143,13 +129,13 @@ describe("reproducible visual interactions", () => {
     await restore(
       "/guide?reader.cost.multiplier=1.5&reader.cost.scenario=double&reader.cost.scale=sqrt&reader.cost.selected=Page",
     );
-    expect(container.querySelector("figure")?.getAttribute("data-reader-readable")).toContain(
+    expect(ui.container.querySelector("figure")?.getAttribute("data-reader-readable")).toContain(
       "Page: 30 lines",
     );
-    expect(container.querySelector("figure")?.getAttribute("data-reader-state")).toBe(
+    expect(ui.container.querySelector("figure")?.getAttribute("data-reader-state")).toBe(
       '{"scenario":"double","multiplier":1.5,"scale":"sqrt","selected":"Page"}',
     );
-    const input = container.querySelector<HTMLInputElement>('input[type="range"]');
+    const input = ui.container.querySelector<HTMLInputElement>('input[type="range"]');
     if (input === null) throw new Error("Expected multiplier control");
     await act(async () => {
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(input, "2");

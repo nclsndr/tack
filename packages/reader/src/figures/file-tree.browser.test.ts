@@ -1,29 +1,17 @@
 // @vitest-environment jsdom
 import { act, createElement } from "react";
-import { createRoot } from "react-dom/client";
-import type { Root } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { interactionContext } from "../browser.ts";
 import { FileTree } from "./file-tree.tsx";
 import type { FileTreeProps } from "./file-tree-model.ts";
 import { fileTreeIssues } from "./catalog.ts";
 import { issueLine } from "./issues.ts";
+import { testRoot } from "../react.test-support.ts";
 
-let container: HTMLDivElement;
-let root: Root;
+const ui = testRoot();
 
 beforeEach(() => {
-  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   window.history.replaceState(null, "", "/tree");
-  container = document.createElement("div");
-  document.body.append(container);
-  root = createRoot(container);
-});
-
-afterEach(async () => {
-  await act(async () => root.unmount());
-  container.remove();
-  vi.unstubAllGlobals();
 });
 
 const source = [
@@ -57,22 +45,22 @@ const props: FileTreeProps = {
 };
 
 async function render(value: FileTreeProps): Promise<void> {
-  await act(async () => root.render(createElement(FileTree, value)));
+  await ui.render(createElement(FileTree, value));
 }
 const row = (id: string): SVGGElement => {
-  const element = container.querySelector<SVGGElement>(`g.tack-tree-row[data-entry="${id}"]`);
+  const element = ui.container.querySelector<SVGGElement>(`g.tack-tree-row[data-entry="${id}"]`);
   if (element === null) throw new Error(`Missing row ${id}`);
   return element;
 };
 const button = (text: string): HTMLButtonElement => {
-  const element = [...container.querySelectorAll("button")].find(
+  const element = [...ui.container.querySelectorAll("button")].find(
     (item) => item.firstChild?.textContent === text,
   );
   if (element === undefined) throw new Error(`Missing button ${text}`);
   return element;
 };
 const figure = (): HTMLElement => {
-  const element = container.querySelector("figure");
+  const element = ui.container.querySelector("figure");
   if (element === null) throw new Error("Missing figure");
   return element;
 };
@@ -83,7 +71,7 @@ async function fire(element: Element, event: Event): Promise<void> {
 }
 const click = (element: Element) => fire(element, new MouseEvent("click", { bubbles: true }));
 const arrows = () =>
-  [...container.querySelectorAll(".tack-tree-arrows path")].map((path) =>
+  [...ui.container.querySelectorAll(".tack-tree-arrows path")].map((path) =>
     path.getAttribute("data-kind"),
   );
 
@@ -91,19 +79,19 @@ describe("FileTree", () => {
   it("draws one row per entry with marks, sizes and symlink arrows on the ruled ground", async () => {
     await render(props);
     expect(figure().getAttribute("data-ground")).toBe("ruled-lines");
-    expect(container.querySelectorAll("svg.tack-tree g.tack-tree-row")).toHaveLength(11);
+    expect(ui.container.querySelectorAll("svg.tack-tree g.tack-tree-row")).toHaveLength(11);
     expect(row("~/.local/share/tack/current").hasAttribute("data-key")).toBe(true);
     expect(row("~/.local/share/tack/staging/").getAttribute("data-temp")).toBe("sometimes");
     expect(row("~/.local/share/tack/releases/").hasAttribute("data-directory")).toBe(true);
     expect(row("~/.local/share/tack/releases/r1/...").getAttribute("aria-hidden")).toBe("true");
     expect(
-      [...container.querySelectorAll(".tack-tree-size")].map((text) => text.textContent),
+      [...ui.container.querySelectorAll(".tack-tree-size")].map((text) => text.textContent),
     ).toEqual(["300 MB", "69 MB"]);
     expect(arrows()).toEqual(["rest", "rest"]);
     expect(row("~/.local/bin/tack").querySelector(".tack-tree-target")?.textContent).toBe(
       " -> ../share/tack/current/bin/tack",
     );
-    const legend = [...container.querySelectorAll(".tack-figure-legend li")].map(
+    const legend = [...ui.container.querySelectorAll(".tack-figure-legend li")].map(
       (item) => item.textContent,
     );
     expect(legend).toEqual([
@@ -112,7 +100,7 @@ describe("FileTree", () => {
       "symlink, to where it resolves",
       "size, to scale with the largest",
     ]);
-    expect(container.querySelector(".tack-figure-issues")).toBeNull();
+    expect(ui.container.querySelector(".tack-figure-issues")).toBeNull();
   });
 
   it("inks a link's chain to the real file when it is in focus, and pins it in the URL", async () => {
@@ -128,10 +116,10 @@ describe("FileTree", () => {
     expect(new URLSearchParams(window.location.search).get("reader.disk.pin")).toBe(
       "~/.local/bin/tack",
     );
-    expect(container.textContent).toContain("Resolves through 2");
+    expect(ui.container.textContent).toContain("Resolves through 2");
     await click(button("~/.local/share/tack/current"));
     expect(row("~/.local/share/tack/current").getAttribute("aria-pressed")).toBe("true");
-    expect(container.textContent).toContain("Pointed at by 1");
+    expect(ui.container.textContent).toContain("Pointed at by 1");
     expect(interactionContext(figure()).readable).toContain(
       "View: pinned ~/.local/share/tack/current",
     );
@@ -149,13 +137,13 @@ describe("FileTree", () => {
       row("~/.local/share/tack/hold"),
       new KeyboardEvent("keydown", { key: "a", bubbles: true }),
     );
-    await click(container.querySelector("svg.tack-tree") ?? figure());
+    await click(ui.container.querySelector("svg.tack-tree") ?? figure());
     expect(window.location.search).toBe("");
   });
 
   it("previews an entry while hovered or focused and fades the arrows it is not on", async () => {
     await render({ ...props, summary: "Eleven entries under ~/.local." });
-    expect(container.querySelector(".tack-figure-summary")?.textContent).toBe(
+    expect(ui.container.querySelector(".tack-figure-summary")?.textContent).toBe(
       "Eleven entries under ~/.local.",
     );
     const target = row("~/.local/share/tack/releases/r1/bin/tack");
@@ -179,12 +167,12 @@ describe("FileTree", () => {
       title: "A link can point back up the tree",
       source: ["top/  [2 MB]", "  data/", "    latest -> ../  # the newest"].join("\n"),
     });
-    const arrow = container.querySelector(".tack-tree-arrows path")?.getAttribute("d") ?? "";
+    const arrow = ui.container.querySelector(".tack-tree-arrows path")?.getAttribute("d") ?? "";
     const start = Number(/^M [\d.]+ ([\d.]+)/.exec(arrow)?.[1]);
     const lane = Number(/ V ([\d.]+)/.exec(arrow)?.[1]);
     expect(lane).toBeLessThan(start);
     await click(row("top/"));
-    const details = container.querySelector(".tack-figure-panel")?.textContent ?? "";
+    const details = ui.container.querySelector(".tack-figure-panel")?.textContent ?? "";
     expect(details).toContain("2 MB");
   });
 
@@ -197,7 +185,7 @@ describe("FileTree", () => {
     expect(row("~/.local/share/tack/hold").querySelector(".tack-tree-stamp")?.textContent).toBe(
       "absent",
     );
-    expect(container.textContent).toContain("staging/ exists.");
+    expect(ui.container.textContent).toContain("staging/ exists.");
     expect(interactionContext(figure()).state).toEqual({
       disk: { pin: null, case: "during", step: null },
     });
@@ -226,11 +214,11 @@ describe("FileTree", () => {
   it("renders what it can and lists the same issues the figure check prints", async () => {
     const broken = { ...props, title: "Disk", source: `${source}\n   odd` };
     await render(broken);
-    const listed = [...container.querySelectorAll(".tack-figure-issues li")].map(
+    const listed = [...ui.container.querySelectorAll(".tack-figure-issues li")].map(
       (item) => item.textContent,
     );
     expect(listed).toEqual(fileTreeIssues(broken).map(issueLine));
     expect(listed).toHaveLength(2);
-    expect(container.querySelectorAll("svg.tack-tree g.tack-tree-row")).toHaveLength(12);
+    expect(ui.container.querySelectorAll("svg.tack-tree g.tack-tree-row")).toHaveLength(12);
   });
 });

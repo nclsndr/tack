@@ -1,6 +1,6 @@
-import { createElement } from "react";
+import { act, createElement } from "react";
 import { renderToMarkdownString } from "react-render-to-markdown";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { numericState, readVisualState, updateVisualState, useVisualState } from "./state.ts";
 
 /** Prints one visual's URL state, as a figure reads it while it renders. */
@@ -9,15 +9,19 @@ function StateProbe(props: { readonly id: string }) {
   return createElement("p", null, `state: ${JSON.stringify(state)}`);
 }
 
+afterEach(() => vi.unstubAllGlobals());
+
 describe("visual URL state without a window", () => {
   // Rspress writes Markdown twins with this client renderer in Node, where no `window` exists.
   it("reads every visual in its initial state", async () => {
     expect(typeof globalThis.window).toBe("undefined");
-    const markdown = await renderToMarkdownString(createElement(StateProbe, { id: "walk" }));
-    // React subscribes in a passive effect that its scheduler runs on a later turn; wait for it,
-    // so the subscription without a window runs on every machine, not only on a fast one.
-    await new Promise((resolve) => setImmediate(resolve));
-    expect(markdown).toBe("state: {}\n\n");
+    vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+    // act runs the render, then the passive effect in which React subscribes. It holds React's
+    // work until its callback returns, so the callback starts the render and does not await it.
+    const { markdown } = await act(async () => ({
+      markdown: renderToMarkdownString(createElement(StateProbe, { id: "walk" })),
+    }));
+    expect(await markdown).toBe("state: {}\n\n");
   });
 });
 

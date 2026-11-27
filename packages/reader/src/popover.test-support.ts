@@ -1,6 +1,9 @@
 import { act } from "react";
 
-/** Lets Base UI's floating and focus effects, which run on timers and frames, settle. */
+/**
+ * Lets Base UI's floating and focus effects, which run on timers and frames, settle. 20 ms covers
+ * one 16 ms animation frame.
+ */
 export async function settle(): Promise<void> {
   await act(async () => {
     await new Promise((resolve) => setTimeout(resolve, 20));

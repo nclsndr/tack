@@ -1,63 +1,50 @@
 // @vitest-environment jsdom
 import { resolve } from "node:path";
 import { act, createElement } from "react";
-import { createRoot } from "react-dom/client";
-import type { Root } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { interactionContext } from "../browser.ts";
-import { waitForReact } from "../react.test-support.ts";
 import { Schema } from "./schema.tsx";
 import type { SchemaProps } from "./schema-model.ts";
 import { depotSchema, domainModel } from "./schema-fixtures.ts";
 import { checkFigures, staticFigures } from "./check.ts";
 import { NotStatic } from "./static-props.ts";
+import { testRoot, waitForReact } from "../react.test-support.ts";
 
-let container: HTMLDivElement;
-let root: Root;
+const ui = testRoot();
 
 beforeEach(() => {
-  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   window.history.replaceState(null, "", "/schema");
-  container = document.createElement("div");
-  document.body.append(container);
-  root = createRoot(container);
-});
-
-afterEach(async () => {
-  await act(async () => root.unmount());
-  container.remove();
-  vi.unstubAllGlobals();
 });
 
 /** Renders a `Schema` and waits until its drawing is laid out. */
 async function render(input: SchemaProps = depotSchema): Promise<HTMLElement> {
-  await act(async () => root.render(createElement(Schema, input)));
+  await ui.render(createElement(Schema, input));
   // The first layout loads the engine, which can take a few seconds on a busy machine.
   await waitForReact(
     () => {
-      expect(container.querySelector(".tack-schema svg.tack-map")).not.toBeNull();
+      expect(ui.container.querySelector(".tack-schema svg.tack-map")).not.toBeNull();
     },
     { timeout: 15_000 },
   );
-  const figure = container.querySelector<HTMLElement>("figure.tack-figure");
+  const figure = ui.container.querySelector<HTMLElement>("figure.tack-figure");
   if (figure === null) throw new Error("no figure");
   return figure;
 }
 
 const card = (name: string): SVGGElement => {
-  const found = container.querySelector<SVGGElement>(`.tack-schema-card[data-box="${name}"]`);
+  const found = ui.container.querySelector<SVGGElement>(`.tack-schema-card[data-box="${name}"]`);
   if (found === null) throw new Error(`no card ${name}`);
   return found;
 };
 const relation = (id: string): SVGPathElement => {
-  const found = container.querySelector<SVGPathElement>(
+  const found = ui.container.querySelector<SVGPathElement>(
     `.tack-map-links .tack-map-link[data-link="${id}"]`,
   );
   if (found === null) throw new Error(`no relation ${id}`);
   return found;
 };
 const chip = (name: string): HTMLButtonElement => {
-  const found = [...container.querySelectorAll<HTMLButtonElement>("button")].find(
+  const found = [...ui.container.querySelectorAll<HTMLButtonElement>("button")].find(
     (button) => button.textContent === name,
   );
   if (found === undefined) throw new Error(`no button ${name}`);
@@ -66,7 +53,7 @@ const chip = (name: string): HTMLButtonElement => {
 const click = async (element: Element): Promise<void> => {
   await act(async () => element.dispatchEvent(new MouseEvent("click", { bubbles: true })));
 };
-const panel = (): string => container.querySelector(".tack-figure-panel")?.textContent ?? "";
+const panel = (): string => ui.container.querySelector(".tack-figure-panel")?.textContent ?? "";
 
 describe("Schema", () => {
   it("draws table cards with key marks, types and notes, in tinted groups on a dot grid", async () => {
@@ -74,7 +61,7 @@ describe("Schema", () => {
     expect(figure.dataset["figureKind"]).toBe("schema");
     expect(figure.dataset["ground"]).toBe("dot-grid");
     expect(
-      [...container.querySelectorAll(".tack-schema-group text")].map((text) => text.textContent),
+      [...ui.container.querySelectorAll(".tack-schema-group text")].map((text) => text.textContent),
     ).toEqual([
       "public",
       "application data",
@@ -111,12 +98,12 @@ describe("Schema", () => {
     // Every relation at rest, a key solid with its crow's foot, the non-key link dashed and labelled.
     expect(relation("key-1").dataset).toMatchObject({ kind: "rest", style: "solid" });
     expect(relation("link-1").dataset).toMatchObject({ kind: "rest", style: "dashed" });
-    expect(container.querySelector('.tack-map-link-label[data-link="link-1"]')?.textContent).toBe(
-      "same Temporal workflow, no FK",
-    );
-    expect(container.querySelectorAll(".tack-schema-marks")).toHaveLength(7);
     expect(
-      [...container.querySelectorAll(".tack-figure-legend li")].map((item) => item.textContent),
+      ui.container.querySelector('.tack-map-link-label[data-link="link-1"]')?.textContent,
+    ).toBe("same Temporal workflow, no FK");
+    expect(ui.container.querySelectorAll(".tack-schema-marks")).toHaveLength(7);
+    expect(
+      [...ui.container.querySelectorAll(".tack-figure-legend li")].map((item) => item.textContent),
     ).toEqual([
       "public",
       "auth",
@@ -166,7 +153,7 @@ describe("Schema", () => {
     expect(figure.textContent).toContain("Reads and writes public, writes ops.job_logs.");
     await click(chip("collector"));
     expect(
-      [...container.querySelectorAll(".tack-schema-stamp")].map((stamp) => stamp.textContent),
+      [...ui.container.querySelectorAll(".tack-schema-stamp")].map((stamp) => stamp.textContent),
     ).toEqual(["W", "W"]);
     expect(card("public.depots").dataset["ink"]).toBe("blocked");
     expect(interactionContext(figure).state).toEqual({
@@ -179,7 +166,7 @@ describe("Schema", () => {
     await click(chip("Enrichment"));
     expect(card("public.docks").dataset["ink"]).toBe("near");
     expect(card("public.depots").dataset["ink"]).toBe("off");
-    expect(container.querySelector(".tack-schema-stamp")).toBeNull();
+    expect(ui.container.querySelector(".tack-schema-stamp")).toBeNull();
   });
 
   it("replays the tables a query touches and marks the columns it names", async () => {
@@ -217,10 +204,10 @@ describe("Schema", () => {
     expect(card("Resource").querySelector(".tack-schema-key")).toBeNull();
     expect(card("Source").querySelector(".tack-schema-key")?.textContent).toBe("PK");
     expect(
-      [...container.querySelectorAll(".tack-map-link-label")].map((label) => label.textContent),
+      [...ui.container.querySelectorAll(".tack-map-link-label")].map((label) => label.textContent),
     ).toEqual(["declares", "picks"]);
     expect(relation("link-1").dataset["style"]).toBe("solid");
-    expect(container.querySelectorAll(".tack-schema-marks")).toHaveLength(2);
+    expect(ui.container.querySelectorAll(".tack-schema-marks")).toHaveLength(2);
     expect(figure.dataset["readerReadable"]).toContain(
       "Source -> Resource: declares (one-to-many)",
     );
@@ -241,7 +228,7 @@ describe("Schema", () => {
     await click(card("Resource"));
     expect(panel()).toContain("Pinned, an entity");
     expect(panel()).not.toContain(" in ");
-    expect(container.querySelector(".tack-figure-panel code")?.textContent).toBe(
+    expect(ui.container.querySelector(".tack-figure-panel code")?.textContent).toBe(
       "one skill, command or doc",
     );
   });
@@ -253,7 +240,7 @@ describe("Schema", () => {
       tables: [{ name: "public.log", columns: [{ name: "line", type: "text" }] }],
     });
     expect(
-      [...container.querySelectorAll(".tack-figure-legend li")].map((item) => item.textContent),
+      [...ui.container.querySelectorAll(".tack-figure-legend li")].map((item) => item.textContent),
     ).not.toContain("primary key");
   });
 
@@ -267,7 +254,7 @@ describe("Schema", () => {
     const figure = await render();
     await click(card("auth.users"));
     expect(panel()).toContain("Pinned, a table in auth");
-    const drawing = container.querySelector(".tack-schema-drawing");
+    const drawing = ui.container.querySelector(".tack-schema-drawing");
     if (drawing === null) throw new Error("no drawing");
     await click(drawing);
     expect(figure.dataset["readerState"]).toBe('{"pin":null,"case":null,"step":null}');

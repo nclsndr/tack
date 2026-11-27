@@ -3,13 +3,12 @@ import { useMDXComponents } from "@mdx-js/react";
 import { House, type LucideIcon } from "lucide-react";
 import { act, createElement, Fragment, useState } from "react";
 import type { ReactNode } from "react";
-import { createRoot } from "react-dom/client";
-import type { Root } from "react-dom/client";
 import { press, pressKey, settle, tabOut } from "./popover.test-support.ts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReaderLayout, SourceBlock } from "./runtime.tsx";
 import type { ReaderBoot, ReaderCustomization } from "./runtime.tsx";
 import type { ReaderDocument } from "./types.ts";
+import { testRoot } from "./react.test-support.ts";
 
 const route = vi.hoisted(() => ({ pathname: "/page", navigate: vi.fn() }));
 vi.mock("@rspress/core/runtime", () => ({
@@ -131,8 +130,7 @@ const boot: ReaderBoot = {
   archive: [],
 };
 
-let container: HTMLDivElement;
-let root: Root;
+const ui = testRoot();
 let clipboard: ReturnType<typeof vi.fn>;
 let fetchMock: ReturnType<typeof vi.fn>;
 let copyResponse: unknown;
@@ -140,7 +138,6 @@ let copyStatus: number;
 let liveResponse: unknown;
 
 beforeEach(() => {
-  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   window.localStorage.clear();
   route.pathname = "/page";
   route.navigate.mockClear();
@@ -158,17 +155,11 @@ beforeEach(() => {
       }),
   );
   vi.stubGlobal("fetch", fetchMock);
-  container = document.createElement("div");
-  document.body.append(container);
-  root = createRoot(container);
 });
 
-afterEach(async () => {
-  await act(async () => root.unmount());
-  container.remove();
+afterEach(() => {
   window.getSelection()?.removeAllRanges();
   vi.useRealTimers();
-  vi.unstubAllGlobals();
 });
 
 async function mount(
@@ -176,14 +167,12 @@ async function mount(
   selectedBoot: ReaderBoot = boot,
   icons: Readonly<Record<string, LucideIcon>> = {},
 ): Promise<void> {
-  await act(async () =>
-    root.render(createElement(ReaderLayout, { boot: selectedBoot, customization, icons })),
-  );
+  await ui.render(createElement(ReaderLayout, { boot: selectedBoot, customization, icons }));
 }
 
 // oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- DOM selectors do not encode their concrete control type, so test callers supply it.
 function element<Selected extends Element = HTMLElement>(selector: string): Selected {
-  const result = container.querySelector<Selected>(selector);
+  const result = ui.container.querySelector<Selected>(selector);
   if (result === null) throw new Error(`Missing element: ${selector}`);
   return result;
 }
@@ -202,7 +191,7 @@ async function openCopyFormats(): Promise<void> {
 
 /** Chooses a copy format from the open menu by its title; the menu closes on the choice. */
 async function chooseFormat(title: string): Promise<void> {
-  const item = Array.from(container.querySelectorAll('[role="menuitemradio"]')).find(
+  const item = Array.from(ui.container.querySelectorAll('[role="menuitemradio"]')).find(
     (candidate) =>
       document.getElementById(candidate.getAttribute("aria-labelledby") ?? "")?.textContent ===
       title,
@@ -380,7 +369,7 @@ describe("reader browser copy", () => {
       "Saved source changed. Refresh before copying.",
     );
     expect(clipboard).not.toHaveBeenCalled();
-    expect(container.querySelector("textarea")).toBeNull();
+    expect(ui.container.querySelector("textarea")).toBeNull();
   });
 
   it("reports response, network, and clipboard failures", async () => {
@@ -403,7 +392,7 @@ describe("reader browser copy", () => {
     await mount();
     await click(element('[data-source-id="prose"] button'));
     expect(clipboard).toHaveBeenCalledWith("");
-    expect(container.querySelector("textarea")).toBeNull();
+    expect(ui.container.querySelector("textarea")).toBeNull();
   });
   it("keeps selection when its copy button receives mouse down", async () => {
     await mount();
@@ -414,18 +403,16 @@ describe("reader browser copy", () => {
     expect(event.defaultPrevented).toBe(true);
   });
   it("supports standalone source controls outside a reader context", async () => {
-    await act(async () =>
-      root.render(
-        createElement(
-          SourceBlock,
-          { id: "standalone", file: "/repo/plain.mdx", version: "v" },
-          "Source content",
-        ),
+    await ui.render(
+      createElement(
+        SourceBlock,
+        { id: "standalone", file: "/repo/plain.mdx", version: "v" },
+        "Source content",
       ),
     );
     await click(element("button"));
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(container.querySelector('button[title="Copy this section"]')).toBeNull();
+    expect(ui.container.querySelector('button[title="Copy this section"]')).toBeNull();
   });
   it("does not present a nested visual heading as an authored section", async () => {
     await mount();
@@ -451,7 +438,7 @@ describe("reader browser copy", () => {
   it("marks the blocks a copy control would copy while it is hovered or keyboard focused", async () => {
     await mount();
     const previewed = () =>
-      Array.from(container.querySelectorAll<HTMLElement>("[data-source-id]"))
+      Array.from(ui.container.querySelectorAll<HTMLElement>("[data-source-id]"))
         .filter((block) => block.dataset["preview"] === "true")
         .map((block) => block.dataset["sourceId"]);
     const blockControl = element('[data-source-id="prose"] .tack-cite');
@@ -479,13 +466,11 @@ describe("reader browser copy", () => {
     expect(element('[data-source-id="prose"]').dataset["preview"]).toBeUndefined();
   });
   it("does not preview from a standalone source control outside a reader context", async () => {
-    await act(async () =>
-      root.render(
-        createElement(
-          SourceBlock,
-          { id: "standalone", file: "/repo/plain.mdx", version: "v" },
-          "Source content",
-        ),
+    await ui.render(
+      createElement(
+        SourceBlock,
+        { id: "standalone", file: "/repo/plain.mdx", version: "v" },
+        "Source content",
       ),
     );
     await act(async () => {
@@ -534,7 +519,7 @@ describe("reader browser copy", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(2400);
     });
-    expect(container.querySelector('[role="status"]')).toBeNull();
+    expect(ui.container.querySelector('[role="status"]')).toBeNull();
   });
   it("names the current document's resource in the copy request", async () => {
     const resource = { sourceRegistrationId: "team", name: "guides", sourcePath: "/repo" };
@@ -568,7 +553,7 @@ describe("reader views and live saved files", () => {
   it("updates page outlines when walkthrough visibility changes", async () => {
     await mount();
     expect(element(".tack-outline").textContent).not.toContain("Hidden step heading");
-    const toggle = [...container.querySelectorAll("button")].find(
+    const toggle = [...ui.container.querySelectorAll("button")].find(
       (button) => button.textContent === "Toggle hidden step",
     );
     if (toggle === undefined) throw new Error("Missing step control");
@@ -588,7 +573,7 @@ describe("reader views and live saved files", () => {
       await vi.advanceTimersByTimeAsync(1000);
     });
     // A failed rebuild joins the issue popover instead of a transient notice.
-    expect(container.querySelector('[role="status"]')).toBeNull();
+    expect(ui.container.querySelector('[role="status"]')).toBeNull();
     expect(element(".tack-issue-count").textContent).toBe("Rebuild failed");
     await click(element(".tack-issue-count"));
     expect(element(".tack-issues li").title).toBe("Missing document title");
@@ -598,9 +583,9 @@ describe("reader views and live saved files", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1000);
     });
-    expect(container.querySelector('[role="status"]')).toBeNull();
-    expect(container.querySelector(".tack-issue-count")).toBeNull();
-    expect(container.querySelector(".tack-project-attention")).toBeNull();
+    expect(ui.container.querySelector('[role="status"]')).toBeNull();
+    expect(ui.container.querySelector(".tack-issue-count")).toBeNull();
+    expect(ui.container.querySelector(".tack-project-attention")).toBeNull();
     expect(live()).toEqual(["Live", "Live from saved files"]);
     fetchMock.mockRejectedValueOnce(new Error("offline"));
     await act(async () => {
@@ -636,8 +621,7 @@ describe("reader views and live saved files", () => {
     expect(element('article aside[data-kind="tip"]').getAttribute("aria-label")).toBe(
       "Tip: Mapped",
     );
-    await act(async () => root.unmount());
-    root = createRoot(container);
+    await ui.unmount();
     await mount(
       {},
       {
@@ -680,7 +664,7 @@ describe("reader views and live saved files", () => {
     // The panel renders inside the reader root, so the reader's element defaults style it.
     expect(element(".tack-reader").contains(element(".tack-issues"))).toBe(true);
     expect(element(".tack-live").textContent).toBe("Source error");
-    expect(container.querySelector('[role="status"]')).toBeNull();
+    expect(ui.container.querySelector('[role="status"]')).toBeNull();
   });
   it("reports a failed refresh response as a live error", async () => {
     vi.useFakeTimers();
@@ -710,8 +694,8 @@ describe("reader views and live saved files", () => {
   it("asks for an available document when a live source disappears from the current route", async () => {
     route.pathname = "/removed";
     await mount();
-    expect(container.textContent).toContain("Choose an available document");
-    expect(container.textContent).not.toContain("No declared documents");
+    expect(ui.container.textContent).toContain("Choose an available document");
+    expect(ui.container.textContent).not.toContain("No declared documents");
   });
   it("discards a delayed live response after the reader unmounts", async () => {
     vi.useFakeTimers();
@@ -727,7 +711,7 @@ describe("reader views and live saved files", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1000);
     });
-    await act(async () => root.unmount());
+    await ui.unmount();
     const original = window;
     const reload = vi.fn();
     vi.stubGlobal("window", { location: { reload } });
@@ -751,11 +735,11 @@ describe("reader views and live saved files", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1000);
     });
-    await act(async () => root.unmount());
+    await ui.unmount();
     await act(async () => {
       fail(new Error("Disconnected"));
     });
-    expect(container.textContent).toBe("");
+    expect(ui.container.textContent).toBe("");
   });
 
   it("uses repository navigation, per-document layouts, and component overrides", async () => {
@@ -865,7 +849,7 @@ it("exposes a compact document list with the current page and full titles", asyn
   }));
   route.pathname = "/doc-20";
   await mount({}, { ...boot, documents });
-  expect(container.querySelectorAll('nav[aria-label="Folders"] a')).toHaveLength(40);
+  expect(ui.container.querySelectorAll('nav[aria-label="Folders"] a')).toHaveLength(40);
   expect(
     element('nav[aria-label="Folders"] a[aria-current="page"]').getAttribute("title"),
   ).toContain("Working document 20");
@@ -883,14 +867,14 @@ describe("document drawer on a narrow viewport", () => {
         removeEventListener: vi.fn(),
       })),
     );
-  const drawer = () => container.querySelector<HTMLElement>('[role="dialog"]');
+  const drawer = () => ui.container.querySelector<HTMLElement>('[role="dialog"]');
 
   it("keeps the documents out of the page until the Files trigger opens them", async () => {
     narrow();
     await mount();
     const toggle = element<HTMLButtonElement>(".tack-navigation-toggle");
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
-    expect(container.querySelector("#reader-documents")).toBeNull();
+    expect(ui.container.querySelector("#reader-documents")).toBeNull();
     await click(toggle);
     await settle();
     expect(toggle.getAttribute("aria-expanded")).toBe("true");
@@ -1011,8 +995,7 @@ describe("sidebar layout", () => {
     });
   };
   const remount = async () => {
-    await act(async () => root.unmount());
-    root = createRoot(container);
+    await ui.unmount();
     await mount();
   };
 
@@ -1177,7 +1160,7 @@ describe("folder navigation", () => {
     archive: ["docs/archive"],
   };
   const titles = (selector: string) =>
-    [...container.querySelectorAll(`${selector} a .tack-entry-title`)].map(
+    [...ui.container.querySelectorAll(`${selector} a .tack-entry-title`)].map(
       (title) => title.textContent,
     );
   const folder = (path: string) => element<HTMLButtonElement>(`button[data-folder="${path}"]`);
@@ -1190,8 +1173,7 @@ describe("folder navigation", () => {
     });
   };
   const remount = async () => {
-    await act(async () => root.unmount());
-    root = createRoot(container);
+    await ui.unmount();
     await mount({}, corpus);
   };
 
@@ -1302,13 +1284,13 @@ describe("folder navigation", () => {
     expect(element(".tack-archive-hint").textContent).toBe("Show 2 archived matches");
     await search("symlink");
     expect(shelf().textContent).toBe("Archive1");
-    expect(container.querySelector(".tack-empty")).toBeNull();
+    expect(ui.container.querySelector(".tack-empty")).toBeNull();
     expect(element(".tack-archive-hint").textContent).toBe("Show 1 archived match");
     await click(element(".tack-archive-hint"));
     expect(titles(".tack-archive")).toEqual(["Symlink layout"]);
-    expect(container.querySelector(".tack-archive-hint")).toBeNull();
+    expect(ui.container.querySelector(".tack-archive-hint")).toBeNull();
     await search("nothing");
-    expect(container.querySelector(".tack-archive")).toBeNull();
+    expect(ui.container.querySelector(".tack-archive")).toBeNull();
     expect(element(".tack-empty").textContent).toBe("No documents match.");
     await search("");
     expect(folder("docs/wip").getAttribute("aria-expanded")).toBe("false");

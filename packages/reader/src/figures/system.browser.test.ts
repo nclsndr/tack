@@ -1,32 +1,19 @@
 // @vitest-environment jsdom
 import { resolve } from "node:path";
 import { act, createElement } from "react";
-import { createRoot } from "react-dom/client";
-import type { Root } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { interactionContext } from "../browser.ts";
-import { waitForReact } from "../react.test-support.ts";
 import { System } from "./system.tsx";
 import type { SystemProps } from "./system-model.ts";
 import { capturePath } from "./system-fixtures.ts";
 import { checkFigures, staticFigures } from "./check.ts";
 import { NotStatic } from "./static-props.ts";
+import { testRoot, waitForReact } from "../react.test-support.ts";
 
-let container: HTMLDivElement;
-let root: Root;
+const ui = testRoot();
 
 beforeEach(() => {
-  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   window.history.replaceState(null, "", "/system");
-  container = document.createElement("div");
-  document.body.append(container);
-  root = createRoot(container);
-});
-
-afterEach(async () => {
-  await act(async () => root.unmount());
-  container.remove();
-  vi.unstubAllGlobals();
 });
 
 const props = {
@@ -37,31 +24,31 @@ const props = {
 
 /** Renders a `System` and waits until its drawing is laid out. */
 async function render(input: SystemProps = props): Promise<HTMLElement> {
-  await act(async () => root.render(createElement(System, input)));
+  await ui.render(createElement(System, input));
   // The first layout loads the engine, which can take a few seconds on a busy machine.
   await waitForReact(
     () => {
-      expect(container.querySelector(".tack-system svg.tack-map")).not.toBeNull();
+      expect(ui.container.querySelector(".tack-system svg.tack-map")).not.toBeNull();
     },
     { timeout: 15_000 },
   );
-  const figure = container.querySelector<HTMLElement>("figure.tack-figure");
+  const figure = ui.container.querySelector<HTMLElement>("figure.tack-figure");
   if (figure === null) throw new Error("no figure");
   return figure;
 }
 
 const box = (id: string): SVGGElement => {
-  const found = container.querySelector<SVGGElement>(`.tack-map-box[data-box="${id}"]`);
+  const found = ui.container.querySelector<SVGGElement>(`.tack-map-box[data-box="${id}"]`);
   if (found === null) throw new Error(`no box ${id}`);
   return found;
 };
 const link = (id: string): SVGPathElement => {
-  const found = container.querySelector<SVGPathElement>(`.tack-map-link[data-link="${id}"]`);
+  const found = ui.container.querySelector<SVGPathElement>(`.tack-map-link[data-link="${id}"]`);
   if (found === null) throw new Error(`no link ${id}`);
   return found;
 };
 const chip = (name: string): HTMLButtonElement => {
-  const found = [...container.querySelectorAll<HTMLButtonElement>("button")].find(
+  const found = [...ui.container.querySelectorAll<HTMLButtonElement>("button")].find(
     (button) => button.textContent === name,
   );
   if (found === undefined) throw new Error(`no button ${name}`);
@@ -81,12 +68,12 @@ describe("System", () => {
     ).toEqual(["external", "plain", "queue", "plain", "store"]);
     expect(box("collector").dataset["tint"]).toBe("0");
     expect(box("feed").dataset["tint"]).toBeUndefined();
-    expect(container.querySelector(".tack-system-group text")?.textContent).toBe(
+    expect(ui.container.querySelector(".tack-system-group text")?.textContent).toBe(
       "worker-browser (untrusted)",
     );
     expect(box("pg").querySelector(".tack-map-line")?.textContent).toBe("public.parcel_events");
     expect(
-      [...container.querySelectorAll<SVGPathElement>(".tack-map-links .tack-map-link")].map(
+      [...ui.container.querySelectorAll<SVGPathElement>(".tack-map-links .tack-map-link")].map(
         (path) => [path.dataset["link"], path.dataset["kind"], path.dataset["style"]],
       ),
     ).toEqual([
@@ -97,13 +84,13 @@ describe("System", () => {
       ["ack", "rest", "muted"],
     ]);
     // No right angle: every link is one cubic curve.
-    for (const path of container.querySelectorAll(".tack-map-links .tack-map-link"))
+    for (const path of ui.container.querySelectorAll(".tack-map-links .tack-map-link"))
       expect(path.getAttribute("d")).toMatch(/^M [\d.-]+ [\d.-]+ C [^LHV]+$/);
     expect(
-      [...container.querySelectorAll(".tack-map-link-label")].map((label) => label.textContent),
+      [...ui.container.querySelectorAll(".tack-map-link-label")].map((label) => label.textContent),
     ).toEqual(["parcel events", "XADD", "XREADGROUP", "INSERT", "ack + delete"]);
     expect(
-      [...container.querySelectorAll(".tack-figure-legend li")].map((item) => item.textContent),
+      [...ui.container.querySelectorAll(".tack-figure-legend li")].map((item) => item.textContent),
     ).toEqual([
       "worker-browser (untrusted)",
       "service",
@@ -136,7 +123,7 @@ describe("System", () => {
     expect(new URL(window.location.href).searchParams.get("reader.capture-path.pin")).toBe(
       "consumer",
     );
-    const panel = container.querySelector(".tack-figure-panel")?.textContent ?? "";
+    const panel = ui.container.querySelector(".tack-figure-panel")?.textContent ?? "";
     expect(panel).toContain("Sends to 2");
     expect(panel).toContain("Receives from 1");
   });
@@ -151,7 +138,7 @@ describe("System", () => {
     await click(chip("Next"));
     await click(chip("Next"));
     await click(chip("Next"));
-    expect(container.querySelector(".tack-figure-count")?.textContent).toBe("Step 4 of 4");
+    expect(ui.container.querySelector(".tack-figure-count")?.textContent).toBe("Step 4 of 4");
     expect(link("ack").dataset).toMatchObject({ kind: "trace", last: "" });
     expect(link("insert").dataset["kind"]).toBe("trace");
     expect(link("insert").dataset["last"]).toBeUndefined();
@@ -161,7 +148,9 @@ describe("System", () => {
     expect(figure.textContent).toContain("Only then is the entry acknowledged and deleted.");
     // The current link's label stays readable: it is drawn, in the current ink.
     expect(
-      container.querySelector('.tack-map-link-label[data-link="ack"]')?.getAttribute("data-kind"),
+      ui.container
+        .querySelector('.tack-map-link-label[data-link="ack"]')
+        ?.getAttribute("data-kind"),
     ).toBe("trace");
     const state = JSON.parse(figure.dataset["readerState"] ?? "{}") as unknown;
     expect(state).toEqual({ pin: null, case: "one-event", step: 4 });
@@ -215,16 +204,16 @@ describe("System", () => {
       "Redis holds only what Postgres does not have yet.",
     );
     expect(
-      [...container.querySelectorAll(".tack-system-group text")].map((text) => text.textContent),
+      [...ui.container.querySelectorAll(".tack-system-group text")].map((text) => text.textContent),
     ).toEqual(["VPS", "worker-browser (untrusted)"]);
-    const panel = (): string => container.querySelector(".tack-figure-panel")?.textContent ?? "";
+    const panel = (): string => ui.container.querySelector(".tack-figure-panel")?.textContent ?? "";
     await click(box("collector"));
     expect(panel()).toContain("Pinned, a service in worker-browser (untrusted)");
     expect(panel()).toContain("headless browser + WebSocket");
     await click(box("redis"));
     expect(panel()).toContain("Pinned, a queue in VPS");
     expect(panel()).toContain("Holds only the backlog not yet written to Postgres.");
-    const drawing = container.querySelector(".tack-system-drawing");
+    const drawing = ui.container.querySelector(".tack-system-drawing");
     if (drawing === null) throw new Error("no drawing");
     await click(drawing);
     expect(figure.dataset["readerState"]).toBe('{"pin":null,"case":null,"step":null}');

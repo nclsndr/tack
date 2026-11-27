@@ -1,49 +1,35 @@
 // @vitest-environment jsdom
 import { act, createElement } from "react";
-import { createRoot } from "react-dom/client";
-import type { Root } from "react-dom/client";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { beforeEach, expect, it, vi } from "vitest";
 import { press, pressKey, settle, tabOut } from "../popover.test-support.ts";
 import { FigureFrame } from "./frame.tsx";
+import { testRoot } from "../react.test-support.ts";
 
-let container: HTMLDivElement;
-let root: Root;
+const ui = testRoot();
 const onEscape = vi.fn();
 
 beforeEach(async () => {
-  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   onEscape.mockClear();
-  container = document.createElement("div");
-  document.body.append(container);
-  root = createRoot(container);
-  await act(async () =>
-    root.render(
-      createElement(
-        "div",
-        null,
-        createElement("button", { type: "button" }, "Before"),
-        createElement(FigureFrame, {
-          id: "deploy",
-          kind: "system",
-          title: "A deploy never skips the queue",
-          issues: [],
-          readable: "Deploy figure",
-          state: {},
-          onEscape,
-          controls: createElement("button", { type: "button" }, "Lens"),
-          drawing: (mode: "column" | "expanded") =>
-            createElement("button", { type: "button", "data-mode": mode }, `Box ${mode}`),
-        }),
-        createElement("button", { type: "button" }, "After"),
-      ),
+  await ui.render(
+    createElement(
+      "div",
+      null,
+      createElement("button", { type: "button" }, "Before"),
+      createElement(FigureFrame, {
+        id: "deploy",
+        kind: "system",
+        title: "A deploy never skips the queue",
+        issues: [],
+        readable: "Deploy figure",
+        state: {},
+        onEscape,
+        controls: createElement("button", { type: "button" }, "Lens"),
+        drawing: (mode: "column" | "expanded") =>
+          createElement("button", { type: "button", "data-mode": mode }, `Box ${mode}`),
+      }),
+      createElement("button", { type: "button" }, "After"),
     ),
   );
-});
-
-afterEach(async () => {
-  await act(async () => root.unmount());
-  container.remove();
-  vi.unstubAllGlobals();
 });
 
 function button(name: string): HTMLButtonElement {

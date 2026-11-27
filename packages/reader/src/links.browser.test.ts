@@ -2,13 +2,12 @@
 import { useMDXComponents } from "@mdx-js/react";
 import { act, createElement, Fragment } from "react";
 import type { ReactNode } from "react";
-import { createRoot } from "react-dom/client";
-import type { Root } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ReaderLink } from "./link.tsx";
 import { ReaderLayout } from "./runtime.tsx";
 import type { ReaderBoot } from "./runtime.tsx";
 import type { ReaderDocument } from "./types.ts";
+import { testRoot } from "./react.test-support.ts";
 
 const router = vi.hoisted(() => ({
   pathname: "/page",
@@ -81,11 +80,9 @@ const boot: ReaderBoot = {
   archive: [],
 };
 
-let container: HTMLDivElement;
-let root: Root;
+const ui = testRoot();
 
 beforeEach(async () => {
-  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   vi.stubGlobal(
     "fetch",
     vi.fn(async () => new Promise<Response>(() => undefined)),
@@ -94,20 +91,11 @@ beforeEach(async () => {
   router.navigate.mockReset();
   router.type = "POP";
   window.history.replaceState(null, "", "/page?q=reader");
-  container = document.createElement("div");
-  document.body.append(container);
-  root = createRoot(container);
-  await act(async () => root.render(createElement(ReaderLayout, { boot, customization: {} })));
-});
-
-afterEach(async () => {
-  await act(async () => root.unmount());
-  container.remove();
-  vi.unstubAllGlobals();
+  await ui.render(createElement(ReaderLayout, { boot, customization: {} }));
 });
 
 function anchor(selector: string): HTMLAnchorElement {
-  const result = container.querySelector<HTMLAnchorElement>(selector);
+  const result = ui.container.querySelector<HTMLAnchorElement>(selector);
   if (result === null) throw new Error(`Missing link: ${selector}`);
   return result;
 }
@@ -182,13 +170,11 @@ describe("router-aware reader links", () => {
   });
 
   it("leaves a click that a handler already took over to that handler", async () => {
-    await act(async () =>
-      root.render(
-        createElement(
-          ReaderLink,
-          { href: "/cost", onClick: (event) => event.preventDefault(), id: "taken" },
-          "Taken",
-        ),
+    await ui.render(
+      createElement(
+        ReaderLink,
+        { href: "/cost", onClick: (event) => event.preventDefault(), id: "taken" },
+        "Taken",
       ),
     );
 
@@ -202,7 +188,7 @@ describe("client-routed page scroll", () => {
     router.pathname = pathname;
     router.type = type;
     window.history.replaceState(null, "", address);
-    await act(async () => root.render(createElement(ReaderLayout, { boot, customization: {} })));
+    await ui.render(createElement(ReaderLayout, { boot, customization: {} }));
   }
 
   it("opens a pushed page at its top", async () => {

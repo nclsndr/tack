@@ -1,36 +1,28 @@
 // @vitest-environment jsdom
 import { act, createElement } from "react";
-import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { EditorControl } from "./editor.tsx";
 import { pressKey, settle } from "./popover.test-support.ts";
+import { testRoot } from "./react.test-support.ts";
 
-let container: HTMLDivElement;
-let root: ReturnType<typeof createRoot>;
+const ui = testRoot();
 
 beforeEach(() => {
-  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   localStorage.clear();
-  container = document.createElement("div");
-  document.body.append(container);
-  root = createRoot(container);
 });
 
-afterEach(async () => {
-  await act(async () => root.unmount());
-  container.remove();
+afterEach(() => {
   vi.restoreAllMocks();
   localStorage.clear();
-  vi.unstubAllGlobals();
 });
 
 async function mount(path: string | undefined = "/repo/page.mdx") {
-  await act(async () => root.render(createElement(EditorControl, { path })));
+  await ui.render(createElement(EditorControl, { path }));
 }
 
 function controls() {
-  const link = container.querySelector("a");
-  const trigger = container.querySelector("button");
+  const link = ui.container.querySelector("a");
+  const trigger = ui.container.querySelector("button");
   if (link === null || trigger === null) throw new Error("Missing editor controls");
   return { link, trigger, open: trigger.getAttribute("aria-expanded") === "true" };
 }
@@ -97,8 +89,7 @@ it.each([
   expect(document.querySelector('[role="menuitemradio"][aria-checked="true"]')?.textContent).toBe(
     label,
   );
-  await act(async () => root.unmount());
-  root = createRoot(container);
+  await ui.unmount();
   await mount(path);
   expect(controls().link.textContent).toBe(`Open in ${label}`);
   expect(controls().link.getAttribute("href")).toBe(
@@ -132,7 +123,7 @@ it("allows editor selection when browser storage is unavailable", async () => {
 });
 
 it("disables opening when there is no current document", async () => {
-  await act(async () => root.render(createElement(EditorControl, { path: undefined })));
+  await ui.render(createElement(EditorControl, { path: undefined }));
   expect(controls().link.hasAttribute("href")).toBe(false);
   expect(controls().link.getAttribute("aria-disabled")).toBe("true");
 });
