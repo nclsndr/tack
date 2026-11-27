@@ -1,7 +1,7 @@
 import { agentPrompt } from "@tackup/harness/prompts/landing";
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { Terminal } from "../terminal.tsx";
-import { closing, docsHref, getStarted, hero, questions } from "./content.ts";
+import { closing, docsHref, footer, getStarted, hero, questions } from "./content.ts";
 import { CliDemo } from "./demo.tsx";
 import { DemoLinksProvider } from "./demo-links.tsx";
 import { DraftingSheet } from "./drafting-sheet.tsx";
@@ -328,7 +328,13 @@ export function Footer() {
           <span>tack</span>
         </a>
         <p>{closing.footerLine}</p>
-        <a href={docsHref}>Docs</a>
+        <nav aria-label="Footer" className="landing-footer-links">
+          {footer.links.map((link) => (
+            <a key={link.href} href={link.href}>
+              {link.label}
+            </a>
+          ))}
+        </nav>
       </div>
     </footer>
   );

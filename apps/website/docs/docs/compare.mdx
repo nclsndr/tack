@@ -1,0 +1,92 @@
+---
+title: Tack and the other ways to share agent skills
+description: When a link script, one shared .agents/skills folder, the skills CLI, skillshare, rulesync, APM, dotagents or Tack fits, what each one does, and where Tack is not the right choice.
+---
+
+# Tack and the other ways to share agent skills
+
+Most of the tools on this page link or copy one skill into several agents. They differ in where your
+skills live, what else they deliver, and how a team and a CI runner get the same set. This page
+says when each one fits, and when you need no tool at all. The rows about other tools come from
+their own docs, linked from each column, as they read on 2026-11-27.
+
+## The short answer
+
+| Your situation                                                                                                                                                                                                 | Use                                    |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| One agent, one machine                                                                                                                                                                                         | The agent's own skills folder, no tool |
+| One repository, and agents that all read `.agents/skills`                                                                                                                                                      | A committed folder, no tool            |
+| Public skills installed fast, with updates tracked in a lockfile                                                                                                                                               | The `skills` CLI                       |
+| One home for skills, MCP servers, hooks and plugins across many tools, Windows included                                                                                                                        | skillshare                             |
+| One project folder that generates each tool's rules, MCP and ignore files                                                                                                                                      | rulesync                               |
+| A manifest and a lockfile in each project, installed with one command                                                                                                                                          | APM or dotagents                       |
+| Your skills and your team's, from several repositories, linked into every project and worktree for each agent, with a preview before every write, docs and scripts beside them, and one bundle for a CI runner | Tack                                   |
+
+## Why not a link script?
+
+A script covers one machine, one repository and one agent folder, and that is often enough. Tack
+adds what the script does not keep:
+
+- A set for each project: `tack pick include review --project app`.
+- Every worktree of the project, with the same links: `tack project refresh --project app --apply`,
+  then a sync.
+- A preview before every write: `tack sync --all` writes nothing until you add `--apply`.
+- A record of each link, so Tack removes only its own: `tack state reset --apply`.
+- Broken links found for you: `tack status --project app`.
+- Your own skills beside your team's, from as many repositories as you keep:
+  `tack source add ~/code/acme-agent-skills`.
+- One file that sets up a CI runner without the source: `tack profile apply-bundle`.
+
+## Why not one shared `.agents/skills` folder?
+
+Most agents read `.agents/skills`: of the agents with a Tack adapter, Codex, Cursor, OpenCode, Pi,
+Gemini CLI and Copilot CLI do, and so do most agents without one, as
+[agent support](./agent-support) lists. Claude Code reads `.claude/skills`; its
+[skills docs](https://code.claude.com/docs/en/skills) list no `.agents` folder. With one repository, one machine and agents that all read `.agents/skills`, commit the
+folder and use no tool.
+
+The folder stops being enough at the next step: the same skills in several repositories, a different
+set for each project, your own skills beside the team's, a teammate on Claude Code, or a CI runner.
+
+## Side by side
+
+A cell that says "not documented" means the tool's docs did not say, not that the tool cannot.
+
+|                               | Tack                                                                                           | [`skills` CLI](https://github.com/vercel-labs/skills)                        | [skillshare](https://skillshare.runkids.cc/docs)                        | [rulesync](https://rulesync.dyoshikawa.com)                                  | [APM](https://microsoft.github.io/apm)                                                | [dotagents](https://dotagents.sentry.dev)              |
+| ----------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Where your skills live        | Folders and Git repositories you own, read in place                                            | A repository, a URL or a local folder, installed into a project or your home | A folder you own, a project's `.skillshare` folder, or Git repositories | The project's `.rulesync` folder, plus declared remote sources               | Packages from Git and marketplaces, declared in `apm.yml`                             | Git, HTTPS or local sources, declared in `agents.toml` |
+| How a skill reaches the agent | A symbolic link                                                                                | A symbolic link to a copy in `.agents/skills`, or a copy                     | A symbolic link per skill by default, or a copy                         | A generated file for each tool                                               | Generated or copied files                                                             | A copy in `.agents`, then symbolic links               |
+| Preview before a write        | By default: `--apply` writes                                                                   | Questions as it goes; no dry run on `add`                                    | The `--dry-run` flag                                                    | The `--dry-run` and `--check` flags                                          | The `--dry-run` flag                                                                  | Not documented                                         |
+| A set for each project        | Picks for each project, and skill metadata                                                     | Project scope by default, in `skills-lock.json`                              | Project mode                                                            | `rulesync.jsonc` in the project                                              | `apm.yml` in the project                                                              | `agents.toml`, with `--project`                        |
+| Git worktrees                 | Every worktree of a registered project; one refresh after a new one                            | Not documented                                                               | `project add --scan` registers them; run it again after a new one       | Not documented                                                               | Not documented                                                                        | Not documented                                         |
+| What it delivers              | Skills, commands for four agents, docs and scripts                                             | Skills                                                                       | Skills, agents, rules, commands, MCP, hooks and plugins                 | Rules, ignore files, MCP, commands, subagents, skills, hooks and permissions | Instructions, skills, prompts, agents, hooks, plugins and MCP                         | Skills, MCP, hooks, subagents and plugins              |
+| Agents                        | 8 with an adapter, 19 more through the folders they fill                                       | 79                                                                           | 80 targets                                                              | A table of supported tools                                                   | 9, named in its README                                                                | 9, named in its README                                 |
+| Third-party skills            | `tack import add` copies them with their revision and a SHA-256 for each file; no update check | A lockfile with the commit; `check` and `update`                             | A lockfile that pins commits, in project mode                           | `rulesync.lock`, with commit SHAs and `--outdated`                           | `apm.lock.yaml`, with the commit and a SHA-256 for each file                          | `agents.lock` records the commit; pin with `ref`       |
+| A fixed set for CI            | A profile bundle, applied without the source and without fetching                              | A frozen lockfile, by default in CI                                          | A GitHub Action                                                         | `install --frozen` and `generate --check`                                    | `install --frozen`, a GitHub Action, and bundles from `apm pack` that install offline | Not documented                                         |
+| Account and telemetry         | No account, no telemetry                                                                       | Anonymous usage data by default, off with an environment variable            | No telemetry                                                            | Not documented                                                               | No account, no telemetry                                                              | Not documented                                         |
+| Platforms                     | macOS and Linux; Windows is untested                                                           | Not documented                                                               | macOS, Linux and Windows                                                | Linux, macOS and Windows                                                     | macOS, Linux and Windows                                                              | Not documented                                         |
+
+Of the tools in this table, Tack is the one that previews by default, and the one that links docs and
+runs scripts beside the skills.
+
+## Where Tack is not the right choice
+
+- **You want MCP servers, hooks or rules files written for each agent.** skillshare, rulesync, APM
+  and dotagents write them. Tack does not yet.
+- **You work on Windows.** Tack's links are untested there. skillshare, rulesync and APM document
+  Windows.
+- **You want third-party skills updated from a lockfile.** The `skills` CLI, rulesync and APM track
+  updates. Tack keeps your own copy and does not check where it came from for a newer one.
+- **You want one install command after a clone.** APM and dotagents install from the project's
+  manifest. With Tack, a teammate registers the team's sources and the project, or lets their agent
+  follow the repository's `AGENTS.md`, as [Onboard a team](./guides/team-onboarding) shows.
+- **You use one agent, or agents that all read one folder, in one repository.** A committed folder is
+  enough.
+- **You want a catalog to find skills in.** Tack runs no registry. Find a skill where you like, then
+  `tack import add` keeps your own copy.
+
+## How this page is kept
+
+Each row about another tool was checked against that tool's own docs on 2026-11-27. A row is
+checked again at each Tack release, and a row nobody could check is removed rather than left to go
+stale. If a row is wrong, [open an issue](https://github.com/nclsndr/tack/issues).

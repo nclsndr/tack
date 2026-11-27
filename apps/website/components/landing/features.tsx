@@ -7,8 +7,9 @@ import { InlineCode } from "./inline-code.tsx";
 const step = (index: number) => String(index + 1).padStart(2, "0");
 
 /**
- * The features, as a strip of six parts on the blueprint sheet: each part is one line and a link
- * to its section of the features page, which has the commands, figures and details.
+ * The features, as a strip of six parts on the blueprint sheet, under the problem they answer: each
+ * part is one line and a link to its section of the features page, which has the commands, figures
+ * and details.
  */
 export function Features() {
   return (
@@ -21,9 +22,14 @@ export function Features() {
           <motion.h2 id="features-title" data-intro="" variants={settle(0.06, 16)}>
             {features.heading}
           </motion.h2>
-          <motion.p className="features-intro" data-intro="" variants={settle(0.16, 10)}>
-            {features.intro}
-          </motion.p>
+          <div className="features-intro">
+            <motion.p data-intro="" variants={settle(0.12, 10)}>
+              {features.problem}
+            </motion.p>
+            <motion.p className="features-intro-next" data-intro="" variants={settle(0.2, 10)}>
+              {features.intro}
+            </motion.p>
+          </div>
         </InView>
         <InView className="features-strip" amount={0.2}>
           <ul className="features-parts">

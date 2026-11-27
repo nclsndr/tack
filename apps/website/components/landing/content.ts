@@ -3,7 +3,8 @@
  * it.
  */
 
-import { sharedAgents } from "../features-page/content.ts";
+import { intro, sharedAgents } from "../features-page/content.ts";
+import { repositoryUrl } from "../site.ts";
 
 /**
  * What Tack is, in one sentence, word for word wherever a page or package describes it: the site,
@@ -129,6 +130,8 @@ export const demo = {
 export const features = {
   label: "Features",
   heading: "Share skills like code.",
+  /** The features page's problem: the team's pain, then one developer's. */
+  problem: intro.problem,
   intro: "Six parts, each one sync away. Every part has its page section, with every command.",
   parts: [
     {
@@ -201,6 +204,11 @@ export const questions = [
       "Not always. With one repository, one machine and agents that all read .agents/skills, commit the folder and use no tool. Tack is for the next step: the same skills in several repositories, a different set for each project, worktrees, a teammate on Claude Code, which reads .claude/skills, and a CI runner.",
   },
   {
+    question: "How is Tack different from the skills CLI or skillshare?",
+    answer:
+      "The skills CLI installs skills from a repository into a project or your home, and tracks their updates in a lockfile. skillshare syncs skills, MCP servers, hooks and plugins from one folder to many tools. Tack links your skills and your team's, from as many repositories as you keep, into every project and worktree for each agent, shows its plan before it writes, and carries docs and scripts with the skills. Compare, in the docs, has the table and says when another tool fits better.",
+  },
+  {
     question: "Does it work in CI, or for a remote agent?",
     answer:
       "Yes. tack profile export packs a profile your team reviewed into one file with checksums, and tack profile apply-bundle sets it up on a fresh machine without the source and without fetching anything.",
@@ -221,6 +229,15 @@ export const questions = [
       "No. Tack is a local CLI. It calls no model and has no telemetry. Only tack import add reaches the network, to fetch from GitHub.",
   },
 ] as const;
+
+/** The footer's links: the docs, how Tack compares with the other ways, and its repository. */
+export const footer = {
+  links: [
+    { label: "Docs", href: docsHref },
+    { label: "Compare", href: "/docs/compare" },
+    { label: "GitHub", href: repositoryUrl },
+  ],
+} as const;
 
 /** The closing section and the footer line. */
 export const closing = {

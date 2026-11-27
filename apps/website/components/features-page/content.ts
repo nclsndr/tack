@@ -69,7 +69,6 @@ export const sourceFigure = {
     { path: "tack.yaml", kind: "declares the resources" },
     { path: "skills/review/SKILL.md", kind: "skill" },
     { path: "commands/ship.md", kind: "command" },
-    { path: "context/conventions.md", kind: "context · no agent yet" },
     { path: "docs/handbook/", kind: "docs" },
     { path: "scripts/report.ts", kind: "script" },
   ],
@@ -333,7 +332,7 @@ export const lenses = [
     when: "You keep skills, commands, docs and scripts in folders of your own and in your team's.",
     claim: "Host it once. Every project draws from it.",
     lines: [
-      "A source is a folder, usually a Git repository, that hosts your resources: the skills, commands, context, docs and scripts your agents use. Its `tack.yaml` declares each one, and Tack reads it where it is.",
+      "A source is a folder, usually a Git repository, that hosts your resources: the skills, commands, docs and scripts your agents use. Its `tack.yaml` declares each one, and Tack reads it where it is.",
       "Projects and agents keep no copy. Tack links skills, commands and docs from their source and runs scripts from it by name, so one edit reaches every project, worktree and agent.",
       "Register as many sources as you keep, your own beside your team's. A team source is a Git repository each teammate clones and adds; edits arrive with their own `git pull`.",
     ],
@@ -632,6 +631,14 @@ export const groundRules = {
       text: "Commands reach Cline, Cursor, OpenCode and Pi. Claude Code, Codex, GitHub Copilot CLI and Gemini CLI get skills only.",
     },
     {
+      title: "Write MCP server definitions.",
+      text: "Tack links files. It does not yet write an agent's MCP server entries into its configuration.",
+    },
+    {
+      title: "Watch an imported skill upstream.",
+      text: "Tack records the revision it copied and tells you, offline, when your copy was edited. It does not check the repository it came from for a newer version.",
+    },
+    {
       title: "Deliver without symbolic links.",
       text: "Every delivery is a symbolic link, with no copy as a fallback. Windows is untested.",
     },
@@ -645,6 +652,10 @@ export const groundRules = {
     {
       title: "Convert skills.",
       text: "Every agent gets a link to the same `SKILL.md` folder.",
+    },
+    {
+      title: "Find skills for you.",
+      text: "Tack runs no registry and no marketplace. Find a skill where you like, then `tack import add` keeps your own copy.",
     },
     {
       title: "Host anything.",

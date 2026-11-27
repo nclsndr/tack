@@ -17,11 +17,13 @@ const sidebar = [
       { text: "Get started", link: "/docs/getting-started" },
       { text: "Features", link: "/docs/features" },
       { text: "Agent support", link: "/docs/agent-support" },
+      { text: "Compare", link: "/docs/compare" },
     ],
   },
   {
     text: "Guides",
     items: [
+      { text: "Share skills between agents", link: "/docs/guides/share-across-agents" },
       { text: "Add a source", link: "/docs/guides/add-a-source" },
       { text: "Move an existing setup into Tack", link: "/docs/guides/migrate" },
       { text: "Onboard a team", link: "/docs/guides/team-onboarding" },

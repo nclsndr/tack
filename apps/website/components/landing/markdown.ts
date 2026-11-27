@@ -41,6 +41,8 @@ ${metaphor}
 
 ## ${features.heading}
 
+${features.problem}
+
 ${features.intro}
 
 ${parts}
