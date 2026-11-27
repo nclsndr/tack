@@ -10,6 +10,7 @@ import { HelpNotesAnnotation } from "./help-notes.ts";
 import { MutationModeSchema } from "./operation-contract.ts";
 import {
   commandDeclarations,
+  modeOf,
   payloadSlots,
   stablePayloadKinds,
   type CommandDeclaration,
@@ -139,7 +140,7 @@ const payloadKindsOf = (
 /** The slots each run mode fills: a preview leaves `applied` to its `--apply` run. */
 const responsesOf = (declaration: CommandDeclaration): CommandNode["responses"] => {
   const kinds = payloadKindsOf(declaration);
-  return declaration.mode === "preview-apply"
+  return modeOf(declaration) === "preview-apply"
     ? [
         {
           mode: "default",
@@ -162,7 +163,7 @@ const nodeOf = Effect.fnUntraced(function* (
       usage: doc.usage,
       description: doc.description,
       executable: declaration !== undefined,
-      ...(declaration === undefined ? {} : { mutation: declaration.mode }),
+      ...(declaration === undefined ? {} : { mutation: modeOf(declaration) }),
       arguments: (doc.args ?? []).map(argumentOf),
       // A command accepts its ancestors' flags too; Effect CLI lists them apart from its own.
       flags: [

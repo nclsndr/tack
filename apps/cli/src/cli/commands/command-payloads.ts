@@ -28,7 +28,7 @@ const CommandExampleSchema = Schema.Struct({
 });
 
 /** A titled block of `term  meaning` rows, such as what each status value means. */
-const HelpNoteSchema = Schema.Struct({
+export const HelpNoteSchema = Schema.Struct({
   title: Schema.String,
   rows: Schema.Array(Schema.Struct({ term: Schema.String, text: Schema.String })),
 });

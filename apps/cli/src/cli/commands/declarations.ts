@@ -129,20 +129,33 @@ export type PayloadSchemas<S extends PayloadSchema = PayloadSchema> = {
 /**
  * The public contract of one command: the words after `tack` that select it, how it changes state,
  * and the schema of each payload slot. A stable command's payloads are part of the stable `--json`
- * contract, so each of its schemas names a stable kind.
+ * contract, so each of its schemas names a stable kind. The mode is declared only where
+ * {@link modeOf} would not read it from the slots.
  */
 export type CommandDeclaration = {
   readonly path: readonly [string, ...Array<string>];
-  readonly mode: MutationMode;
+  readonly mode?: MutationMode;
 } & (
   | ({ readonly stable?: false } & PayloadSchemas)
   | ({ readonly stable: true } & PayloadSchemas<StablePayloadSchema>)
 );
 
+/**
+ * How a command changes state: its declared mode, or else read from its slots. A plan is previewed
+ * and applied with `--apply`, an applied payload alone is written at once, and a result alone is
+ * read-only.
+ */
+export const modeOf = (declaration: CommandDeclaration): MutationMode =>
+  declaration.mode ??
+  (declaration.plan !== undefined
+    ? "preview-apply"
+    : declaration.applied === undefined
+      ? "read-only"
+      : "immediate");
+
 /** `state clean` plans and applies the same removal whether or not `--pending` selects `retry`. */
 const stateClean = {
   path: ["state", "clean"],
-  mode: "preview-apply",
   plan: SelectedRemovalPlanSchema,
   applied: RemovalResultSchema,
 } as const satisfies CommandDeclaration;
@@ -154,91 +167,47 @@ const stateClean = {
 export const commandDeclarations = {
   "adapter-disable": {
     path: ["adapter", "disable"],
-    mode: "preview-apply",
     plan: AdapterDisablementPlanSchema,
     applied: AdapterDisablementResultSchema,
   },
-  "adapter-list": { path: ["adapter"], mode: "read-only", result: AdapterListPayloadSchema },
-  "adapter-set": {
-    path: ["adapter", "enable"],
-    mode: "immediate",
-    applied: AdapterSettingsPayloadSchema,
-  },
-  catalog: { path: ["catalog"], mode: "read-only", result: CatalogReportSchema },
-  "choice-remove": {
-    path: ["pick", "remove"],
-    mode: "immediate",
-    applied: ChoiceRemovalPayloadSchema,
-  },
-  "choice-set": {
-    path: ["pick", "include"],
-    mode: "immediate",
-    applied: ChoiceChangePayloadSchema,
-  },
-  "choice-exclude": {
-    path: ["pick", "exclude"],
-    mode: "immediate",
-    applied: ChoiceChangePayloadSchema,
-  },
+  "adapter-list": { path: ["adapter"], result: AdapterListPayloadSchema },
+  "adapter-set": { path: ["adapter", "enable"], applied: AdapterSettingsPayloadSchema },
+  catalog: { path: ["catalog"], result: CatalogReportSchema },
+  "choice-remove": { path: ["pick", "remove"], applied: ChoiceRemovalPayloadSchema },
+  "choice-set": { path: ["pick", "include"], applied: ChoiceChangePayloadSchema },
+  "choice-exclude": { path: ["pick", "exclude"], applied: ChoiceChangePayloadSchema },
   clean: stateClean,
-  doctor: { path: ["doctor"], mode: "read-only", stable: true, result: DoctorReportSchema },
-  "docs-attach": {
-    path: ["docs", "attach"],
-    mode: "immediate",
-    applied: DocsSettingsPayloadSchema,
-  },
-  check: { path: ["check"], mode: "read-only", result: CheckReportSchema },
-  "docs-icons": { path: ["docs", "icons"], mode: "read-only", result: DocsIconsPayloadSchema },
-  "docs-configure": {
-    path: ["docs", "configure"],
-    mode: "immediate",
-    applied: DocsSettingsPayloadSchema,
-  },
-  "docs-detach": {
-    path: ["docs", "detach"],
-    mode: "immediate",
-    applied: DocsSettingsPayloadSchema,
-  },
-  "docs-list": { path: ["docs"], mode: "read-only", result: DocsListPayloadSchema },
-  "docs-search": { path: ["docs", "search"], mode: "read-only", result: ReaderSearchPayloadSchema },
-  "docs-serve": { path: ["docs", "serve"], mode: "read-only", result: ReaderSessionPayloadSchema },
-  "docs-target": { path: ["docs", "target"], mode: "read-only", result: DocsTargetPayloadSchema },
+  doctor: { path: ["doctor"], stable: true, result: DoctorReportSchema },
+  "docs-attach": { path: ["docs", "attach"], applied: DocsSettingsPayloadSchema },
+  check: { path: ["check"], result: CheckReportSchema },
+  "docs-icons": { path: ["docs", "icons"], result: DocsIconsPayloadSchema },
+  "docs-configure": { path: ["docs", "configure"], applied: DocsSettingsPayloadSchema },
+  "docs-detach": { path: ["docs", "detach"], applied: DocsSettingsPayloadSchema },
+  "docs-list": { path: ["docs"], result: DocsListPayloadSchema },
+  "docs-search": { path: ["docs", "search"], result: ReaderSearchPayloadSchema },
+  "docs-serve": { path: ["docs", "serve"], result: ReaderSessionPayloadSchema },
+  "docs-target": { path: ["docs", "target"], result: DocsTargetPayloadSchema },
   explore: { path: ["explore"], mode: "conditional", result: ExploreSessionSchema },
-  guide: {
-    path: ["guide"],
-    mode: "read-only",
-    result: Schema.Union([GuideIndexSchema, GuideSchema]),
-  },
+  guide: { path: ["guide"], result: Schema.Union([GuideIndexSchema, GuideSchema]) },
   "history-clear": {
     path: ["script", "history", "clear"],
-    mode: "preview-apply",
     plan: HistoryClearPlanSchema,
     applied: HistoryClearApplicationSchema,
   },
-  "history-list": {
-    path: ["script", "history"],
-    mode: "read-only",
-    result: HistoryListPayloadSchema,
-  },
-  "history-show": {
-    path: ["script", "history", "show"],
-    mode: "read-only",
-    result: HistoryRecordSchema,
-  },
+  "history-list": { path: ["script", "history"], result: HistoryListPayloadSchema },
+  "history-show": { path: ["script", "history", "show"], result: HistoryRecordSchema },
   "import-add": {
     path: ["import", "add"],
-    mode: "preview-apply",
     plan: ImportPlanSchema,
     applied: ImportApplicationSchema,
   },
-  "import-list": { path: ["import"], mode: "read-only", result: ImportListSchema },
+  "import-list": { path: ["import"], result: ImportListSchema },
   "import-remove": {
     path: ["import", "remove"],
-    mode: "preview-apply",
     plan: ImportRemovalPlanSchema,
     applied: ImportRemovalApplicationSchema,
   },
-  init: { path: ["state", "init"], mode: "immediate", applied: StateInitializationPayloadSchema },
+  init: { path: ["state", "init"], applied: StateInitializationPayloadSchema },
   // It writes at once and reports what it planned beside what it applied.
   "machine-init": {
     path: ["init"],
@@ -247,40 +216,28 @@ export const commandDeclarations = {
     plan: InitPlanSchema,
     applied: InitApplicationSchema,
   },
-  "pick-list": { path: ["pick"], mode: "read-only", result: ChoiceListPayloadSchema },
-  "project-add": {
-    path: ["project", "add"],
-    mode: "immediate",
-    applied: ProjectRegistrationPayloadSchema,
-  },
-  "project-list": { path: ["project"], mode: "read-only", result: ProjectInspectionsPayloadSchema },
+  "pick-list": { path: ["pick"], result: ChoiceListPayloadSchema },
+  "project-add": { path: ["project", "add"], applied: ProjectRegistrationPayloadSchema },
+  "project-list": { path: ["project"], result: ProjectInspectionsPayloadSchema },
   "project-refresh": {
     path: ["project", "refresh"],
-    mode: "preview-apply",
     plan: ProjectRefreshCommandPlanSchema,
     applied: ProjectRefreshCommandResultSchema,
   },
   "project-remove": {
     path: ["project", "remove"],
-    mode: "preview-apply",
     plan: ProjectRemovalPlanSchema,
     applied: ProjectRemovalResultSchema,
   },
   reset: { ...stateClean, path: ["state", "reset"] },
   retry: stateClean,
-  upgrade: { path: ["upgrade"], mode: "read-only", stable: true, result: UpgradeGuideSchema },
+  upgrade: { path: ["upgrade"], stable: true, result: UpgradeGuideSchema },
   "script-run": { path: ["script", "run"], mode: "execute", result: ScriptRunPayloadSchema },
-  "script-show": { path: ["script", "show"], mode: "read-only", result: ScriptShowPayloadSchema },
+  "script-show": { path: ["script", "show"], result: ScriptShowPayloadSchema },
   // `--apply` publishes the plan it wrote as `applied`, so both slots hold the same plan.
-  types: {
-    path: ["types"],
-    mode: "preview-apply",
-    plan: TypesPlanSchema,
-    applied: TypesPlanSchema,
-  },
+  types: { path: ["types"], plan: TypesPlanSchema, applied: TypesPlanSchema },
   "source-add": {
     path: ["source", "add"],
-    mode: "preview-apply",
     // A preview registers a source or scaffolds its tack.yaml; an application publishes the
     // scaffold it wrote, if any, beside the registration.
     plan: Schema.Union([SourceRegistrationPlanSchema, SourceScaffoldPlanSchema]),
@@ -288,65 +245,43 @@ export const commandDeclarations = {
   },
   "profile-apply": {
     path: ["profile", "apply"],
-    mode: "preview-apply",
     plan: ProfileApplyPlanSchema,
     applied: ProfileDeliveryApplicationSchema,
   },
   "profile-save": {
     path: ["profile", "save"],
-    mode: "preview-apply",
     plan: ProfileSavePlanSchema,
     applied: ProfileSavedSchema,
   },
   "profile-adopt": {
     path: ["profile", "adopt"],
-    mode: "preview-apply",
     plan: ProfileAdoptPlanSchema,
     applied: ProfileAdoptedSchema,
   },
   "profile-export": {
     path: ["profile", "export"],
-    mode: "preview-apply",
     plan: BundleExportPlanSchema,
     applied: BundleExportedSchema,
   },
   "profile-inspect-bundle": {
     path: ["profile", "inspect-bundle"],
-    mode: "read-only",
     result: BundleInspectionPayloadSchema,
   },
   "profile-apply-bundle": {
     path: ["profile", "apply-bundle"],
-    mode: "preview-apply",
     plan: BundleApplyPlanSchema,
     applied: ProfileDeliveryApplicationSchema,
   },
-  "source-list": { path: ["source"], mode: "read-only", result: SourceListPayloadSchema },
-  "source-relocate": {
-    path: ["source", "relocate"],
-    mode: "immediate",
-    applied: SourceRelocationPayloadSchema,
-  },
+  "source-list": { path: ["source"], result: SourceListPayloadSchema },
+  "source-relocate": { path: ["source", "relocate"], applied: SourceRelocationPayloadSchema },
   "source-remove": {
     path: ["source", "remove"],
-    mode: "preview-apply",
     plan: SourceRemovalPlanSchema,
     applied: SourceRemovalResultSchema,
   },
-  status: { path: ["status"], mode: "read-only", stable: true, result: StatusPayloadSchema },
-  sync: {
-    path: ["sync"],
-    mode: "preview-apply",
-    stable: true,
-    plan: SyncPlanSchema,
-    applied: SyncApplicationSchema,
-  },
-  "upgrade-status": {
-    path: ["upgrade", "status"],
-    mode: "read-only",
-    stable: true,
-    result: UpgradeGuideSchema,
-  },
+  status: { path: ["status"], stable: true, result: StatusPayloadSchema },
+  sync: { path: ["sync"], stable: true, plan: SyncPlanSchema, applied: SyncApplicationSchema },
+  "upgrade-status": { path: ["upgrade", "status"], stable: true, result: UpgradeGuideSchema },
 } as const satisfies Record<Exclude<Invocation["_tag"], FlagRequestTag>, CommandDeclaration>;
 
 /** The payload schemas of the `--help` and `--version` requests, which no command word selects. */
