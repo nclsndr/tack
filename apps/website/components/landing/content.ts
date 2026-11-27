@@ -47,7 +47,7 @@ export const story = {
     {
       id: "sources",
       title: "Write it once.",
-      text: "Skills, commands and docs live in folders you own and in Git repositories your team shares.",
+      text: "Skills, commands and docs live in sources: folders you own and Git repositories your team shares.",
       proof: "~/skills/review/SKILL.md",
       region: { left: 1.6, top: 5.5, width: 27.6, height: 67.5 },
       caption: { left: 31, top: 12 },
@@ -131,7 +131,7 @@ export const features = {
     {
       id: "sources",
       name: "Sources",
-      line: "Your team's Git repository beside the folders you keep. Edits arrive with `git pull`; new skills wait for your preview.",
+      line: "A source hosts your skills, commands, docs and scripts, yours beside your team's. Every project links to it; edits arrive with `git pull`.",
     },
     {
       id: "projects",
@@ -210,7 +210,7 @@ export const questions = [
   {
     question: "What if I stop using Tack?",
     answer:
-      "Your skills are plain SKILL.md folders in your own directories. tack state reset --apply removes every link Tack created and its state. Your files stay.",
+      "Your skills are plain SKILL.md folders in your own sources. tack state reset --apply removes every link Tack created and its state. Your files stay.",
   },
   {
     question: "Does it call a model or send data?",
@@ -222,6 +222,6 @@ export const questions = [
 /** The closing section and the footer line. */
 export const closing = {
   heading: "Change agents. Keep your setup.",
-  text: "Your skills stay in your folders. Tack links them into the next agent you try.",
+  text: "Your skills stay in your sources. Tack links them into the next agent you try.",
   footerLine: "Tack up any agent.",
 } as const;

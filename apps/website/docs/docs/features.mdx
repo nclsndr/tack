@@ -5,17 +5,40 @@ description: Everything Tack does, in the six parts of the features page - sourc
 
 # Features
 
-Tack keeps your skills, commands, docs and scripts in folders you own and links them wherever your
-coding agents look. This page lists every feature in the six parts of the
+Tack keeps your skills, commands, docs and scripts in sources you own and links them into the
+folders each coding agent reads. This page lists every feature in the six parts of the
 [features page](/features), with the command that shows it. The [guides](./guides/add-a-source)
 walk through each task from start to end.
 
 ## Sources
 
-**Write it once, in a folder you own.** A source is a folder with a `tack.yaml`, under your own
-version control. It holds skills, commands, context, docs and scripts. Tack reads it where it is and
-moves nothing. Keep it in a Git repository and your team shares it: each teammate clones it and
-registers it, and edits arrive with their own `git pull`.
+**Write it once, in one place every project draws from.** A source is a folder, usually a Git
+repository, that hosts your resources. A resource is one thing an agent uses: a skill, a command, a
+piece of context, a set of docs or a script. The source's `tack.yaml` declares each one; Tack does
+not guess from folder names.
+
+```text
+~/agent-setup                    a source, under your own version control
+├── tack.yaml                    declares the resources below
+├── skills/review/SKILL.md       a skill
+├── commands/ship.md             a command
+├── context/conventions.md       context, catalogued only
+├── docs/handbook/               docs
+└── scripts/report.ts            a script
+```
+
+Projects and agents keep no copy of a resource. Tack links skills, commands and docs from their
+source into each project and worktree that picks them, and runs scripts from it by name, so one edit
+in the source reaches every project, worktree and agent:
+
+```text
+~/code/app/.claude/skills/review  →  ~/agent-setup/skills/review
+~/code/app/.agents/skills/review  →  ~/agent-setup/skills/review
+```
+
+Register as many sources as you keep: your own beside your team's. Tack reads each one where it is
+and moves nothing. A team source is a Git repository each teammate clones and registers, and edits
+arrive with their own `git pull`.
 
 | Feature                    | What it does                                                                                                                                     | Command                                                                                                    |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
