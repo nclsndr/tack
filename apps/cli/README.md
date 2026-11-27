@@ -447,8 +447,10 @@ skills:
 A `.` entry walks the source folder like any declared folder, with `include` and `exclude`, and
 passes over dot, underscore and `node_modules` names and the folders of other sources, as a docs
 walk does. A `tack.yaml` with a `.` entry declares that one kind: another resource key would read
-the same files, so it is refused with `declaration-schema-invalid` at that key. Content of another
-kind is a source of its own with its own `tack.yaml`. A `context` entry is never `.`, since context
+the same files, so it is refused with `declaration-schema-invalid` at that key. To hold several
+kinds, keep the one `tack.yaml` and list each folder under its kind, a skill folder at the top as
+an entry of its own: `skills: [{ path: deploy-service }, { path: rollback }]` beside
+`docs: [{ name: handbook, path: handbook }]`. A `context` entry is never `.`, since context
 would take every file: it is refused with `declaration-path-invalid`. A source with a skills entry
 `.` whose folder holds `SKILL.md` is one skill, and the source is unhealthy with
 `source-is-one-skill`. `tack import add --into SOURCE` writes into its top, and `SOURCE:FOLDER`
@@ -480,8 +482,10 @@ quarantined with its own reason code (`declaration-entry-invalid`, `declaration-
 `declaration-path-outside-source`, `declaration-path-missing`, `declaration-path-wrong-type`,
 `declaration-path-overlap`, `declaration-reaches-source`) and the other entries still load.
 
-**Nested sources.** Each `tack.yaml` marks the edge of a source, as a nested repository does in
-Git. Below a source's root, a folder that holds `tack.yaml` and no `SKILL.md` belongs to another
+**Nested sources.** A source has one `tack.yaml`, at its top, that declares every folder; a
+subfolder with a `tack.yaml` of its own is an edge case, such as a vendored repository that is a
+source already. Each `tack.yaml` marks the edge of a source, as a nested repository does in Git.
+Below a source's root, a folder that holds `tack.yaml` and no `SKILL.md` belongs to another
 source, registered or not, and the parent never reads it; configurations never merge or inherit.
 A declared path of any kind that is or lies inside such a folder is refused with
 `declaration-reaches-source`. A skills, commands or context folder whose walk meets one skips that

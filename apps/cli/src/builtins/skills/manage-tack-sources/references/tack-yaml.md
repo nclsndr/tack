@@ -29,9 +29,22 @@ A `.` entry walks the source folder as a declared folder, with `include` and `ex
 passes over dot, underscore and `node_modules` names, as a docs walk does, so `_drafts/` and
 `.git/` stay out. It passes over another source's folder without a finding, as a docs walk does.
 A `tack.yaml` with a `.` entry declares that one kind: another resource key would read the same
-files, so `tack check` refuses each other key with `declaration-schema-invalid`. Content of
-another kind is a source of its own, in a folder with its own `tack.yaml`, such as
-`~/skills/handbook` with a docs entry `.` beside `~/skills` with a skills entry `.`. A `context` entry is never `.`: context would take every file, the `tack.yaml` too, so it is
+files, so `tack check` refuses each other key with `declaration-schema-invalid`. To hold several
+kinds, keep the one `tack.yaml` and list each folder under its kind instead of `.`: each skill
+folder at the top is an entry of its own.
+
+```yaml
+version: 1
+name: ops
+skills:
+  - path: deploy-service
+  - path: rollback
+docs:
+  - name: handbook
+    path: handbook
+```
+
+A `context` entry is never `.`: context would take every file, the `tack.yaml` too, so it is
 refused with `declaration-path-invalid`. A source with a skills entry `.` whose folder holds
 `SKILL.md` is one skill, and the source is unhealthy with `source-is-one-skill`: register the folder
 above it, or import it with `tack import add`.
@@ -69,8 +82,10 @@ with `exclude: ["run.ts"]` beside a script `tools/run.ts`. An `include` does not
 still enters every folder. The finding names that exclude. `docs` paths are exempt: a docs folder
 may hold or equal any other entry's folder.
 
-**Nested sources.** Each `tack.yaml` marks the edge of a source. Below the source's root, a folder
-that holds `tack.yaml` and no `SKILL.md` is another source, registered or not, and this source
+**Nested sources.** A source has one `tack.yaml`, at its top: declare every folder there rather
+than splitting a kind into a subfolder with a `tack.yaml` of its own. A nested `tack.yaml` is an
+edge case, such as a vendored repository that is a source already. Each `tack.yaml` marks the edge
+of a source. Below the source's root, a folder that holds `tack.yaml` and no `SKILL.md` is another source, registered or not, and this source
 never reads it: configurations never merge or inherit. An entry whose path is or lies inside such a
 folder is refused with `declaration-reaches-source`; declare those resources in that folder's
 `tack.yaml`. A skills, commands or context walk that meets one skips the folder and reports

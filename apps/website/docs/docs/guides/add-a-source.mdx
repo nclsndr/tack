@@ -167,8 +167,18 @@ Its `Next` is `tack guide tack-yaml`.
 When the skill folders sit at the top of the folder, such as `~/skills/review/SKILL.md`, declare the
 folder itself with the path `.`: `{"version": 1, "name": "skills", "skills": [{"path": "."}]}`. Its
 walk passes over dot and underscore folders, `node_modules` and the folders of other sources. A
-`tack.yaml` with a `.` entry declares that one kind, so a folder of commands or docs beside the
-skills is a source of its own, with its own `.` entry under `commands` or `docs`.
+`tack.yaml` with a `.` entry declares that one kind. When a folder of commands or docs sits beside
+the skills, keep one `tack.yaml` and name each folder instead of `.`, a skill folder as an entry of
+its own:
+
+```json
+{
+  "version": 1,
+  "name": "skills",
+  "skills": [{ "path": "review" }, { "path": "deploy" }],
+  "docs": [{ "name": "handbook", "path": "handbook" }]
+}
+```
 
 ## A folder that already has a tack.yaml
 
