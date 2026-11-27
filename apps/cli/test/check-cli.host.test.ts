@@ -31,7 +31,7 @@ it.effect("parses one variadic read-only checker and removes every older checker
 
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { profileFixture } from "./support/profile-fixture.ts";
-import { exitCodeForEnvelope } from "../src/cli/host/public-outcome.ts";
+import { exitCodeForEnvelope } from "../src/cli/envelope/public-outcome.ts";
 import { runHost } from "./support/host-runner.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
 import { StateStore } from "../src/services/state-store.ts";

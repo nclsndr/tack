@@ -1,7 +1,7 @@
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, PlatformError } from "effect";
-import type { TerminalContextShape } from "../src/cli/host/human/terminal-context.ts";
-import { exitCodeForEnvelope } from "../src/cli/host/public-outcome.ts";
+import type { TerminalContextShape } from "../src/cli/human/terminal-context.ts";
+import { exitCodeForEnvelope } from "../src/cli/envelope/public-outcome.ts";
 import { writeTypes } from "../src/features/execution/script-types.ts";
 import { applyImport } from "../src/features/imports/import.ts";
 import { removeImport } from "../src/features/imports/import-removal.ts";

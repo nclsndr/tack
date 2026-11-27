@@ -1,8 +1,8 @@
 import { expect, it } from "vitest";
-import { renderDedicated, renderHuman } from "../src/cli/host/human/render.ts";
-import { makeStyle } from "../src/cli/host/human/style.ts";
-import { resultAs, resultOutcome } from "../src/cli/host/outcomes.ts";
-import { createPublicEnvelope, type PublicEnvelope } from "../src/cli/host/public-outcome.ts";
+import { renderDedicated, renderHuman } from "../src/cli/human/render.ts";
+import { makeStyle } from "../src/cli/human/style.ts";
+import { resultAs, resultOutcome } from "../src/cli/envelope/outcomes.ts";
+import { createPublicEnvelope, type PublicEnvelope } from "../src/cli/envelope/public-outcome.ts";
 
 const style = makeStyle({ color: false, width: 80, homeDirectory: "/Users/ada" });
 const render = (envelope: PublicEnvelope) => renderHuman(envelope, style);

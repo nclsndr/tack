@@ -16,7 +16,7 @@ import { searchReader } from "../src/features/reader/search.ts";
 import { runDoctor } from "../src/features/doctor/doctor.ts";
 import { runStatus, statusPartialCauses } from "../src/features/status/status.ts";
 import { runSyncCommand } from "../src/features/reconciliation/sync-command.ts";
-import { doctorOutcome } from "../src/cli/host/outcomes.ts";
+import { doctorOutcome } from "../src/cli/envelope/outcomes.ts";
 
 it.layer(LiveTestLayer)("profile workflow agreements", (test) => {
   for (const input of ["source", "bundle"] as const) {

@@ -18,7 +18,7 @@ import { watchFile, unwatchFile } from "node:fs";
 import { Effect, Schema } from "effect";
 import { decodeState } from "../src/domain/state/state-codec.ts";
 import { StateSchema } from "../src/domain/state/state-schema.ts";
-import type { PublicEnvelope } from "../src/cli/host/public-outcome.ts";
+import type { PublicEnvelope } from "../src/cli/envelope/public-outcome.ts";
 import {
   HistoryListPayloadSchema,
   HistoryRecordSchema,

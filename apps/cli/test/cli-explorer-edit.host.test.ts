@@ -6,22 +6,18 @@ import { expect, it } from "@effect/vitest";
 import { Cause, Effect, FileSystem, Option, Path, Queue, Ref, Terminal } from "effect";
 import { SecureRandom } from "effect/crypto";
 import type { Namespace } from "../src/domain/choices/choice-schema.ts";
-import { explorerEntries } from "../src/cli/host/human/explorer/entries.ts";
-import { renderExplorerFrame } from "../src/cli/host/human/explorer/frame.ts";
-import { makeStyle } from "../src/cli/host/human/style.ts";
+import { explorerEntries } from "../src/cli/explorer/entries.ts";
+import { renderExplorerFrame } from "../src/cli/explorer/frame.ts";
+import { makeStyle } from "../src/cli/human/style.ts";
 import type { CatalogReport } from "../src/domain/sources/catalog-report.ts";
-import { stagedState } from "../src/cli/host/human/explorer/edit.ts";
-import {
-  initialExplorerState,
-  pendingChanges,
-  stepExplorer,
-} from "../src/cli/host/human/explorer/model.ts";
-import { exploreSelection } from "../src/cli/host/routes/explore.ts";
-import { TerminalContext } from "../src/cli/host/human/terminal-context.ts";
+import { stagedState } from "../src/cli/explorer/edit.ts";
+import { initialExplorerState, pendingChanges, stepExplorer } from "../src/cli/explorer/model.ts";
+import { exploreSelection } from "../src/cli/routes/explore.ts";
+import { TerminalContext } from "../src/cli/human/terminal-context.ts";
 import { Git } from "../src/services/git.ts";
 import { enableAdapters } from "../src/features/reconciliation/agent.ts";
-import type { RouteServices } from "../src/cli/host/routes/route.ts";
-import { loadExplorer, makeExplorerEditor } from "../src/cli/host/human/explorer/editor.ts";
+import type { RouteServices } from "../src/cli/envelope/route-services.ts";
+import { loadExplorer, makeExplorerEditor } from "../src/cli/explorer/editor.ts";
 import { Source, makeSourceService, registerSource } from "../src/features/sources/source.ts";
 import { mutateStateFixture, stateOptionsAt } from "./support/state-fixture.ts";
 import {
@@ -34,7 +30,7 @@ import {
 } from "./support/explorer.ts";
 import { initializeState, readState } from "../src/services/state-store.ts";
 import { type State } from "../src/domain/state/state-schema.ts";
-import { makeExplorerDestinations } from "../src/cli/host/human/explorer/profile-editor.ts";
+import { makeExplorerDestinations } from "../src/cli/explorer/profile-editor.ts";
 
 const user: Namespace = { _tag: "user" };
 

@@ -2,7 +2,7 @@ import { fakeGit } from "./support/fake-git.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
-import { exitCodeForEnvelope } from "../src/cli/host/public-outcome.ts";
+import { exitCodeForEnvelope } from "../src/cli/envelope/public-outcome.ts";
 import { runHost } from "./support/host-runner.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
 

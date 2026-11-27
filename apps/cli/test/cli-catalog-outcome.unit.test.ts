@@ -1,5 +1,5 @@
 import { expect, it } from "@effect/vitest";
-import { catalogOutcome } from "../src/cli/host/outcomes.ts";
+import { catalogOutcome } from "../src/cli/envelope/outcomes.ts";
 
 const script = {
   kind: "script",

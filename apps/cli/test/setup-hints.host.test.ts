@@ -10,9 +10,9 @@ import { Effect, FileSystem, Path, Schema } from "effect";
 import { ExecutionPlatformLive } from "../src/platform/execution/execution-platform.ts";
 import { DoctorReportSchema } from "../src/domain/doctor/doctor-schema.ts";
 import { SyncPlanSchema } from "../src/domain/reconciliation/sync-schema.ts";
-import type { PublicEnvelope } from "../src/cli/host/public-outcome.ts";
+import type { PublicEnvelope } from "../src/cli/envelope/public-outcome.ts";
 import type { GitService } from "../src/services/git.ts";
-import type { TerminalContextShape } from "../src/cli/host/human/terminal-context.ts";
+import type { TerminalContextShape } from "../src/cli/human/terminal-context.ts";
 
 const pipe: TerminalContextShape = {
   columns: 120,

@@ -6,8 +6,8 @@ import { expect, it } from "@effect/vitest";
 import { Effect, Option, Queue, Ref, Terminal } from "effect";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { unwatchedTerminalSize } from "./support/explorer.ts";
-import { renderExplorerFrame } from "../src/cli/host/human/explorer/frame.ts";
-import { runExplorer } from "../src/cli/host/human/explorer/session.ts";
+import { renderExplorerFrame } from "../src/cli/explorer/frame.ts";
+import { runExplorer } from "../src/cli/explorer/session.ts";
 import {
   initialExplorerState,
   stepExplorer,
@@ -15,8 +15,8 @@ import {
   withReview,
   type ExplorerEntry,
   type ExplorerState,
-} from "../src/cli/host/human/explorer/model.ts";
-import { makeStyle } from "../src/cli/host/human/style.ts";
+} from "../src/cli/explorer/model.ts";
+import { makeStyle } from "../src/cli/human/style.ts";
 
 const size = { columns: 80, rows: 14 };
 const style = makeStyle({ color: false, homeDirectory: undefined, width: size.columns });

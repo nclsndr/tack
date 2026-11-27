@@ -1,6 +1,6 @@
 import { Effect, Exit, FileSystem, Path, Predicate, Schema, Stdio, Stream } from "effect";
 import { agentsFoundIn } from "../../features/setup/machine-init.ts";
-import { commandLine } from "./command-line.ts";
+import { commandLine } from "../envelope/command-line.ts";
 import {
   commandNameOf,
   isCommandName,
@@ -10,11 +10,11 @@ import {
 } from "../commands/index.ts";
 import { hostStateOptions } from "./host-state-options.ts";
 import { InvocationSnapshot, makeSnapshotCell } from "../../features/snapshot/command-snapshot.ts";
-import { loadReferenceIndex } from "./human/reference-index.ts";
-import { nextCommandsOf, renderHuman } from "./human/render.ts";
+import { loadReferenceIndex } from "../human/reference-index.ts";
+import { nextCommandsOf, renderHuman } from "../human/render.ts";
 import { withCheckoutHint } from "../../features/projects/checkout.ts";
 import { readInvocationSnapshot } from "../../features/snapshot/command-snapshot.ts";
-import { makeStyle, type Style } from "./human/style.ts";
+import { makeStyle, type Style } from "../human/style.ts";
 import type { ReferenceIndex } from "../../features/sources/resource-reference.ts";
 import {
   colorEnabled,
@@ -23,7 +23,7 @@ import {
   TerminalContext,
   type OutputFormat,
   type TerminalContextShape,
-} from "./human/terminal-context.ts";
+} from "../human/terminal-context.ts";
 import {
   makeStateNoticeCollector,
   stateAutoInitializes,
@@ -32,7 +32,7 @@ import {
   type StateOptions,
 } from "../../services/state-store.ts";
 import { reportInternalCause, withDebugRerun } from "./debug-cause.ts";
-import { HostConfigurationError, outcomeForError } from "./errors.ts";
+import { HostConfigurationError, outcomeForError } from "../envelope/errors.ts";
 import {
   createPublicEnvelope,
   envelopeFromExit,
@@ -40,8 +40,8 @@ import {
   PublicEnvelopeSchema,
   renderPublicEnvelope,
   type PublicEnvelope,
-} from "./public-outcome.ts";
-import { PublicExit, type Route, routes } from "./routes/index.ts";
+} from "../envelope/public-outcome.ts";
+import { PublicExit, type Route, routes } from "../routes/index.ts";
 
 const redactedCommandName = (candidate: unknown) =>
   Predicate.isObject(candidate) && isCommandName(candidate["command"])

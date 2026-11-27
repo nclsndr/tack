@@ -7,7 +7,7 @@ import {
   withAppliedEntries,
   withReview,
   type ExplorerState,
-} from "../src/cli/host/human/explorer/model.ts";
+} from "../src/cli/explorer/model.ts";
 import {
   docs,
   editing,

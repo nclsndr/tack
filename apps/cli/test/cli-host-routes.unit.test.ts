@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@effect/vitest";
 import { commandNameOf, commandDeclarations, commandTagOf } from "../src/cli/commands/index.ts";
-import { routes } from "../src/cli/host/routes/index.ts";
+import { routes } from "../src/cli/routes/index.ts";
 
 describe("CLI host routes", () => {
   it("routes exactly the invocations that have a command path", () => {

@@ -5,8 +5,11 @@ import { ChildProcess, ChildProcessSpawner } from "effect/process";
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { agentMarkers } from "../../src/cli/host/human/terminal-context.ts";
-import { PublicEnvelopeSchema, type PublicEnvelope } from "../../src/cli/host/public-outcome.ts";
+import { agentMarkers } from "../../src/cli/human/terminal-context.ts";
+import {
+  PublicEnvelopeSchema,
+  type PublicEnvelope,
+} from "../../src/cli/envelope/public-outcome.ts";
 
 /** The root of the Tack repository. */
 export const repositoryRoot = resolve(import.meta.dirname, "../../../..");

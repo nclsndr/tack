@@ -4,7 +4,7 @@ import { runCli } from "../../src/cli/host/run.ts";
 import {
   TerminalContext,
   type TerminalContextShape,
-} from "../../src/cli/host/human/terminal-context.ts";
+} from "../../src/cli/human/terminal-context.ts";
 import { Git, type GitService } from "../../src/services/git.ts";
 import { undeclaredPayloadsOfOutput } from "./declared-payloads.ts";
 import { isolationChanges, type TackRunOptions, type TackRun } from "./tack-process.ts";

@@ -1,6 +1,6 @@
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
-import type { TerminalContextShape } from "../src/cli/host/human/terminal-context.ts";
+import type { TerminalContextShape } from "../src/cli/human/terminal-context.ts";
 import { fakeGit } from "./support/fake-git.ts";
 import { runHost } from "./support/host-runner.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";

@@ -1,13 +1,13 @@
 import { skillText } from "./support/source-tree.ts";
 import { fakeGit } from "./support/fake-git.ts";
-import { stageChange } from "../src/cli/host/human/explorer/edit.ts";
+import { stageChange } from "../src/cli/explorer/edit.ts";
 import { checkPaths } from "../src/features/check/check-paths.ts";
 import { Git } from "../src/services/git.ts";
 import { registerSource } from "../src/features/sources/source.ts";
-import { makeExplorerDestinations } from "../src/cli/host/human/explorer/profile-editor.ts";
-import { initialExplorerState, stepExplorer } from "../src/cli/host/human/explorer/model.ts";
-import { makeStyle } from "../src/cli/host/human/style.ts";
-import type { RouteServices } from "../src/cli/host/routes/route.ts";
+import { makeExplorerDestinations } from "../src/cli/explorer/profile-editor.ts";
+import { initialExplorerState, stepExplorer } from "../src/cli/explorer/model.ts";
+import { makeStyle } from "../src/cli/human/style.ts";
+import type { RouteServices } from "../src/cli/envelope/route-services.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect } from "effect";
 import { profileFixture } from "./support/profile-fixture.ts";

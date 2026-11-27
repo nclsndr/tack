@@ -14,7 +14,7 @@ import { runStatus, statusPartialCauses } from "./status.ts";
 import { StatusReportSchema } from "../../domain/status/status-schema.ts";
 import { readState } from "../../services/state-store.ts";
 import { makeDestinationService } from "../../platform/filesystem/destination-observation.ts";
-import { statusOutcome, withOutsidePendingDiagnostic } from "../../cli/host/outcomes.ts";
+import { statusOutcome, withOutsidePendingDiagnostic } from "../../cli/envelope/outcomes.ts";
 
 const createSource = Effect.fnUntraced(function* (
   root: string,

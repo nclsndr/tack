@@ -1,9 +1,9 @@
 import { Effect, type Terminal } from "effect";
 import { expect } from "vitest";
-import type { ExplorerActivity } from "../../src/cli/host/human/explorer/activity.ts";
-import type { ExplorerDestination } from "../../src/cli/host/human/explorer/destination.ts";
-import { initialEditState } from "../../src/cli/host/human/explorer/edit.ts";
-import { renderExplorerFrame } from "../../src/cli/host/human/explorer/frame.ts";
+import type { ExplorerActivity } from "../../src/cli/explorer/activity.ts";
+import type { ExplorerDestination } from "../../src/cli/explorer/destination.ts";
+import { initialEditState } from "../../src/cli/explorer/edit.ts";
+import { renderExplorerFrame } from "../../src/cli/explorer/frame.ts";
 import {
   initialExplorerState,
   stepExplorer,
@@ -11,8 +11,8 @@ import {
   type ExplorerEntry,
   type ExplorerKey,
   type ExplorerState,
-} from "../../src/cli/host/human/explorer/model.ts";
-import { makeStyle } from "../../src/cli/host/human/style.ts";
+} from "../../src/cli/explorer/model.ts";
+import { makeStyle } from "../../src/cli/human/style.ts";
 
 export const sourceRegistrationId = "00000000-0000-4000-8000-000000000001";
 

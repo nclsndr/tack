@@ -1,6 +1,6 @@
 import { Config, ConfigProvider, Effect, Option } from "effect";
 import type { StateOptions } from "../../services/state-store.ts";
-import { HostConfigurationError } from "./errors.ts";
+import { HostConfigurationError } from "../envelope/errors.ts";
 import { HostEnvironment } from "./host-environment.ts";
 
 /**

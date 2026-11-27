@@ -5,9 +5,9 @@ import { BunServices } from "@effect/platform-bun";
 import { describe, expect, it } from "vitest";
 import { InvocationError, parseInvocation } from "../src/cli/commands/index.ts";
 import { readVersionRequest } from "../src/cli/commands/version-request.ts";
-import { renderHuman } from "../src/cli/host/human/render.ts";
-import { makeStyle } from "../src/cli/host/human/style.ts";
-import { createPublicEnvelope } from "../src/cli/host/public-outcome.ts";
+import { renderHuman } from "../src/cli/human/render.ts";
+import { makeStyle } from "../src/cli/human/style.ts";
+import { createPublicEnvelope } from "../src/cli/envelope/public-outcome.ts";
 import {
   currentVersionReport,
   releaseStamp,

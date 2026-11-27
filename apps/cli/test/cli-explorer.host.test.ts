@@ -19,7 +19,7 @@ import {
   agentMarkers,
   TerminalContext,
   type TerminalContextShape,
-} from "../src/cli/host/human/terminal-context.ts";
+} from "../src/cli/human/terminal-context.ts";
 import { parseInvocation } from "../src/cli/commands/index.ts";
 import { Git } from "../src/services/git.ts";
 import { runHost } from "./support/host-runner.ts";
@@ -33,18 +33,18 @@ import {
   type ExplorerEntry,
   type ExplorerKey,
   type ExplorerState,
-} from "../src/cli/host/human/explorer/model.ts";
-import { renderExplorerFrame } from "../src/cli/host/human/explorer/frame.ts";
-import { runExplorer } from "../src/cli/host/human/explorer/session.ts";
-import { makeStyle } from "../src/cli/host/human/style.ts";
+} from "../src/cli/explorer/model.ts";
+import { renderExplorerFrame } from "../src/cli/explorer/frame.ts";
+import { runExplorer } from "../src/cli/explorer/session.ts";
+import { makeStyle } from "../src/cli/human/style.ts";
 import { ReaderCorpusLive } from "../src/platform/reader/search.ts";
 import { initializeState, readState } from "../src/services/state-store.ts";
 import { registerSource } from "../src/features/sources/source.ts";
-import { exploreSelection } from "../src/cli/host/routes/explore.ts";
-import { loadExplorer } from "../src/cli/host/human/explorer/editor.ts";
+import { exploreSelection } from "../src/cli/routes/explore.ts";
+import { loadExplorer } from "../src/cli/explorer/editor.ts";
 import { CatalogReportSchema } from "../src/domain/sources/catalog-report.ts";
 import { SkillChoiceSchema } from "../src/domain/choices/choice-schema.ts";
-import { explorerEntries } from "../src/cli/host/human/explorer/entries.ts";
+import { explorerEntries } from "../src/cli/explorer/entries.ts";
 import { stateOptionsAt } from "./support/state-fixture.ts";
 
 const interactive: TerminalContextShape = {

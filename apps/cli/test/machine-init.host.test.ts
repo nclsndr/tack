@@ -4,9 +4,9 @@ import { runHost } from "./support/host-runner.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, Schema } from "effect";
-import type { TerminalContextShape } from "../src/cli/host/human/terminal-context.ts";
+import type { TerminalContextShape } from "../src/cli/human/terminal-context.ts";
 import { InitApplicationSchema, InitPlanSchema } from "../src/domain/setup/machine-init-schema.ts";
-import type { PublicEnvelope } from "../src/cli/host/public-outcome.ts";
+import type { PublicEnvelope } from "../src/cli/envelope/public-outcome.ts";
 import { Source } from "../src/features/sources/source.ts";
 import { builtInSource } from "../src/release.ts";
 

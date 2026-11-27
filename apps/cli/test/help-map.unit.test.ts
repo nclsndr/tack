@@ -3,7 +3,7 @@ import { expect, it } from "@effect/vitest";
 import { Effect } from "effect";
 import { describeContracts } from "../src/cli/commands/manifest.test-support.ts";
 import { MutationModeSchema, type MutationMode } from "../src/cli/commands/operation-contract.ts";
-import { operationMap } from "../src/cli/host/human/help-map.ts";
+import { operationMap } from "../src/cli/human/help-map.ts";
 
 const contracts = describeContracts([]).pipe(Effect.provide(BunServices.layer));
 

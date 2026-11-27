@@ -4,10 +4,11 @@ import { describe, expect, it } from "@effect/vitest";
 import { InvocationError } from "../src/cli/commands/index.ts";
 import {
   errorRegistry,
+  ExplorerInterruptedError,
   HostConfigurationError,
   outcomeForError,
   type HostFailure,
-} from "../src/cli/host/errors.ts";
+} from "../src/cli/envelope/errors.ts";
 import {
   ChoiceProjectNotFoundError,
   ChoiceProjectRemovingError,
@@ -47,7 +48,6 @@ import {
 import { SourceRemovalError } from "../src/features/removal/source-removal.ts";
 import { SourceAddRequestError } from "../src/features/sources/source-scaffold.ts";
 import { ExecutionError } from "../src/services/execution-platform.ts";
-import { ExplorerInterruptedError } from "../src/cli/host/routes/explore.ts";
 import { GitCommandError, GitOutputParseError } from "../src/services/git.ts";
 import { ImportFetchError } from "../src/services/import-remote.ts";
 import { ReaderStartupError } from "../src/services/reader.ts";

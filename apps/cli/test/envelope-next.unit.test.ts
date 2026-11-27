@@ -1,14 +1,14 @@
 import { expect, it } from "@effect/vitest";
 import { Schema } from "effect";
 import { readFileSync, readdirSync } from "node:fs";
-import { nextCommandsOf, renderHuman } from "../src/cli/host/human/render.ts";
-import { makeStyle } from "../src/cli/host/human/style.ts";
+import { nextCommandsOf, renderHuman } from "../src/cli/human/render.ts";
+import { makeStyle } from "../src/cli/human/style.ts";
 import {
   PublicEnvelopeSchema,
   createPublicEnvelope,
   renderPublicEnvelope,
   type PublicEnvelope,
-} from "../src/cli/host/public-outcome.ts";
+} from "../src/cli/envelope/public-outcome.ts";
 import { hintsIn } from "./support/hints.ts";
 
 const fixtures = new URL("./fixtures/human/", import.meta.url);

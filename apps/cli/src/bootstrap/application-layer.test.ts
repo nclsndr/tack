@@ -1,6 +1,6 @@
 import { expect, it } from "@effect/vitest";
 import { Effect } from "effect";
-import { TerminalContext } from "../cli/host/human/terminal-context.ts";
+import { TerminalContext } from "../cli/human/terminal-context.ts";
 import { Source } from "../features/sources/source.ts";
 import { Destination } from "../services/destination.ts";
 import { ExecutionWorker, RunHistory } from "../services/execution-platform.ts";

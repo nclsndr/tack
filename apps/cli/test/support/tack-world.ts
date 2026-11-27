@@ -2,7 +2,7 @@ import { afterAll, expect } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { ChildProcessSpawner } from "effect/process";
 import { rm } from "node:fs/promises";
-import type { PublicEnvelope } from "../../src/cli/host/public-outcome.ts";
+import type { PublicEnvelope } from "../../src/cli/envelope/public-outcome.ts";
 import type { StateOptions } from "../../src/services/state-store.ts";
 import { runTackInProcess } from "./host-runner.ts";
 import {

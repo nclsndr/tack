@@ -35,15 +35,17 @@ const productionSourceFiles = () =>
  * - `services`: the declarations of every injected capability (tag and interface), over `domain`.
  * - `platform`: adapters that implement a service against files, git, processes and the reader.
  * - `features`: use cases that drive services and domain policy.
- * - `cli`: command declarations and the host. `bootstrap`: the composition root that builds live layers.
+ * - `cli`: from argv to the public envelope, in the folders of {@link cliFolders}.
+ * - `bootstrap`: the composition root that builds live layers.
  *
- * `cli/commands` parses command families into transport-free requests; `cli/host` dispatches them and
- * owns the single public envelope and exit status. Pure policy stays ordinary TypeScript in `domain`.
+ * Pure policy stays ordinary TypeScript in `domain`.
  * Add an Effect `Context.Service` capability only when a feature must replace an external action in
  * tests, choose a live implementation, or share a resource lifecycle. Declare it in `services`, keep it
  * small and named for the feature intent, and add no generic infrastructure or file-operation services.
  * Its live implementation belongs in `platform`, and `bootstrap` supplies it once. A service that a
  * feature implements itself, such as `Source`, keeps its declaration and live layer in that feature.
+ * The one implementation in `services` is `exclusive-lock.ts`: `platform/state` and two features
+ * share that lock over `FileSystem`, and a service tag for it would add a seam for one rule.
  * Feature workflows must not select production layers themselves.
  */
 const layerImports: Readonly<Record<string, ReadonlyArray<string>>> = {
@@ -54,6 +56,27 @@ const layerImports: Readonly<Record<string, ReadonlyArray<string>>> = {
   cli: ["domain", "services", "features", "cli"],
   bootstrap: ["domain", "services", "platform", "features", "cli", "bootstrap"],
 };
+
+/**
+ * The folders of `cli`, lowest first. A folder imports only the folders before it, so the order
+ * reads as the path of one command.
+ *
+ * - `commands`: command declarations that parse argv into transport-free requests.
+ * - `envelope`: the public envelope, the command line it names, and how each typed result, partial
+ *   cause and failure becomes a public outcome.
+ * - `human`: the text views of an envelope.
+ * - `explorer`: the interactive explorer session.
+ * - `routes`: one route per command, which runs its use case and returns an outcome.
+ * - `host`: dispatch, completion and the host environment; it renders and exits.
+ */
+const cliFolders: ReadonlyArray<string> = [
+  "commands",
+  "envelope",
+  "human",
+  "explorer",
+  "routes",
+  "host",
+];
 
 /**
  * The layers that may import each entry of the workspace packages the CLI uses. `domain` imports
@@ -196,6 +219,19 @@ describe("CLI architecture boundaries", () => {
     expect(findCycle(folderGraph(layer))).toBeUndefined();
   });
 
+  it("orders the cli folders: each imports only the folders before it", () => {
+    const graph = folderGraph("cli");
+
+    expect([...graph.keys()].toSorted()).toEqual(cliFolders.toSorted());
+    expect(
+      [...graph].flatMap(([folder, targets]) =>
+        [...targets].flatMap((target) =>
+          cliFolders.indexOf(target) < cliFolders.indexOf(folder) ? [] : [`${folder} -> ${target}`],
+        ),
+      ),
+    ).toEqual([]);
+  });
+
   it("reads the state document only through the command snapshot", () => {
     const readers = productionSourceFiles().flatMap((path) =>
       /\breadState\b/.test(readFileSync(path, "utf8")) ? [modulePath(path)] : [],
@@ -253,7 +289,7 @@ describe("CLI architecture boundaries", () => {
     // Effect, and the bundle codec, the YAML reader and the release facts are plain functions. Lower
     // a count when a throw goes; a new one needs a reason to throw rather than fail an Effect.
     const allowed = {
-      "cli/host/human/explorer/profile-editor.ts": 2,
+      "cli/explorer/profile-editor.ts": 2,
       "domain/agents/agent-layout.ts": 1,
       "domain/bundles/bundle-codec.ts": 4,
       "domain/bundles/bundle-path.ts": 3,
