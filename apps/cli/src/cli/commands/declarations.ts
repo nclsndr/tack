@@ -127,13 +127,13 @@ export type PayloadSchemas<S extends PayloadSchema = PayloadSchema> = {
 };
 
 /**
- * The public contract of one command: the words after `tack` that select it, how it changes state,
- * and the schema of each payload slot. A stable command's payloads are part of the stable `--json`
- * contract, so each of its schemas names a stable kind. The mode is declared only where
- * {@link modeOf} would not read it from the slots.
+ * The public contract of one command: how it changes state and the schema of each payload slot. A
+ * stable command's payloads are part of the stable `--json` contract, so each of its schemas names
+ * a stable kind. The path is declared only where the tag's words do not spell it (see
+ * `commandPathOf`), and the mode only where {@link modeOf} would not read it from the slots.
  */
 export type CommandDeclaration = {
-  readonly path: readonly [string, ...Array<string>];
+  readonly path?: readonly [string, ...Array<string>];
   readonly mode?: MutationMode;
 } & (
   | ({ readonly stable?: false } & PayloadSchemas)
@@ -153,135 +153,91 @@ export const modeOf = (declaration: CommandDeclaration): MutationMode =>
       ? "read-only"
       : "immediate");
 
-/** `state clean` plans and applies the same removal whether or not `--pending` selects `state-clean-pending`. */
-const stateClean = {
-  path: ["state", "clean"],
+/** `state clean`, with or without `--pending`, and `state reset` plan and apply one removal. */
+const stateRemoval = {
   plan: SelectedRemovalPlanSchema,
   applied: RemovalResultSchema,
 } as const satisfies CommandDeclaration;
 
 /**
- * Every invocation the command tree declares, by tag. Envelope command names and command paths
- * derive only from this table, and parser tests keep it in agreement with the tree.
+ * Every invocation the command tree declares, by tag. A tag spells its command path, so envelope
+ * command names and command paths derive from the tag, or from the path declared where the words
+ * differ. Parser tests keep this table in agreement with the tree.
  */
 export const commandDeclarations = {
   "adapter-disable": {
-    path: ["adapter", "disable"],
     plan: AdapterDisablementPlanSchema,
     applied: AdapterDisablementResultSchema,
   },
-  "adapter-list": { path: ["adapter"], result: AdapterListPayloadSchema },
-  "adapter-enable": { path: ["adapter", "enable"], applied: AdapterSettingsPayloadSchema },
-  catalog: { path: ["catalog"], result: CatalogReportSchema },
-  "pick-remove": { path: ["pick", "remove"], applied: ChoiceRemovalPayloadSchema },
-  "pick-include": { path: ["pick", "include"], applied: ChoiceChangePayloadSchema },
-  "pick-exclude": { path: ["pick", "exclude"], applied: ChoiceChangePayloadSchema },
-  "state-clean": stateClean,
-  doctor: { path: ["doctor"], stable: true, result: DoctorReportSchema },
-  "docs-attach": { path: ["docs", "attach"], applied: DocsSettingsPayloadSchema },
-  check: { path: ["check"], result: CheckReportSchema },
-  "docs-icons": { path: ["docs", "icons"], result: DocsIconsPayloadSchema },
-  "docs-configure": { path: ["docs", "configure"], applied: DocsSettingsPayloadSchema },
-  "docs-detach": { path: ["docs", "detach"], applied: DocsSettingsPayloadSchema },
-  "docs-list": { path: ["docs"], result: DocsListPayloadSchema },
-  "docs-search": { path: ["docs", "search"], result: ReaderSearchPayloadSchema },
-  "docs-serve": { path: ["docs", "serve"], result: ReaderSessionPayloadSchema },
-  "docs-target": { path: ["docs", "target"], result: DocsTargetPayloadSchema },
-  explore: { path: ["explore"], mode: "conditional", result: ExploreSessionSchema },
-  guide: { path: ["guide"], result: Schema.Union([GuideIndexSchema, GuideSchema]) },
-  "script-history-clear": {
-    path: ["script", "history", "clear"],
-    plan: HistoryClearPlanSchema,
-    applied: HistoryClearApplicationSchema,
-  },
-  "script-history-list": { path: ["script", "history"], result: HistoryListPayloadSchema },
-  "script-history-show": { path: ["script", "history", "show"], result: HistoryRecordSchema },
-  "import-add": {
-    path: ["import", "add"],
-    plan: ImportPlanSchema,
-    applied: ImportApplicationSchema,
-  },
-  "import-list": { path: ["import"], result: ImportListSchema },
-  "import-remove": {
-    path: ["import", "remove"],
-    plan: ImportRemovalPlanSchema,
-    applied: ImportRemovalApplicationSchema,
-  },
-  "state-init": { path: ["state", "init"], applied: StateInitializationPayloadSchema },
+  "adapter-enable": { applied: AdapterSettingsPayloadSchema },
+  "adapter-list": { result: AdapterListPayloadSchema },
+  catalog: { result: CatalogReportSchema },
+  check: { result: CheckReportSchema },
+  "docs-attach": { applied: DocsSettingsPayloadSchema },
+  "docs-configure": { applied: DocsSettingsPayloadSchema },
+  "docs-detach": { applied: DocsSettingsPayloadSchema },
+  "docs-icons": { result: DocsIconsPayloadSchema },
+  "docs-list": { result: DocsListPayloadSchema },
+  "docs-search": { result: ReaderSearchPayloadSchema },
+  "docs-serve": { result: ReaderSessionPayloadSchema },
+  "docs-target": { result: DocsTargetPayloadSchema },
+  doctor: { stable: true, result: DoctorReportSchema },
+  explore: { mode: "conditional", result: ExploreSessionSchema },
+  guide: { result: Schema.Union([GuideIndexSchema, GuideSchema]) },
+  "import-add": { plan: ImportPlanSchema, applied: ImportApplicationSchema },
+  "import-list": { result: ImportListSchema },
+  "import-remove": { plan: ImportRemovalPlanSchema, applied: ImportRemovalApplicationSchema },
   // It writes at once and reports what it planned beside what it applied.
-  init: {
-    path: ["init"],
-    mode: "immediate",
-    stable: true,
-    plan: InitPlanSchema,
-    applied: InitApplicationSchema,
-  },
-  "pick-list": { path: ["pick"], result: ChoiceListPayloadSchema },
-  "project-add": { path: ["project", "add"], applied: ProjectRegistrationPayloadSchema },
-  "project-list": { path: ["project"], result: ProjectInspectionsPayloadSchema },
-  "project-refresh": {
-    path: ["project", "refresh"],
-    plan: ProjectRefreshCommandPlanSchema,
-    applied: ProjectRefreshCommandResultSchema,
-  },
-  "project-remove": {
-    path: ["project", "remove"],
-    plan: ProjectRemovalPlanSchema,
-    applied: ProjectRemovalResultSchema,
-  },
-  "state-reset": { ...stateClean, path: ["state", "reset"] },
-  "state-clean-pending": stateClean,
-  upgrade: { path: ["upgrade"], stable: true, result: UpgradeGuideSchema },
-  "script-run": { path: ["script", "run"], mode: "execute", result: ScriptRunPayloadSchema },
-  "script-show": { path: ["script", "show"], result: ScriptShowPayloadSchema },
-  // `--apply` publishes the plan it wrote as `applied`, so both slots hold the same plan.
-  types: { path: ["types"], plan: TypesPlanSchema, applied: TypesPlanSchema },
-  "source-add": {
-    path: ["source", "add"],
-    // A preview registers a source or scaffolds its tack.yaml; an application publishes the
-    // scaffold it wrote, if any, beside the registration.
-    plan: Schema.Union([SourceRegistrationPlanSchema, SourceScaffoldPlanSchema]),
-    applied: SourceRegistrationPayloadSchema,
-  },
-  "profile-apply": {
-    path: ["profile", "apply"],
-    plan: ProfileApplyPlanSchema,
-    applied: ProfileDeliveryApplicationSchema,
-  },
-  "profile-save": {
-    path: ["profile", "save"],
-    plan: ProfileSavePlanSchema,
-    applied: ProfileSavedSchema,
-  },
-  "profile-adopt": {
-    path: ["profile", "adopt"],
-    plan: ProfileAdoptPlanSchema,
-    applied: ProfileAdoptedSchema,
-  },
-  "profile-export": {
-    path: ["profile", "export"],
-    plan: BundleExportPlanSchema,
-    applied: BundleExportedSchema,
-  },
-  "profile-inspect-bundle": {
-    path: ["profile", "inspect-bundle"],
-    result: BundleInspectionPayloadSchema,
-  },
+  init: { mode: "immediate", stable: true, plan: InitPlanSchema, applied: InitApplicationSchema },
+  "pick-exclude": { applied: ChoiceChangePayloadSchema },
+  "pick-include": { applied: ChoiceChangePayloadSchema },
+  "pick-list": { result: ChoiceListPayloadSchema },
+  "pick-remove": { applied: ChoiceRemovalPayloadSchema },
+  "profile-adopt": { plan: ProfileAdoptPlanSchema, applied: ProfileAdoptedSchema },
+  "profile-apply": { plan: ProfileApplyPlanSchema, applied: ProfileDeliveryApplicationSchema },
   "profile-apply-bundle": {
     path: ["profile", "apply-bundle"],
     plan: BundleApplyPlanSchema,
     applied: ProfileDeliveryApplicationSchema,
   },
-  "source-list": { path: ["source"], result: SourceListPayloadSchema },
-  "source-relocate": { path: ["source", "relocate"], applied: SourceRelocationPayloadSchema },
-  "source-remove": {
-    path: ["source", "remove"],
-    plan: SourceRemovalPlanSchema,
-    applied: SourceRemovalResultSchema,
+  "profile-export": { plan: BundleExportPlanSchema, applied: BundleExportedSchema },
+  "profile-inspect-bundle": {
+    path: ["profile", "inspect-bundle"],
+    result: BundleInspectionPayloadSchema,
   },
-  status: { path: ["status"], stable: true, result: StatusPayloadSchema },
-  sync: { path: ["sync"], stable: true, plan: SyncPlanSchema, applied: SyncApplicationSchema },
-  "upgrade-status": { path: ["upgrade", "status"], stable: true, result: UpgradeGuideSchema },
+  "profile-save": { plan: ProfileSavePlanSchema, applied: ProfileSavedSchema },
+  "project-add": { applied: ProjectRegistrationPayloadSchema },
+  "project-list": { result: ProjectInspectionsPayloadSchema },
+  "project-refresh": {
+    plan: ProjectRefreshCommandPlanSchema,
+    applied: ProjectRefreshCommandResultSchema,
+  },
+  "project-remove": { plan: ProjectRemovalPlanSchema, applied: ProjectRemovalResultSchema },
+  "script-history-clear": { plan: HistoryClearPlanSchema, applied: HistoryClearApplicationSchema },
+  "script-history-list": { result: HistoryListPayloadSchema },
+  "script-history-show": { result: HistoryRecordSchema },
+  "script-run": { mode: "execute", result: ScriptRunPayloadSchema },
+  "script-show": { result: ScriptShowPayloadSchema },
+  "source-add": {
+    // A preview registers a source or scaffolds its tack.yaml; an application publishes the
+    // scaffold it wrote, if any, beside the registration.
+    plan: Schema.Union([SourceRegistrationPlanSchema, SourceScaffoldPlanSchema]),
+    applied: SourceRegistrationPayloadSchema,
+  },
+  "source-list": { result: SourceListPayloadSchema },
+  "source-relocate": { applied: SourceRelocationPayloadSchema },
+  "source-remove": { plan: SourceRemovalPlanSchema, applied: SourceRemovalResultSchema },
+  "state-clean": stateRemoval,
+  // `state clean --pending`: the flag, not a word, selects it.
+  "state-clean-pending": { ...stateRemoval, path: ["state", "clean"] },
+  "state-init": { applied: StateInitializationPayloadSchema },
+  "state-reset": stateRemoval,
+  status: { stable: true, result: StatusPayloadSchema },
+  sync: { stable: true, plan: SyncPlanSchema, applied: SyncApplicationSchema },
+  // `--apply` publishes the plan it wrote as `applied`, so both slots hold the same plan.
+  types: { plan: TypesPlanSchema, applied: TypesPlanSchema },
+  upgrade: { stable: true, result: UpgradeGuideSchema },
+  "upgrade-status": { stable: true, result: UpgradeGuideSchema },
 } as const satisfies Record<Exclude<Invocation["_tag"], FlagRequestTag>, CommandDeclaration>;
 
 /** The payload schemas of the `--help` and `--version` requests, which no command word selects. */

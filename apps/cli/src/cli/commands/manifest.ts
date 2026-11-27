@@ -1,9 +1,9 @@
-import { Console, Context, Effect, Option, Schema } from "effect";
+import { Console, Context, Effect, Option, Record, Schema } from "effect";
 import { CliConfig, CliOutput, Command, GlobalFlag, type HelpDoc } from "effect/cli";
 import { tackVersion } from "../../version.ts";
 import { tackCommand } from "./command-tree.ts";
 import { isListAlias } from "./list-alias.ts";
-import { commandNameOf, InvocationError } from "./model.ts";
+import { commandNameOf, commandPathOf, InvocationError } from "./model.ts";
 import { versionFlagHelp } from "./version-request.ts";
 import { InvocationReceiver } from "./invocation-receiver.ts";
 import { HelpNotesAnnotation } from "./help-notes.ts";
@@ -118,8 +118,12 @@ const argumentOf = (argument: HelpDoc.ArgDoc): typeof CommandArgumentSchema.Type
 });
 
 /** The declaration of the command a path selects; `state-clean` and `state-clean-pending` share theirs. */
-const declarationOf = (commandPath: ReadonlyArray<string>) =>
-  Object.values(commandDeclarations).find(({ path }) => samePath(path, commandPath));
+const declarationOf = (commandPath: ReadonlyArray<string>) => {
+  const tag = Record.keys(commandDeclarations).find((candidate) =>
+    samePath(commandPathOf(candidate), commandPath),
+  );
+  return tag === undefined ? undefined : commandDeclarations[tag];
+};
 
 /**
  * Each declared slot with the payload kind it publishes: a stable command's schema names its kind,

@@ -1,6 +1,6 @@
 import { Record, Schema } from "effect";
 import { NextCommandsSchema } from "../../domain/hints/next-commands.ts";
-import { commandDeclarations } from "./declarations.ts";
+import { commandDeclarations, type CommandDeclaration } from "./declarations.ts";
 import type { DocsResourceRequest } from "../../domain/docs/docs-schema.ts";
 import type { ChoiceNamespace } from "../../domain/choices/choice-schema.ts";
 import type { TargetSelector } from "../../domain/projects/project-schema.ts";
@@ -285,15 +285,24 @@ export type FlagRequestTag = "help" | "version";
 export const unknownCommandName = "unknown";
 
 /**
+ * The words after `tack` that select one invocation: its declared path, or else the words of its
+ * tag, where a final `list` names the group's bare command (`pick-list` is `tack pick`). The flag
+ * requests are selected by no word.
+ */
+export const commandPathOf = (tag: Invocation["_tag"]): ReadonlyArray<string> => {
+  if (tag === "help" || tag === "version") return [];
+  const declaration: CommandDeclaration = commandDeclarations[tag];
+  if (declaration.path !== undefined) return declaration.path;
+  const words = tag.split("-");
+  return words.at(-1) === "list" ? words.slice(0, -1) : words;
+};
+
+/**
  * Names the public operation that produces one invocation: its space-joined command path, or the
  * tag itself for a {@link FlagRequestTag}.
  */
 export const commandNameOf = (tag: Invocation["_tag"]): string =>
-  tag === "help" || tag === "version" ? tag : commandDeclarations[tag].path.join(" ");
-
-/** The words after `tack` that select one invocation; the flag requests are selected by no word. */
-export const commandPathOf = (tag: Invocation["_tag"]): ReadonlyArray<string> =>
-  tag === "help" || tag === "version" ? [] : commandDeclarations[tag].path;
+  tag === "help" || tag === "version" ? tag : commandPathOf(tag).join(" ");
 
 const invocationTags: ReadonlyArray<Invocation["_tag"]> = [
   ...Record.keys(commandDeclarations),

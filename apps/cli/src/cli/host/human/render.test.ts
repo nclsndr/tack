@@ -13,7 +13,7 @@ import { humanViews, renderHuman } from "./render.ts";
 
 /** Every public operation: the command paths of the tree and the two flag requests. */
 const operations = [
-  ...Object.values(commandDeclarations).map(({ path }) => path.join(" ")),
+  ...Record.keys(commandDeclarations).map(commandNameOf),
   commandNameOf("help"),
   commandNameOf("version"),
 ];

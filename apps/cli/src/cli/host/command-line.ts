@@ -1,4 +1,5 @@
-import { commandDeclarations } from "../commands/declarations.ts";
+import type { commandDeclarations } from "../commands/declarations.ts";
+import { commandPathOf } from "../commands/model.ts";
 
 /** An operation a printed command can name: every invocation the command tree declares. */
 export type CommandName = keyof typeof commandDeclarations;
@@ -17,7 +18,7 @@ export const argvLine = (argv: ReadonlyArray<string>): string => argv.map(shellW
 export const invocation = (
   command: CommandName,
   ...words: ReadonlyArray<string>
-): ReadonlyArray<string> => ["tack", ...commandDeclarations[command].path, ...words];
+): ReadonlyArray<string> => ["tack", ...commandPathOf(command), ...words];
 
 /**
  * The `tack` command line that runs one operation: its command path from the command model, then
