@@ -24,6 +24,7 @@ const guidanceFiles = [
   "CONTEXT.md",
   "README.md",
   "SECURITY.md",
+  "STRATEGY.md",
   ".github/pull_request_template.md",
   ".github/workflows/README.md",
 ] as const;
