@@ -40,8 +40,10 @@ fails the run with `invalid_definition` and names the fix.
 | `run`     | `async (context) => result`; return JSON data or nothing                                                          |
 
 An argument is required unless it has a `default` or `optional: true`; `choices` restrict a string
-argument; `multiple: true` takes a list. TypeScript infers `args` exactly from the declarations.
-Argument names are lower camel or kebab case.
+argument; `multiple: true` takes a list. A `default` must be a value the argument takes: of its
+type, one of its `choices`, and a list when `multiple: true`, or `defineScript` throws when the
+module loads. TypeScript infers `args` exactly from the declarations. Argument names are lower camel
+or kebab case.
 
 An operator passes arguments after `--`:
 `tack script run report --project demo -- --repo nclsndr/tack --limit 5 --labels bug --labels ui`.

@@ -137,7 +137,9 @@ export class ScriptDefinitionError extends Error {
 
 const optionKeys = ["args", "secrets", "run"] as const;
 const argKeys = ["type", "description", "multiple", "optional", "default", "choices"] as const;
-const argTypes: ReadonlyArray<string> = ["string", "number", "boolean"];
+const argTypes: ReadonlyArray<ArgType> = ["string", "number", "boolean"];
+
+const isArgType = (value: unknown): value is ArgType => argTypes.some((type) => type === value);
 
 const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
   typeof value === "object" && value !== null && Array.isArray(value) === false;
@@ -157,26 +159,74 @@ const closest = (word: string, known: ReadonlyArray<string>) =>
       { shared: 0 },
     ).name;
 
+/**
+ * What an argument expects of a value that does not fit its declaration, such as `a number` or
+ * `one of warm, cool`; `undefined` when the value fits. A number must be finite.
+ * @internal Used by the Tack worker to check supplied values; not part of the authoring contract.
+ */
+export const expectedArgumentValue = (
+  spec: { readonly type: ArgType; readonly choices?: ReadonlyArray<string> | undefined },
+  value: unknown,
+): string | undefined => {
+  const typed =
+    spec.type === "number"
+      ? typeof value === "number" && Number.isFinite(value)
+      : typeof value === spec.type;
+  if (typed === false) return `a ${spec.type}`;
+  if (spec.choices === undefined || spec.choices.includes(String(value)) === true) return undefined;
+  return `one of ${spec.choices.join(", ")}`;
+};
+
+/** A default as an author wrote it: JSON, except that a number keeps its own spelling, such as `NaN`. */
+const shownDefault = (value: unknown) =>
+  typeof value === "number" ? String(value) : JSON.stringify(value);
+
+/**
+ * Every problem with the default of an argument whose type is valid and whose choices, if any,
+ * belong to a string argument: the run would refuse the same value if an operator passed it.
+ * Choices that are not a list constrain nothing here.
+ */
+const defaultProblems = (
+  name: string,
+  type: ArgType,
+  spec: Readonly<Record<string, unknown>>,
+): ReadonlyArray<string> => {
+  const fallback = spec["default"];
+  if (fallback === undefined) return [];
+  if (spec["multiple"] === true && Array.isArray(fallback) === false)
+    return [
+      `Argument "${name}" takes a list, so its default must be a list, got ${shownDefault(fallback)}.`,
+    ];
+  const choices = Array.isArray(spec["choices"])
+    ? spec["choices"].map((choice: unknown) => String(choice))
+    : undefined;
+  const values: ReadonlyArray<unknown> = spec["multiple"] === true ? [fallback].flat() : [fallback];
+  return values.flatMap((value) => {
+    const expected = expectedArgumentValue({ type, choices }, value);
+    return expected === undefined
+      ? []
+      : [`Argument "${name}" has the default ${shownDefault(value)}, which is not ${expected}.`];
+  });
+};
+
 /** Every problem with one argument declaration. */
 const argumentProblems = (name: string, spec: unknown): ReadonlyArray<string> => {
   if (/^[a-z][a-zA-Z0-9-]*$/.test(name) === false)
     return [`Argument "${name}" needs a lower-camel or kebab name, such as "repo" or "dry-run".`];
-  if (
-    isRecord(spec) === false ||
-    typeof spec["type"] !== "string" ||
-    argTypes.includes(spec["type"]) === false
-  )
+  if (isRecord(spec) === false || isArgType(spec["type"]) === false)
     return [`Argument "${name}" needs a type: { type: "string" | "number" | "boolean" }.`];
-  return [
-    ...Object.keys(spec).flatMap((key) =>
-      (argKeys as ReadonlyArray<string>).includes(key) === true
-        ? []
-        : [`Argument "${name}" has no "${key}" field. Fields: ${argKeys.join(", ")}.`],
-    ),
-    ...(spec["choices"] !== undefined && spec["type"] !== "string"
-      ? [`Argument "${name}" can only list choices when its type is "string".`]
-      : []),
-  ];
+  const type = spec["type"];
+  const unknownFields = Object.keys(spec).flatMap((key) =>
+    (argKeys as ReadonlyArray<string>).includes(key) === true
+      ? []
+      : [`Argument "${name}" has no "${key}" field. Fields: ${argKeys.join(", ")}.`],
+  );
+  if (spec["choices"] !== undefined && type !== "string")
+    return [
+      ...unknownFields,
+      `Argument "${name}" can only list choices when its type is "string".`,
+    ];
+  return [...unknownFields, ...defaultProblems(name, type, spec)];
 };
 
 /** Every problem with one definition, each naming its fix. */
