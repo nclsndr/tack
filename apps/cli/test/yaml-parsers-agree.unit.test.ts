@@ -15,6 +15,7 @@ const documents: ReadonlyArray<readonly [string, string]> = [
   ["a repeated top key", "version: 1\nname: one\nname: two\n"],
   ["a repeated entry key", "docs:\n  - name: a\n    path: a\n    path: b\n"],
   ["a repeated flow key", "reader: {content: [], content: []}\n"],
+  ["a repeated list key", "version: 1\nskills:\n  - path: a\nskills:\n  - path: b\n"],
   ["a key that is no scalar", "? [a, b]\n: 1\nname: x\n"],
   ["malformed YAML", "version: [\n"],
   ["two documents", "version: 1\n---\nversion: 2\n"],
@@ -54,6 +55,6 @@ it.each(documents)(
 
 it("refuses every repeated key the matrix holds in both parsers", () => {
   expect(documents.filter(([, text]) => "repeated" in verdict(() => Yaml.parse(text))).length).toBe(
-    3,
+    4,
   );
 });

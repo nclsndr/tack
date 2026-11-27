@@ -33,6 +33,16 @@ describe("parseYaml", () => {
     });
   });
 
+  it.each([
+    { case: "the first", text: "skills:\n  - path: a\nname: x\nskills: b\n" },
+    { case: "the second", text: "skills: a\nskills:\n  - path: b\n" },
+    { case: "a flow list", text: "skills: [a]\nskills: [b]\n" },
+  ])("asks to merge a repeated key whose value is a list in $case", ({ text }) => {
+    expect(() => parseYaml(text)).toThrow(
+      /^The key "skills" appears twice, at lines \d+ and \d+\. Merge them into one list\.$/,
+    );
+  });
+
   it("counts lines from the first line the text starts at in its file", () => {
     expect(() => parseYaml("name: a\nname: b\n", 2)).toThrow(
       'The key "name" appears twice, at lines 2 and 3. Keep one of them.',

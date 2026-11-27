@@ -40,7 +40,8 @@ above it, or import it with `tack import add`.
 prints the `tack.yaml` to write instead, with the kind's `.` entry.
 
 A key a `tack.yaml` mapping names twice, anywhere in the file, is refused with
-`declaration-malformed`, which names the key and both of its lines. Remove one of them.
+`declaration-malformed`, which names the key and both of its lines. Keep one of them, or merge two
+lists into one.
 
 ## Entries
 

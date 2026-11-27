@@ -81,6 +81,18 @@ export const keysAtSourceFolder = (value: { readonly [key: string]: unknown }) =
   });
 
 /**
+ * What a `.` entry of each key lists instead, resource by resource: resources at the top of the
+ * source folder have no one folder that holds them.
+ */
+const eachOf = {
+  skills: "each skill folder",
+  commands: "each command file",
+  context: "each context file",
+  scripts: "each script",
+  docs: "each docs folder",
+} as const satisfies Record<(typeof declarationResourceKeys)[number], string>;
+
+/**
  * A declaration with a `.` entry declares one resource kind: the folder that holds its
  * `tack.yaml` is that kind's folder, so another resource key would read the same files. Each
  * other resource key is an issue at its own field. Both the runtime and the authoring schema
@@ -94,7 +106,7 @@ export const oneKindAtSourceFolder = Schema.makeFilter(
       .filter((other) => other !== key && value[other] !== undefined)
       .map((other) => ({
         path: [other],
-        issue: `The ${key} entry "." declares the source folder itself, so this tack.yaml declares ${key} only. Move ${other} to a tack.yaml of its own folder, or name the folder that holds the ${key} instead of ".".`,
+        issue: `The ${key} entry "." declares the source folder itself, so this tack.yaml declares ${key} only. Move ${other} to a tack.yaml of its own folder, or name the folder that holds the ${key} instead of ".", or list ${eachOf[key]}.`,
       }));
   },
 );

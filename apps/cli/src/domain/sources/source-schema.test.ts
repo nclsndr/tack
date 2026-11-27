@@ -69,7 +69,7 @@ it("refuses another resource key beside a . entry, at each other key", () => {
   ).toEqual(
     ["commands", "docs"].map((other) => ({
       field: other,
-      message: `${other}: The skills entry "." declares the source folder itself, so this tack.yaml declares skills only. Move ${other} to a tack.yaml of its own folder, or name the folder that holds the skills instead of ".".`,
+      message: `${other}: The skills entry "." declares the source folder itself, so this tack.yaml declares skills only. Move ${other} to a tack.yaml of its own folder, or name the folder that holds the skills instead of ".", or list each skill folder.`,
     })),
   );
   expect(

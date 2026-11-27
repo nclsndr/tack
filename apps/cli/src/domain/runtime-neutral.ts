@@ -5,6 +5,7 @@
 import picomatch from "picomatch";
 import {
   isScalar,
+  isSeq,
   LineCounter,
   parseDocument,
   stringify,
@@ -24,9 +25,13 @@ export class RepeatedYamlKeyError extends Error {
   readonly key: string;
   /** The 1-based lines of its first and second occurrence in the file. */
   readonly lines: readonly [number, number];
-  constructor(key: string, lines: readonly [number, number]) {
+  /**
+   * @param list - Whether either occurrence holds a list, which the two merge into rather than
+   *   one replacing the other.
+   */
+  constructor(key: string, lines: readonly [number, number], list: boolean) {
     super(
-      `The key "${key}" appears twice, at lines ${lines[0]} and ${lines[1]}. Keep one of them.`,
+      `The key "${key}" appears twice, at lines ${lines[0]} and ${lines[1]}. ${list ? "Merge them into one list." : "Keep one of them."}`,
     );
     this.key = key;
     this.lines = lines;
@@ -54,15 +59,19 @@ const parseYaml = (text: string, firstLine = 1): unknown => {
   let repeated: RepeatedYamlKeyError | undefined;
   visit(document, {
     Map(_, map) {
-      const seen = new Map<unknown, LocatedKey>();
-      for (const { key } of map.items) {
+      const seen = new Map<unknown, { readonly key: LocatedKey; readonly value: unknown }>();
+      for (const { key, value } of map.items) {
         if (isLocatedKey(key) === false) continue;
         const first = seen.get(key.value);
         if (first !== undefined) {
-          repeated = new RepeatedYamlKeyError(String(key.value), [lineOf(first), lineOf(key)]);
+          repeated = new RepeatedYamlKeyError(
+            String(key.value),
+            [lineOf(first.key), lineOf(key)],
+            isSeq(first.value) || isSeq(value),
+          );
           return visit.BREAK;
         }
-        seen.set(key.value, key);
+        seen.set(key.value, { key, value });
       }
       return undefined;
     },
