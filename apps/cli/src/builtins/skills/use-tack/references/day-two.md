@@ -25,7 +25,7 @@ after the yes: the source's default skills reach every project.
 
 ## A new skill, script or docs in a registered source
 
-- Skill: write it inside a declared skills folder, run `tack check PATH`, then `tack sync --all`. An edit to an existing skill needs no sync: the links
+- Skill: write it inside a declared skills folder, run `tack check PATH` (no path checks the current folder), then `tack sync --all`. An edit to an existing skill needs no sync: the links
   point at the source. A project that ignores its links needs a line for each new link: show the
   new lines from `tack status --project NAME --details`.
 - Script: follow `manage-tack-sources` (its scripts reference). Scripts run by reference and need
