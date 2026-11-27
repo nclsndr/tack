@@ -1,4 +1,4 @@
-import { Schema } from "effect";
+import { Record, Schema } from "effect";
 import { NextCommandsSchema } from "../../domain/hints/next-commands.ts";
 import { commandDeclarations } from "./declarations.ts";
 import type { DocsResourceRequest } from "../../domain/docs/docs-schema.ts";
@@ -281,33 +281,38 @@ export type ParsedInvocation = {
  */
 export type FlagRequestTag = "help" | "version";
 
-/** The envelope command names of {@link FlagRequestTag} invocations. */
-const flagRequestCommandNames = { help: "help", version: "version" } as const satisfies Record<
-  FlagRequestTag,
-  string
->;
-
 /** The envelope command name used when no executable operation can be identified. */
 export const unknownCommandName = "unknown";
 
-/** Names the public operation that produces one invocation: its space-joined command path. */
+/**
+ * Names the public operation that produces one invocation: its space-joined command path, or the
+ * tag itself for a {@link FlagRequestTag}.
+ */
 export const commandNameOf = (tag: Invocation["_tag"]): string =>
-  tag === "help" || tag === "version"
-    ? flagRequestCommandNames[tag]
-    : commandDeclarations[tag].path.join(" ");
+  tag === "help" || tag === "version" ? tag : commandDeclarations[tag].path.join(" ");
 
 /** The words after `tack` that select one invocation; the flag requests are selected by no word. */
 export const commandPathOf = (tag: Invocation["_tag"]): ReadonlyArray<string> =>
   tag === "help" || tag === "version" ? [] : commandDeclarations[tag].path;
 
-const commandNames: ReadonlySet<string> = new Set([
-  ...Object.values(commandDeclarations).map(({ path }) => path.join(" ")),
-  ...Object.values(flagRequestCommandNames),
-]);
+const invocationTags: ReadonlyArray<Invocation["_tag"]> = [
+  ...Record.keys(commandDeclarations),
+  "help",
+  "version",
+];
+
+/** The invocation each command name names; the first tag declared wins, so `clean` over `retry`. */
+const tagsByCommandName: ReadonlyMap<string, Invocation["_tag"]> = new Map(
+  invocationTags.toReversed().map((tag) => [commandNameOf(tag), tag]),
+);
+
+/** The invocation a public command name names, or `undefined` for a group or an unknown name. */
+export const commandTagOf = (name: string): Invocation["_tag"] | undefined =>
+  tagsByCommandName.get(name);
 
 /** Reports whether a value is the public name of an executable operation. */
 export const isCommandName = (value: unknown): value is string =>
-  typeof value === "string" && commandNames.has(value);
+  typeof value === "string" && tagsByCommandName.has(value);
 
 /**
  * Names the executable operation selected by the words after `tack`, or {@link unknownCommandName}

@@ -1,7 +1,7 @@
 import { fakeGit } from "../../../../test/support/fake-git.ts";
 import { write } from "../../../../test/support/source-tree.ts";
 import { beforeAll, describe, expect, it } from "@effect/vitest";
-import { Effect, FileSystem, Path } from "effect";
+import { Effect, FileSystem, Path, Record } from "effect";
 import {
   expectViewContract,
   flat,
@@ -10,6 +10,7 @@ import {
   styleOf,
 } from "./human.test-support.ts";
 import { inspectionViews } from "./inspection-views.ts";
+import { commandNameOf } from "../../commands/index.ts";
 import { createPublicEnvelope, type PublicEnvelope } from "../public-outcome.ts";
 import { docsListOutcome, projectsOutcome, resultOutcome, sourcesOutcome } from "../outcomes.ts";
 import { runHost } from "../../../../test/support/host-runner.ts";
@@ -595,10 +596,11 @@ describe("docs target", () => {
 
 describe("undecodable payloads", () => {
   it("returns undefined so the generic view is used", () => {
-    for (const command of Object.keys(inspectionViews)) {
+    for (const tag of Record.keys(inspectionViews)) {
+      const command = commandNameOf(tag);
       for (const payload of [{ unexpected: true }, [], null]) {
         const envelope = createPublicEnvelope(command, resultOutcome(payload));
-        expect(inspectionViews[command]?.(envelope, styleOf()), command).toBeUndefined();
+        expect(inspectionViews[tag](envelope, styleOf()), command).toBeUndefined();
         expect(render(envelope)).toContain(`tack ${command}`);
       }
     }

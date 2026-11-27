@@ -17,6 +17,7 @@ import { tackVersion } from "../../version.ts";
 export {
   commandNameOf,
   commandPathOf,
+  commandTagOf,
   InvocationError,
   isCommandName,
   type Invocation,

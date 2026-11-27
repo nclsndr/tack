@@ -1,8 +1,9 @@
 import { searchDocuments, type ReaderDocument } from "@tackup/reader/search-core";
 import { expect, it } from "@effect/vitest";
-import { Effect, type Schema } from "effect";
+import { Effect, Record, type Schema } from "effect";
 import { expectViewContract, flat, lines, renderView, styleOf } from "./human.test-support.ts";
 import { runViews } from "./run-views.ts";
+import { commandNameOf } from "../../commands/index.ts";
 import {
   historyListOutcome,
   docsSearchOutcome,
@@ -23,8 +24,6 @@ import { hintsIn, parseHintsIn } from "../../../../test/support/hints.ts";
 const terminal = { homeDirectory: "/Users/ada" } as const;
 const render = (envelope: PublicEnvelope, width = 80) =>
   renderView(envelope, { ...terminal, width });
-const viewOf = (envelope: PublicEnvelope) =>
-  runViews[envelope.command]?.(envelope, styleOf(terminal));
 /** The text with line breaks and their indentation removed, to read back a wrapped path. */
 const unwrapped = (text: string) => text.replace(/\n +/g, "");
 
@@ -734,10 +733,11 @@ it.effect("renders an unknown run identifier as a failure with a listing hint", 
 // ---------------------------------------------------------------- undecodable payloads
 
 it("returns undefined for an undecodable payload so the generic view is used", () => {
-  for (const command of Object.keys(runViews)) {
+  for (const tag of Record.keys(runViews)) {
+    const command = commandNameOf(tag);
     for (const payload of [{ unexpected: true }, { runId: otherRunId }, [], null]) {
       const envelope = createPublicEnvelope(command, resultOutcome(payload));
-      expect(viewOf(envelope), command).toBeUndefined();
+      expect(runViews[tag](envelope, styleOf(terminal)), command).toBeUndefined();
       expect(render(envelope)).toContain(`tack ${command}`);
     }
   }

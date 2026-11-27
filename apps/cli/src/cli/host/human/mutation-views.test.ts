@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Effect } from "effect";
+import { Effect, Record } from "effect";
 import {
   catalogAddressCandidates,
   ChoiceRemovalPayloadSchema,
@@ -47,6 +47,7 @@ import {
 } from "./human.test-support.ts";
 import { mutationViews } from "./mutation-views.ts";
 import { renderHuman } from "./render.ts";
+import { commandNameOf } from "../../commands/index.ts";
 import { createPublicEnvelope, type PublicEnvelope } from "../public-outcome.ts";
 import { hintsIn, parseHintsIn } from "../../../../test/support/hints.ts";
 
@@ -817,28 +818,29 @@ describe("layout", () => {
 
 describe("undecodable payloads", () => {
   it("returns undefined so the generic view is used", () => {
-    for (const command of Object.keys(mutationViews)) {
+    for (const tag of Record.keys(mutationViews)) {
+      const command = commandNameOf(tag);
       const envelope = createPublicEnvelope(command, appliedOutcome({ unexpected: true }));
-      expect(mutationViews[command]?.(envelope, style())).toBeUndefined();
+      expect(mutationViews[tag](envelope, style())).toBeUndefined();
       expect(renderHuman(envelope, style())).toContain(`tack ${command}`);
       const empty = createPublicEnvelope(command, { classification: "success", diagnostics: [] });
-      expect(mutationViews[command]?.(empty, style())).toBeUndefined();
+      expect(mutationViews[tag](empty, style())).toBeUndefined();
     }
   });
 
   it("registers exactly the immediate mutations", () => {
     expect(Object.keys(mutationViews).toSorted()).toEqual([
-      "adapter enable",
-      "docs attach",
-      "docs configure",
-      "docs detach",
-      "pick exclude",
-      "pick include",
-      "pick remove",
-      "project add",
-      "source add",
-      "source relocate",
-      "state init",
+      "adapter-set",
+      "choice-exclude",
+      "choice-remove",
+      "choice-set",
+      "docs-attach",
+      "docs-configure",
+      "docs-detach",
+      "init",
+      "project-add",
+      "source-add",
+      "source-relocate",
     ]);
   });
 });

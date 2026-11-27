@@ -1,6 +1,7 @@
 import { renderCheck } from "./check.ts";
 import { renderBundleExport, renderBundleInspection } from "./profile-bundle.ts";
 import { renderProfileSave, renderProfileAdopt } from "./profile-copy.ts";
+import { commandTagOf, type Invocation } from "../../commands/index.ts";
 import type { PublicEnvelope } from "../public-outcome.ts";
 import { renderProfileApply } from "./profile.ts";
 import { renderCatalog } from "./catalog.ts";
@@ -30,10 +31,14 @@ export type HumanView = (
   style: Style,
   details?: boolean,
 ) => string | undefined;
-export type HumanViewRegistry = Readonly<Partial<Record<string, HumanView>>>;
+/** The view of every invocation, by tag. */
+export type HumanViews = { readonly [Tag in Invocation["_tag"]]: HumanView };
 
-/** Dedicated views register here; the generic view serves any operation without one. */
-export const humanViews: HumanViewRegistry = {
+/** Views for some invocations; an invocation without one renders through the generic view. */
+export type HumanViewRegistry = Partial<HumanViews>;
+
+/** The dedicated view of every invocation. */
+export const humanViews = {
   ...mutationViews,
   ...removalViews,
   ...importViews,
@@ -44,20 +49,20 @@ export const humanViews: HumanViewRegistry = {
   doctor: renderDoctor,
   check: renderCheck,
   guide: renderGuide,
-  "profile apply": renderProfileApply,
-  "profile apply-bundle": renderProfileApply,
-  "profile export": renderBundleExport,
-  "profile inspect-bundle": renderBundleInspection,
-  "profile save": renderProfileSave,
-  "profile adopt": renderProfileAdopt,
+  "profile-apply": renderProfileApply,
+  "profile-apply-bundle": renderProfileApply,
+  "profile-export": renderBundleExport,
+  "profile-inspect-bundle": renderBundleInspection,
+  "profile-save": renderProfileSave,
+  "profile-adopt": renderProfileAdopt,
   help: renderHelp,
-  init: renderInit,
+  "machine-init": renderInit,
   sync: renderSync,
-  "upgrade status": renderUpgradeGuide,
+  "upgrade-status": renderUpgradeGuide,
   upgrade: renderUpgradeGuide,
   status: (envelope, style, details) => renderStatus(envelope, style, details === true),
   version: renderVersion,
-};
+} satisfies HumanViews;
 
 /**
  * Shows every payload slot as JSON under the header and diagnostics that every view shares. A
@@ -74,6 +79,12 @@ export const renderGeneric = (envelope: PublicEnvelope, style: Style): string =>
     ),
   );
 
+/** The view of the invocation a command name names; `undefined` for a name that names none. */
+export const viewOf = (views: HumanViewRegistry, command: string) => {
+  const tag = commandTagOf(command);
+  return tag === undefined ? undefined : views[tag];
+};
+
 /** Renders a validated envelope through its dedicated view, or the generic view. */
 export const renderHuman = (
   envelope: PublicEnvelope,
@@ -85,7 +96,7 @@ export const renderHuman = (
   // it the same way: the redacted diagnostic and the rerun that prints its cause.
   envelope.classification === "internal"
     ? (withoutPayload(envelope, undefined, style) ?? renderGeneric(envelope, style))
-    : (views[envelope.command]?.(envelope, style, options.details === true) ??
+    : (viewOf(views, envelope.command)?.(envelope, style, options.details === true) ??
       renderGeneric(envelope, style));
 
 /**

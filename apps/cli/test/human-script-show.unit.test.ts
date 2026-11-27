@@ -74,7 +74,7 @@ it("names a camel-case argument's placeholder in upper snake case", () => {
 
 it("declines an undecodable payload and frames a failure without one", () => {
   expect(
-    runViews["script show"]?.(
+    runViews["script-show"](
       createPublicEnvelope("script show", resultOutcome({ kind: "script-show" })),
       style,
     ),

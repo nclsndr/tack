@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Effect, Schema } from "effect";
+import { Effect, Record, Schema } from "effect";
 import { posix } from "node:path";
 import { outcomeForError } from "../errors.ts";
 import {
@@ -15,7 +15,8 @@ import {
 } from "./human.test-support.ts";
 import { docsSummary, removalScopeBlock, removalScopeText } from "./removal-rows.ts";
 import { removalViews } from "./removal-views.ts";
-import { nextCommandsOf } from "./render.ts";
+import { nextCommandsOf, viewOf } from "./render.ts";
+import { commandNameOf } from "../../commands/index.ts";
 import { renderSync } from "./sync.ts";
 import { previewOutcome, removalOutcome, syncOutcome } from "../outcomes.ts";
 import { createPublicEnvelope, type PublicEnvelope } from "../public-outcome.ts";
@@ -1809,17 +1810,18 @@ describe("project refresh", () => {
 
 describe("undecodable payloads", () => {
   it("returns undefined so the generic view is used", () => {
-    for (const command of Object.keys(removalViews)) {
+    for (const tag of Record.keys(removalViews)) {
+      const command = commandNameOf(tag);
       for (const payload of [{ unexpected: true }, { kind: "other" }, [], null]) {
         const envelope = createPublicEnvelope(command, previewOutcome({ plan: payload }));
-        expect(removalViews[command]?.(envelope, styleOf()), command).toBeUndefined();
+        expect(removalViews[tag](envelope, styleOf()), command).toBeUndefined();
         expect(render(envelope)).toContain(`tack ${command}`);
       }
     }
     // A readable plan with an unreadable application is declined too.
     const cleaned = cleanupEnvelope("clean", mixedPlan, undefined, projectSelection);
     expect(
-      removalViews["state clean"]?.({ ...cleaned, applied: { kind: "other" } }, styleOf()),
+      removalViews.clean({ ...cleaned, applied: { kind: "other" } }, styleOf()),
     ).toBeUndefined();
   });
 });
@@ -1829,13 +1831,14 @@ describe("undecodable payloads", () => {
 describe("registry", () => {
   it("covers exactly the preview/apply removal operations", () => {
     expect(Object.keys(removalViews).sort()).toEqual([
-      "adapter disable",
-      "project refresh",
-      "project remove",
-      "script history clear",
-      "source remove",
-      "state clean",
-      "state reset",
+      "adapter-disable",
+      "clean",
+      "history-clear",
+      "project-refresh",
+      "project-remove",
+      "reset",
+      "retry",
+      "source-remove",
     ]);
   });
 });
@@ -1898,7 +1901,7 @@ const rawRemovalPlan = (scope: unknown, overrides: Record<string, unknown> = {})
 });
 
 const recorded = (command: string, plan: unknown, applied?: unknown) => {
-  const view = removalViews[command];
+  const view = viewOf(removalViews, command);
   if (view === undefined) throw new Error(`No removal view for ${command}.`);
   const { hints, style } = hintRecorder();
   const text = view(envelopeOf({ command, plan, applied }), style);

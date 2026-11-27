@@ -267,7 +267,7 @@ const projectInspectView = resultView(
 );
 
 /** Source and project inspection views. */
-export const sourceInspectionViews: HumanViewRegistry = {
-  source: sourceInspectView,
-  project: projectInspectView,
-};
+export const sourceInspectionViews = {
+  "source-list": sourceInspectView,
+  "project-list": projectInspectView,
+} satisfies HumanViewRegistry;

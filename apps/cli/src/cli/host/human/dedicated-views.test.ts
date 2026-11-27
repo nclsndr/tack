@@ -294,8 +294,7 @@ describe("display width", () => {
 
 describe("adapter list view", () => {
   it("lists no disabled adapters when all are on", () => {
-    const view = listViews["adapter"];
-    if (view === undefined) throw new Error("No adapter view.");
+    const view = listViews["adapter-list"];
     const { hints, style } = hintRecorder();
     const text = view(
       envelopeOf({
@@ -317,8 +316,7 @@ describe("adapter list view", () => {
 
 describe("mutation failure hints", () => {
   it("offers no command when a failure's details cannot be read", () => {
-    const view = mutationViews["adapter enable"];
-    if (view === undefined) throw new Error("No adapter enable view.");
+    const view = mutationViews["adapter-set"];
     const { hints, style } = hintRecorder();
     const text = view(
       envelopeOf({

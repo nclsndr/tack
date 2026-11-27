@@ -340,20 +340,23 @@ const docsConfigureView = mutationView(DocsSettingsPayloadSchema, (settings, sty
   facts: docsFacts(settings, style),
 }));
 
+/** `source add` plans a scaffold or a registration, then applies a registration. */
+const sourceAddView: HumanView = (envelope, style, details) =>
+  renderSourceScaffold(envelope, style, details) ??
+  renderSourceRegistrationPlan(envelope, style, details) ??
+  sourceRegistrationView(envelope, style, details);
+
 /** Dedicated views for the immediate mutations. */
-export const mutationViews: HumanViewRegistry = {
-  "adapter enable": adapterSetView,
-  "pick remove": choiceRemoveView,
-  "pick include": choiceSetView,
-  "pick exclude": choiceSetView,
-  "docs attach": docsAttachView,
-  "docs configure": docsConfigureView,
-  "docs detach": docsDetachView,
-  "state init": initView,
-  "project add": projectAddView,
-  "source add": (envelope, style, details) =>
-    renderSourceScaffold(envelope, style, details) ??
-    renderSourceRegistrationPlan(envelope, style, details) ??
-    sourceRegistrationView(envelope, style, details),
-  "source relocate": sourceRelocateView,
-};
+export const mutationViews = {
+  "adapter-set": adapterSetView,
+  "choice-remove": choiceRemoveView,
+  "choice-set": choiceSetView,
+  "choice-exclude": choiceSetView,
+  "docs-attach": docsAttachView,
+  "docs-configure": docsConfigureView,
+  "docs-detach": docsDetachView,
+  init: initView,
+  "project-add": projectAddView,
+  "source-add": sourceAddView,
+  "source-relocate": sourceRelocateView,
+} satisfies HumanViewRegistry;

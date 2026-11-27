@@ -634,8 +634,8 @@ const importRemoveView: HumanView = withFailure((envelope, style) => {
 });
 
 /** Dedicated views for the `import` group. */
-export const importViews: HumanViewRegistry = {
-  import: importListView,
-  "import add": importAddView,
-  "import remove": importRemoveView,
-};
+export const importViews = {
+  "import-list": importListView,
+  "import-add": importAddView,
+  "import-remove": importRemoveView,
+} satisfies HumanViewRegistry;

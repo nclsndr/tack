@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { commandNameOf, commandDeclarations, isCommandName } from "../../commands/index.ts";
+import { Record } from "effect";
+import { commandNameOf, commandDeclarations, commandTagOf } from "../../commands/index.ts";
 import { createPublicEnvelope } from "../public-outcome.ts";
 import {
   envelopeOf,
@@ -35,10 +36,9 @@ const failureOf = (command: string) =>
   });
 
 describe("the view registry", () => {
-  it("registers a dedicated view for every operation, and only under operation names", () => {
-    for (const operation of operations)
-      expect(humanViews[operation], operation).toBeTypeOf("function");
-    for (const name of Object.keys(humanViews)) expect(isCommandName(name), name).toBe(true);
+  it("shows the invocations that share a command name through one view", () => {
+    for (const tag of Record.keys(humanViews))
+      expect(humanViews[tag], tag).toBe(humanViews[commandTagOf(commandNameOf(tag)) ?? tag]);
   });
 
   it.each(operations)("keeps the view contract for a failure of %s", (operation) => {

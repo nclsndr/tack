@@ -851,13 +851,17 @@ const projectRefreshView: HumanView = withFailure((envelope, style, details) =>
   }),
 );
 
+const stateCleanView = selectedRemovalView("clean");
+
 /** Dedicated views for the preview/apply operations that remove or reconcile. */
-export const removalViews: HumanViewRegistry = {
-  "adapter disable": adapterDisableView,
-  "state clean": selectedRemovalView("clean"),
-  "script history clear": historyClearView,
-  "project refresh": projectRefreshView,
-  "project remove": projectRemoveView,
-  "source remove": sourceRemoveView,
-  "state reset": selectedRemovalView("reset"),
-};
+export const removalViews = {
+  "adapter-disable": adapterDisableView,
+  clean: stateCleanView,
+  // `retry` is `state clean --pending`: its envelope names `state clean`, so it shares that view.
+  retry: stateCleanView,
+  "history-clear": historyClearView,
+  "project-refresh": projectRefreshView,
+  "project-remove": projectRemoveView,
+  "source-remove": sourceRemoveView,
+  reset: selectedRemovalView("reset"),
+} satisfies HumanViewRegistry;

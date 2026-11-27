@@ -4,8 +4,8 @@ import { sourceInspectionViews } from "./inspection-sources.ts";
 import type { HumanViewRegistry } from "./render.ts";
 
 /** Dedicated views for inspections. */
-export const inspectionViews: HumanViewRegistry = {
+export const inspectionViews = {
   ...sourceInspectionViews,
   ...listViews,
   ...docsViews,
-};
+} satisfies HumanViewRegistry;

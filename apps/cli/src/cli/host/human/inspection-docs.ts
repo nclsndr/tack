@@ -214,7 +214,7 @@ const docsTargetView = resultView(
 );
 
 /** Docs list and docs target views. */
-export const docsViews: HumanViewRegistry = {
-  docs: docsListView,
-  "docs target": docsTargetView,
-};
+export const docsViews = {
+  "docs-list": docsListView,
+  "docs-target": docsTargetView,
+} satisfies HumanViewRegistry;

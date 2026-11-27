@@ -91,7 +91,7 @@ const adapterListView = resultView(
 );
 
 /** Choice and adapter list views. */
-export const listViews: HumanViewRegistry = {
-  pick: choiceListView,
-  adapter: adapterListView,
-};
+export const listViews = {
+  "pick-list": choiceListView,
+  "adapter-list": adapterListView,
+} satisfies HumanViewRegistry;
