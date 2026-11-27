@@ -87,10 +87,26 @@ const layerOf = (module: string) => {
   return first in layerImports ? first : undefined;
 };
 
-/** The feature folder of a `features/` module; a file directly in `features/` is a feature of its own. */
-const featureOf = (module: string) => {
+/** The folder of a module inside its layer; a file directly in the layer is a folder of its own. */
+const folderOf = (module: string) => {
   const [, second = ""] = module.split("/");
   return second.replace(/\.ts$/, "");
+};
+
+/** The imports between the folders of one layer, as a graph from folder to the folders it reads. */
+const folderGraph = (layer: string) => {
+  const graph = new Map<string, Set<string>>();
+  for (const path of productionSourceFiles()) {
+    const module = modulePath(path);
+    if (layerOf(module) !== layer) continue;
+    const folder = folderOf(module);
+    const targets = graph.get(folder) ?? new Set<string>();
+    for (const target of localImportsOf(path)) {
+      if (layerOf(target) === layer && folderOf(target) !== folder) targets.add(folderOf(target));
+    }
+    graph.set(folder, targets);
+  }
+  return graph;
 };
 
 /** One cycle through a directed graph as a path that returns to its start, or `undefined`. */
@@ -173,22 +189,11 @@ describe("CLI architecture boundaries", () => {
     ).toEqual([]);
   });
 
-  it("keeps the feature folders a directed acyclic graph", () => {
-    const graph = new Map<string, Set<string>>();
-    for (const path of productionSourceFiles()) {
-      const module = modulePath(path);
-      if (layerOf(module) !== "features") continue;
-      const feature = featureOf(module);
-      const targets = graph.get(feature) ?? new Set<string>();
-      for (const target of localImportsOf(path)) {
-        if (layerOf(target) === "features" && featureOf(target) !== feature) {
-          targets.add(featureOf(target));
-        }
-      }
-      graph.set(feature, targets);
-    }
-
-    expect(findCycle(graph)).toBeUndefined();
+  // `domain` holds what is stored, or what two features share. A plan, report or result schema
+  // that one feature produces lives beside that feature, and a cycle between two domain folders
+  // means a file sits in the wrong one.
+  it.each(["domain", "features"])("keeps the %s folders a directed acyclic graph", (layer) => {
+    expect(findCycle(folderGraph(layer))).toBeUndefined();
   });
 
   it("reads the state document only through the command snapshot", () => {
