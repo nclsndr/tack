@@ -45,10 +45,13 @@ const boot: ReaderBoot = {
   })),
 };
 const ui = testRoot();
+// Silences the error boundary's reports on the console as it was before testRoot wraps it, so the
+// wrapper still fails a test on an update outside act.
+const original = console;
 beforeEach(() => {
   route.pathname = "/broken";
   route.failContent = false;
-  vi.spyOn(console, "error").mockImplementation(() => undefined);
+  vi.spyOn(original, "error").mockImplementation(() => undefined);
   window.localStorage.clear();
 });
 afterEach(() => {

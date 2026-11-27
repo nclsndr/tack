@@ -18,9 +18,12 @@ vi.mock("@rspress/core/runtime", () => ({
   pathnameToRouteService: () => undefined,
 }));
 const ui = testRoot();
+// Silences the error boundary's reports on the console as it was before testRoot wraps it, so the
+// wrapper still fails a test on an update outside act.
+const original = console;
 it("preloads a safe route before catching the source module evaluation failure inside the reader", async () => {
   const root = await mkdtemp(join(tmpdir(), "tack-page-proxy-"));
-  const errors = vi.spyOn(console, "error").mockImplementation(() => undefined);
+  const errors = vi.spyOn(original, "error").mockImplementation(() => undefined);
   try {
     const physical = join(root, "throwing.tsx");
     await writeFile(

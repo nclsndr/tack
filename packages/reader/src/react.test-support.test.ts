@@ -4,6 +4,8 @@ import { afterAll, describe, expect, it, vi } from "vitest";
 import { testRoot, waitForReact } from "./react.test-support.ts";
 
 const ui = testRoot();
+/** The console before the helper wraps it, where the wrapper forwards what it records. */
+const original = console;
 
 /** Renders `text`, and records its mount and unmount. */
 function Probe(props: { readonly text: string; readonly log: string[] }): string {
@@ -45,6 +47,21 @@ describe("testRoot", () => {
     await ui.render(createElement(Probe, { text: "two", log }));
     expect(ui.container.textContent).toBe("two");
     expect(log).toEqual(["mount one", "unmount one", "mount two"]);
+  });
+
+  // The helper's afterEach fails this test, which `fails` expects.
+  it.fails("fails a test whose React update runs outside act", async () => {
+    let update: (text: string) => void = () => undefined;
+    function Settable(): string {
+      const [text, setText] = useState("before");
+      update = setText;
+      return text;
+    }
+    await ui.render(createElement(Settable));
+    const printed = vi.spyOn(original, "error").mockImplementation(() => undefined);
+    update("after");
+    expect(printed.mock.calls[0]?.[0]).toContain("not wrapped in act(");
+    printed.mockRestore();
   });
 
   afterAll(() => {

@@ -2,7 +2,7 @@ import { act } from "react";
 import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import type { Root } from "react-dom/client";
-import { afterEach, beforeEach, vi } from "vitest";
+import { afterEach, beforeEach, expect, vi } from "vitest";
 
 /** One test's React root and the container it renders into. */
 export type TestRoot = {
@@ -17,11 +17,13 @@ export type TestRoot = {
 /**
  * Gives every test of the calling file a React root in a fresh container. Before each test it
  * declares the act environment and attaches the container. After each test it unmounts inside
- * act, removes the container and restores the globals the test stubbed.
+ * act, removes the container, restores the globals the test stubbed, and fails the test when
+ * React reported an update outside act.
  */
 export function testRoot(): TestRoot {
   let container: HTMLDivElement | undefined;
   let root: Root | undefined;
+  const unwrapped: string[] = [];
   const current = (): HTMLDivElement => {
     if (container === undefined) throw new Error("No test is running");
     return container;
@@ -32,6 +34,19 @@ export function testRoot(): TestRoot {
     if (mounted !== undefined) await act(async () => mounted.unmount());
   };
   beforeEach(() => {
+    unwrapped.length = 0;
+    const original = console;
+    // React only prints an update that ran outside act. Such an update lands on a later turn, so
+    // the branches it reaches are covered on one run and missed on the next: fail the test instead.
+    vi.stubGlobal("console", {
+      ...console,
+      error: (...values: unknown[]) => {
+        if (typeof values[0] === "string" && values[0].includes("not wrapped in act(")) {
+          unwrapped.push(values.map(String).join(" ").split("\n")[0] ?? "");
+        }
+        original.error(...values);
+      },
+    });
     vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
     container = document.createElement("div");
     document.body.append(container);
@@ -41,6 +56,7 @@ export function testRoot(): TestRoot {
     container?.remove();
     container = undefined;
     vi.unstubAllGlobals();
+    expect(unwrapped, "React updates outside act").toEqual([]);
   });
   return {
     get container() {
