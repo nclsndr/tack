@@ -52,11 +52,11 @@ export const install = {
   docs: "Read the docs",
 } as const;
 
-/** One source with one of each kind, as the README's example shows it. */
+/** One source hosting one resource of each kind, as the README's example shows it. */
 export const sourceFigure = {
   root: "~/agent-setup",
   entries: [
-    { path: "tack.yaml", kind: "declares" },
+    { path: "tack.yaml", kind: "declares the resources" },
     { path: "skills/review/SKILL.md", kind: "skill" },
     { path: "commands/ship.md", kind: "command" },
     { path: "context/conventions.md", kind: "context · no agent yet" },
@@ -320,11 +320,12 @@ export const lenses = [
   {
     id: "sources",
     name: "Sources",
-    when: "You keep skills, docs and scripts in folders of your own and in your team's.",
-    claim: "Your sources and your team's, in one setup.",
+    when: "You keep skills, commands, docs and scripts in folders of your own and in your team's.",
+    claim: "Host it once. Every project draws from it.",
     lines: [
-      "Skills, commands, context, docs and scripts live in sources: folders with a `tack.yaml`, each under its own version control. Tack reads each one where it is and moves nothing.",
-      "Add as many as you keep: your own beside your team's. A team source is a Git repository each teammate clones and adds; edits arrive with their own `git pull`.",
+      "A source is a folder, usually a Git repository, that hosts your resources: the skills, commands, context, docs and scripts your agents use. Its `tack.yaml` declares each one, and Tack reads it where it is.",
+      "Projects and agents keep no copy. Tack links skills, commands and docs from their source and runs scripts from it by name, so one edit reaches every project, worktree and agent.",
+      "Register as many sources as you keep, your own beside your team's. A team source is a Git repository each teammate clones and adds; edits arrive with their own `git pull`.",
     ],
     proof: "tack source add ~/agent-setup",
     details: [
@@ -368,7 +369,7 @@ export const lenses = [
     when: "Each repository needs its own skills, in every worktree.",
     claim: "Each project picks its own. Every worktree follows.",
     lines: [
-      "Register a Git repository once and Tack finds its worktrees. Include or exclude skills for that project, and every worktree gets the same links.",
+      "Register a Git repository once and Tack finds its worktrees. Include or exclude resources from your sources for that project, and every worktree gets the same links.",
       "`tack sync --all` previews the changes for every project and for you before it writes.",
     ],
     proof: "tack pick include review --project app",
