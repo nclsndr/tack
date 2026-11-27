@@ -131,8 +131,11 @@ publishes as `@tackup/cli`, its workspace name, and the private workspace packag
   `human.test-support.ts`. `render.test.ts` holds every operation to the view contract (fits 40, 80
   and 120 columns, no ANSI without color); a view test passes its long or wide samples to
   `expectViewContract` instead of checking widths or escapes itself.
-- Settle async React state in reader tests with `waitForReact` from
-  `packages/reader/src/react.test-support.ts`.
+- Render React in reader tests through `testRoot()` from `packages/reader/src/react.test-support.ts`.
+  It owns the act flag, the container and the unmount, and fails a test on an update outside
+  `act()`. Settle async React state with `waitForReact` from the same file, never `vi.waitFor`.
+  Render with `react-render-to-markdown` inside `act()`: start the render in the callback and await
+  it outside, since awaiting it inside `act()` hangs.
 - Navigate in jsdom with cancelable clicks (`{ bubbles: true, cancelable: true }`) and route fixture
   pages through the mocked router, as `packages/reader/src/runtime.browser.test.ts` does.
 - Prefer in-process tests (jsdom or node) over a headless browser. CLI tests run with a throwaway
