@@ -18,7 +18,7 @@ const sourceFiles = (directory: string): ReadonlyArray<string> =>
 const namesGithubForOtherReasons = (module: string) =>
   module.startsWith("features/self/") ||
   module.startsWith("domain/self/") ||
-  module === "cli/commands/self.ts" ||
+  module === "cli/commands/upgrade.ts" ||
   module === "domain/agents/agent-adapter.ts";
 
 it("names GitHub nowhere outside its adapter, the registry, its other uses and tests", () => {

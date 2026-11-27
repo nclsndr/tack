@@ -4,11 +4,9 @@ import { readInvocationSnapshot } from "../../../features/snapshot/command-snaps
 import { Installation, type BuiltInsPruneRequest } from "../../../services/installation.ts";
 import type { SyncOptions } from "../../../domain/reconciliation/sync-schema.ts";
 import type { ReconcilePlanningRequest } from "../../commands/model.ts";
-import { disableAdapter } from "../../../features/maintenance/adapter-disablement.ts";
-import { enableAdapters, listEnabledAdapters } from "../../../features/reconciliation/agent.ts";
 import { runSyncCommand } from "../../../features/reconciliation/sync-command.ts";
 import type { StateOptions } from "../../../services/state-store.ts";
-import { appliedAs, removalOutcome, resultAs, syncOutcome } from "../outcomes.ts";
+import { syncOutcome } from "../outcomes.ts";
 import { cwdOrCurrent, type RoutesFor, onlyUserOrAllSelector } from "./route.ts";
 
 /** The narrowing flags a sync request carries, or none when it gave no such flag. */
@@ -79,37 +77,8 @@ const sync = (stateOptions: StateOptions, request: ReconcilePlanningRequest, app
     Effect.map((execution) => syncOutcome(execution, syncOptionsOf(request))),
   );
 
-/** Enabled adapters and skill reconciliation. */
-export const reconciliationRoutes: RoutesFor<
-  "adapter-disable" | "adapter-list" | "adapter-enable" | "sync"
-> = {
-  "adapter-enable": {
-    needsHome: false,
-    // The named adapters replace detection, as `init --adapter` does, when this initializes state.
-    run: (invocation, { initialAdapters: _detected, ...stateOptions }) =>
-      enableAdapters(stateOptions, invocation.adapters).pipe(
-        Effect.map(appliedAs("adapter-enable")),
-      ),
-  },
-  "adapter-list": {
-    needsHome: false,
-    run: (_, stateOptions) =>
-      listEnabledAdapters(stateOptions).pipe(
-        Effect.map((enabledAdapters) => resultAs("adapter-list")({ enabledAdapters })),
-      ),
-  },
-  "adapter-disable": {
-    needsHome: false,
-    run: (invocation, stateOptions) =>
-      disableAdapter(stateOptions, invocation.adapter, { apply: invocation.apply }).pipe(
-        Effect.map((execution) =>
-          removalOutcome(execution, {
-            planned: [execution.plan.removal],
-            applied: execution.applied === undefined ? undefined : [execution.applied.removal],
-          }),
-        ),
-      ),
-  },
+/** Preview, then apply, the selected links and docs mounts. */
+export const syncRoutes: RoutesFor<"sync"> = {
   sync: {
     needsHome: onlyUserOrAllSelector,
     run: (invocation, stateOptions) => sync(stateOptions, invocation, invocation.apply),

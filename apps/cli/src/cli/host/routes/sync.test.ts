@@ -2,10 +2,10 @@ import { expect, it } from "@effect/vitest";
 import { Effect } from "effect";
 import { LiveTestLayer } from "../../../../test/support/live-test-layer.ts";
 import { profileFixture } from "../../../../test/support/profile-fixture.ts";
-import { reconciliationRoutes } from "./reconciliation.ts";
+import { syncRoutes } from "./sync.ts";
 import { outcomeOf } from "./route.test-support.ts";
 
-it.layer(LiveTestLayer)("reconciliation routes", (test) => {
+it.layer(LiveTestLayer)("sync routes", (test) => {
   test.effect("classifies a sync whose link action fails as partial", () =>
     Effect.gen(function* () {
       const world = yield* profileFixture;
@@ -16,7 +16,7 @@ it.layer(LiveTestLayer)("reconciliation routes", (test) => {
       );
       const outcome = yield* world.run(
         outcomeOf(
-          reconciliationRoutes.sync.run(
+          syncRoutes.sync.run(
             {
               _tag: "sync",
               apply: true,

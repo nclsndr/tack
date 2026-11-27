@@ -19,7 +19,7 @@ import {
 } from "../../../domain/execution/execution-schema.ts";
 import type { Invocation } from "../../commands/index.ts";
 import type { PublicOutcome } from "../public-outcome.ts";
-import { executionRoutes } from "./execution.ts";
+import { scriptRoutes } from "./script.ts";
 import type { ForegroundSession } from "./route.ts";
 import { routeOutcome } from "./route.test-support.ts";
 
@@ -115,7 +115,7 @@ const scene = (
         Effect.provideService(RunHistory, runHistory),
       );
     const run = (invocation: ScriptRun) =>
-      routed(executionRoutes["script-run"].run(invocation, options));
+      routed(scriptRoutes["script-run"].run(invocation, options));
     return { root, home, project, options, history, workers, run, routed };
   });
 
@@ -223,7 +223,7 @@ it.layer(LiveTestLayer)("script show route", (test) => {
     Effect.gen(function* () {
       const { root, options, routed, workers } = yield* scene();
       const outcome = yield* routed(
-        executionRoutes["script-show"].run({ _tag: "script-show", reference: "hello" }, options),
+        scriptRoutes["script-show"].run({ _tag: "script-show", reference: "hello" }, options),
       );
       expect(outcome).toMatchObject({
         classification: "success",
@@ -251,7 +251,7 @@ it.layer(LiveTestLayer)("script history routes", (test) => {
 
       expect(
         yield* routed(
-          executionRoutes["script-history-list"].run(
+          scriptRoutes["script-history-list"].run(
             { _tag: "script-history-list", limit: 20, offset: 0 },
             options,
           ),
@@ -259,14 +259,11 @@ it.layer(LiveTestLayer)("script history routes", (test) => {
       ).toMatchObject({ classification: "success", result: { total: 1 } });
       expect(
         yield* routed(
-          executionRoutes["script-history-show"].run(
-            { _tag: "script-history-show", runId },
-            options,
-          ),
+          scriptRoutes["script-history-show"].run({ _tag: "script-history-show", runId }, options),
         ),
       ).toMatchObject({ classification: "success", result: { runId, status: "complete" } });
 
-      const clear = executionRoutes["script-history-clear"];
+      const clear = scriptRoutes["script-history-clear"];
       const preview = yield* routed(
         clear.run({ _tag: "script-history-clear", apply: false }, options),
       );

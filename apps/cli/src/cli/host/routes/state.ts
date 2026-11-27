@@ -5,15 +5,7 @@ import {
   retrySelectedPendingRemovals,
 } from "../../../features/maintenance/selected-removal.ts";
 import type { RemovalExecution } from "../../../features/removal/removal.ts";
-import { readInvocationSnapshot } from "../../../features/snapshot/command-snapshot.ts";
-import { statusFromSnapshot } from "../../../features/status/status.ts";
-import {
-  removalOutcome,
-  statusOutcome,
-  withOutsidePendingDiagnostic,
-  withUnregisteredWorktree,
-} from "../outcomes.ts";
-import { observeCheckout } from "../../../features/projects/checkout.ts";
+import { removalOutcome, withOutsidePendingDiagnostic } from "../outcomes.ts";
 import { cwdOrCurrent, type RoutesFor, onlyUserOrAllSelector } from "./route.ts";
 
 const cleanupOutcome = (execution: RemovalExecution) =>
@@ -22,36 +14,8 @@ const cleanupOutcome = (execution: RemovalExecution) =>
     applied: execution.applied === undefined ? undefined : [execution.applied],
   });
 
-/** Read-only status and selected cleanup, retry and reset. */
-export const maintenanceRoutes: RoutesFor<
-  "state-clean" | "state-reset" | "state-clean-pending" | "status"
-> = {
-  status: {
-    needsHome: onlyUserOrAllSelector,
-    run: (invocation, stateOptions) =>
-      Effect.gen(function* () {
-        const cwd = yield* cwdOrCurrent(invocation.cwd);
-        const snapshot = yield* readInvocationSnapshot(stateOptions);
-        const report = yield* statusFromSnapshot(snapshot, stateOptions, {
-          cwd,
-          includeOptional: invocation.includeOptional,
-          selector: invocation.selector,
-          ...(stateOptions.homeDirectory === undefined
-            ? {}
-            : { userTarget: stateOptions.homeDirectory }),
-        });
-        // A registered root needs no Git question, and the user scope holds no worktree.
-        const checkout =
-          report.scope._tag === "user"
-            ? ({ _tag: "outside-repository" } as const)
-            : yield* observeCheckout(snapshot.state, cwd);
-        return withOutsidePendingDiagnostic(
-          withUnregisteredWorktree(statusOutcome(report), checkout, report.scope),
-          snapshot.state,
-          report.selection,
-        );
-      }),
-  },
+/** Selected cleanup, its pending-only retry, and the full reset. */
+export const stateRoutes: RoutesFor<"state-clean" | "state-reset" | "state-clean-pending"> = {
   "state-clean": {
     needsHome: onlyUserOrAllSelector,
     run: (invocation, stateOptions) =>

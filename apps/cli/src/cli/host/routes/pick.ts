@@ -181,58 +181,57 @@ const setPick = (
   );
 
 /** Persisted include and exclude choices. */
-export const choiceRoutes: RoutesFor<
-  "pick-remove" | "pick-include" | "pick-exclude" | "pick-list"
-> = {
-  "pick-include": {
-    needsHome: false,
-    run: (invocation, stateOptions) =>
-      setPick(stateOptions, {
-        tag: "pick-include",
-        decision: "include",
-        namespace: invocation.namespace,
-        reference: invocation.reference,
-        ...(invocation.kind === undefined ? {} : { kind: invocation.kind }),
-      }),
-  },
-  "pick-exclude": {
-    needsHome: false,
-    run: (invocation, stateOptions) =>
-      setPick(stateOptions, {
-        tag: "pick-exclude",
-        decision: "exclude",
-        namespace: invocation.namespace,
-        reference: invocation.reference,
-        ...(invocation.kind === undefined ? {} : { kind: invocation.kind }),
-      }),
-  },
-  "pick-remove": {
-    needsHome: false,
-    run: (invocation, stateOptions) =>
-      withCommandWriter(stateOptions, (writer, snapshot) =>
-        Effect.gen(function* () {
-          const catalog = yield* snapshot.catalog;
-          const choices = yield* listSkillChoices(snapshot.state, invocation.namespace);
-          const address = yield* resolveStoredPick(
-            catalog,
-            choices,
-            invocation.namespace,
-            invocation.reference,
-            invocation.kind,
-          );
-          return appliedAs("pick-remove")(
-            yield* removeSkillChoice(writer, { address, namespace: invocation.namespace }),
-          );
+export const pickRoutes: RoutesFor<"pick-remove" | "pick-include" | "pick-exclude" | "pick-list"> =
+  {
+    "pick-include": {
+      needsHome: false,
+      run: (invocation, stateOptions) =>
+        setPick(stateOptions, {
+          tag: "pick-include",
+          decision: "include",
+          namespace: invocation.namespace,
+          reference: invocation.reference,
+          ...(invocation.kind === undefined ? {} : { kind: invocation.kind }),
         }),
-      ),
-  },
-  "pick-list": {
-    needsHome: false,
-    run: (invocation, stateOptions) =>
-      Effect.gen(function* () {
-        const { state } = yield* readInvocationSnapshot(stateOptions);
-        const choices = yield* listSkillChoices(state, invocation.namespace);
-        return resultAs("pick-list")({ choices });
-      }),
-  },
-};
+    },
+    "pick-exclude": {
+      needsHome: false,
+      run: (invocation, stateOptions) =>
+        setPick(stateOptions, {
+          tag: "pick-exclude",
+          decision: "exclude",
+          namespace: invocation.namespace,
+          reference: invocation.reference,
+          ...(invocation.kind === undefined ? {} : { kind: invocation.kind }),
+        }),
+    },
+    "pick-remove": {
+      needsHome: false,
+      run: (invocation, stateOptions) =>
+        withCommandWriter(stateOptions, (writer, snapshot) =>
+          Effect.gen(function* () {
+            const catalog = yield* snapshot.catalog;
+            const choices = yield* listSkillChoices(snapshot.state, invocation.namespace);
+            const address = yield* resolveStoredPick(
+              catalog,
+              choices,
+              invocation.namespace,
+              invocation.reference,
+              invocation.kind,
+            );
+            return appliedAs("pick-remove")(
+              yield* removeSkillChoice(writer, { address, namespace: invocation.namespace }),
+            );
+          }),
+        ),
+    },
+    "pick-list": {
+      needsHome: false,
+      run: (invocation, stateOptions) =>
+        Effect.gen(function* () {
+          const { state } = yield* readInvocationSnapshot(stateOptions);
+          const choices = yield* listSkillChoices(state, invocation.namespace);
+          return resultAs("pick-list")({ choices });
+        }),
+    },
+  };

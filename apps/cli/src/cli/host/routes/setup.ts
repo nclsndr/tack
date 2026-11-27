@@ -11,7 +11,7 @@ import {
 } from "../../../features/setup/machine-init.ts";
 import { syncOutcome, toJson } from "../outcomes.ts";
 import type { PublicOutcome } from "../public-outcome.ts";
-import { afterSync } from "./reconciliation.ts";
+import { afterSync } from "./sync.ts";
 import { cwdOrCurrent, type RoutesFor } from "./route.ts";
 
 const validInitPlan = Schema.decodeUnknownSync(InitPlanSchema, { onExcessProperty: "error" });

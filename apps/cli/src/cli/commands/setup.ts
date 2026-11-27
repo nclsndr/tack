@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { Command } from "effect/cli";
 import { handle } from "./invocation-receiver.ts";
-import { decodeAdapters, repeatableAdapterFlag } from "./reconciliation.ts";
+import { decodeAdapters, repeatableAdapterFlag } from "./adapter.ts";
 
 /** One repeatable machine setup, written at once: state, agents and their user links. */
 export const initCommand = Command.make(

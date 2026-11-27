@@ -40,7 +40,7 @@ const scriptTargetFlags = (request: {
   ].map(shellWord);
 
 /** Supervised runs and retained run history. */
-export const executionRoutes: RoutesFor<
+export const scriptRoutes: RoutesFor<
   | "script-history-clear"
   | "script-history-list"
   | "script-history-show"

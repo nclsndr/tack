@@ -6,7 +6,7 @@ import { LiveTestLayer } from "../../../../test/support/live-test-layer.ts";
 import { initializeState, readState, type StateOptions } from "../../../services/state-store.ts";
 import { registerSource } from "../../../features/sources/source.ts";
 import { ResourceReferenceError } from "../../../features/sources/resource-reference.ts";
-import { choiceRoutes } from "./choices.ts";
+import { pickRoutes } from "./pick.ts";
 import { routeOutcome } from "./route.test-support.ts";
 
 /** Two sources: `tools` with a skill and a command named review, `more` with a skill review. */
@@ -58,7 +58,7 @@ it.layer(LiveTestLayer)("pick routes", (test) => {
       const { options } = yield* scene;
       expect(
         yield* routeOutcome(
-          choiceRoutes["pick-include"].run(
+          pickRoutes["pick-include"].run(
             { _tag: "pick-include", reference: "tools:review", kind: "command", namespace: user },
             options,
           ),
@@ -66,7 +66,7 @@ it.layer(LiveTestLayer)("pick routes", (test) => {
       ).toMatchObject({ classification: "success" });
       expect(
         yield* routeOutcome(
-          choiceRoutes["pick-exclude"].run(
+          pickRoutes["pick-exclude"].run(
             { _tag: "pick-exclude", reference: "more:review", kind: "skill", namespace: user },
             options,
           ),
@@ -87,12 +87,12 @@ it.layer(LiveTestLayer)("pick routes", (test) => {
         ["more:review", "skill"],
       ] as const)
         yield* routeOutcome(
-          choiceRoutes["pick-include"].run(
+          pickRoutes["pick-include"].run(
             { _tag: "pick-include", reference, kind, namespace: user },
             options,
           ),
         );
-      const remove = choiceRoutes["pick-remove"];
+      const remove = pickRoutes["pick-remove"];
       const error = yield* routeOutcome(
         remove.run({ _tag: "pick-remove", reference: "review", namespace: user }, options),
       ).pipe(Effect.flip);
@@ -125,7 +125,7 @@ it.layer(LiveTestLayer)("pick routes", (test) => {
     Effect.gen(function* () {
       const { options } = yield* scene;
       const error = yield* routeOutcome(
-        choiceRoutes["pick-remove"].run(
+        pickRoutes["pick-remove"].run(
           { _tag: "pick-remove", reference: "unknown", namespace: user },
           options,
         ),

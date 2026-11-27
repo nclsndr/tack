@@ -14,7 +14,7 @@ const guide = () => {
 };
 
 /** Tack never upgrades itself; these name the package manager command that does. */
-export const selfRoutes: RoutesFor<"upgrade" | "upgrade-status"> = {
+export const upgradeRoutes: RoutesFor<"upgrade" | "upgrade-status"> = {
   upgrade: { needsHome: false, stateless: true, run: guide },
   "upgrade-status": { needsHome: false, stateless: true, run: guide },
 };
