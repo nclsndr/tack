@@ -103,14 +103,17 @@ const cleanupBlocks = (
 ): ReadonlyArray<ReadonlyArray<string>> => {
   const actions = removalRows(plan, applied, style, showTarget, details);
   const docs = cleanupDocsRows(plan, applied, style);
-  const docsPending = applied?.docsPending ?? [];
+  const docsPending = applied?.docsPendingRemovals ?? [];
   return [
     targetSummaryLines(plan, applied, style),
     actions.length === 0 ? [] : [style.bold("Actions"), ...actions],
     docs.length === 0 ? [] : [style.bold("Docs links"), ...docs],
-    applied === undefined || (applied.pending.length === 0 && docsPending.length === 0)
+    applied === undefined || (applied.pendingRemovals.length === 0 && docsPending.length === 0)
       ? []
-      : [style.bold("Pending cleanup"), ...pendingRows(applied.pending, docsPending, style)],
+      : [
+          style.bold("Pending cleanup"),
+          ...pendingRows(applied.pendingRemovals, docsPending, style),
+        ],
   ];
 };
 
@@ -149,8 +152,8 @@ const selectedRemovalView = (command: SelectedCommand) =>
     const stateDeleted =
       applied !== undefined &&
       command === "state-reset" &&
-      applied.pending.length === 0 &&
-      (applied.docsPending ?? []).length === 0 &&
+      applied.pendingRemovals.length === 0 &&
+      (applied.docsPendingRemovals ?? []).length === 0 &&
       applied.actions.every((outcome) => outcome._tag === "applied");
     return frameView(envelope, style, {
       scope:

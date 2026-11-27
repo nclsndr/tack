@@ -1263,9 +1263,9 @@ resource, destination, source directory and link text) and, once attempted, its 
 (`blocked`, `filesystem-failure` or `interrupted`, with a `message`). `sync` reports only the
 projects it covers. Each owed docs removal is also a `pending-removal` partial diagnostic in
 `status` and `sync`, and the `links` check of `doctor` counts it among its pending removals and
-names `tack state clean --pending` as its next step. A removal result carries the same array as
-`docsPending`, and `docsActions` reports each docs mount's outcome with the `blocked` tag when the
-mount stays owed.
+names `tack state clean --pending` as its next step. A removal result carries the same array under
+the same name, beside `pendingRemovals` for the agent links, and `docsActions` reports each docs
+mount's outcome with the `blocked` tag when the mount stays owed.
 
 A planned docs link that cannot proceed is a `partial` diagnostic whose `code` names its cause, in
 `sync` preview and apply alike, with the link's `resource` and `destinationPath` in `details.subject`:

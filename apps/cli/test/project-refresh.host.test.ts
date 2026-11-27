@@ -443,7 +443,7 @@ it.layer(LiveTestLayer)("project refresh against real Git", (refreshIt) => {
           expect(retried.applied).toMatchObject({
             actions: [{ _tag: "applied" }],
             finalizedProject: true,
-            pending: [],
+            pendingRemovals: [],
           });
           const converged = yield* readState(fixture.options);
           expect(converged.data.projects).not.toEqual(

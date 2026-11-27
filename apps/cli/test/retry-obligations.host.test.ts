@@ -293,7 +293,7 @@ it.layer(LiveTestLayer)("retry settles only obligations", (retryIt) => {
               "--apply",
             ]),
           );
-          expect(retried.applied).toMatchObject({ finalizedProject: true, pending: [] });
+          expect(retried.applied).toMatchObject({ finalizedProject: true, pendingRemovals: [] });
           const settled = yield* readState(fixture.options);
           expect(settled.data.projects?.map((entry) => entry.name)).toEqual(["workspace"]);
           expect(docsLinkRoots(managedDocsLinksOf(settled.data.links))).toEqual([

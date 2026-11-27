@@ -428,9 +428,9 @@ export const removalAppliedSummary = (result: RemovalResult) => {
   return [
     ...outcomePhrases(result.actions),
     ...(result.finalizedProject ? ["1 project registration removed"] : []),
-    ...(result.pending.length === 0
+    ...(result.pendingRemovals.length === 0
       ? []
-      : [`${plural(result.pending.length, "cleanup obligation")} still pending`]),
+      : [`${plural(result.pendingRemovals.length, "cleanup obligation")} still pending`]),
   ];
 };
 

@@ -1446,7 +1446,7 @@ it.layer(LiveTestLayer)("project worktree refresh planning", (refreshIt) => {
           expect(execution.applied?.removals[0]?.docsActions).toMatchObject([
             { _tag: "blocked", code: "docs-destination-modified" },
           ]);
-          expect(execution.applied?.removals[0]?.docsPending).toMatchObject([
+          expect(execution.applied?.removals[0]?.docsPendingRemovals).toMatchObject([
             { cause: "root-removal", lastResult: { _tag: "blocked" } },
           ]);
           expect(state.data.projects?.at(0)).toMatchObject({ removingRoots: [], roots: [kept] });

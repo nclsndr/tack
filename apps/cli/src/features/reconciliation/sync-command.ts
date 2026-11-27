@@ -27,7 +27,7 @@ export type SyncPlan = {
   readonly resources?: PreparedReconciliation;
   readonly docs: ReadonlyArray<DocsLinkPlan>;
   /** The docs mounts of the synced projects whose removal is owed when the plan was made. */
-  readonly docsPending: ReadonlyArray<DocsPendingRemoval>;
+  readonly docsPendingRemovals: ReadonlyArray<DocsPendingRemoval>;
 };
 
 /** What applying a sync plan did to agent links and to each project's docs mounts. */
@@ -35,7 +35,7 @@ export type SyncApplication = {
   readonly resources: ReconciliationApplyResult | undefined;
   readonly docs: ReadonlyArray<DocsLinkApplication>;
   /** The docs mounts whose removal is still owed; a sync reports what its plan found. */
-  readonly docsPending: ReadonlyArray<DocsPendingRemoval>;
+  readonly docsPendingRemovals: ReadonlyArray<DocsPendingRemoval>;
 };
 
 /** The owed docs removals of the projects a sync covers, none when docs are left out. */
@@ -77,7 +77,11 @@ export const planSync = Effect.fnUntraced(function* (
   return {
     ...(options.adapterOverride?.length === 0 ? {} : { resources: prepared }),
     docs,
-    docsPending: docsPendingOf(snapshot.state.data.links, prepared.projectNames, options.noDocs),
+    docsPendingRemovals: docsPendingOf(
+      snapshot.state.data.links,
+      prepared.projectNames,
+      options.noDocs,
+    ),
   } satisfies SyncPlan;
 });
 
@@ -114,6 +118,10 @@ export const applySyncPlan = (writer: StateCheckpointWriter, plan: SyncPlan) =>
         const docs: DocsLinkApplication[] = [];
         for (const entry of plan.docs) docs.push(yield* applyDocsActions(ledger, entry));
         // A sync never owes or settles a removal, so what it reports is what the plan found.
-        return { resources, docs, docsPending: plan.docsPending } satisfies SyncApplication;
+        return {
+          resources,
+          docs,
+          docsPendingRemovals: plan.docsPendingRemovals,
+        } satisfies SyncApplication;
       }),
   );

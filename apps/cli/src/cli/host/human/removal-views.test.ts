@@ -173,7 +173,7 @@ const appliedOutcomeOf = (action: RemovalAction): RemovalActionOutcome =>
 
 const removalResult = (
   actions: ReadonlyArray<RemovalActionOutcome>,
-  extra: Partial<Pick<RemovalResult, "docsActions" | "pending">> & {
+  extra: Partial<Pick<RemovalResult, "docsActions" | "pendingRemovals">> & {
     readonly finalizedProject?: boolean;
   } = {},
 ): RemovalResult =>
@@ -182,7 +182,7 @@ const removalResult = (
     ...(extra.docsActions === undefined ? {} : { docsActions: extra.docsActions }),
     finalizedProject: extra.finalizedProject ?? false,
     kind: "managed-removal-application",
-    pending: extra.pending ?? [],
+    pendingRemovals: extra.pendingRemovals ?? [],
     version: 1,
   });
 
@@ -343,7 +343,7 @@ describe("clean", () => {
           appliedOutcomeOf(blockedOf(foreign)),
         ],
         {
-          pending: [
+          pendingRemovals: [
             pendingOf(notes, "clean", {
               _tag: "filesystem-failure",
               message: "EACCES: permission denied",
@@ -562,7 +562,7 @@ describe("retry", () => {
           "state-clean-pending",
           plan,
           removalResult([failed], {
-            pending: [pendingOf(evidence("review", userTarget), "clean")],
+            pendingRemovals: [pendingOf(evidence("review", userTarget), "clean")],
           }),
           userSelection,
         ),
@@ -646,7 +646,7 @@ describe("reset", () => {
               },
               { _tag: "applied", action: retireOf(stale) },
             ],
-            { pending: [pendingOf(evidence("review", userTarget, "codex"), "reset")] },
+            { pendingRemovals: [pendingOf(evidence("review", userTarget, "codex"), "reset")] },
           ),
         ),
       );
@@ -735,7 +735,7 @@ describe("adapter disable", () => {
           },
         ],
         {
-          pending: [
+          pendingRemovals: [
             pendingOf(cursorLink, "adapter-disable", {
               _tag: "filesystem-failure",
               message: "EIO: i/o error",
@@ -951,7 +951,9 @@ describe("source remove", () => {
         version: 1,
         source: plan.source,
         removal: removalResult([appliedOutcomeOf(blockedOf(foreign))], {
-          pending: [pendingOf(foreign, "clean", { _tag: "blocked", message: "in the way" })],
+          pendingRemovals: [
+            pendingOf(foreign, "clean", { _tag: "blocked", message: "in the way" }),
+          ],
         }),
       });
       const envelope = registrationEnvelope("source remove", plan, applied);
@@ -1050,7 +1052,7 @@ describe("project remove", () => {
       version: 1,
       project: "demo",
       removal: removalResult([appliedOutcomeOf(blockedOf(foreign))], {
-        pending: [
+        pendingRemovals: [
           pendingOf(foreign, "project-removal", { _tag: "blocked", message: "in the way" }),
         ],
       }),
@@ -1108,10 +1110,10 @@ const docsReport = (
 const docsSync = (plan: ReturnType<typeof docsReport>, application?: DocsLinkApplication) =>
   syncOutcome(
     {
-      plan: { docs: [plan], docsPending: [] },
+      plan: { docs: [plan], docsPendingRemovals: [] },
       ...(application === undefined
         ? {}
-        : { applied: { resources: undefined, docs: [application], docsPending: [] } }),
+        : { applied: { resources: undefined, docs: [application], docsPendingRemovals: [] } }),
     },
     undefined,
   );
@@ -1389,7 +1391,7 @@ describe("sync", () => {
                 docsReport([{ action: "create", evidence: create }]),
                 docsReport([{ action: "create", evidence: other }]),
               ],
-              docsPending: [],
+              docsPendingRemovals: [],
             },
           },
           undefined,
@@ -1700,7 +1702,7 @@ describe("project refresh", () => {
                 : appliedOutcomeOf(action),
             ),
             {
-              pending: [
+              pendingRemovals: [
                 pendingOf(handoffLink, "root-removal", {
                   _tag: "filesystem-failure",
                   message: "EACCES: permission denied",
@@ -2009,7 +2011,7 @@ describe("state clean view", () => {
             message: "busy",
           },
         ],
-        docsPending: [
+        docsPendingRemovals: [
           {
             cause: "clean",
             evidence: docs,
@@ -2019,7 +2021,7 @@ describe("state clean view", () => {
         ],
         finalizedProject: true,
         kind: "managed-removal-application",
-        pending: [],
+        pendingRemovals: [],
         version: 1,
       },
     );

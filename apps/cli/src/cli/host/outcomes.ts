@@ -250,7 +250,7 @@ export const syncOutcome = (
           docs: applied.docs.map((docs) => validDocsApplication(docs)),
         };
   const pendingField =
-    plan.docsPending.length === 0 ? {} : { docsPendingRemovals: plan.docsPending };
+    plan.docsPendingRemovals.length === 0 ? {} : { docsPendingRemovals: plan.docsPendingRemovals };
   return {
     ...partialWhen([
       ...[
@@ -260,7 +260,7 @@ export const syncOutcome = (
           : reconciliationApplicationCauses(applied.resources)),
       ].map(partialCauseDiagnostic),
       ...docsPlans.flatMap((docs, index) => docsWarnings(docs, application?.docs[index])),
-      ...plan.docsPending.map((pending) =>
+      ...plan.docsPendingRemovals.map((pending) =>
         partialCauseDiagnostic({
           code: "pending-removal",
           subject: { cause: pending.cause, destinationPath: pending.evidence.destinationPath },

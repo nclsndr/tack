@@ -130,7 +130,7 @@ const interruptResetAt = Effect.fnUntraced(function* (
   expect(retainedPending.length).toBeGreaterThanOrEqual(yield* linksOnDisk(fixture));
 
   const recovered = successfulEnvelope(yield* runTack(fixture, ["state", "reset", "--apply"]));
-  expect(recovered.applied).toMatchObject({ pending: [] });
+  expect(recovered.applied).toMatchObject({ pendingRemovals: [] });
   const path = yield* Path.Path;
   expect(yield* fileSystem.exists(path.join(fixture.stateDirectory, "state.json"))).toBe(false);
 });

@@ -104,11 +104,11 @@ it.layer(LiveTestLayer)("combined sync", (test) => {
         },
       }));
       const owed = yield* runSyncCommand(options, request);
-      expect(owed.plan.docsPending.map((pending) => pending.evidence.destinationPath)).toEqual([
-        docsPath,
-      ]);
       expect(
-        (yield* runSyncCommand(options, { ...request, noDocs: true })).plan.docsPending,
+        owed.plan.docsPendingRemovals.map((pending) => pending.evidence.destinationPath),
+      ).toEqual([docsPath]);
+      expect(
+        (yield* runSyncCommand(options, { ...request, noDocs: true })).plan.docsPendingRemovals,
       ).toEqual([]);
     }).pipe(Effect.scoped),
   );

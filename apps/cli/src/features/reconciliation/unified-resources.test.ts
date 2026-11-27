@@ -250,7 +250,7 @@ it.layer(LiveTestLayer)("unified resource links", (test) => {
           f.command,
         );
         const reset = yield* resetTack(f.options, { apply: true });
-        expect(reset.applied?.pending).toHaveLength(1);
+        expect(reset.applied?.pendingRemovals).toHaveLength(1);
         const retained = yield* readState(f.options);
         expect(pendingRemovalsOf(retained.data.links)[0]).toMatchObject({
           cause: "reset",

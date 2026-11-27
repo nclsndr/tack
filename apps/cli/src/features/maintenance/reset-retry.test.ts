@@ -60,7 +60,7 @@ it.layer(LiveTestLayer)("reset and pending-removal retry", (resetIt) => {
 
         expect(execution.plan.actions).toEqual([]);
         expect(execution.applied?.actions).toEqual([]);
-        expect(execution.applied?.pending).toEqual([]);
+        expect(execution.applied?.pendingRemovals).toEqual([]);
         expect(yield* fileSystem.exists(statePath)).toBe(false);
       }),
     ),
@@ -155,7 +155,7 @@ it.layer(LiveTestLayer)("reset and pending-removal retry", (resetIt) => {
           const applied = yield* resetTack(options, { apply: true });
 
           expect(applied.plan).toEqual(dryRun.plan);
-          expect(applied.applied?.pending).toEqual([]);
+          expect(applied.applied?.pendingRemovals).toEqual([]);
           expect(yield* fileSystem.exists(statePath)).toBe(false);
           expect(yield* fileSystem.exists(projectDestination)).toBe(false);
           expect(yield* fileSystem.exists(userDestination)).toBe(false);
@@ -297,7 +297,7 @@ it.layer(LiveTestLayer)("reset and pending-removal retry", (resetIt) => {
           expect(settled.plan.actions.map((action) => action.destinationPath)).toEqual([
             blockedDestination,
           ]);
-          expect(settled.applied?.pending).toEqual([]);
+          expect(settled.applied?.pendingRemovals).toEqual([]);
           expect(yield* fileSystem.exists(statePath)).toBe(false);
           expect(yield* fileSystem.exists(blockedDestination)).toBe(false);
         }),
@@ -792,7 +792,7 @@ it.layer(LiveTestLayer)("reset and pending-removal retry", (resetIt) => {
             "applied",
             "blocked",
           ]);
-          expect(reset.applied?.docsPending).toMatchObject([
+          expect(reset.applied?.docsPendingRemovals).toMatchObject([
             {
               evidence: { destinationPath: evidence.destinationPath },
               lastResult: { _tag: "blocked", message: "The destination is an existing directory." },
@@ -807,7 +807,7 @@ it.layer(LiveTestLayer)("reset and pending-removal retry", (resetIt) => {
           yield* fs.remove(evidence.destinationPath, { recursive: true });
           const retried = yield* retryPendingRemovals(options, { apply: true });
           expect(retried.applied?.docsActions?.map((outcome) => outcome._tag)).toEqual(["applied"]);
-          expect(retried.applied?.docsPending).toBeUndefined();
+          expect(retried.applied?.docsPendingRemovals).toBeUndefined();
           expect(docsPendingRemovalsOf((yield* readState(options)).data.links)).toEqual([]);
           return undefined;
         }),

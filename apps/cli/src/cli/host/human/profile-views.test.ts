@@ -99,7 +99,7 @@ const syncOf = (
   ],
 ) => ({
   docs,
-  docsPending: [],
+  docsPendingRemovals: [],
   resources: {
     causes: [],
     projectNames: ["demo"],
@@ -294,7 +294,7 @@ describe("profile apply view", () => {
         plan: applyPlan(),
         applied: {
           docs: [],
-          docsPending: [],
+          docsPendingRemovals: [],
           resources: {
             kind: "skill-reconciliation-application",
             version: 1,
@@ -379,7 +379,7 @@ describe("profile apply view", () => {
             issues: [],
           },
         ],
-        docsPending: [],
+        docsPendingRemovals: [],
       },
       row: "✓ applied create ~/project/docs/guide",
     },
