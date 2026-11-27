@@ -14,6 +14,10 @@ import { makeSourceService, registerSource, Source } from "../sources/source.ts"
 import { compareCodeUnits, sortAndDedupeBy } from "../../domain/identity/ordering.ts";
 import { resourceAddressIdentity } from "../../domain/sources/catalog-schema.ts";
 import { runStatus, statusPartialCauses } from "./status.ts";
+import {
+  generatedSkillRegistrationId,
+  userSourcesSkillName,
+} from "../../domain/generated/sources-skill.ts";
 
 /**
  * A source with a default skill that optionally depends on an opt-in skill, a default command, a
@@ -247,8 +251,18 @@ it.layer(LiveTestLayer)("status agrees with the reconciliation planner", (agreem
         expect(preview.partial).toBe(false);
         const byPath = (left: ReadonlyArray<string>, right: ReadonlyArray<string>) =>
           compareCodeUnits(left[1] ?? "", right[1] ?? "");
+        // With lead excluded the user links nothing of the source, so its sources skill goes too.
+        const removed = preview.plan.units
+          .flatMap((unit) => unit.actions)
+          .filter((action) => action._tag === "link-remove");
+        expect(removed.map((action) => [action.evidence.address.name, action.reason])).toEqual(
+          lead.map(() => [userSourcesSkillName, "deselected"]),
+        );
         expect(nonMatching(report).sort(byPath)).toEqual(
-          released.map((action) => ["evidence-changed", action.destinationPath]).sort(byPath),
+          [
+            ...released.map((action) => ["evidence-changed", action.destinationPath]),
+            ...removed.map((action) => ["drift", action.destinationPath]),
+          ].sort(byPath),
         );
         expect(statusPartialCauses(report).length).toBeGreaterThan(0);
 
@@ -383,7 +397,12 @@ it.layer(LiveTestLayer)("status agrees with the reconciliation planner", (agreem
           const addresses = sortAndDedupeBy(
             managedLinksOf(state.data.links)
               .map((evidence) => evidence.address)
-              .filter((address) => address.name !== "helper"),
+              // A profile names resources of sources, never the sources skill Tack generates.
+              .filter(
+                (address) =>
+                  address.name !== "helper" &&
+                  address.sourceRegistrationId !== generatedSkillRegistrationId,
+              ),
             resourceAddressIdentity,
           );
           const registered = addresses[0]?.sourceRegistrationId;

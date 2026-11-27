@@ -62,7 +62,8 @@ it("starts from an empty directory and writes one format 1 file that status read
   const deliveries = document.data.links.map(
     (record: { delivery: { _tag: string } }) => record.delivery._tag,
   );
-  expect(deliveries.toSorted()).toEqual(["agent", "docs"]);
+  // The pdf skill, the project's sources skill and the docs mount.
+  expect(deliveries.toSorted()).toEqual(["agent", "agent", "docs"]);
   for (const record of document.data.links) {
     expect(record.resource.sourceRegistrationId).toMatch(/^[0-9a-f-]{36}$/);
     expect(await lstat(record.destinationPath).then((entry) => entry.isSymbolicLink())).toBe(true);

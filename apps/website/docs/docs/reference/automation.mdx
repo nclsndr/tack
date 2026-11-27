@@ -121,8 +121,11 @@ diagnostic, in preview and apply alike, with the link's `resource` and `destinat
 (`source-unhealthy`). A declaration entry Tack cannot use is a quarantined candidate whose code names
 the reason; [Source format](./tack-yaml#declared-paths) lists them. A healthy source that declares no
 resources and no docs carries the warning `source-declares-no-resources` in the `warnings` of its
-entry in `tack source` and `tack status`, and in the `sources` check of `tack doctor`. A warning
-changes no exit code.
+entry in `tack source` and `tack status`, and in the `sources` check of `tack doctor`, as do
+`source-description-long` and `source-rules-long` for a `description` or `rules.body` too long to
+show ([Description and rules](./tack-yaml#description-and-rules)). A warning changes no exit code. A
+source skill named `tack-sources` or `tack-user-sources` is a quarantined candidate with
+`skill-name-reserved`: Tack generates skills with those names.
 
 ## Help
 

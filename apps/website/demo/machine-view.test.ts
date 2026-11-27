@@ -54,6 +54,7 @@ describe("machine view", () => {
     expect(outline(app).filter((line) => line.includes("->"))).toEqual([
       "      commit -> ../../../../skills/commit",
       "      review -> ../../../../skills/review",
+      "      tack-sources -> ../../../../.tack/generated/projects/app/tack-sources",
       "        handbook -> ../../../../../team-docs/handbook",
     ]);
     expect(home.kind === "directory" ? home.children.map((child) => child.name) : []).toEqual([

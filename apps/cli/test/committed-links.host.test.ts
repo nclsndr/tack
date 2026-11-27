@@ -6,6 +6,7 @@ import { runHost } from "./support/host-runner.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { declare, skillText, write } from "./support/source-tree.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
+import { projectSourcesSkillName } from "../src/domain/generated/sources-skill.ts";
 
 const pipe: TerminalContextShape = {
   columns: 200,
@@ -72,6 +73,8 @@ it.layer(LiveTestLayer)("links committed to a repository", (committedIt) => {
         const { at, checkOut, committed, fileSystem, second } = yield* clones();
         yield* checkOut(committed);
         const destinationPath = at("second", ".claude", "skills", "review");
+        // The project's sources skill lives in each machine's state, so no clone commits its link.
+        const sourcesSkill = at("second", ".claude", "skills", projectSourcesSkillName);
 
         const preview = yield* second.json(["sync", "--project", "app"]);
         expect(preview).toMatchObject({
@@ -81,9 +84,12 @@ it.layer(LiveTestLayer)("links committed to a repository", (committedIt) => {
               units: [
                 {
                   adapter: "claude",
-                  actions: [{ _tag: "link-adopt", destinationPath, relativeTarget: committed }],
+                  actions: [
+                    { _tag: "link-adopt", destinationPath, relativeTarget: committed },
+                    { _tag: "link-create", destinationPath: sourcesSkill },
+                  ],
                   conflicts: [],
-                  summary: { adopt: 1, conflict: 0, create: 0 },
+                  summary: { adopt: 1, conflict: 0, create: 1 },
                 },
               ],
             },
@@ -99,7 +105,14 @@ it.layer(LiveTestLayer)("links committed to a repository", (committedIt) => {
           status: "success",
           applied: {
             resources: {
-              units: [{ actions: [{ _tag: "applied", action: { _tag: "link-adopt" } }] }],
+              units: [
+                {
+                  actions: [
+                    { _tag: "applied", action: { _tag: "link-adopt" } },
+                    { _tag: "applied", action: { _tag: "link-create" } },
+                  ],
+                },
+              ],
             },
           },
         });
@@ -109,10 +122,16 @@ it.layer(LiveTestLayer)("links committed to a repository", (committedIt) => {
         });
         expect(yield* second.json(["status", "--project", "app"])).toMatchObject({
           status: "success",
-          result: { destinations: [{ _tag: "matching", destinationPath }] },
+          result: {
+            destinations: [
+              { _tag: "matching", destinationPath },
+              { _tag: "matching", destinationPath: sourcesSkill },
+            ],
+          },
         });
 
-        // The adopted link is Tack's own: deselecting its skill removes it like any other.
+        // The adopted link is Tack's own: deselecting its skill removes it like any other. The
+        // project then links nothing of a source, so its sources skill goes too.
         expect((yield* second.json(["pick", "exclude", "review", "--project", "app"])).status).toBe(
           "success",
         );
@@ -120,7 +139,17 @@ it.layer(LiveTestLayer)("links committed to a repository", (committedIt) => {
           status: "success",
           applied: {
             resources: {
-              units: [{ actions: [{ _tag: "applied", action: { _tag: "link-remove" } }] }],
+              units: [
+                {
+                  actions: [
+                    { _tag: "applied", action: { _tag: "link-remove", destinationPath } },
+                    {
+                      _tag: "applied",
+                      action: { _tag: "link-remove", destinationPath: sourcesSkill },
+                    },
+                  ],
+                },
+              ],
             },
           },
         });
@@ -136,6 +165,7 @@ it.layer(LiveTestLayer)("links committed to a repository", (committedIt) => {
         yield* fileSystem.makeDirectory(at("second", "elsewhere"), { recursive: true });
         yield* checkOut("../../elsewhere");
         const destinationPath = at("second", ".claude", "skills", "review");
+        const sourcesSkill = at("second", ".claude", "skills", projectSourcesSkillName);
 
         const preview = yield* second.json(["sync", "--project", "app"]);
         expect(preview).toMatchObject({
@@ -144,7 +174,7 @@ it.layer(LiveTestLayer)("links committed to a repository", (committedIt) => {
             resources: {
               units: [
                 {
-                  actions: [],
+                  actions: [{ _tag: "link-create", destinationPath: sourcesSkill }],
                   conflicts: [
                     {
                       _tag: "foreign-destination",

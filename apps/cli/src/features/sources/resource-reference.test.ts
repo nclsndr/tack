@@ -6,6 +6,7 @@ import {
   sourceQualifier,
   type ReferenceIndex,
 } from "./resource-reference.ts";
+import { generatedSkillRegistrationId } from "../../domain/generated/sources-skill.ts";
 
 const team = "11111111-1111-4111-8111-111111111111";
 const me = "22222222-2222-4222-8222-222222222222";
@@ -56,6 +57,16 @@ it("keeps a qualifier for a resource the catalog no longer holds, and for an unl
     referenceFor(clashing, { kind: "skill", name: "review", sourceRegistrationId: team }),
   ).toBe(`${team}:review`);
   expect(sourceQualifier({}, team)).toBe(team);
+});
+
+it("names a skill Tack generates by its name, which no catalog holds", () => {
+  const generated = {
+    kind: "skill",
+    name: "tack-sources",
+    sourceRegistrationId: generatedSkillRegistrationId,
+  };
+  expect(referenceFor(index, generated)).toBe("tack-sources");
+  expect(sourceQualifier(index, generatedSkillRegistrationId)).toBe("generated");
 });
 
 const catalog = {

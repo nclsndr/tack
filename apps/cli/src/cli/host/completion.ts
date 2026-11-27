@@ -1,6 +1,7 @@
 import { Effect, FileSystem, Path } from "effect";
 import { agentAdapterIds } from "../../domain/agents/agent-adapter.ts";
 import { guideTopics } from "../../domain/guides/guide-schema.ts";
+import { compareCodeUnits } from "../../domain/identity/ordering.ts";
 import type { ResourceKind } from "../../domain/resources/kinds.ts";
 import { catalogSelectableEntries, type Catalog } from "../../domain/sources/catalog-schema.ts";
 import { readInvocationSnapshot } from "../../features/snapshot/command-snapshot.ts";
@@ -216,7 +217,8 @@ const stateValues = Effect.fnUntraced(function* (
 /**
  * The folders (and with `files`, the files) a path being typed can continue with. A leading `~`
  * stands for the home and stays as typed; each folder ends with `/` so Tab can go on into it, and
- * dot entries show only once the word starts with a dot. It fails when the folder cannot be read.
+ * dot entries show only once the word starts with a dot. They come sorted. It fails when the folder
+ * cannot be read.
  */
 export const completePath = Effect.fnUntraced(function* (partial: string, files: boolean) {
   const fileSystem = yield* FileSystem.FileSystem;
@@ -245,7 +247,8 @@ export const completePath = Effect.fnUntraced(function* (partial: string, files:
         Effect.orElseSucceed(() => []),
       ),
   );
-  return entries.flat();
+  // The folder lists its names in whatever order the file system keeps; a completion is sorted.
+  return entries.flat().sort(compareCodeUnits);
 });
 
 const sorted = (values: ReadonlyArray<string>) => [...new Set(values)].sort();

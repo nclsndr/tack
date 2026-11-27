@@ -1110,7 +1110,7 @@ const docsReport = (
 const docsSync = (plan: ReturnType<typeof docsReport>, application?: DocsLinkApplication) =>
   syncOutcome(
     {
-      plan: { docs: [plan], docsPendingRemovals: [] },
+      plan: { docs: [plan], docsPendingRemovals: [], sourcesSkills: [] },
       ...(application === undefined
         ? {}
         : { applied: { resources: undefined, docs: [application], docsPendingRemovals: [] } }),
@@ -1387,6 +1387,7 @@ describe("sync", () => {
         syncOutcome(
           {
             plan: {
+              sourcesSkills: [],
               docs: [
                 docsReport([{ action: "create", evidence: create }]),
                 docsReport([{ action: "create", evidence: other }]),

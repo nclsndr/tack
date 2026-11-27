@@ -24,8 +24,9 @@ _Avoid_: source declaration, resource identity
 **Source declaration**:
 A versioned document authored within a source. It describes source content independently of the
 operator's local registration. The `tack.yaml` at the top of a source is version 1.
-It carries a source label, maintainers, source dependencies and the resource declarations that say
-where each kind of resource lives, and may also publish profiles and bundle support. Source, profile, bundle and local-state
+It carries a source label, a source description, source rules, maintainers, source dependencies and
+the resource declarations that say where each kind of resource lives, and may also publish profiles
+and bundle support. Source, profile, bundle and local-state
 formats are independent. Nothing is a resource unless a declaration covers it. Each `tack.yaml`
 marks the edge of one source: below a source's root, a folder that holds `tack.yaml` and no
 `SKILL.md` belongs to another source, and declarations never merge or inherit across that edge.
@@ -75,6 +76,26 @@ _Avoid_: source ID, registration ID
 A descriptive list of contacts supplied by a source's authors. Tack
 shows it. It never affects identity, selection, delivery, dependency resolution or editing.
 _Avoid_: editors, reviewers, access list
+
+**Source description**:
+One sentence in a source's declaration, `description`, that says what the source holds, so an
+agent can tell sources apart. Tack shows it in the sources skill.
+_Avoid_: summary, about
+
+**Source rules**:
+What a source's authors tell agents about editing it, declared as `rules` in its `tack.yaml`: a
+`description` of when they apply and a `body` that states them. They live in the declaration, never
+in an `AGENTS.md` convention, and Tack inlines them in the sources skill. Like maintainers, they
+grant and refuse nothing: an agent reads and follows them.
+_Avoid_: policy, contribution guide, source instructions
+
+**Sources skill**:
+The skill Tack generates at each sync, in its state directory, never in a source: `tack-sources` for
+a project and `tack-user-sources` for the user. It lists each source with a linked resource in that
+namespace, with its description, real path, maintainers and rules, and Tack links it like a
+selected skill. It is not a resource: no source declares it, no choice selects it, and its names are
+reserved. `status` reports a copy whose text a sync would change as stale.
+_Avoid_: rules skill, source map, generated map
 
 **Source dependency**:
 A source's declaration that its resources may depend on resources from another named source.

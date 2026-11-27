@@ -190,8 +190,9 @@ export const agentWalkthrough: ReadonlyArray<AgentBeat> = [
       {
         kind: "assistant",
         text: [
-          "**Preview:** 11 changes in each project, 7 links and their folders, no conflicts:",
+          "**Preview:** 14 changes in each project, 10 links and their folders, no conflicts:",
           "- `commit` and `review` for Claude Code, Codex and Cursor.",
+          "- `tack-sources` for each agent: Tack writes it to list the sources behind the links and their rules.",
           "- The `release` command for Cursor only: Claude Code and Codex take no commands.",
           "",
           "The links point to paths on this machine, so committed links break for teammates. Apply, and what about Git?",

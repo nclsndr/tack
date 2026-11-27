@@ -79,6 +79,32 @@ resource as undelivered with that reason. After the user pick is removed, the ne
 links the resource into the project again. A resource of another source with the same name is not
 affected.
 
+## The sources skill
+
+Each sync also writes a skill that tells agents which sources stand behind the links, and how to
+edit them. A project gets `tack-sources`; the user's own links get `tack-user-sources`. Tack writes
+each one in its state directory, under `generated/`, never in a source or a project, and links it
+into every enabled adapter's skills folder like a selected skill. A namespace gets one once it links
+at least one skill, command or docs resource of a healthy source, and an enabled adapter links
+skills there.
+
+The skill's description is fixed: it asks an agent to load the skill before it edits any linked
+file. Its body lists each source with a linked resource, by name:
+
+- its `description` from `tack.yaml`, or a line that says it has none;
+- its real path, where the `tack.yaml` is, and its `maintainers`;
+- its `rules`: `rules.description` and the `rules.body` inlined as a quote.
+
+A body over 2,048 bytes is not inlined: the skill names the `tack.yaml` that holds it. Past about
+8 KB in all, the skill points to each `tack.yaml` for its rules, and past that lists one line per
+source. [Source format](./tack-yaml#description-and-rules) describes both keys.
+
+The plan's `sourcesSkills` lists each skill with its `namespace`, its `path`, the hash of its
+`inputs` and its `state`: `current` when the copy on disk is the text sync would write, `stale`
+when a source, a description, maintainers or rules changed since, and `missing`. `--apply` rewrites
+each copy that is not current, then links. Do not edit it: the next sync rewrites it. A source skill
+named `tack-sources` or `tack-user-sources` is quarantined with `skill-name-reserved`.
+
 ## Why a link is removed
 
 A `link-remove` action names why the link goes in `reason`, which the text view prints beside the
@@ -167,7 +193,9 @@ inspect what `tack sync --include-optional` delivers; without it, optional links
 because a plain sync would remove them. Status covers the same targets and links sync acts on: a
 missing or unhealthy project root is reported on its project (`root-missing`, `root-unhealthy`) and
 lists no destinations, and the built-in skill links of a user target with a fixed profile, which
-sync leaves as they are, are not listed. The help of `tack status` says what each link state means
+sync leaves as they are, are not listed. Status also lists each [sources skill](#the-sources-skill) under
+`sourcesSkills`, and one that is `stale` or `missing` makes it partial with `sources-skill-stale`:
+run `tack sync` to rewrite it. The help of `tack status` says what each link state means
 and what to run.
 
 ## Doctor

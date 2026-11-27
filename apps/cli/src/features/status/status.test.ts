@@ -1,3 +1,4 @@
+import { generatedSkillRegistrationId } from "../../domain/generated/sources-skill.ts";
 import { bareSkillText } from "../../../test/support/source-tree.ts";
 import {
   mutateStateFixture,
@@ -222,11 +223,24 @@ it.layer(LiveTestLayer)("read-only status", (statusIt) => {
             { _tag: "project", projectName: "project-b" },
             { _tag: "user" },
           ]);
-          expect(
-            report.destinations
-              .filter((destination) => destination.destinationPath.startsWith(skillDirectory))
-              .map((destination) => destination._tag),
-          ).toEqual([
+          const [sourceDestinations, generatedDestinations] = [false, true].map((generated) =>
+            report.destinations.filter(
+              (destination) =>
+                destination.destinationPath.startsWith(skillDirectory) &&
+                destination.desired.some(
+                  (link) => link.sourceRegistrationId === generatedSkillRegistrationId,
+                ) === generated,
+            ),
+          );
+          // Status plans the sources skill a sync would write and link, and reports it unwritten.
+          expect(generatedDestinations?.map((destination) => destination._tag)).toEqual([
+            "expected-absent",
+          ]);
+          expect(report.sourcesSkills?.map((skill) => [skill.namespace, skill.state])).toEqual([
+            [{ _tag: "project", projectName: "project-a" }, "missing"],
+            [{ _tag: "project", projectName: "project-b" }, "missing"],
+          ]);
+          expect((sourceDestinations ?? []).map((destination) => destination._tag)).toEqual([
             "selection-conflict",
             "matching",
             "drift",

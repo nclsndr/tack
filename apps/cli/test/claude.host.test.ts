@@ -199,7 +199,11 @@ it.layer(LiveTestLayer)("Claude Code adapter", (claudeIt) => {
             "--apply",
           ]),
         );
-        expect(result.diagnostics).toMatchObject([{ code: "link-action-failed" }]);
+        // Both the selected skill and the project's sources skill fail to link.
+        expect(result.diagnostics).toMatchObject([
+          { code: "link-action-failed" },
+          { code: "link-action-failed" },
+        ]);
         expect(yield* fileSystem.readDirectory(skills)).toEqual([]);
       }),
     ),

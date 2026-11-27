@@ -1,4 +1,10 @@
 version: 1
 name: tack
+description: The skills that ship with Tack, for operating it, authoring sources and profiles, and writing docs figures.
+rules:
+  description: Before you edit any built-in skill.
+  body: |
+    Do not edit these skills. They ship with Tack, and the next upgrade replaces them. Report a
+    wrong or missing instruction to the operator instead.
 skills:
   - path: skills

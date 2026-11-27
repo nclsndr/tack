@@ -3,6 +3,7 @@ import {
   SourceIssueSchema,
   SourceLabelIssueSchema,
   SourceRegistrationSchema,
+  SourceRulesSchema,
   SourceWarningSchema,
   type SourceDeclaration,
   type SourceRegistration,
@@ -14,9 +15,14 @@ export type SourceIssue = typeof SourceIssueSchema.Type;
 /** Where a source comes from when the operator did not register it: the release or a bundle. */
 export const sourceOrigin = { origin: Schema.optionalKey(Schema.Literals(["builtin", "bundle"])) };
 
-/** The label, maintainers and dependencies of one registered source, as `source` reports them. */
+/**
+ * The label, description, rules, maintainers and dependencies of one registered source, as
+ * `source` reports them.
+ */
 export const sourceLabelFacts = {
   label: Schema.optionalKey(Schema.String),
+  description: Schema.optionalKey(Schema.String),
+  rules: Schema.optionalKey(SourceRulesSchema),
   labelOrigin: Schema.optionalKey(Schema.Literals(["declared", "derived", "none", "clashing"])),
   maintainers: Schema.optionalKey(Schema.Array(Schema.String)),
   dependsOn: Schema.optionalKey(Schema.Array(Schema.String)),

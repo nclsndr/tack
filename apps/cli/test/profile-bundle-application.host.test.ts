@@ -1,3 +1,7 @@
+import {
+  generatedSkillRegistrationId,
+  projectSourcesSkillName,
+} from "../src/domain/generated/sources-skill.ts";
 import { saveProfile } from "../src/features/profiles/profile-save.ts";
 import { relocateSource } from "../src/features/sources/source.ts";
 import { expect, it } from "@effect/vitest";
@@ -162,7 +166,8 @@ it.layer(LiveTestLayer)("bundle application parity and retention", (test) => {
           result.applied?.resources?.units
             .flatMap((unit) => unit.actions)
             .filter((action) => action["_tag"] === "failed"),
-        ).toHaveLength(2);
+          // The two members and the project's sources skill.
+        ).toHaveLength(3);
         const state = yield* readState(options);
         expect(state.data.links).toEqual([]);
         expect(state.data.sources.filter((source) => source.bundle !== undefined)).toHaveLength(1);
@@ -185,6 +190,7 @@ it.layer(LiveTestLayer)("bundle application parity and retention", (test) => {
         expect((yield* fs.readDirectory(path.join(project, ".agents/skills"))).sort()).toEqual([
           "review",
           "style",
+          projectSourcesSkillName,
         ]);
         expect((yield* readState(options)).data.sources).toEqual(state.data.sources);
       }),
@@ -206,7 +212,10 @@ it.layer(LiveTestLayer)("bundle application parity and retention", (test) => {
             0,
           ),
         ).toBeGreaterThan(0);
-        expect((yield* readState(options)).data.links).toEqual([]);
+        // Only the sources skill, which no foreign entry occupies, is linked.
+        expect(
+          (yield* readState(options)).data.links.map((link) => link.resource.sourceRegistrationId),
+        ).toEqual([generatedSkillRegistrationId]);
         const forced = yield* run(runBundleApply(options, { ...request, file, force: true }));
         expect(forced.plan.refused).toBe(false);
         for (const name of ["review", "style"])

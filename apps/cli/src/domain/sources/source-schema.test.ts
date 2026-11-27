@@ -192,3 +192,32 @@ it("names a missing key other than the name", () => {
 it("reports an issue with the whole declaration without a field", () => {
   expect(issuesOf("brain")).toEqual([{ message: expect.stringContaining("Expected object") }]);
 });
+
+it("decodes a source description and its rules", () => {
+  const rules = { description: "Before editing any skill of this source.", body: "Branch first." };
+  const value = { version: 1, name: "handbook", description: "The team handbook.", rules };
+  expect(decode(value)).toEqual({ declaration: value });
+});
+
+it.each([
+  [{ description: "" }, "description", "description: A source description must not be empty."],
+  [{ description: "  " }, "description", "description: A source description must not be empty."],
+  [
+    { rules: { description: "Always.", body: " " } },
+    "rules.body",
+    "rules.body: The rules body must not be empty.",
+  ],
+  [
+    { rules: { description: "", body: "Branch first." } },
+    "rules.description",
+    "rules.description: The rules description must not be empty.",
+  ],
+  [{ rules: { body: "Branch first." } }, "rules.description", 'Missing key "rules.description".'],
+  [
+    { rules: { description: "Always.", body: "Branch first.", when: "x" } },
+    "rules.when",
+    'Unknown key "rules.when". rules takes: description, body.',
+  ],
+])("refuses an unusable description or rules: %j", (change, field, message) => {
+  expect(issuesOf({ version: 1, name: "brain", ...change })).toEqual([{ field, message }]);
+});

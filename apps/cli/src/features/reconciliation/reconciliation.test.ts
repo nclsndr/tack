@@ -601,6 +601,59 @@ it.layer(LiveTestLayer)("reconciliation planning", (planningIt) => {
     ),
   );
 
+  planningIt.effect("links a namespace's generated skill into each of its targets only", () =>
+    Effect.scoped(
+      Effect.gen(function* () {
+        const fileSystem = yield* FileSystem.FileSystem;
+        const path = yield* Path.Path;
+        const root = yield* fileSystem.realPath(
+          yield* fileSystem.makeTempDirectoryScoped({ prefix: "tack-plan-test-" }),
+        );
+        const [main, worktree, other] = ["main", "worktree", "other"].map((name) =>
+          path.join(root, name),
+        );
+        const generated = catalogEntry("tack-sources", path.join(root, "state", "tack-sources"));
+        yield* fileSystem.makeDirectory(generated.directoryPath, { recursive: true });
+        const project = { _tag: "project", projectName: "shop" } as const;
+
+        const plan = yield* planReconciliation({
+          adapters: [agentAdapterDescriptor("claude")],
+          catalogEntries: [],
+          managedLinks: [],
+          namespaces: reconciliationNamespaces(
+            [
+              { ...namespaceResolution(project, []), generated: [generated] },
+              namespaceResolution({ _tag: "project", projectName: "other" }, []),
+            ],
+            [
+              targetProject(main!, "shop"),
+              targetProject(worktree!, "shop"),
+              targetProject(other!, "other"),
+            ],
+          ),
+          // The user's link of the same address never takes the project's generated skill away.
+          userLinks: [{ adapter: "claude", address: generated.address }],
+        });
+
+        expect(
+          plan.units.map((unit) => [
+            unit.target.canonicalPath,
+            unit.actions.flatMap((action) =>
+              action._tag === "link-create" ? [action.evidence.address.name] : [],
+            ),
+          ]),
+        ).toEqual([
+          [other, []],
+          [main, ["tack-sources"]],
+          [worktree, ["tack-sources"]],
+        ]);
+        expect(plan.namespaceResolutions).not.toContainEqual(
+          expect.objectContaining({ generated: expect.anything() }),
+        );
+      }),
+    ),
+  );
+
   planningIt.effect.each(["deselected", "removed from its source"] as const)(
     "releases the three adapter links of a skill moved into the repository once it is %s",
     (change) =>

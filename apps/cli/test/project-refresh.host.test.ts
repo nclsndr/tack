@@ -1,3 +1,4 @@
+import { projectSourcesSkillName } from "../src/domain/generated/sources-skill.ts";
 import { skillText } from "./support/source-tree.ts";
 import { pendingRemovalsOf } from "../src/domain/links/link-record-schema.ts";
 import { projectRecords } from "./support/state-fixture.ts";
@@ -346,6 +347,16 @@ it.layer(LiveTestLayer)("project refresh against real Git", (refreshIt) => {
             removals: [
               {
                 actions: [
+                  // The sources skill's link went with the worktree, so only its record is left.
+                  {
+                    _tag: "retire",
+                    destinationPath: path.join(
+                      canonicalFinalRoot,
+                      ".agents",
+                      "skills",
+                      projectSourcesSkillName,
+                    ),
+                  },
                   {
                     _tag: "blocked",
                     destinationPath: destination,

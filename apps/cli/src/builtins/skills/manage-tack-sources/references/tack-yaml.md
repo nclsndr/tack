@@ -56,6 +56,43 @@ A key a `tack.yaml` mapping names twice, anywhere in the file, is refused with
 `declaration-malformed`, which names the key and both of its lines. Keep one of them, or merge two
 lists into one.
 
+## Description and rules
+
+A source tells agents what it holds and how to edit it in two optional keys:
+
+```yaml
+version: 1
+name: team-handbook
+description: The team handbook - deploy, incident and review skills, and the runbooks.
+rules:
+  description: Before you edit any skill or runbook of this source.
+  body: |
+    1. Create a `handbook/` branch before the first edit, never commit on `main`.
+    2. Add a line to `CHANGELOG.md` for every skill you change.
+    3. Open a pull request and name the platform team as reviewer.
+maintainers:
+  - platform-team
+skills:
+  - path: skills
+docs:
+  - name: runbooks
+    path: runbooks
+```
+
+- `description` is one sentence of about 200 characters that names what the source holds, such as
+  its skills or runbooks. An agent picks the right source by it.
+- `rules.description` says when the rules apply, in one sentence. `rules.body` is the rules, in
+  Markdown, addressed to agents. Put first what must happen before the first edit.
+
+`tack sync` writes one `tack-sources` skill per project in Tack's state, never in a source, and
+links it into every enabled agent's skills folder; the user's links get `tack-user-sources`. It
+lists each source with a linked resource: its name, description, real path, maintainers and rules,
+with the body inlined. A body over 2,048 bytes is not inlined: the skill points to the `tack.yaml`,
+and `tack check` warns with `source-rules-long`. A description over 200 characters warns with
+`source-description-long`. Both keys are plain text: an empty one makes the source unhealthy with
+`declaration-schema-invalid`. After an edit, `tack status` reports the skill as stale until the
+next `tack sync`.
+
 ## Entries
 
 The main skill shows the shape of a declaration and the names it produces. This reference holds the

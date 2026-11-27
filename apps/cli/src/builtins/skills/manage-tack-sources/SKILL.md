@@ -23,7 +23,7 @@ the output and preview-before-`--apply` rules that apply here. Read the text vie
 ## Orient before editing
 
 ```sh
-tack source     # each source: label, maintainers, path, health, declarations
+tack source     # each source: label, description, rules, maintainers, path, health, declarations
 tack catalog    # resources, and issues that need a fix
 tack catalog --details   # also the declared path that found each resource
 ```
@@ -38,9 +38,9 @@ has problems: read `issues` and every declaration's `problems` before you report
 
 ## Before changing a source
 
-Read `maintainers` and follow the source's contribution instructions. `maintainers` is descriptive
-contact information, not an edit permission or a resource grouping. Work within the operator's
-requested scope, using the source's normal review process where applicable.
+Read `maintainers` and `rules` and follow them: the generated `tack-sources` skill (`tack-user-sources`
+for the user) lists both for each linked source. `maintainers` is descriptive contact information,
+not an edit permission or a resource grouping. Work within the operator's requested scope.
 
 ## Declare resources in `tack.yaml`
 
@@ -77,7 +77,7 @@ folders between a declared folder and a resource, organize a source and never ch
   comes from the folder. `tack` and generated `bundle-` labels are reserved, a registration-ID-shaped
   value is rejected, and two sources with one label cannot qualify a reference until one changes.
   Picks store IDs, never labels.
-- `maintainers` lists descriptive contacts. Tack shows it and never interprets it.
+- `maintainers` lists descriptive contacts. Tack shows it and never interprets it. `description` and `rules` say what the source holds and how agents edit it ([details](references/tack-yaml.md#description-and-rules)).
 - `depends-on` lists labels of other sources.
 - `skills`, `commands` and `context` entries have a `path` to a folder or one resource, `.` for the
   source folder (never for `context`), and optional `include` and `exclude` globs that need a
@@ -170,25 +170,25 @@ other.
 
 ## Fix catalog issues
 
-| Issue                                                                                            | Fix                                                                                                                                                                                                                      |
-| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `declaration-resources-undeclared`                                                               | The source has no resource key and a folder named for a resource kind. Add the entries its message names, or an empty list.                                                                                              |
-| `declaration-entry-invalid`                                                                      | The entry does not decode: an unknown key, a wrong type, a missing `path`, or patterns on one skill, command or file. Other entries still load.                                                                          |
-| `declaration-path-invalid`                                                                       | The `path` is empty, absolute, has a `.` or `..` segment, an empty segment or a backslash, names the source's own `tack.yaml`, or is a `context` entry `.`.                                                              |
-| `declaration-path-outside-source`                                                                | The path resolves outside the source, or to the source folder by another path than `.`. Point it inside, or move the content into the source.                                                                            |
-| `declaration-path-missing`                                                                       | Nothing exists at the path. Create it, fix the spelling, or delete the entry.                                                                                                                                            |
-| `declaration-path-wrong-type`                                                                    | The path has the wrong type: a folder for `skills` and `docs`, a folder or file for `context`, a folder or `.md` file for `commands`, a `.ts` file for `scripts`.                                                        |
-| `declaration-path-overlap`                                                                       | Two skills, commands, context, scripts or docs entries, or a profile publication and one of them, are equal or nested; every one is refused. Add the `exclude` the message names to the outer folder entry, or keep one. |
-| `declaration-reaches-source`                                                                     | The path is or lies inside a folder with its own `tack.yaml`, or a walk met one and skipped it. Declare those resources there, add `exclude: ["FOLDER/**"]`, or delete the nested `tack.yaml`.                           |
-| `source-is-one-skill`, `declaration-inside-source`                                               | A source with a skills entry `.` holds `SKILL.md`: register its parent. `source add` refused a `tack.yaml` another source reaches: exclude the folder there first.                                                       |
-| `declaration-invalid`                                                                            | A `docs` key that is not a list, or a docs entry with an unknown key or a bad `name`. Fix it as the message says.                                                                                                        |
-| `resource-boundary-violation`                                                                    | A file or link inside a declared folder resolves outside it. Declare the real path, or remove the link.                                                                                                                  |
-| `skill-name-mismatch`, `skill-frontmatter-*`, `skill-metadata-*`, `command-*`                    | Fix the frontmatter the message names. The skill folder name must equal `name`.                                                                                                                                          |
-| `source-declares-no-resources`: warning                                                          | Empty but healthy: add a resource key, `docs`, or an empty list. No exit code changes.                                                                                                                                   |
-| Dependency source undeclared or ambiguous                                                        | Add the label to `depends-on`, or add `source: LABEL` to the edge.                                                                                                                                                       |
-| Declared source not registered, or unhealthy                                                     | `tack source add` for it, or remove the label from `depends-on`. An unhealthy one: `tack check` the path the blocker names.                                                                                              |
-| `skill-address-duplicate` or `resource-address-duplicate`: one kind and name twice in one source | Both are quarantined, whichever declarations found them. Rename or delete one. Only the same name in different sources is allowed.                                                                                       |
-| Source label reserved or duplicated                                                              | Change `name`. Two sources with one label cannot qualify a reference until one changes.                                                                                                                                  |
+| Issue                                                                                                | Fix                                                                                                                                                                                                                      |
+| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `declaration-resources-undeclared`                                                                   | The source has no resource key and a folder named for a resource kind. Add the entries its message names, or an empty list.                                                                                              |
+| `declaration-entry-invalid`                                                                          | The entry does not decode: an unknown key, a wrong type, a missing `path`, or patterns on one skill, command or file. Other entries still load.                                                                          |
+| `declaration-path-invalid`                                                                           | The `path` is empty, absolute, has a `.` or `..` segment, an empty segment or a backslash, names the source's own `tack.yaml`, or is a `context` entry `.`.                                                              |
+| `declaration-path-outside-source`                                                                    | The path resolves outside the source, or to the source folder by another path than `.`. Point it inside, or move the content into the source.                                                                            |
+| `declaration-path-missing`                                                                           | Nothing exists at the path. Create it, fix the spelling, or delete the entry.                                                                                                                                            |
+| `declaration-path-wrong-type`                                                                        | The path has the wrong type: a folder for `skills` and `docs`, a folder or file for `context`, a folder or `.md` file for `commands`, a `.ts` file for `scripts`.                                                        |
+| `declaration-path-overlap`                                                                           | Two skills, commands, context, scripts or docs entries, or a profile publication and one of them, are equal or nested; every one is refused. Add the `exclude` the message names to the outer folder entry, or keep one. |
+| `declaration-reaches-source`                                                                         | The path is or lies inside a folder with its own `tack.yaml`, or a walk met one and skipped it. Declare those resources there, add `exclude: ["FOLDER/**"]`, or delete the nested `tack.yaml`.                           |
+| `source-is-one-skill`, `declaration-inside-source`                                                   | A source with a skills entry `.` holds `SKILL.md`: register its parent. `source add` refused a `tack.yaml` another source reaches: exclude the folder there first.                                                       |
+| `declaration-invalid`                                                                                | A `docs` key that is not a list, or a docs entry with an unknown key or a bad `name`. Fix it as the message says.                                                                                                        |
+| `resource-boundary-violation`                                                                        | A file or link inside a declared folder resolves outside it. Declare the real path, or remove the link.                                                                                                                  |
+| `skill-name-mismatch`, `skill-name-reserved`, `skill-frontmatter-*`, `skill-metadata-*`, `command-*` | Fix the frontmatter the message names. The skill folder name must equal `name`; `tack-sources` and `tack-user-sources` are reserved for the skills Tack generates.                                                       |
+| `source-declares-no-resources`, `source-description-long`, `source-rules-long`: warnings             | Empty but healthy: add a resource key, `docs`, or an empty list. A long `description` or `rules.body`: keep 200 characters or 2,048 bytes, which the `tack-sources` skill inlines. No exit code changes.                 |
+| Dependency source undeclared or ambiguous                                                            | Add the label to `depends-on`, or add `source: LABEL` to the edge.                                                                                                                                                       |
+| Declared source not registered, or unhealthy                                                         | `tack source add` for it, or remove the label from `depends-on`. An unhealthy one: `tack check` the path the blocker names.                                                                                              |
+| `skill-address-duplicate` or `resource-address-duplicate`: one kind and name twice in one source     | Both are quarantined, whichever declarations found them. Rename or delete one. Only the same name in different sources is allowed.                                                                                       |
+| Source label reserved or duplicated                                                                  | Change `name`. Two sources with one label cannot qualify a reference until one changes.                                                                                                                                  |
 
 Bundle-provided sources are verified retained projections, identified separately from authored
 sources and release-owned built-ins. They contribute no ordinary defaults to unrelated contexts;

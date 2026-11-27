@@ -122,7 +122,8 @@ it.layer(LiveTestLayer)("shortest references in human output", (referencesIt) =>
     Effect.gen(function* () {
       const { tack } = yield* fixture;
       const output = yield* tack(["sync", "--project", "workspace"]);
-      expect(output).toMatch(
+      // A long cell wraps onto an indented line, so the row is matched with its wraps joined.
+      expect(output.replace(/\n {3,}/g, " ")).toMatch(
         /collision +review +needed by skill (me:review, skill team:review|team:review, skill me:review)/,
       );
       // The two candidates come in registration order, which is not a property under test.

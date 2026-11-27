@@ -15,6 +15,8 @@ import {
   reconciliationResultOf,
 } from "./reconciliation-application.ts";
 import { runPreparedBatch } from "../links/link-engine.ts";
+import type { SourcesSkillReport } from "../../domain/generated/sources-skill-schema.ts";
+import { observeSourcesSkill, writeSourcesSkills } from "./sources-skill.ts";
 import type { ReconciliationApplyResult } from "../../domain/reconciliation/reconciliation-application-schema.ts";
 import {
   prepareReconciliation,
@@ -25,6 +27,8 @@ import {
 /** The resource and docs plans one sync computes from a single state snapshot. */
 export type SyncPlan = {
   readonly resources?: PreparedReconciliation;
+  /** Each planned sources skill and whether its copy is current; none when no links are planned. */
+  readonly sourcesSkills: ReadonlyArray<SourcesSkillReport>;
   readonly docs: ReadonlyArray<DocsLinkPlan>;
   /** The docs mounts of the synced projects whose removal is owed when the plan was made. */
   readonly docsPendingRemovals: ReadonlyArray<DocsPendingRemoval>;
@@ -74,8 +78,12 @@ export const planSync = Effect.fnUntraced(function* (
             planDocsLinks(snapshot.state, catalog, { projectName }),
           ),
       );
+  const linksPlanned = options.adapterOverride?.length !== 0;
   return {
-    ...(options.adapterOverride?.length === 0 ? {} : { resources: prepared }),
+    ...(linksPlanned ? { resources: prepared } : {}),
+    sourcesSkills: linksPlanned
+      ? yield* Effect.forEach(prepared.sourcesSkills.skills, observeSourcesSkill)
+      : [],
     docs,
     docsPendingRemovals: docsPendingOf(
       snapshot.state.data.links,
@@ -98,30 +106,38 @@ export const runSyncCommand = Effect.fn("reconciliation.runSyncCommand")(functio
   });
 });
 
-/** Applies a sync plan through the shared prepared-batch writer. */
+/**
+ * Applies a sync plan: writes the sources skills first, so a link created next never points at
+ * nothing, then links through the shared prepared-batch writer.
+ */
 export const applySyncPlan = (writer: StateCheckpointWriter, plan: SyncPlan) =>
-  runPreparedBatch(
-    writer,
-    [
-      ...(plan.resources === undefined ? [] : preparedBatchOfPlan(plan.resources.plan)),
-      ...docsPreparedBatchOf(plan.docs),
-    ],
-    (ledger) =>
-      Effect.gen(function* () {
-        const resources =
-          plan.resources === undefined
-            ? undefined
-            : reconciliationResultOf(
-                plan.resources.plan,
-                yield* applyReconciliationUnits(ledger, plan.resources.plan),
-              );
-        const docs: DocsLinkApplication[] = [];
-        for (const entry of plan.docs) docs.push(yield* applyDocsActions(ledger, entry));
-        // A sync never owes or settles a removal, so what it reports is what the plan found.
-        return {
-          resources,
-          docs,
-          docsPendingRemovals: plan.docsPendingRemovals,
-        } satisfies SyncApplication;
-      }),
+  Effect.andThen(
+    plan.resources === undefined
+      ? Effect.void
+      : writeSourcesSkills(plan.resources.sourcesSkills, plan.sourcesSkills),
+    runPreparedBatch(
+      writer,
+      [
+        ...(plan.resources === undefined ? [] : preparedBatchOfPlan(plan.resources.plan)),
+        ...docsPreparedBatchOf(plan.docs),
+      ],
+      (ledger) =>
+        Effect.gen(function* () {
+          const resources =
+            plan.resources === undefined
+              ? undefined
+              : reconciliationResultOf(
+                  plan.resources.plan,
+                  yield* applyReconciliationUnits(ledger, plan.resources.plan),
+                );
+          const docs: DocsLinkApplication[] = [];
+          for (const entry of plan.docs) docs.push(yield* applyDocsActions(ledger, entry));
+          // A sync never owes or settles a removal, so what it reports is what the plan found.
+          return {
+            resources,
+            docs,
+            docsPendingRemovals: plan.docsPendingRemovals,
+          } satisfies SyncApplication;
+        }),
+    ),
   );

@@ -458,7 +458,8 @@ it.layer(LiveTestLayer)("explore write sessions", (test) => {
       yield* runEditing(options, terminal);
       const frames = yield* framesOf(displayed);
       expect(frames).toContain("saved   include skill source:review");
-      expect(frames).toContain("2 applied, 0 failed");
+      // The skills folder, the skill, and the user's sources skill that now lists its source.
+      expect(frames).toContain("3 applied, 0 failed");
       expect((yield* readState(options)).data.userChoices).toMatchObject([
         {
           address: expect.objectContaining({ kind: "skill", name: "review" }),
@@ -497,7 +498,8 @@ it.layer(LiveTestLayer)("explore write sessions", (test) => {
         input("q"),
       ]);
       yield* runEditing(options, terminal);
-      expect(yield* framesOf(displayed)).toContain("claude → user: 1 to release");
+      // The user then links nothing of a source, so its sources skill is removed beside it.
+      expect(yield* framesOf(displayed)).toContain("claude → user: 1 to remove, 1 to release");
     }),
   );
 
@@ -585,7 +587,7 @@ it.layer(LiveTestLayer)("explore write sessions", (test) => {
       const frames = yield* framesOf(confirmed.displayed);
       expect(frames).toContain("saved   include skill source:review");
       expect(frames).toContain("saved   attach docs handbook");
-      expect(frames).toContain("skills  2 applied, 0 failed");
+      expect(frames).toContain("skills  3 applied, 0 failed");
       expect(frames).toContain("docs    1 applied, 0 not applied");
       const state = yield* readState(options);
       expect(state.data.projects[0]?.choices).toMatchObject([

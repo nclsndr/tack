@@ -1,3 +1,4 @@
+import { projectSourcesSkillName } from "../src/domain/generated/sources-skill.ts";
 import { skillText } from "./support/source-tree.ts";
 import { builtinSkillLockReason } from "../src/domain/choices/builtin.ts";
 import { makeExplorerDestinations } from "../src/cli/explorer/profile-editor.ts";
@@ -221,7 +222,7 @@ it.layer(LiveTestLayer)("release-owned profile members", (test) => {
         expect(sync.plan.resources?.causes).toEqual([]);
         expect(
           (yield* f.fs.readDirectory(f.path.join(f.project, ".agents/skills"))).sort(),
-        ).toEqual(["review", "style"]);
+        ).toEqual(["review", "style", projectSourcesSkillName]);
       }),
   );
   test.effect(

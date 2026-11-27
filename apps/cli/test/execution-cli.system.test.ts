@@ -1,3 +1,4 @@
+import { generatedSkillRegistrationId } from "../src/domain/generated/sources-skill.ts";
 import { encodeStateFixture } from "./support/state-fixture.ts";
 import { spawn } from "node:child_process";
 import {
@@ -816,12 +817,20 @@ it("round-trips normalized ownership across CLI restarts, roots, adapters, docs,
       );
     const installed = await readDisk();
     const agentLinks = (links: typeof installed.data.links) =>
-      links.filter((link) => link.delivery._tag === "agent");
+      links.filter(
+        (link) =>
+          link.delivery._tag === "agent" &&
+          link.resource.sourceRegistrationId !== generatedSkillRegistrationId,
+      );
+    const sourcesSkillLinks = (links: typeof installed.data.links) =>
+      links.filter((link) => link.resource.sourceRegistrationId === generatedSkillRegistrationId);
     const docsLinks = (links: typeof installed.data.links) =>
       links.filter((link) => link.delivery._tag === "docs");
-    // One ledger holds the four agent links and the two docs mounts.
-    expect(installed.data.links).toHaveLength(6);
+    // One ledger holds the four agent links, the four links of the project's sources skill and the
+    // two docs mounts.
+    expect(installed.data.links).toHaveLength(10);
     expect(agentLinks(installed.data.links)).toHaveLength(4);
+    expect(sourcesSkillLinks(installed.data.links)).toHaveLength(4);
     expect(agentLinks(installed.data.links)).toMatchObject(
       roots.flatMap((root) =>
         ["codex", "cursor"].map((adapter) => ({

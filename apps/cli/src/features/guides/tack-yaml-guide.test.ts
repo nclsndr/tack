@@ -65,9 +65,25 @@ const tables: ReadonlyArray<Table> = [
   {
     heading: "## Keys",
     minimal: { version: 1, name: "brain" },
-    sample: (key: string) => (key === "version" ? 2 : []),
+    sample: (key: string) =>
+      key === "version"
+        ? 2
+        : key === "description"
+          ? "The team handbook."
+          : key === "rules"
+            ? { description: "Always.", body: "Branch first." }
+            : [],
     refused: (value: unknown) =>
       declarationFieldIssues(value).flatMap((issue) => issue.field ?? []),
+  },
+  {
+    heading: "### Rules",
+    minimal: { description: "Always.", body: "Branch first." },
+    sample: () => "x",
+    refused: (value: unknown) =>
+      declarationFieldIssues({ version: 1, name: "brain", rules: value }).flatMap(
+        (issue) => issue.field?.replace(/^rules\./, "") ?? [],
+      ),
   },
   {
     heading: "### Folder entries",

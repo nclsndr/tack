@@ -1,3 +1,4 @@
+import { projectSourcesSkillName } from "../src/domain/generated/sources-skill.ts";
 import { fakeGit } from "./support/fake-git.ts";
 import { skillText } from "./support/source-tree.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
@@ -222,11 +223,16 @@ it.layer(LiveTestLayer)("structured partial causes", (causesIt) => {
         const preview = yield* tack(sync);
 
         expect(codes(preview)).toContain(code);
+        // The project then links nothing of a healthy source, so its sources skill goes too.
         expect(preview.plan).toMatchObject({
           resources: {
             units: [
               {
                 actions: [
+                  {
+                    _tag: "link-remove",
+                    evidence: { address: { name: projectSourcesSkillName } },
+                  },
                   { _tag: "link-remove", evidence: { address: { name: "valid" } }, reason },
                 ],
               },

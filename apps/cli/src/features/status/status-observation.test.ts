@@ -7,6 +7,7 @@ import { initializeState } from "../../services/state-store.ts";
 import { registerSource } from "../sources/source.ts";
 import { enableAdapters } from "../reconciliation/agent.ts";
 import { runStatus } from "./status.ts";
+import { generatedSkillRegistrationId } from "../../domain/generated/sources-skill.ts";
 
 /**
  * A home whose `.claude/skills` is an alias of `.agents/skills`, and a source in the folder `My Notes`,
@@ -48,8 +49,14 @@ const world = Effect.gen(function* () {
   return { fs, path, root, home, source, options, evidenceFor };
 });
 
+/** The destinations of the `valid` skill, without the sources skill linked beside it. */
+const sourceDestinations = (report: Effect.Success<ReturnType<typeof runStatus>>) =>
+  report.destinations.filter((destination) =>
+    destination.desired.every((link) => link.sourceRegistrationId !== generatedSkillRegistrationId),
+  );
+
 const tagsOf = (report: Effect.Success<ReturnType<typeof runStatus>>) =>
-  report.destinations.map((destination) => [
+  sourceDestinations(report).map((destination) => [
     destination.adapter,
     destination._tag,
     destination.sharing?.role,
@@ -129,10 +136,9 @@ it.layer(LiveTestLayer)("status observation", (test) => {
         ["codex", "expected-absent", "shared"],
         ["claude", "expected-absent", "writer"],
       ]);
-      expect(report.destinations.map((destination) => destination.evidence?.adapter)).toEqual([
-        "codex",
-        "claude",
-      ]);
+      expect(
+        sourceDestinations(report).map((destination) => destination.evidence?.adapter),
+      ).toEqual(["codex", "claude"]);
     }),
   );
 

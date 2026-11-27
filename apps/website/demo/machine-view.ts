@@ -63,10 +63,16 @@ export const treeOf = (volume: MemoryVolume, path: string, name = path): TreeNod
 const isDocsMount = (volume: MemoryVolume, path: string) =>
   path.endsWith("/.tack") && volume.exists(`${path}/docs`);
 
-/** Every link in the tree, with the real entry it reaches; dangling links are left out. */
+/**
+ * Every link in the tree, with the real entry it reaches. A dangling link is left out, and so is a
+ * link into Tack's own state, such as the generated `tack-sources` skill: the tree hides that
+ * state, so the link reaches nothing it shows.
+ */
 export const linkEdges = (node: TreeNode): ReadonlyArray<LinkEdge> => {
   if (node.kind === "link")
-    return node.resolved === undefined ? [] : [{ from: node.path, to: node.resolved }];
+    return node.resolved === undefined || node.resolved.includes("/.tack/")
+      ? []
+      : [{ from: node.path, to: node.resolved }];
   return node.kind === "directory" ? node.children.flatMap(linkEdges) : [];
 };
 

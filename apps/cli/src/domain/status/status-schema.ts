@@ -1,3 +1,4 @@
+import { SourcesSkillReportSchema } from "../generated/sources-skill-schema.ts";
 import { ProfileDeliverySchema } from "../profiles/profile-delivery.ts";
 import { ProfileApplicationSchema } from "../state/profile-application-schema.ts";
 import { Schema, Struct } from "effect";
@@ -298,6 +299,11 @@ export const StatusReportSchema = Schema.Struct({
   selection: ReconciliationSelectionSchema,
   scope: StatusScopeSchema,
   sources: Schema.Array(StatusSourceSchema),
+  /**
+   * The sources skill of each reported namespace that links a source, and whether its copy is the
+   * one a sync would write now; absent when there is none.
+   */
+  sourcesSkills: Schema.optionalKey(Schema.Array(SourcesSkillReportSchema)),
   stateDirectory: CanonicalPathSchema,
   /**
    * The excludes of the reported projects that hide nothing, because the user namespace links their

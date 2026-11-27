@@ -156,6 +156,10 @@ export type PartialCause =
       readonly subject: { readonly destinationPaths: ReadonlyArray<string> };
     }
   | {
+      readonly code: "sources-skill-stale";
+      readonly subject: { readonly namespace: Namespace; readonly path: string };
+    }
+  | {
       readonly code: "removal-blocked" | "removal-failed" | "removal-skipped";
       readonly subject: { readonly destinationPath: string; readonly reason: string };
     };

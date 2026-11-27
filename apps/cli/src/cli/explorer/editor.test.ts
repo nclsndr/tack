@@ -93,7 +93,8 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
       expect(yield* fs.exists(userLink)).toBe(true);
 
       const preview = yield* editor.preview([exclude]);
-      expect(preview).toContain("claude → user: 1 to remove");
+      // The user then links nothing of the source, so its sources skill is unlinked too.
+      expect(preview).toContain("claude → user: 2 to remove");
       expect(preview).toContain(
         "  unlink      .claude/skills/review  skill source:review (deselected)",
       );
@@ -317,7 +318,8 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
       yield* user.editor.apply([{ kind: "choice", address: user.review, decision: "include" }]);
       const { editor } = yield* editorFor({ _tag: "project", projectName: "demo" });
       const preview = yield* editor.preview([]);
-      expect(preview).toContain("claude → demo: 1 linked for the user");
+      // The project still links its own sources skill, which lists the source of the skipped skill.
+      expect(preview).toContain("claude → demo: 1 to link, 1 linked for the user");
       expect(preview).toContain("  skip        skill source:review (linked for the user)");
     }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
   );
@@ -398,7 +400,8 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
       const preview = yield* editor.preview([
         { kind: "choice", address: review, decision: "include" },
       ]);
-      expect(preview).toContain("claude → user: 1 to adopt");
+      // The sources skill is linked beside the adopted link.
+      expect(preview).toContain("claude → user: 1 to link, 1 to adopt");
       expect(preview).toContain(
         "  adopt       .claude/skills/review  skill source:review (already linked)",
       );
@@ -414,7 +417,8 @@ it.layer(LiveTestLayer)("explorer editor", (test) => {
       const preview = yield* editor.preview([
         { kind: "choice", address: review, decision: "exclude" },
       ]);
-      expect(preview).toContain("claude → user: 1 to forget");
+      // The user then links nothing of the source, so its sources skill is unlinked.
+      expect(preview).toContain("claude → user: 1 to remove, 1 to forget");
       expect(preview).toContain("  forget      .claude/skills/review  record only");
     }).pipe(Effect.provideService(Git, fakeGit("/tmp", []))),
   );

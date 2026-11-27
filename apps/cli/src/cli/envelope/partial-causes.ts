@@ -62,6 +62,7 @@ export const partialCauseRegistry: { readonly [K in PartialCauseCode]: string } 
   "root-unhealthy": "A registered project root cannot be used.",
   "selection-collision": "Two or more selected resources need the same destination name.",
   "source-unhealthy": "A registered source is unhealthy, so its resources are unavailable.",
+  "sources-skill-stale": `The tack-sources skill Tack generated is missing or no longer matches its sources. Run \`${commandLine("sync")}\` to rewrite it.`,
   "unresolved-choice": "An include choice names a resource that the catalog cannot provide.",
 };
 

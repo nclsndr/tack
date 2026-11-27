@@ -15,6 +15,10 @@ import { recoverAfterPreflight, runProfileApply } from "../src/features/profiles
 import { runSyncCommand } from "../src/features/reconciliation/sync-command.ts";
 import { withStateCheckpointWriter } from "../src/services/state-store.ts";
 import { setChoice } from "../src/features/choices/choice.ts";
+import {
+  projectSourcesSkillName,
+  userSourcesSkillName,
+} from "../src/domain/generated/sources-skill.ts";
 
 it.layer(LiveTestLayer)("exact profile application", (test) => {
   test.effect("retires fixed intent when its project registration is removed", () =>
@@ -206,6 +210,7 @@ it.layer(LiveTestLayer)("exact profile application", (test) => {
         expect((yield* fs.readDirectory(path.join(project, ".agents/skills"))).sort()).toEqual([
           "review",
           "style",
+          projectSourcesSkillName,
         ]);
         const status = yield* run(
           runStatus(options, { cwd: project, selector: request.namespace }),
@@ -252,6 +257,7 @@ it.layer(LiveTestLayer)("exact profile application", (test) => {
       expect((yield* fs.readDirectory(path.join(project, ".agents/skills"))).sort()).toEqual([
         "review",
         "style",
+        projectSourcesSkillName,
       ]);
     }),
   );
@@ -272,6 +278,7 @@ it.layer(LiveTestLayer)("exact profile application", (test) => {
         expect((yield* fs.readDirectory(path.join(project, ".agents/skills"))).sort()).toEqual([
           "notes",
           "style",
+          projectSourcesSkillName,
         ]);
         const before = yield* readState(options);
         expect((yield* run(runProfileApply(options, request))).plan.refused).toBe(true);
@@ -282,6 +289,7 @@ it.layer(LiveTestLayer)("exact profile application", (test) => {
         expect((yield* fs.readDirectory(path.join(project, ".agents/skills"))).sort()).toEqual([
           "review",
           "style",
+          projectSourcesSkillName,
         ]);
       }),
   );
@@ -323,6 +331,7 @@ it.layer(LiveTestLayer)("exact profile application", (test) => {
       expect((yield* fs.readDirectory(path.join(home, ".agents/skills"))).sort()).toEqual([
         "review",
         "style",
+        userSourcesSkillName,
       ]);
       yield* run(
         runSyncCommand(
@@ -426,6 +435,7 @@ it.layer(LiveTestLayer)("exact profile application", (test) => {
         expect((yield* fs.readDirectory(path.join(project, ".agents/skills"))).sort()).toEqual([
           "review",
           "style",
+          projectSourcesSkillName,
         ]);
         yield* write(
           "source/skills/later/SKILL.md",
@@ -443,6 +453,7 @@ it.layer(LiveTestLayer)("exact profile application", (test) => {
         expect((yield* fs.readDirectory(path.join(project, ".agents/skills"))).sort()).toEqual([
           "review",
           "style",
+          projectSourcesSkillName,
         ]);
         // The fixed application is read back from the one state format.
         const applied = yield* readState(options);

@@ -7,6 +7,7 @@ import {
 } from "../docs/docs-schema.ts";
 import { ReconciliationApplyResultSchema } from "./reconciliation-application-schema.ts";
 import { ReconciliationCommandPlanSchema } from "./reconciliation-schema.ts";
+import { SourcesSkillReportSchema } from "../generated/sources-skill-schema.ts";
 
 /**
  * The flags that narrow or widen what a sync plans, as the request made them; each key is present
@@ -34,6 +35,11 @@ export const SyncPlanSchema = Schema.Struct({
   }),
   /** The docs mounts of the synced projects whose removal is owed; absent when none is. */
   docsPendingRemovals: Schema.optionalKey(DocsPendingRemovalsSchema),
+  /**
+   * The sources skill of each synced namespace that links a source, and whether its copy is
+   * current; applying writes each one that is not, before it links it. Absent when there is none.
+   */
+  sourcesSkills: Schema.optionalKey(Schema.Array(SourcesSkillReportSchema)),
   /** The narrowing flags of the request; absent when it gave none. */
   options: Schema.optionalKey(SyncOptionsSchema),
 });

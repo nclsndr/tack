@@ -165,6 +165,15 @@ that project list it once. The plan unit names it in `linkedForUser`, the text p
 `linked-for-user`; `status` lists it as undelivered with that reason. The plan decides from the
 selection, so removing the user pick links it into the project again on the next project sync.
 A project resource of another source with the same name is still linked.
+Each sync also writes, in Tack's state, a skill that lists the sources the namespace links: one
+`tack-sources` per project, and `tack-user-sources` for the user. For each source with a linked
+skill, command or docs, it gives its description, real path, maintainers and the `rules` of its
+`tack.yaml`, so an agent reads them before it edits a linked file. Sync links it like a selected
+skill into every enabled adapter and lists it in the plan's `sourcesSkills` with its state: `current`,
+`stale` or `missing`. `--apply` rewrites a stale or missing copy before it links it. Never edit it:
+the next sync rewrites it. `status` reports a copy that is stale or missing with
+`sources-skill-stale`, and its Next is the sync that rewrites it. A source skill with either name is
+quarantined with `skill-name-reserved`.
 Apply a preview with the flags that made it: `--apply` alone widens a `--no-adapters`, `--no-docs`,
 `--adapter` or `--include-optional` preview to everything. The plan's `options` echoes the
 `--adapter`, `--require-capability`, `--include-optional` and `--no-docs` it was made with (absent
