@@ -319,9 +319,11 @@ Reader and search never infer unregistered folders.
 
 ## Check authored content
 
-Write files, run `tack check PATH...`, and repeat until clean:
+Write files, run `tack check PATH...`, and repeat until clean. With no path, it checks the current
+folder as `tack check .` does:
 
 ```sh
+tack check
 tack check /sources/tools /sources/helpers
 tack check /sources/tools/profiles/ci.yaml /sources/helpers
 tack check docs/architecture.mdx docs /artifacts/ci.tar.gz
@@ -1313,7 +1315,7 @@ version-1 schema: `name`, optional `depends-on` source names and positive `membe
 resolve only in the owning source; external members use `{ name, source, kind? }`. Required
 resource dependencies expand; defaults, picks and optional dependencies do not.
 
-`tack check SOURCE_PATH [COMPANION_SOURCE...]` checks all its profiles; a profile file can also
+`tack check [SOURCE_PATH] [COMPANION_SOURCE...]` checks all its profiles; a profile file can also
 be passed directly. This reads only files in the authoring scope and reports structure, linkage
 and separate direct/required inventory. In `tack explore`, press `d` and choose a profile under
 Profiles, or a new profile. Save writes only the profile and its publication; pending

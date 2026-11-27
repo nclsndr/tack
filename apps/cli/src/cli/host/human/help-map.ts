@@ -54,7 +54,7 @@ export const operationMap: ReadonlyArray<MapGroup> = [
       },
       {
         operations: ["check"],
-        usage: "check <path>...",
+        usage: "check [path...]",
         mode: "read",
         summary: "check sources, profile files, bundles and docs without state",
       },

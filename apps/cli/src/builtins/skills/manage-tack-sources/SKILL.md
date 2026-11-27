@@ -123,7 +123,7 @@ metadata.
    The preview reports every issue at once with its field and line, then the `tack.yaml` it writes
    and what each entry finds. Show it, ask once, rerun with `--apply` ([declaration creation](references/tack-yaml.md#declaration-creation)).
 3. Edit an existing `tack.yaml` by hand. Run `tack check /absolute/path` with any companion source
-   folders until clean: it reads no state and runs no authored code. Errors exit 1.
+   folders, or a bare `tack check` from inside the source folder, until clean: it reads no state and runs no authored code. Errors exit 1.
 4. With an existing `tack.yaml`, `tack source add /absolute/path` previews the registration: the
    name the source takes, its counts and issues. `--apply` registers it, and sets up state when Tack
    has none. `--config` on such a source fails with `declaration-exists` and writes nothing.
