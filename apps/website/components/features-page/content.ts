@@ -27,8 +27,18 @@ export type Lens = {
   readonly details: ReadonlyArray<Detail>;
 };
 
+/** A part's number, two digits, as the page and its twin number the parts. */
+export const step = (index: number) => String(index + 1).padStart(2, "0");
+
 /** How many features of a part show at once; the rest wait behind "More". */
 export const keyDetails = 3;
+
+/** The page's title and description, for the browser tab, a shared link and `llms.txt`. */
+export const pageMeta = {
+  title: "Tack features: every part, every command",
+  description:
+    "Every Tack feature, by what you care about: sources that host your skills and your team's, every project and worktree, every agent, a fixed set for a CI runner, docs and scripts.",
+} as const;
 
 /** The page's head: the problem Tack solves, and the way to what it does not do yet. */
 export const intro = {

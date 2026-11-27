@@ -2,7 +2,8 @@ import { motion } from "motion/react";
 import { DraftingSheet, InView, settle } from "../landing/drafting-sheet.tsx";
 import { InlineCode, Proof } from "../landing/inline-code.tsx";
 import { Terminal } from "../terminal.tsx";
-import { docsHref, Footer, Header } from "../landing/landing.tsx";
+import { docsHref } from "../landing/content.ts";
+import { Footer, Header } from "../landing/landing.tsx";
 import {
   groundRules,
   intro,
@@ -11,13 +12,11 @@ import {
   install,
   previewFigure,
   sharedAgents,
+  step,
   type Detail,
-  type Lens,
 } from "./content.ts";
 import { lensFigures, wideFigures } from "./figures.tsx";
-
-/** A part's number on the page, two digits, as a drafting sheet numbers its views. */
-const step = (index: number) => String(index + 1).padStart(2, "0");
+import { featuresMarkdown } from "./markdown.ts";
 
 /** The details' delays, so they arrive one after another with shrinking gaps. */
 const detailDelay = (index: number) => 0.04 + Math.min(index, 5) * 0.05;
@@ -290,64 +289,9 @@ function Install() {
   );
 }
 
-/** The Markdown twin of the features page: the same copy, without layout or figures. */
-function FeaturesMarkdown() {
-  const item = (detail: Detail) =>
-    `- **${detail.title}** ${detail.text}${detail.command === undefined ? "" : ` \`${detail.command}\``}`;
-  const shared = `### ${sharedAgents.heading}\n\n${sharedAgents.intro}\n\n| Agent | Folder | Reads it at |\n| --- | --- | --- |\n${sharedAgents.rows
-    .map(
-      (row) =>
-        `| [${row.agent}](${row.href}) | \`${row.folder}\` | ${row.scope}${"note" in row ? `, ${row.note}` : ""} |`,
-    )
-    .join("\n")}`;
-  const lensText = (lens: Lens, index: number) =>
-    `## ${step(index)} · ${lens.name}: ${lens.claim}\n\nFor when: ${lens.when}\n\n${lens.lines.join(" ")}\n\n\`\`\`sh\n${lens.proof}\n\`\`\`\n\n${lens.details.map(item).join("\n")}${lens.id === "agents" ? `\n\n${shared}` : ""}`;
-  return (
-    <>
-      {`# ${intro.heading}
-
-${intro.problem}
-
-[${intro.limitsLink}](#limits)
-
-${lenses.map(lensText).join("\n\n")}
-
-## ${groundRules.label}: ${groundRules.heading}
-
-${previewFigure.caption}
-
-\`\`\`text
-$ ${previewFigure.command}
-${previewFigure.output}
-\`\`\`
-
-${groundRules.rules.map(item).join("\n")}
-
-### ${groundRules.notYetHeading}
-
-${groundRules.notYet.map(item).join("\n")}
-
-### ${groundRules.limitsHeading}
-
-${groundRules.limits.map(item).join("\n")}
-
-## ${install.heading}
-
-${install.text}
-
-\`\`\`sh
-${install.commands.join("\n")}
-\`\`\`
-
-[${install.guide}](${install.guideHref}) · [${install.docs}](${docsHref})
-`}
-    </>
-  );
-}
-
 /** The features page: every Tack feature, in six parts, on the landing's blueprint sheet. */
 export function FeaturesPage() {
-  if (import.meta.env.SSG_MD === true) return <FeaturesMarkdown />;
+  if (import.meta.env.SSG_MD === true) return <>{featuresMarkdown()}</>;
   return (
     <div className="tack-theme-dark landing fp">
       <a href="#main" className="landing-skip">

@@ -29,6 +29,9 @@ export const hero = {
   ],
 } as const;
 
+/** The docs overview, where every page sends a reader for more. */
+export const docsHref = "/docs/";
+
 /** The landing page's title, for the browser tab and for a shared link. */
 export const pageTitle = "Tack: one setup for every agent, project and worktree";
 
