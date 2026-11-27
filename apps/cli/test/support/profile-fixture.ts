@@ -1,6 +1,6 @@
 import { writeUnder, seedSource, profileSourceFiles, bareSkillText } from "./source-tree.ts";
 import { Effect, FileSystem, Path } from "effect";
-import { mutateStateFixture } from "./state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "./state-fixture.ts";
 import { initializeState } from "../../src/services/state-store.ts";
 import { registerSource } from "../../src/features/sources/source.ts";
 import { Git } from "../../src/services/git.ts";
@@ -12,10 +12,7 @@ export const profileFixture = Effect.gen(function* () {
   const home = path.join(root, "home");
   const project = path.join(root, "project");
   const source = path.join(root, "source");
-  const options = {
-    homeDirectory: home,
-    environment: { HOME: home, TACK_STATE_DIR: path.join(home, "state") },
-  };
+  const options = stateOptionsAt(path.join(home, "state"), home);
   yield* fs.makeDirectory(project);
   yield* seedSource(
     source,

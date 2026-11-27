@@ -182,23 +182,6 @@ it.layer(LiveTestLayer)("agent selection", (agentIt) => {
     ),
   );
 
-  agentIt.effect("keeps state enablement independent from environment values", () =>
-    withStateFixture(({ options }) =>
-      Effect.gen(function* () {
-        const result = yield* enableAdapters(
-          {
-            ...options,
-            environment: { ...options.environment, TACK_ADAPTERS: "cursor" },
-          },
-          ["codex"],
-        );
-
-        expect(result.enabledAdapters).toEqual(["codex"]);
-        expect(yield* listEnabledAdapters(options)).toEqual(["codex"]);
-      }),
-    ),
-  );
-
   agentIt.effect("preserves initial state compatibility and schema round trips", () =>
     withStateFixture(({ options }) =>
       Effect.gen(function* () {

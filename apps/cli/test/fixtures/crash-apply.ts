@@ -71,10 +71,7 @@ const program = Effect.gen(function* () {
           process.kill(process.pid, "SIGKILL");
       }),
   } satisfies FileSystem.FileSystem;
-  const options = {
-    environment: { TACK_STATE_DIR: stateDirectory },
-    homeDirectory,
-  };
+  const options = { stateDirectory, homeDirectory };
   const entries = applyCatalogEntries(sourcesDirectory, count);
   const work = Effect.gen(function* () {
     yield* initializeState(options);

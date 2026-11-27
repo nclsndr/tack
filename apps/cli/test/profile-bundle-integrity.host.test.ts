@@ -76,11 +76,7 @@ it.layer(LiveTestLayer)("retained bundle integrity", (test) => {
     () =>
       Effect.gen(function* () {
         const { fs, path, root, options, request, run, file, archive } = yield* bundleFixture;
-        const payload = path.join(
-          options.environment.TACK_STATE_DIR,
-          "bundles",
-          archive.manifest.identity,
-        );
+        const payload = path.join(options.stateDirectory, "bundles", archive.manifest.identity);
         yield* mutateStateFixture(options, (state) => ({
           ...state,
           data: {

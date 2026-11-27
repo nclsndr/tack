@@ -6,6 +6,7 @@ import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { initializeState, type StateOptions } from "../../services/state-store.ts";
 
 import { registerSource } from "./source.ts";
+import { stateOptionsAt } from "../../../test/support/state-fixture.ts";
 
 it.layer(LiveTestLayer)("source resource identity", (test) => {
   test.effect(
@@ -15,10 +16,7 @@ it.layer(LiveTestLayer)("source resource identity", (test) => {
         const fs = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
         const root = yield* fs.makeTempDirectoryScoped({ prefix: "tack-source-identity-" });
-        const options: StateOptions = {
-          environment: { TACK_STATE_DIR: path.join(root, "state") },
-          homeDirectory: root,
-        };
+        const options: StateOptions = stateOptionsAt(path.join(root, "state"), root);
         yield* initializeState(options);
         for (const label of ["team", "me"]) {
           const source = path.join(root, label);

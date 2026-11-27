@@ -281,9 +281,9 @@ export const makeStateStoreService = (
     yield* Effect.onExit(writeAndReplace, () => removeTemporaryState);
   });
 
-  /** Resolves `TACK_STATE_DIR`, falling back to the supplied operator home and `.tack`. */
+  /** Resolves the configured state directory, falling back to the operator home and `.tack`. */
   const resolveStateDirectoryLive = Effect.fnUntraced(function* (options: StateOptions) {
-    const configuredStateDirectory = options.environment["TACK_STATE_DIR"];
+    const configuredStateDirectory = options.stateDirectory;
 
     if (configuredStateDirectory !== undefined) {
       if (configuredStateDirectory.length === 0) {

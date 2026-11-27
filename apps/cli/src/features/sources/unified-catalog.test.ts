@@ -8,6 +8,7 @@ import { LiveTestLayer, provideTestFileSystem } from "../../../test/support/live
 import { initializeState, readState, type StateOptions } from "../../services/state-store.ts";
 import { registerSource, inspectSources } from "./source.ts";
 import { resolveCatalog } from "./catalog.ts";
+import { stateOptionsAt } from "../../../test/support/state-fixture.ts";
 
 const withSource = <A, E, R>(
   use: (fixture: { root: string; options: StateOptions }) => Effect.Effect<A, E, R>,
@@ -17,10 +18,7 @@ const withSource = <A, E, R>(
     const path = yield* Path.Path;
     const temporary = yield* fs.makeTempDirectoryScoped({ prefix: "tack-unified-catalog-" });
     const root = yield* fs.realPath(temporary);
-    const options = {
-      environment: { TACK_STATE_DIR: path.join(root, "state") },
-      homeDirectory: root,
-    };
+    const options = stateOptionsAt(path.join(root, "state"), root);
     yield* initializeState(options);
     yield* fs.writeFileString(path.join(root, "tack.yaml"), "version: 1\nname: shared\n");
     return yield* use({ root, options });

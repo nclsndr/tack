@@ -205,7 +205,7 @@ export const runCli = Effect.fnUntraced(function* () {
                   FileSystem.FileSystem | Path.Path
                 > =
                   route.stateless === true
-                    ? Effect.succeed({ environment: {} })
+                    ? Effect.succeed({})
                     : resolveStateOptions(route, invocation, stateDirectory, noticeCollector.sink);
                 const operation = stateOptions.pipe(
                   Effect.tap((options) => {

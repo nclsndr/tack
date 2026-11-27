@@ -1,6 +1,6 @@
 import { writeUnder, bareSkillText, tackMetadata } from "../../../test/support/source-tree.ts";
 import { managedLinksOf } from "../../domain/links/link-record-schema.ts";
-import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "../../../test/support/state-fixture.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { SecureRandom } from "effect/crypto";
@@ -30,10 +30,7 @@ const agreementFixture = Effect.fnUntraced(function* () {
   const source = path.join(root, "source");
   const workspace = path.join(root, "workspace");
   const anchor = path.join(root, "anchor");
-  const options: StateOptions = {
-    environment: { TACK_STATE_DIR: path.join(root, "state") },
-    homeDirectory: home,
-  };
+  const options: StateOptions = stateOptionsAt(path.join(root, "state"), home);
   const write = writeUnder(source);
   yield* Effect.forEach([home, workspace, anchor], (directory) =>
     fileSystem.makeDirectory(directory, { recursive: true }),

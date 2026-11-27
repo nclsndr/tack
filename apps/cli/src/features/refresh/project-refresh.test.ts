@@ -163,7 +163,7 @@ const withRefreshFixture = <A, E, R>(
     const path = yield* Path.Path;
     const root = yield* fileSystem.makeTempDirectoryScoped({ prefix: "tack-refresh-test-" });
     const options = {
-      environment: { TACK_STATE_DIR: path.join(root, "state") },
+      stateDirectory: path.join(root, "state"),
       homeDirectory: path.join(root, "home"),
     } satisfies StateOptions;
     yield* initializeState(options);
@@ -418,7 +418,7 @@ it.layer(LiveTestLayer)("project worktree refresh planning", (refreshIt) => {
             projects: [{ gitCommonDirectory: anchor, name: "project", roots: [kept, missingPath] }],
           },
         }));
-        const statePath = path.join(options.environment["TACK_STATE_DIR"] ?? "", "state.json");
+        const statePath = path.join(options.stateDirectory ?? "", "state.json");
         const before = yield* fileSystem.readFileString(statePath);
         const result = yield* appliedRefresh(
           options,
@@ -699,7 +699,7 @@ it.layer(LiveTestLayer)("project worktree refresh planning", (refreshIt) => {
           },
         }));
         const git = fakeGit(anchor, [{ path: existing }, { path: newRoot }]);
-        const statePath = path.join(options.environment["TACK_STATE_DIR"] ?? "", "state.json");
+        const statePath = path.join(options.stateDirectory ?? "", "state.json");
         const before = yield* fileSystem.readFileString(statePath);
         const dryRun = yield* runProjectRefreshCommand(options, {
           apply: false,
@@ -868,7 +868,7 @@ it.layer(LiveTestLayer)("project worktree refresh planning", (refreshIt) => {
             projects: [{ gitCommonDirectory: anchor, name: "project", roots: [missingPath] }],
           },
         }));
-        const statePath = path.join(options.environment["TACK_STATE_DIR"] ?? "", "state.json");
+        const statePath = path.join(options.stateDirectory ?? "", "state.json");
         const before = yield* fileSystem.readFileString(statePath);
 
         const error = yield* Effect.flip(previewRefresh(options, fakeGit(anchor, [])));

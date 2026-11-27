@@ -4,7 +4,7 @@ import { expect, it } from "@effect/vitest";
 import { Effect, PlatformError } from "effect";
 import { LiveTestLayer, provideTestFileSystem } from "./support/live-test-layer.ts";
 import { bundleFixture } from "./support/bundle-fixture.ts";
-import { mutateStateFixture } from "./support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "./support/state-fixture.ts";
 import { runBundleApply } from "../src/features/profiles/bundle-apply.ts";
 import { runBundleExport } from "../src/features/profiles/bundle-export.ts";
 import { readState } from "../src/services/state-store.ts";
@@ -119,17 +119,12 @@ it.layer(LiveTestLayer)("bundle application parity and retention", (test) => {
           (yield* run(runBundleApply(options, { ...user, force: true }))).plan.findings[0]?.code,
         ).toBe("profile-target-boundary");
         expect(yield* readState(options)).toEqual(before);
-        expect(yield* fs.exists(path.join(options.environment.TACK_STATE_DIR, "bundles"))).toBe(
-          false,
-        );
+        expect(yield* fs.exists(path.join(options.stateDirectory, "bundles"))).toBe(false);
         yield* fs.rename(path.join(home, ".agents"), path.join(home, "redirected-agents"));
         const applied = yield* run(runBundleApply(options, user));
         expect(applied.plan.refused, JSON.stringify(applied.plan.findings)).toBe(false);
         expect(yield* fs.exists(path.join(home, ".agents/skills/review"))).toBe(true);
-        const other = {
-          homeDirectory: ordinary,
-          environment: { HOME: ordinary, TACK_STATE_DIR: options.environment.TACK_STATE_DIR },
-        };
+        const other = stateOptionsAt(options.stateDirectory, ordinary);
         const sync = yield* run(
           runSyncCommand(other, {
             apply: true,

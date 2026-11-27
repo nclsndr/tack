@@ -54,7 +54,7 @@ const observeProfileTarget = Effect.fnUntraced(function* (
   } else {
     const ordinaryHome =
       options.homeDirectory === undefined ? undefined : yield* canonical(options.homeDirectory);
-    const stateDirectory = options.environment["TACK_STATE_DIR"];
+    const stateDirectory = options.stateDirectory;
     const stateRoot = stateDirectory === undefined ? undefined : yield* canonical(stateDirectory);
     if (
       home === undefined ||

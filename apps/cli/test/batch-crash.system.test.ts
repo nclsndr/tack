@@ -7,13 +7,13 @@ import {
   planReconciliation,
   reconciliationNamespaces,
 } from "../src/features/reconciliation/reconciliation.ts";
-import { initializeState, readState, type StateOptions } from "../src/services/state-store.ts";
+import { initializeState, readState } from "../src/services/state-store.ts";
 import { type State } from "../src/domain/state/state-schema.ts";
 import { managedLinksOf, pendingRemovalsOf } from "../src/domain/links/link-record-schema.ts";
 import type { ManagedLinkEvidence } from "../src/domain/links/managed-link-schema.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
 import { repositoryRoot, tackEnvironment, type TackIsolation } from "./support/tack-process.ts";
-import { mutateStateFixture } from "./support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "./support/state-fixture.ts";
 import { retryPendingRemovals } from "./support/removal.ts";
 import { planAndApplyReconciliation } from "./support/reconciliation.ts";
 import { applyCatalogEntries, crashApplyRegistrationId } from "./support/crash-apply-catalog.ts";
@@ -129,10 +129,7 @@ it.layer(LiveTestLayer)("a killed apply converges on the next writer", (crashIt)
           const home = path.join(world, variant.name, "home");
           const stateDirectory = path.join(world, variant.name, "state");
           yield* fileSystem.makeDirectory(home, { recursive: true });
-          const options = {
-            environment: { TACK_STATE_DIR: stateDirectory },
-            homeDirectory: home,
-          } satisfies StateOptions;
+          const options = stateOptionsAt(stateDirectory, home);
           const child = yield* spawnFixture(
             "crash-apply.ts",
             { home, state: stateDirectory },
@@ -262,10 +259,7 @@ it.layer(LiveTestLayer)("a killed removal converges on the next writer", (crashI
           const skills = path.join(projectRoot, ".agents", "skills");
           yield* fileSystem.makeDirectory(skills, { recursive: true });
           yield* fileSystem.makeDirectory(home, { recursive: true });
-          const options = {
-            environment: { TACK_STATE_DIR: stateDirectory },
-            homeDirectory: home,
-          } satisfies StateOptions;
+          const options = stateOptionsAt(stateDirectory, home);
           const canonicalRoot = yield* fileSystem.realPath(projectRoot);
           const canonicalSource = yield* fileSystem.realPath(source);
           const names = Array.from(
@@ -414,10 +408,7 @@ it.layer(LiveTestLayer)(
             const home = path.join(world, variant.name, "home");
             const stateDirectory = path.join(world, variant.name, "state");
             yield* fileSystem.makeDirectory(mixedProjectRoot(home), { recursive: true });
-            const options = {
-              environment: { TACK_STATE_DIR: stateDirectory },
-              homeDirectory: home,
-            } satisfies StateOptions;
+            const options = stateOptionsAt(stateDirectory, home);
             const child = yield* spawnFixture(
               "crash-apply.ts",
               { home, state: stateDirectory },

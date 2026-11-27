@@ -160,7 +160,7 @@ it.layer(LiveTestLayer)("release-owned profile members", (test) => {
             runHost({
               args: [
                 "--state-dir",
-                f.options.environment.TACK_STATE_DIR,
+                f.options.stateDirectory,
                 "--json",
                 "check",
                 f.path.join(f.source, "ci.yaml"),

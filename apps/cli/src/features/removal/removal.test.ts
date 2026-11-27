@@ -938,7 +938,7 @@ it.layer(LiveTestLayer)("removal lifecycle", (removalIt) => {
           Effect.forkChild({ startImmediately: true }),
         );
         yield* Deferred.await(stall.entered);
-        const lockPath = path.join(options.environment["TACK_STATE_DIR"] ?? "", "state.lock");
+        const lockPath = path.join(options.stateDirectory ?? "", "state.lock");
         expect(yield* liveFileSystem.exists(lockPath)).toBe(true);
         yield* Fiber.interrupt(fiber);
         expect(yield* liveFileSystem.exists(lockPath)).toBe(false);

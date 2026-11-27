@@ -2,7 +2,7 @@ import { fakeGit } from "../../../../../test/support/fake-git.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "../../../../../test/support/live-test-layer.ts";
-import { mutateStateFixture } from "../../../../../test/support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "../../../../../test/support/state-fixture.ts";
 import type { ChoiceNamespace } from "../../../../domain/choices/choice-schema.ts";
 import { enableAdapters } from "../../../../features/reconciliation/agent.ts";
 import { registerSource } from "../../../../features/sources/source.ts";
@@ -37,10 +37,7 @@ const workspace = Effect.fnUntraced(function* (adapters: ReadonlyArray<"claude">
   const root = yield* fs.realPath(yield* fs.makeTempDirectoryScoped({ prefix: "tack-editor-" }));
   const source = path.join(root, "source");
   const project = path.join(root, "demo");
-  const options = {
-    environment: { TACK_STATE_DIR: path.join(root, "state") },
-    homeDirectory: root,
-  };
+  const options = stateOptionsAt(path.join(root, "state"), root);
   yield* fs.makeDirectory(path.join(source, "skills", "review"), { recursive: true });
   yield* fs.makeDirectory(path.join(source, "knowledge"), { recursive: true });
   yield* fs.makeDirectory(project, { recursive: true });

@@ -5,6 +5,7 @@ import { type GitService } from "../src/services/git.ts";
 import { readState } from "../src/services/state-store.ts";
 import { runHost } from "./support/host-runner.ts";
 import { LiveTestLayer, provideTestFileSystem } from "./support/live-test-layer.ts";
+import { stateOptionsAt } from "./support/state-fixture.ts";
 
 /*
  * One `sync --all --apply` writes the state document twice however many links it creates: once to
@@ -87,10 +88,7 @@ it.layer(LiveTestLayer)("sync --all --apply writes state a fixed number of times
             expect(JSON.parse(first.output)).toMatchObject({ command: "sync", status: "success" });
             expect(first.stateWrites).toBe(2);
 
-            const state = yield* readState({
-              environment: { TACK_STATE_DIR: stateDirectory },
-              homeDirectory,
-            });
+            const state = yield* readState(stateOptionsAt(stateDirectory, homeDirectory));
             expect(state.data.journal).toBeUndefined();
             // The project and the user target each hold every skill.
             expect(state.data.links.length).toBeGreaterThanOrEqual(count);
@@ -116,10 +114,7 @@ it.layer(LiveTestLayer)("a mixed sync of agent links and docs mounts", (mixedIt)
           expect(JSON.parse(first.output)).toMatchObject({ command: "sync", status: "success" });
           expect(first.stateWrites).toBe(2);
 
-          const state = yield* readState({
-            environment: { TACK_STATE_DIR: stateDirectory },
-            homeDirectory,
-          });
+          const state = yield* readState(stateOptionsAt(stateDirectory, homeDirectory));
           expect(state.data.journal).toBeUndefined();
           expect(state.data.links.filter((link) => link.delivery._tag === "docs")).toHaveLength(1);
           expect(

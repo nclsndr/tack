@@ -1,4 +1,4 @@
-import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "../../../test/support/state-fixture.ts";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
@@ -43,7 +43,7 @@ const docsWorld = Effect.gen(function* () {
   const path = yield* Path.Path;
   const home = yield* temporaryHome;
   const stateDirectory = path.join(home, "state");
-  const options = { environment: { TACK_STATE_DIR: stateDirectory }, homeDirectory: home };
+  const options = stateOptionsAt(stateDirectory, home);
   yield* initializeState(options);
   const root = path.join(home, "project");
   yield* fs.makeDirectory(root);
@@ -83,7 +83,7 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
   doctorIt.effect("reports a missing default state and skips every check that reads it", () =>
     Effect.gen(function* () {
       const home = yield* temporaryHome;
-      const report = yield* doctorIn({ environment: {}, homeDirectory: home }, home);
+      const report = yield* doctorIn({ homeDirectory: home }, home);
       // No `--state-dir` is suggested when the operator relies on the default state directory.
       expect(checkOf(report, "state")).toMatchObject({
         outcome: "warning",
@@ -102,7 +102,7 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
   doctorIt.effect("points a fresh state at tack init and registering a source", () =>
     Effect.gen(function* () {
       const home = yield* temporaryHome;
-      const options = { environment: {}, homeDirectory: home };
+      const options = { homeDirectory: home };
       yield* initializeState(options);
       const report = yield* doctorIn(options, home);
       expect(checkOf(report, "adapters")).toMatchObject({
@@ -128,10 +128,7 @@ it.layer(LiveTestLayer)("doctor", (doctorIt) => {
         path.join(stateDirectory, "state.json"),
         '{"format":99,"data":{}}\n',
       );
-      const report = yield* doctorIn(
-        { environment: { TACK_STATE_DIR: stateDirectory }, homeDirectory: home },
-        home,
-      );
+      const report = yield* doctorIn(stateOptionsAt(stateDirectory, home), home);
       expect(checkOf(report, "state")).toMatchObject({
         outcome: "failed",
         message: expect.stringContaining("State format 99"),

@@ -17,9 +17,10 @@ export const InstallationLive = Layer.succeed(Installation, {
   /* v8 ignore start -- @preserve */
   ...(packageRun === true
     ? {
-        pruneBuiltIns: ({ home, environment, folders }) =>
+        pruneBuiltIns: ({ home, folders }) =>
           Effect.sync(() => {
-            const root = builtInsRoot(environment, home);
+            // The request carries no TACK_BUILTINS_DIR, so the prune keeps to the copies under the home.
+            const root = builtInsRoot({}, home);
             if (root === undefined) return;
             pruneBuiltIns(root, currentVersionReport().stamp, linkedBuiltIns(root, folders));
           }).pipe(Effect.ignore),

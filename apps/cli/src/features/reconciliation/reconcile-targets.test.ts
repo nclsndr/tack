@@ -1,4 +1,4 @@
-import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "../../../test/support/state-fixture.ts";
 import { LiveTestLayer } from "../../../test/support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
@@ -15,10 +15,7 @@ it.layer(LiveTestLayer)("reconcile targets", (test) => {
       const home = path.join(root, "home");
       const formerHome = path.join(root, "former-home");
       yield* fs.makeDirectory(home);
-      const options = {
-        environment: { TACK_STATE_DIR: path.join(root, "state") },
-        homeDirectory: home,
-      };
+      const options = stateOptionsAt(path.join(root, "state"), home);
       yield* initializeState(options);
       yield* enableAdapters(options, ["codex"]);
       yield* mutateStateFixture(options, (state) => ({

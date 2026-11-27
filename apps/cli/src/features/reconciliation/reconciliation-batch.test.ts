@@ -73,7 +73,7 @@ const makeRecorder = () => {
   return {
     events,
     options: (stateDirectory: string, homeDirectory: string): StateOptions => ({
-      environment: { TACK_STATE_DIR: stateDirectory },
+      stateDirectory,
       homeDirectory,
       observer: {
         wrote: () => {

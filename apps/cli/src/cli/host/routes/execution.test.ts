@@ -2,14 +2,14 @@ import { skillText } from "../../../../test/support/source-tree.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "../../../../test/support/live-test-layer.ts";
-import { mutateStateFixture } from "../../../../test/support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "../../../../test/support/state-fixture.ts";
 import {
   ExecutionWorker,
   RunHistory,
   type WorkerRequest,
 } from "../../../services/execution-platform.ts";
 import { makeRunCancellation } from "../../../platform/execution/execution-platform.ts";
-import { initializeState, type StateOptions } from "../../../services/state-store.ts";
+import { initializeState } from "../../../services/state-store.ts";
 import { registerSource } from "../../../features/sources/source.ts";
 import {
   runFailure,
@@ -63,10 +63,7 @@ const scene = (
       path.join(source, "skills", "hello", "SKILL.md"),
       skillText("hello", { description: "A skill that shares the script name", body: "" }),
     );
-    const options = {
-      environment: { TACK_STATE_DIR: path.join(root, "state") },
-      homeDirectory: home,
-    } satisfies StateOptions;
+    const options = stateOptionsAt(path.join(root, "state"), home);
     yield* initializeState(options);
     yield* registerSource(options, { sourcePath: source });
     yield* mutateStateFixture(options, (state) => ({

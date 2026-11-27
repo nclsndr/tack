@@ -1,5 +1,9 @@
 import { managedLinksOf } from "../../domain/links/link-record-schema.ts";
-import { expectWriterGuarded, mutateStateFixture } from "../../../test/support/state-fixture.ts";
+import {
+  expectWriterGuarded,
+  mutateStateFixture,
+  stateOptionsAt,
+} from "../../../test/support/state-fixture.ts";
 import { LiveTestLayer, provideTestFileSystem } from "../../../test/support/live-test-layer.ts";
 import { faultyFileSystem, platformTestError, stallAt } from "../../../test/support/faults.ts";
 import { expect, it } from "@effect/vitest";
@@ -98,10 +102,10 @@ const homeDirectoryFromStateDirectory = (stateDirectory: string) =>
   `${stateDirectory.slice(0, -stateDirectorySuffix.length)}/home`;
 
 const stateOptions = (stateDirectory: string, homeDirectory?: string) =>
-  ({
-    environment: { TACK_STATE_DIR: stateDirectory },
-    homeDirectory: homeDirectory ?? homeDirectoryFromStateDirectory(stateDirectory),
-  }) satisfies StateOptions;
+  stateOptionsAt(
+    stateDirectory,
+    homeDirectory ?? homeDirectoryFromStateDirectory(stateDirectory),
+  ) satisfies StateOptions;
 
 const withTemporaryRoot = <A, E, R>(use: (root: string) => Effect.Effect<A, E, R>) =>
   Effect.gen(function* () {

@@ -32,7 +32,7 @@ const scene = Effect.gen(function* () {
     skillText("review", { description: "Review", body: "" }),
   );
   const options = {
-    environment: { TACK_STATE_DIR: path.join(root, "state") },
+    stateDirectory: path.join(root, "state"),
     homeDirectory: path.join(root, "home"),
   } satisfies StateOptions;
   yield* initializeState(options);

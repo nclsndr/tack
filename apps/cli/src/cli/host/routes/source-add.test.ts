@@ -32,7 +32,7 @@ it.layer(LiveTestLayer)("source add route", (test) => {
         const preview = yield* routeOutcome(
           sourceRoutes["source-add"].run(
             { _tag: "source-add", sourcePath: folder, apply: false, config },
-            { environment: {}, homeDirectory: home },
+            { homeDirectory: home },
           ),
         );
         const stateDirectory = path.join(home, ".tack");
@@ -73,7 +73,7 @@ it.layer(LiveTestLayer)("source add route", (test) => {
         const preview = yield* routeOutcome(
           sourceRoutes["source-add"].run(
             { _tag: "source-add", sourcePath: folder, apply: false },
-            { environment: {}, homeDirectory: home },
+            { homeDirectory: home },
           ),
         );
         expect(preview).toMatchObject({
@@ -111,7 +111,7 @@ it.layer(LiveTestLayer)("source add route", (test) => {
         routeOutcome(
           sourceRoutes["source-add"].run(
             { _tag: "source-add", sourcePath: root, apply: false, config: "-" },
-            { environment: {}, homeDirectory: root },
+            { homeDirectory: root },
           ),
         ),
       ).pipe(Effect.provideService(Stdio.Stdio, failing));

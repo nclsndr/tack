@@ -8,7 +8,7 @@ import { routeOutcome } from "./route.test-support.ts";
 import { typesRoutes } from "./types.ts";
 
 const style = makeStyle({ color: false, width: 100, homeDirectory: "/nowhere" });
-const options = { environment: {}, homeDirectory: "/nowhere" };
+const options = { homeDirectory: "/nowhere" };
 
 it.layer(LiveTestLayer)("types route", (test) => {
   const scene = Effect.gen(function* () {

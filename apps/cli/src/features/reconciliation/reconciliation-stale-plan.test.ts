@@ -1,5 +1,5 @@
 import { managedLinksOf } from "../../domain/links/link-record-schema.ts";
-import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "../../../test/support/state-fixture.ts";
 import { LiveTestLayer, provideTestFileSystem } from "../../../test/support/live-test-layer.ts";
 import { applyReconciliationPlan } from "../../../test/support/reconciliation.ts";
 import { expect, it } from "@effect/vitest";
@@ -11,7 +11,6 @@ import {
   initializeState,
   readState,
   withStateCheckpointWriter,
-  type StateOptions,
 } from "../../services/state-store.ts";
 import { applyReconciliationWithWriter } from "./reconciliation-application.test-support.ts";
 import { planReconciliation, reconciliationNamespaces } from "./reconciliation.ts";
@@ -28,10 +27,7 @@ const staleWorld = Effect.gen(function* () {
   const root = yield* fs.realPath(yield* fs.makeTempDirectoryScoped({ prefix: "tack-stale-" }));
   const home = path.join(root, "home");
   const source = path.join(root, "source", "skill");
-  const options = {
-    environment: { TACK_STATE_DIR: path.join(root, "state") },
-    homeDirectory: home,
-  } satisfies StateOptions;
+  const options = stateOptionsAt(path.join(root, "state"), home);
   yield* fs.makeDirectory(source, { recursive: true });
   yield* fs.makeDirectory(home, { recursive: true });
   yield* initializeState(options);

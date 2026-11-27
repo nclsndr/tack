@@ -250,7 +250,7 @@ it.layer(LiveTestLayer)("profile routes", (test) => {
         outcomeOf(
           profileRoutes["profile-inspect-bundle"].run(
             { _tag: "profile-inspect-bundle", file: world.file },
-            { environment: {} },
+            {},
           ),
         ),
       );

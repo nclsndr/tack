@@ -38,9 +38,9 @@ export const hostStateOptions = Effect.fnUntraced(function* (
   const configuredStateDirectory =
     stateDirectory ?? Option.getOrUndefined(environmentStateDirectory);
   const needsHome = configuredStateDirectory === undefined || homeWhenConfigured;
-  const environment =
-    configuredStateDirectory === undefined ? {} : { TACK_STATE_DIR: configuredStateDirectory };
-  if (needsHome === false) return { environment } satisfies StateOptions;
+  const located: StateOptions =
+    configuredStateDirectory === undefined ? {} : { stateDirectory: configuredStateDirectory };
+  if (needsHome === false) return located;
   const homeDirectory = yield* Config.String("HOME")
     .parse(provider)
     .pipe(
@@ -52,5 +52,5 @@ export const hostStateOptions = Effect.fnUntraced(function* (
           }),
       ),
     );
-  return { environment, homeDirectory } satisfies StateOptions;
+  return { ...located, homeDirectory } satisfies StateOptions;
 });

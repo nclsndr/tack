@@ -10,6 +10,7 @@ import { Reader } from "../services/reader.ts";
 import { ReaderCorpus } from "../services/reader-corpus.ts";
 import { StateStore } from "../services/state-store.ts";
 import { ApplicationLive } from "./application-layer.ts";
+import { stateOptionsAt } from "../../test/support/state-fixture.ts";
 
 it.effect("builds every capability the CLI resolves from the one production graph", () =>
   Effect.gen(function* () {
@@ -27,10 +28,9 @@ it.effect("builds every capability the CLI resolves from the one production grap
     ];
 
     expect(
-      yield* state.resolveDirectory({
-        environment: { TACK_STATE_DIR: "/tack-application-layer-state" },
-        homeDirectory: "/unused-home",
-      }),
+      yield* state.resolveDirectory(
+        stateOptionsAt("/tack-application-layer-state", "/unused-home"),
+      ),
     ).toBe("/tack-application-layer-state");
     expect(terminal.columns).toBeGreaterThan(0);
     expect(services.every((service) => typeof service === "object")).toBe(true);

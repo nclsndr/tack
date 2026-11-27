@@ -7,6 +7,7 @@ import { initializeState, readState } from "../../../services/state-store.ts";
 import { envelopeOf } from "./human.test-support.ts";
 import { loadReferenceIndex } from "./reference-index.ts";
 import { TerminalContext, TerminalContextLive } from "./terminal-context.ts";
+import { stateOptionsAt } from "../../../../test/support/state-fixture.ts";
 
 const naming = (sourceRegistrationId: string) =>
   envelopeOf({
@@ -42,10 +43,7 @@ it.layer(LiveTestLayer)("reference index", (test) => {
         path.join(source, "skills", "review", "SKILL.md"),
         skillText("review", { description: "Review", body: "" }),
       );
-      const options = {
-        environment: { TACK_STATE_DIR: path.join(root, "state") },
-        homeDirectory: root,
-      };
+      const options = stateOptionsAt(path.join(root, "state"), root);
       yield* initializeState(options);
       yield* registerSource(options, { sourcePath: source });
       const registration = (yield* readState(options)).data.sources[0];
@@ -72,10 +70,7 @@ it.layer(LiveTestLayer)("reference index", (test) => {
         const root = yield* fs.realPath(
           yield* fs.makeTempDirectoryScoped({ prefix: "tack-refs-" }),
         );
-        const options = {
-          environment: { TACK_STATE_DIR: path.join(root, "state") },
-          homeDirectory: root,
-        };
+        const options = stateOptionsAt(path.join(root, "state"), root);
         yield* initializeState(options);
         const directories = ["tools", "helpers", path.join("broken", "tools")];
         for (const directory of directories) {
@@ -115,10 +110,10 @@ it.layer(LiveTestLayer)("reference index", (test) => {
       const root = yield* fs.realPath(yield* fs.makeTempDirectoryScoped({ prefix: "tack-refs-" }));
       const notADirectory = path.join(root, "state");
       yield* fs.writeFileString(notADirectory, "not a state directory\n");
-      const index = yield* loadReferenceIndex(naming("00000000-0000-4000-8000-000000000001"), {
-        environment: { TACK_STATE_DIR: notADirectory },
-        homeDirectory: root,
-      });
+      const index = yield* loadReferenceIndex(
+        naming("00000000-0000-4000-8000-000000000001"),
+        stateOptionsAt(notADirectory, root),
+      );
       expect(index).toBeUndefined();
     }),
   );

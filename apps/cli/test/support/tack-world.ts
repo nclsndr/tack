@@ -14,6 +14,7 @@ import {
   tackProcess,
   type ProcessResult,
 } from "./tack-process.ts";
+import { stateOptionsAt } from "./state-fixture.ts";
 
 export type TackWorld = {
   readonly entrypoint: string;
@@ -165,10 +166,7 @@ export const withTackWorld = <A, E, R>(use: (fixture: TackWorld) => Effect.Effec
 
     yield* copyGitTemplate(root);
 
-    const options = {
-      environment: { TACK_STATE_DIR: stateDirectory },
-      homeDirectory,
-    } satisfies StateOptions;
+    const options = stateOptionsAt(stateDirectory, homeDirectory);
     const fixture = {
       entrypoint,
       homeDirectory,

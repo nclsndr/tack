@@ -8,7 +8,7 @@ import {
   pendingRemovalsOf,
 } from "../../domain/links/link-record-schema.ts";
 import { allSkillChoices } from "../../domain/state/state-intent.ts";
-import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "../../../test/support/state-fixture.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path, PlatformError, Schema } from "effect";
 import { LiveTestLayer, provideTestFileSystem } from "../../../test/support/live-test-layer.ts";
@@ -33,10 +33,7 @@ const fixture = Effect.fnUntraced(function* () {
   const home = path.join(root, "home");
   const source = path.join(root, "source");
   const statePath = path.join(root, "state", "state.json");
-  const options: StateOptions = {
-    homeDirectory: home,
-    environment: { TACK_STATE_DIR: path.dirname(statePath) },
-  };
+  const options: StateOptions = stateOptionsAt(path.dirname(statePath), home);
   const write = writeUnder(source);
   yield* fs.makeDirectory(home);
   yield* write(

@@ -45,6 +45,7 @@ import { loadExplorer } from "../src/cli/host/human/explorer/editor.ts";
 import { CatalogReportSchema } from "../src/domain/sources/catalog-report.ts";
 import { SkillChoiceSchema } from "../src/domain/choices/choice-schema.ts";
 import { explorerEntries } from "../src/cli/host/human/explorer/entries.ts";
+import { stateOptionsAt } from "./support/state-fixture.ts";
 
 const interactive: TerminalContextShape = {
   columns: 80,
@@ -457,10 +458,7 @@ it.layer(LiveTestLayer)("explorer sessions", (test) => {
       const root = yield* fs.makeTempDirectoryScoped({ prefix: "tack-explore-readonly-" });
       const source = path.join(root, "source");
       const skill = path.join(source, "skills", "review");
-      const options = {
-        environment: { TACK_STATE_DIR: path.join(root, "state") },
-        homeDirectory: root,
-      };
+      const options = stateOptionsAt(path.join(root, "state"), root);
       yield* fs.makeDirectory(skill, { recursive: true });
       yield* fs.writeFileString(
         path.join(source, "tack.yaml"),
@@ -511,10 +509,7 @@ it.layer(LiveTestLayer)("explorer sessions", (test) => {
       const path = yield* Path.Path;
       const root = yield* fs.makeTempDirectoryScoped({ prefix: "tack-explore-declared-" });
       const source = path.join(root, "source");
-      const options = {
-        environment: { TACK_STATE_DIR: path.join(root, "state") },
-        homeDirectory: root,
-      };
+      const options = stateOptionsAt(path.join(root, "state"), root);
       yield* fs.makeDirectory(path.join(source, "vendor", "skills", "pdf"), { recursive: true });
       yield* fs.writeFileString(
         path.join(source, "tack.yaml"),
@@ -539,10 +534,7 @@ it.layer(LiveTestLayer)("explorer sessions", (test) => {
       const fs = yield* FileSystem.FileSystem;
       const path = yield* Path.Path;
       const root = yield* fs.makeTempDirectoryScoped({ prefix: "tack-explore-interrupt-" });
-      const options = {
-        environment: { TACK_STATE_DIR: path.join(root, "state") },
-        homeDirectory: root,
-      };
+      const options = stateOptionsAt(path.join(root, "state"), root);
       yield* initializeState(options);
       const { terminal, displayed } = yield* scriptedTerminal([input("c", "\u0003", true)]);
       const { exit, stdout } = yield* runHost({

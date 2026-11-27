@@ -12,15 +12,13 @@ import { profilePublications } from "../src/features/sources/profile-publication
 import { profileContext } from "../src/features/profiles/profile-check.ts";
 import { resolveProfile } from "../src/domain/profiles/profile-resolution.ts";
 import { provideTestFileSystem } from "./support/live-test-layer.ts";
+import { stateOptionsAt } from "./support/state-fixture.ts";
 
 const fixture = Effect.gen(function* () {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
   const root = yield* fs.realPath(yield* fs.makeTempDirectoryScoped({ prefix: "tack-profiles-" }));
-  const options = {
-    homeDirectory: root,
-    environment: { TACK_STATE_DIR: path.join(root, "state") },
-  };
+  const options = stateOptionsAt(path.join(root, "state"), root);
   const write = writeUnder(root);
   // The profile lives under `profiles/`, so this source does not start from the standard tree.
   yield* seedSource(path.join(root, "owner"), {
@@ -475,7 +473,7 @@ it.layer(LiveTestLayer)("fixed profile authoring", (test) => {
             "command owner:lint",
           ]),
         );
-        expect(yield* fs.exists(options.environment.TACK_STATE_DIR)).toBe(false);
+        expect(yield* fs.exists(options.stateDirectory)).toBe(false);
       }),
   );
   test.effect("keeps bare members owner-scoped under registration order and owner removal", () =>

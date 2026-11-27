@@ -3,7 +3,7 @@ import { fakeGit } from "../../../../../test/support/fake-git.ts";
 import { expect, it } from "@effect/vitest";
 import { Effect, FileSystem, Path } from "effect";
 import { LiveTestLayer } from "../../../../../test/support/live-test-layer.ts";
-import { mutateStateFixture } from "../../../../../test/support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "../../../../../test/support/state-fixture.ts";
 import type { ResourceAddress } from "../../../../domain/sources/catalog-schema.ts";
 import { enableAdapters } from "../../../../features/reconciliation/agent.ts";
 import { registerSource } from "../../../../features/sources/source.ts";
@@ -25,10 +25,7 @@ const workspace = Effect.fnUntraced(function* () {
   const path = yield* Path.Path;
   const root = yield* fs.realPath(yield* fs.makeTempDirectoryScoped({ prefix: "tack-dest-" }));
   const source = path.join(root, "source");
-  const options = {
-    environment: { TACK_STATE_DIR: path.join(root, "state") },
-    homeDirectory: root,
-  };
+  const options = stateOptionsAt(path.join(root, "state"), root);
   yield* fs.makeDirectory(path.join(source, "skills", "review"), { recursive: true });
   yield* fs.writeFileString(
     path.join(source, "tack.yaml"),
@@ -248,10 +245,7 @@ it.layer(LiveTestLayer)("explorer destinations", (test) => {
   test.effect("refuses a seed whose sources cannot get distinct portable names", () =>
     Effect.gen(function* () {
       const { fs, path, root, source, destinations } = yield* workspace();
-      const options = {
-        environment: { TACK_STATE_DIR: path.join(root, "state") },
-        homeDirectory: root,
-      };
+      const options = stateOptionsAt(path.join(root, "state"), root);
       for (const directory of ["one", "two"]) {
         yield* fs.makeDirectory(path.join(root, directory));
         yield* fs.writeFileString(

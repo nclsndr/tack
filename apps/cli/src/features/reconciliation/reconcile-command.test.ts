@@ -1,6 +1,6 @@
 import { skillText } from "../../../test/support/source-tree.ts";
 import { managedLinksOf, pendingRemovalsOf } from "../../domain/links/link-record-schema.ts";
-import { mutateStateFixture } from "../../../test/support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "../../../test/support/state-fixture.ts";
 import { LiveTestLayer, provideTestFileSystem } from "../../../test/support/live-test-layer.ts";
 import { expect, it } from "@effect/vitest";
 import { Deferred, Effect, FileSystem, Fiber, Path, PlatformError, Schema } from "effect";
@@ -33,10 +33,7 @@ it.layer(LiveTestLayer)("reconciliation command lifecycle", (reconcileIt) => {
       const sourceDirectory = path.join(root, "source");
       const skillDirectory = path.join(sourceDirectory, "skills", "valid");
       const skillFilePath = path.join(skillDirectory, "SKILL.md");
-      const options = {
-        environment: { TACK_STATE_DIR: path.join(root, "state") },
-        homeDirectory,
-      } satisfies StateOptions;
+      const options = stateOptionsAt(path.join(root, "state"), homeDirectory);
       yield* fileSystem.makeDirectory(homeDirectory, { recursive: true });
       yield* fileSystem.makeDirectory(skillDirectory, { recursive: true });
       yield* fileSystem.writeFileString(
@@ -108,10 +105,7 @@ it.layer(LiveTestLayer)("reconciliation command lifecycle", (reconcileIt) => {
         const homeDirectory = path.join(root, "home");
         const sourceDirectory = path.join(root, "source");
         const skillDirectory = path.join(sourceDirectory, "skills", "valid");
-        const options = {
-          environment: { TACK_STATE_DIR: path.join(root, "state") },
-          homeDirectory,
-        } satisfies StateOptions;
+        const options = stateOptionsAt(path.join(root, "state"), homeDirectory);
         yield* fileSystem.makeDirectory(homeDirectory, { recursive: true });
         yield* fileSystem.makeDirectory(skillDirectory, { recursive: true });
         yield* fileSystem.writeFileString(
@@ -179,10 +173,7 @@ it.layer(LiveTestLayer)("reconciliation command lifecycle", (reconcileIt) => {
       const sourceDirectory = path.join(root, "source");
       const skillDirectory = path.join(sourceDirectory, "skills", "valid");
       const destinationDirectory = path.join(homeDirectory, ".claude", "skills");
-      const options = {
-        environment: { TACK_STATE_DIR: path.join(root, "state") },
-        homeDirectory,
-      } satisfies StateOptions;
+      const options = stateOptionsAt(path.join(root, "state"), homeDirectory);
       yield* fileSystem.makeDirectory(homeDirectory, { recursive: true });
       yield* fileSystem.makeDirectory(skillDirectory, { recursive: true });
       yield* fileSystem.writeFileString(
@@ -233,10 +224,7 @@ it.layer(LiveTestLayer)("reconciliation command lifecycle", (reconcileIt) => {
       const root = yield* fileSystem.realPath(temporaryRoot);
       const homeDirectory = path.join(root, "home");
       const sourceDirectory = path.join(root, "source");
-      const options = {
-        environment: { TACK_STATE_DIR: path.join(root, "state") },
-        homeDirectory,
-      } satisfies StateOptions;
+      const options = stateOptionsAt(path.join(root, "state"), homeDirectory);
       yield* fileSystem.makeDirectory(homeDirectory, { recursive: true });
       yield* fileSystem.makeDirectory(path.join(sourceDirectory, "commands"), { recursive: true });
       yield* fileSystem.writeFileString(
@@ -331,10 +319,7 @@ const withSymlinkedHome = <A, E, R>(
     );
     yield* fileSystem.writeFileString(path.join(skillDirectory, "SKILL.md"), validSkillDocument);
     const homeDirectory = yield* layout(root);
-    const options = {
-      environment: { TACK_STATE_DIR: path.join(root, "state") },
-      homeDirectory,
-    } satisfies StateOptions;
+    const options = stateOptionsAt(path.join(root, "state"), homeDirectory);
     yield* initializeState(options);
     yield* enableAdapters(options, ["cursor"]);
     yield* registerSource(options, { sourcePath: sourceDirectory });
@@ -459,10 +444,7 @@ const withReconciledSkills = <A, E, R>(
     const homeDirectory = path.join(root, "home");
     const sourceDirectory = path.join(root, "source");
     const skill = (name: string) => path.join(sourceDirectory, "skills", name);
-    const options = {
-      environment: { TACK_STATE_DIR: path.join(root, "state") },
-      homeDirectory,
-    } satisfies StateOptions;
+    const options = stateOptionsAt(path.join(root, "state"), homeDirectory);
     yield* fileSystem.makeDirectory(homeDirectory, { recursive: true });
     yield* fileSystem.makeDirectory(sourceDirectory, { recursive: true });
     yield* fileSystem.writeFileString(

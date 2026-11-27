@@ -215,10 +215,22 @@ export const projectRecords = (state: State) =>
 export const encodeStateFixture = (state: FlatFixture): string =>
   JSON.stringify(Effect.runSync(encodeState(runtimeFixture(state))));
 
+/** The state options of a test: state in `directory`, and the operator home when one is given. */
+export function stateOptionsAt(directory: string): { readonly stateDirectory: string };
+export function stateOptionsAt(
+  directory: string,
+  home: string,
+): { readonly stateDirectory: string; readonly homeDirectory: string };
+export function stateOptionsAt(directory: string, home?: string): StateOptions {
+  return home === undefined
+    ? { stateDirectory: directory }
+    : { stateDirectory: directory, homeDirectory: home };
+}
+
 /** The temporary world of a state test: a canonical root with an initialized state below it. */
 export type StateFixture = {
   readonly options: StateOptions & {
-    readonly environment: { readonly TACK_STATE_DIR: string };
+    readonly stateDirectory: string;
     readonly homeDirectory: string;
   };
   readonly root: string;
@@ -239,7 +251,7 @@ export const withStateFixture = <A, E, R>(use: (fixture: StateFixture) => Effect
     );
     const stateDirectory = path.join(root, "state");
     const options = {
-      environment: { TACK_STATE_DIR: stateDirectory },
+      stateDirectory,
       homeDirectory: path.join(root, "home"),
     };
     yield* fileSystem.makeDirectory(options.homeDirectory, { recursive: true });

@@ -7,10 +7,7 @@ const program = Effect.gen(function* () {
   const provider = ConfigProvider.fromEnv({ preserveEmptyStrings: true });
   const homeDirectory = yield* Config.String("HOME").parse(provider);
   const stateDirectory = yield* Config.String("TACK_STATE_DIR").parse(provider);
-  const options = {
-    environment: { TACK_STATE_DIR: stateDirectory },
-    homeDirectory,
-  } satisfies StateOptions;
+  const options = { stateDirectory, homeDirectory } satisfies StateOptions;
 
   yield* mutateState(options, () =>
     Effect.gen(function* () {

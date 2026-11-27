@@ -62,10 +62,7 @@ const program = Effect.gen(function* () {
           process.kill(process.pid, "SIGKILL");
       }),
   } satisfies FileSystem.FileSystem;
-  const options = {
-    environment: { TACK_STATE_DIR: stateDirectory },
-    homeDirectory,
-  };
+  const options = { stateDirectory, homeDirectory };
   const work = Effect.gen(function* () {
     const state = yield* readState(options);
     const plan = yield* planRemoval(state, {

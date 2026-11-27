@@ -4,7 +4,11 @@ import type { AgentAdapterId } from "../domain/agents/agent-adapter-schema.ts";
 
 /** Inputs that the application boundary resolves before operating on Tack state. */
 export type StateOptions = {
-  readonly environment: Readonly<Record<string, string | undefined>>;
+  /**
+   * The state directory that `--state-dir` or `TACK_STATE_DIR` named. Left out, state lives in
+   * `.tack` under the operator home. An empty value is kept and refused when state is touched.
+   */
+  readonly stateDirectory?: string;
   /** The operator home, when known; it locates default state and the user target. */
   readonly homeDirectory?: string;
   /** Told what persisting during this invocation did; the host installs one per invocation. */
@@ -20,8 +24,7 @@ export type StateOptions = {
  * Whether the first mutation may initialize absent state: only the default state directory is
  * created on demand, so a mistyped explicit one is never.
  */
-export const stateAutoInitializes = (options: StateOptions) =>
-  options.environment["TACK_STATE_DIR"] === undefined;
+export const stateAutoInitializes = (options: StateOptions) => options.stateDirectory === undefined;
 
 /** Reports an invalid effective-state configuration before filesystem access. */
 export class StateConfigurationError extends Schema.TaggedError<StateConfigurationError>()(

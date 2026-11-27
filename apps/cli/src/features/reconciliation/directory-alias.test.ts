@@ -12,6 +12,7 @@ import { syncResources } from "../../../test/support/reconciliation.ts";
 import { planReconciliation, reconciliationNamespaces } from "./reconciliation.ts";
 import { agentAdapterDescriptor } from "../../domain/agents/agent-adapter.ts";
 import type { SkillCatalogEntry } from "../../domain/sources/catalog-schema.ts";
+import { stateOptionsAt } from "../../../test/support/state-fixture.ts";
 
 /** A temporary user home with one registered source, and its isolated state. */
 const withHome = <A, E, R>(
@@ -31,10 +32,7 @@ const withHome = <A, E, R>(
     const home = path.join(root, "home");
     const source = path.join(root, "source");
     const skillDirectory = path.join(source, "skills", "valid");
-    const options = {
-      environment: { TACK_STATE_DIR: path.join(root, "state") },
-      homeDirectory: home,
-    } satisfies StateOptions;
+    const options = stateOptionsAt(path.join(root, "state"), home);
     yield* fileSystem.makeDirectory(home, { recursive: true });
     yield* fileSystem.makeDirectory(skillDirectory, { recursive: true });
     yield* fileSystem.writeFileString(

@@ -50,7 +50,7 @@ const pruneUnlinkedBuiltIns = (
           project.roots.map((path) => ({ _tag: "project-root" as const, canonicalPath: path })),
         ),
       ]);
-      return prune({ home, environment: stateOptions.environment, folders });
+      return prune({ home, folders });
     }),
     Effect.ignore,
   );

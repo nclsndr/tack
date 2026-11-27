@@ -23,7 +23,7 @@ import { enableAdapters } from "../src/features/reconciliation/agent.ts";
 import type { RouteServices } from "../src/cli/host/routes/route.ts";
 import { loadExplorer, makeExplorerEditor } from "../src/cli/host/human/explorer/editor.ts";
 import { Source, makeSourceService, registerSource } from "../src/features/sources/source.ts";
-import { mutateStateFixture } from "./support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "./support/state-fixture.ts";
 import {
   choice,
   key,
@@ -351,10 +351,7 @@ const withWorkspace = Effect.fnUntraced(function* () {
   );
   const source = path.join(root, "source");
   const skill = path.join(source, "skills", "review");
-  const options = {
-    environment: { TACK_STATE_DIR: path.join(root, "state") },
-    homeDirectory: root,
-  };
+  const options = stateOptionsAt(path.join(root, "state"), root);
   const project = path.join(root, "demo");
   yield* fs.makeDirectory(skill, { recursive: true });
   yield* fs.makeDirectory(path.join(source, "knowledge"), { recursive: true });

@@ -1,6 +1,6 @@
 import { skillText } from "./support/source-tree.ts";
 import { LiveTestLayer } from "./support/live-test-layer.ts";
-import { mutateStateFixture } from "./support/state-fixture.ts";
+import { mutateStateFixture, stateOptionsAt } from "./support/state-fixture.ts";
 import { fakeGit, outsideRepositoryGit } from "./support/fake-git.ts";
 import { inDirectory, runHost } from "./support/host-runner.ts";
 import { decodeEnvelope } from "./support/tack-process.ts";
@@ -82,7 +82,7 @@ const machine = Effect.fnUntraced(function* () {
       cwd === undefined ? (effect) => effect : inDirectory(at(cwd)),
     );
   expect((yield* json(["state", "init"])).status).toBe("success");
-  return { at, json, text, state: { environment: { TACK_STATE_DIR: at("state") } } };
+  return { at, json, text, state: stateOptionsAt(at("state")) };
 });
 
 /** The `projects` check of a doctor envelope. */

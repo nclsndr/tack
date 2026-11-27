@@ -58,7 +58,7 @@ const withLinks = <A, E, R>(count: number, use: (world: World) => Effect.Effect<
     const source = path.join(root, "source");
     let writes = 0;
     const options: StateOptions = {
-      environment: { TACK_STATE_DIR: stateDirectory },
+      stateDirectory,
       homeDirectory: path.join(root, "home"),
       observer: {
         wrote: () => {

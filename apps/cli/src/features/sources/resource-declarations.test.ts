@@ -7,6 +7,7 @@ import { initializeState, readState, type StateOptions } from "../../services/st
 
 import { inspectSources, registerSource } from "./source.ts";
 import { declaredSkillsFolders } from "./resource-declarations.ts";
+import { stateOptionsAt } from "../../../test/support/state-fixture.ts";
 
 type Fixture = { readonly root: string; readonly options: StateOptions };
 
@@ -20,10 +21,7 @@ const withSource = <A, E, R>(
     const path = yield* Path.Path;
     const temporary = yield* fs.makeTempDirectoryScoped({ prefix: "tack-declarations-" });
     const base = yield* fs.realPath(temporary);
-    const options = {
-      environment: { TACK_STATE_DIR: path.join(base, "state") },
-      homeDirectory: base,
-    } satisfies StateOptions;
+    const options = stateOptionsAt(path.join(base, "state"), base);
     yield* initializeState(options);
     const root = path.join(base, "source");
     yield* fs.makeDirectory(root, { recursive: true });
