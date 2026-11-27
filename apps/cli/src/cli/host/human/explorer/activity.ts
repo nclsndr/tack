@@ -1,5 +1,8 @@
 import { isBuiltinSkill } from "../../../../domain/choices/builtin.ts";
-import type { ChoiceNamespace } from "../../../../domain/choices/choice-schema.ts";
+import {
+  choiceNamespaceIdentity,
+  type ChoiceNamespace,
+} from "../../../../domain/choices/choice-schema.ts";
 import type { InitialSelectionDecision } from "../../../../domain/choices/selection.ts";
 import { docsResourceIdentity } from "../../../../domain/docs/docs-schema.ts";
 import { resolveContextSelection } from "../../../../domain/profiles/profile-application.ts";
@@ -71,11 +74,9 @@ export type DestinationActivity = {
 
 /** Identifies a scope, so the edited destination can be found among the state lines. */
 export const scopeKey = (scope: ActivityScope): string =>
-  scope._tag === "user"
-    ? "user"
-    : scope._tag === "project"
-      ? `project:${scope.projectName}`
-      : `profile:${scope.sourcePath}\u0000${scope.profileName}`;
+  scope._tag === "profile"
+    ? `profile:${scope.sourcePath}\u0000${scope.profileName}`
+    : choiceNamespaceIdentity(scope);
 
 const notSelected = {
   exclude: "excluded",

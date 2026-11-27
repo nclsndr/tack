@@ -39,6 +39,13 @@ export const choiceNamespaceIdentity = Match.type<ChoiceNamespace>().pipe(
   Match.exhaustive,
 );
 
+/**
+ * Returns the key two resources share when they have one kind and name, whatever their source:
+ * they then compete for one destination, and a dependency by kind and name can mean either.
+ */
+export const kindAndNameKey = (resource: { readonly kind: string; readonly name: string }) =>
+  `${resource.kind}\u0000${resource.name}`;
+
 /** Returns the canonical identity for one exact choice within its namespace. */
 export const skillChoiceIdentity = (choice: {
   readonly address: SelectableAddress;

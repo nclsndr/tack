@@ -4,6 +4,7 @@ import {
   ChoiceNamespaceSchema,
   SkillChoiceSchema,
   choiceNamespaceIdentity,
+  kindAndNameKey,
   type ChoiceNamespace,
   type SkillChoice,
 } from "./choice-schema.ts";
@@ -14,7 +15,6 @@ import {
   catalogSelectableEntries,
   resourceAddressIdentity,
   type Catalog,
-  type SelectableAddress,
   type SelectableCatalogEntry,
 } from "../sources/catalog-schema.ts";
 
@@ -150,9 +150,6 @@ const decisionFor = (
   return { _tag: "selected", address: entry.address, compatibility, reason: "default" };
 };
 
-/** The kind and name two resources must share to compete for one destination. */
-const nameKey = (address: SelectableAddress) => `${address.kind}\u0000${address.name}`;
-
 /** Resolves declaration behavior and exact choices for one independent namespace. */
 export const resolveInitialSelection = ({
   choices,
@@ -179,7 +176,7 @@ export const resolveInitialSelection = ({
   const includedNames = new Set(
     sortedEntries.flatMap((entry) =>
       choicesByAddress.get(resourceAddressIdentity(entry.address))?.decision === "include"
-        ? [nameKey(entry.address)]
+        ? [kindAndNameKey(entry.address)]
         : [],
     ),
   );
@@ -194,7 +191,7 @@ export const resolveInitialSelection = ({
         entry,
         choicesByAddress.get(resourceAddressIdentity(entry.address)),
         compatibilityFor(namespace, entry),
-        includedNames.has(nameKey(entry.address)),
+        includedNames.has(kindAndNameKey(entry.address)),
       ),
     ),
     namespace,
