@@ -13,7 +13,7 @@ import { checkDeclarationVersion, declarationFileName } from "./declaration-file
 
 /**
  * Reads a published file without importing any source content. A file that a skills, commands,
- * context or scripts entry also owns is refused, like any two overlapping entries.
+ * context, scripts or docs entry also owns is refused, like any two overlapping entries.
  */
 export const readProfileFile = Effect.fnUntraced(function* (
   sourcePath: string,
@@ -53,7 +53,7 @@ export const readProfileFile = Effect.fnUntraced(function* (
     return fail(
       "declaration-path-overlap",
       overlap,
-      "Exclude the profile file from the entry that holds it, or keep one of them.",
+      "Exclude the profile file from the folder entry that holds it, move it out, or keep one of them.",
     );
   return yield* Effect.gen(function* () {
     const content = yield* fs.readFileString(resolved.resolved);

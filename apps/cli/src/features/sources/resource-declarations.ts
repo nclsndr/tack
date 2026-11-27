@@ -21,7 +21,7 @@ import {
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
 import { declarationFileName } from "./declaration-file.ts";
 import { docsWalkSkips, marksSourceEdge } from "@tackup/reader/source-edges";
-import { discoverDocs } from "./docs-discovery.ts";
+import { checkDocs, discoverDocs, docsFolders, type DocsFolder } from "./docs-discovery.ts";
 import { profilePublications } from "./profile-publications.ts";
 
 /** The kinds this module discovers from their resource keys; docs have their own discovery. */
@@ -362,11 +362,11 @@ const folderKinds: { readonly [K in FolderKind]: FolderKindRules } = {
 };
 
 /**
- * A path one entry owns, as the overlap rule compares it: a skills, commands, context or scripts
- * entry, or a profile publication. Docs own nothing, since they are never linked by name.
+ * A path one entry owns, as the overlap rule compares it: a skills, commands, context, scripts or
+ * docs entry, or a profile publication.
  */
 type Owner = {
-  readonly kind: DeclaredKind | "profile";
+  readonly kind: ResourceKind | "profile";
   readonly label: string;
   readonly declaredPath: string;
   readonly resolved: string;
@@ -381,10 +381,14 @@ const relativeInside = (path: Path.Path, outer: Owner, inner: Owner) =>
 
 /**
  * The exclude that would take `inner` out of the walk of `outer`, or undefined when `outer` takes
- * no patterns or does not strictly hold `inner`.
+ * no patterns or does not strictly hold `inner`. A docs entry takes none.
  */
 const excludeFor = (path: Path.Path, outer: Owner, inner: Owner) => {
-  if (outer.patterns === undefined || isStrictlyInside(outer.resolved, inner.resolved) === false)
+  if (
+    outer.kind === "docs" ||
+    outer.patterns === undefined ||
+    isStrictlyInside(outer.resolved, inner.resolved) === false
+  )
     return undefined;
   const relative = relativeInside(path, outer, inner);
   return inner.file === true ? relative : `${relative}/**`;
@@ -431,8 +435,9 @@ const overlapMessage = (path: Path.Path, owner: Owner, others: ReadonlyArray<Own
 
 /**
  * Checks every resource entry of a declaration against the syntax, location and type rules, and
- * returns the ones that pass, with every path an entry owns: theirs and each readable profile
- * publication. Entries that fail are reported through `report`.
+ * returns the ones that pass, with every path an entry owns: theirs, each docs folder that passes
+ * its own rules and each readable profile publication. Entries that fail are reported through
+ * `report`; docs entries are reported where docs are discovered.
  */
 const declaredOwners = Effect.fnUntraced(function* (
   root: string,
@@ -620,7 +625,28 @@ const declaredOwners = Effect.fnUntraced(function* (
             ),
           ),
   );
-  return { accepted, owners: [...accepted.map(({ owner }) => owner), ...profiles.flat()] };
+  const docsChecks = yield* checkDocs(root, declaration);
+  const docsOwners = new Map(
+    docsFolders(docsChecks).map((folder): [DocsFolder, Owner] => [
+      folder,
+      {
+        kind: "docs",
+        // Docs are named by their entry, so two docs on one folder read as two entries.
+        label: `docs entry "${folder.item.name}"`,
+        declaredPath: folder.item.path,
+        resolved: folder.resolved,
+        file: false,
+        // A docs walk takes no patterns, but a `.` one passes over the names any `.` walk does.
+        patterns: patternSelector(undefined, undefined),
+      },
+    ]),
+  );
+  return {
+    accepted,
+    owners: [...accepted.map(({ owner }) => owner), ...profiles.flat(), ...docsOwners.values()],
+    docsChecks,
+    docsOwners,
+  };
 });
 
 /**
@@ -628,7 +654,8 @@ const declaredOwners = Effect.fnUntraced(function* (
  * syntax, location, type and overlap rules have passed. Two entries overlap when their paths are
  * equal or one holds the other, unless an exclude of the outer one prunes the inner path. Entries
  * that fail are reported through `report`, so catalog discovery and the import destination rules
- * share one definition.
+ * share one definition. Docs entries come back checked against their own rules, with why each
+ * folder overlaps another entry, for `discoverDocs` to report.
  */
 const acceptDeclarations = Effect.fnUntraced(function* (
   root: string,
@@ -637,8 +664,20 @@ const acceptDeclarations = Effect.fnUntraced(function* (
   records: Array<DeclarationRecord>,
 ) {
   const path = yield* Path.Path;
-  const { accepted, owners } = yield* declaredOwners(root, declaration, report, records);
-  return accepted.filter((declared) => {
+  const { accepted, owners, docsChecks, docsOwners } = yield* declaredOwners(
+    root,
+    declaration,
+    report,
+    records,
+  );
+  /** Why each docs folder overlaps another entry; one that overlaps none is absent. */
+  const docsOverlaps = new Map(
+    [...docsOwners].flatMap(([folder, owner]) => {
+      const others = overlapsOf(path, owners, owner);
+      return others.length === 0 ? [] : [[folder, overlapMessage(path, owner, others)] as const];
+    }),
+  );
+  const usable = accepted.filter((declared) => {
     const others = overlapsOf(path, owners, declared.owner);
     if (others.length === 0) return true;
     report(
@@ -650,11 +689,16 @@ const acceptDeclarations = Effect.fnUntraced(function* (
     );
     return false;
   });
+  return {
+    usable,
+    docsChecks,
+    docsOverlap: (folder: DocsFolder) => docsOverlaps.get(folder),
+  };
 });
 
 /**
- * Why the profile published at `publicationPath` is refused because a skills, commands, context
- * or scripts entry also owns its file, or undefined when none does.
+ * Why the profile published at `publicationPath` is refused because a skills, commands, context,
+ * scripts or docs entry also owns its file, or undefined when none does.
  */
 export const profileOverlap = Effect.fnUntraced(function* (
   root: string,
@@ -672,9 +716,26 @@ export const profileOverlap = Effect.fnUntraced(function* (
 });
 
 /**
- * Turns the resource declarations of a validated source into candidates and quarantines. Every
- * entry is checked on its own, so one bad entry quarantines only itself. A resource enters the
- * catalog only when a declaration covers it.
+ * Resolves the docs folders of a validated source, refusing each one that overlaps another entry
+ * with `declaration-path-overlap`, as the other kinds are.
+ */
+export const discoverSourceDocs = Effect.fnUntraced(function* (
+  source: SourceRegistration,
+  declaration: SourceDeclaration,
+) {
+  const { docsChecks, docsOverlap } = yield* acceptDeclarations(
+    source.canonicalPath,
+    declaration,
+    ignoreIssues,
+    [],
+  );
+  return yield* discoverDocs(source, docsChecks, docsOverlap);
+});
+
+/**
+ * Turns the resource declarations of a validated source into candidates and quarantines, and its
+ * docs entries into docs catalog entries. Every entry is checked on its own, so one bad entry
+ * quarantines only itself. A resource enters the catalog only when a declaration covers it.
  */
 export const discoverDeclaredResources = Effect.fnUntraced(function* (
   source: SourceRegistration,
@@ -687,7 +748,13 @@ export const discoverDeclaredResources = Effect.fnUntraced(function* (
   const records: Array<DeclarationRecord> = [];
   const report = reporterFor(source, quarantined);
 
-  const usable = yield* acceptDeclarations(source.canonicalPath, declaration, report, records);
+  const { usable, docsChecks, docsOverlap } = yield* acceptDeclarations(
+    source.canonicalPath,
+    declaration,
+    report,
+    records,
+  );
+  const docs = yield* discoverDocs(source, docsChecks, docsOverlap);
 
   const observe = Effect.fnUntraced(function* (
     record: DeclarationRecord,
@@ -841,7 +908,7 @@ export const discoverDeclaredResources = Effect.fnUntraced(function* (
       ? folderKinds[declared.kind].discoverOne(declared, discovery)
       : walk(declared, false);
   }
-  return { candidates, quarantined, records };
+  return { candidates, quarantined, records, docs };
 });
 
 /** A declared skills folder that catalog discovery reads: a folder entry that passed every rule. */
@@ -862,7 +929,7 @@ export const declaredSkillsFolders = Effect.fnUntraced(function* (
   source: SourceRegistration,
   declaration: SourceDeclaration,
 ) {
-  const usable = yield* acceptDeclarations(source.canonicalPath, declaration, ignoreIssues, []);
+  const { usable } = yield* acceptDeclarations(source.canonicalPath, declaration, ignoreIssues, []);
   return usable.flatMap((declared): ReadonlyArray<DeclaredSkillsFolder> =>
     declared.kind === "skill" && declared.single === false
       ? [
@@ -891,8 +958,13 @@ export const declarationReaching = Effect.fnUntraced(function* (
 ) {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
-  const usable = yield* acceptDeclarations(source.canonicalPath, declaration, ignoreIssues, []);
-  const docs = (yield* discoverDocs(source, declaration)).entries.map((entry) => ({
+  const { usable, docsChecks, docsOverlap } = yield* acceptDeclarations(
+    source.canonicalPath,
+    declaration,
+    ignoreIssues,
+    [],
+  );
+  const docs = (yield* discoverDocs(source, docsChecks, docsOverlap)).entries.map((entry) => ({
     label: `docs entry "${entry.declaredPath}"`,
     resolved: entry.directoryPath,
   }));

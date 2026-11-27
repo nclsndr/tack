@@ -1,5 +1,4 @@
 import { Effect, FileSystem, Path } from "effect";
-import { discoverDocs } from "./docs-discovery.ts";
 import { parseSkillDocument, parseCommandDocument } from "./resource-frontmatter.ts";
 import { discoverSource, catalogQuarantine, type ResourceCandidate } from "./catalog-discovery.ts";
 import {
@@ -215,7 +214,8 @@ export const resolveCatalog = Effect.fnUntraced(function* (
       unhealthySources.push(inspection);
       continue;
     }
-    const docs = yield* discoverDocs(inspection.registration, inspection.declaration);
+    const discovery = yield* discoverSource(inspection.registration, inspection.declaration);
+    const docs = discovery.docs;
     docs.entries.forEach((entry, index) => {
       const added =
         inspection.origin === undefined ? entry : { ...entry, origin: inspection.origin };
@@ -224,7 +224,6 @@ export const resolveCatalog = Effect.fnUntraced(function* (
       if (record !== undefined) declarationOf.set(added, record);
     });
     quarantined.push(...docs.quarantined);
-    const discovery = yield* discoverSource(inspection.registration, inspection.declaration);
     quarantined.push(...discovery.quarantined);
     for (const candidate of discovery.candidates) {
       const parsed = yield* parseCandidate(candidate);

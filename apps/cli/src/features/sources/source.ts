@@ -29,7 +29,7 @@ import { SourceCheckReportSchema } from "../../domain/sources/source-check.ts";
 import { mutateState, type StateMutation, type StateOptions } from "../../services/state-store.ts";
 import { type State } from "../../domain/state/state-schema.ts";
 import { compareCodeUnits } from "../../domain/identity/ordering.ts";
-import { discoverDocs } from "./docs-discovery.ts";
+import { discoverSourceDocs } from "./resource-declarations.ts";
 import { kindFoldersAt, undeclaredFoldersMessage } from "./undeclared-folders.ts";
 import { fieldLine } from "../../domain/sources/field-line.ts";
 import {
@@ -145,7 +145,7 @@ export type SourceMutationResult = Omit<
 
 /** Lists the healthy docs a validated declaration provides. */
 const declaredDocs = (registration: SourceRegistration, declaration: SourceDeclaration) =>
-  discoverDocs(registration, declaration).pipe(
+  discoverSourceDocs(registration, declaration).pipe(
     Effect.map(({ entries }) =>
       entries
         .map((entry) => ({ name: entry.address.name }))

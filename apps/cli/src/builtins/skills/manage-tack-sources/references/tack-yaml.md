@@ -72,15 +72,17 @@ nothing, such as an empty folder before an import, is valid and shows `0`.
 `skills` and `docs`, a folder or one file for `context`, a folder or one `.md` file for
 `commands`, a `.ts` file for `scripts`. Everything found inside a declared folder must resolve
 inside that folder, or it is refused with `resource-boundary-violation`: declare the other path
-instead. Declarations of skills, commands, context and scripts may not overlap, so one file belongs
-to one declaration: two entries overlap when their paths are equal or one lies inside the other, and
-every overlapping entry is quarantined with `declaration-path-overlap`. A profile publication
+instead. Declarations of skills, commands, context, scripts and docs may not overlap, so one file
+belongs to one declaration: two entries overlap when their paths are equal or one lies inside the
+other, and every overlapping entry is quarantined with `declaration-path-overlap`. A profile publication
 counts as a file entry, so a profile inside a declared folder is refused too. An `exclude` on the
 outer folder entry that prunes the inner path ends the overlap, because its walk never reaches that
 path: `skills` with `exclude: ["vendor/**"]` beside a `skills/vendor` entry, or `context` `tools`
 with `exclude: ["run.ts"]` beside a script `tools/run.ts`. An `include` does not, since the walk
-still enters every folder. The finding names that exclude. `docs` paths are exempt: a docs folder
-may hold or equal any other entry's folder.
+still enters every folder. The finding names that exclude. Docs overlap like any other entry: a
+`skills` entry with `exclude: ["handbook/**"]` may hold a docs entry `skills/handbook`, but a docs
+entry takes no `exclude`, so a docs folder that holds or equals another entry's path is refused
+with it. Give the docs their own folder.
 
 **Nested sources.** A source has one `tack.yaml`, at its top: declare every folder there rather
 than splitting a kind into a subfolder with a `tack.yaml` of its own. A nested `tack.yaml` is an

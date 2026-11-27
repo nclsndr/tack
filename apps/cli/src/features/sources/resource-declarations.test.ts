@@ -541,7 +541,7 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
     ),
   );
 
-  test.effect("overlapping declarations are all quarantined, across kinds, docs exempt", () =>
+  test.effect("overlapping declarations are all quarantined, across kinds, docs included", () =>
     withSource(
       declare(
         "source",
@@ -566,11 +566,18 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
       (fixture) =>
         Effect.gen(function* () {
           const catalog = yield* catalogOf(fixture);
-          expect(resources(catalog)).toEqual(["context/x.md", "docs/kb", "skill/lone"]);
+          expect(resources(catalog)).toEqual(["context/x.md", "skill/lone"]);
           const overlaps = catalog.quarantined.filter(
             ({ code }) => code === "declaration-path-overlap",
           );
-          expect(overlaps).toHaveLength(3);
+          expect(
+            quarantines(catalog).filter((code) => code.endsWith(":declaration-path-overlap")),
+          ).toEqual([
+            "command:declaration-path-overlap",
+            "docs:declaration-path-overlap",
+            "skill:declaration-path-overlap",
+            "skill:declaration-path-overlap",
+          ]);
           expect(overlaps.every(({ message }) => message.includes("skills"))).toBe(true);
         }),
     ),
@@ -631,6 +638,18 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
         "    description: Run",
       ],
       loads: ["context/notes.md", "script/run"],
+    },
+    {
+      case: "a docs folder",
+      lines: [
+        "skills:",
+        "  - path: skills",
+        '    exclude: ["vendor/**"]',
+        "docs:",
+        "  - name: kb",
+        "    path: skills/vendor",
+      ],
+      loads: ["docs/kb", "skill/a"],
     },
   ])("an outer exclude that prunes $case ends the overlap", (row) =>
     withSource(
@@ -727,6 +746,68 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
         `The scripts entry "run" overlaps the scripts entry "go". ${loadsNone} Keep one of them.`,
       ],
     },
+    {
+      case: "a docs folder inside a skills folder",
+      lines: ["skills:", "  - path: skills", "docs:", "  - name: kb", "    path: skills/vendor"],
+      says: [
+        `The docs entry "kb" overlaps the skills entry "skills". ${loadsNone} Add exclude: ["vendor/**"] to the skills entry "skills", or keep one of them.`,
+        `The skills entry "skills" overlaps the docs entry "kb". ${loadsNone} Add exclude: ["vendor/**"] to the skills entry "skills", or keep one of them.`,
+      ],
+    },
+    {
+      case: "a docs folder that holds a declared skill, which no docs exclude can end",
+      lines: ["skills:", "  - path: skills/a", "docs:", "  - name: kb", "    path: skills"],
+      says: [
+        `The docs entry "kb" overlaps the skills entry "skills/a". ${loadsNone} Keep one of them.`,
+        `The skills entry "skills/a" overlaps the docs entry "kb". ${loadsNone} Keep one of them.`,
+      ],
+    },
+    {
+      case: "a docs folder on a script",
+      lines: [
+        "scripts:",
+        "  - name: run",
+        "    path: tools/run.ts",
+        "    description: Run",
+        "docs:",
+        "  - name: kb",
+        "    path: tools",
+      ],
+      says: [
+        `The docs entry "kb" overlaps the scripts entry "run". ${loadsNone} Keep one of them.`,
+        `The scripts entry "run" overlaps the docs entry "kb". ${loadsNone} Keep one of them.`,
+      ],
+    },
+    {
+      case: "two docs on one folder, each named by its own name",
+      lines: [
+        "skills: []",
+        "docs:",
+        "  - name: kb",
+        "    path: tools",
+        "  - name: ref",
+        "    path: tools",
+      ],
+      says: [
+        `The docs entry "kb" overlaps the docs entry "ref". ${loadsNone} Keep one of them.`,
+        `The docs entry "ref" overlaps the docs entry "kb". ${loadsNone} Keep one of them.`,
+      ],
+    },
+    {
+      case: "a docs folder inside another",
+      lines: [
+        "skills: []",
+        "docs:",
+        "  - name: kb",
+        "    path: skills",
+        "  - name: ref",
+        "    path: skills/a",
+      ],
+      says: [
+        `The docs entry "kb" overlaps the docs entry "ref". ${loadsNone} Keep one of them.`,
+        `The docs entry "ref" overlaps the docs entry "kb". ${loadsNone} Keep one of them.`,
+      ],
+    },
   ])("$case still overlaps, and the message names the fix", (row) =>
     withSource(
       declare("source", ...row.lines),
@@ -746,6 +827,33 @@ it.layer(LiveTestLayer)("source resource declarations", (test) => {
               .map(({ message }) => message)
               .sort(),
           ).toEqual(row.says);
+        }),
+    ),
+  );
+
+  test.effect.each([
+    { case: "passes over leaves it", inner: "_drafts", loads: ["docs/drafts", "docs/site"] },
+    { case: "walks overlaps it", inner: "notes", loads: [] },
+  ])("a folder that a docs . entry $case", (row) =>
+    withSource(
+      declare(
+        "source",
+        "docs:",
+        "  - name: site",
+        "    path: .",
+        "  - name: drafts",
+        `    path: ${row.inner}`,
+      ),
+      { "_drafts/a.md": "a", "notes/b.md": "b" },
+      (fixture) =>
+        Effect.gen(function* () {
+          const catalog = yield* catalogOf(fixture);
+          expect(resources(catalog)).toEqual(row.loads);
+          expect(quarantines(catalog)).toEqual(
+            row.loads.length === 0
+              ? ["docs:declaration-path-overlap", "docs:declaration-path-overlap"]
+              : [],
+          );
         }),
     ),
   );

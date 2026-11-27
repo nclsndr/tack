@@ -43,14 +43,23 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
         const fs = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
         yield* fs.writeFileString(path.join(source, "knowledge", "hidden.md"), "# Hidden\n");
+        // Each docs entry owns its folder, so the linked settings filter a copy of the same files.
+        for (const folder of ["linked", "invalid"]) {
+          yield* fs.makeDirectory(path.join(source, folder));
+          for (const title of ["Hello", "Hidden"])
+            yield* fs.writeFileString(
+              path.join(source, folder, `${title.toLowerCase()}.md`),
+              `# ${title}\n`,
+            );
+        }
         yield* fs.makeDirectory(path.join(source, "reader"));
         yield* fs.writeFileString(
           path.join(source, "reader", "handbook.yaml"),
-          "content:\n  - root: knowledge\n    exclude: [hello.md]\n",
+          "content:\n  - root: linked\n    exclude: [hello.md]\n",
         );
         yield* fs.writeFileString(
           path.join(source, "tack.yaml"),
-          "version: 1\nname: source\ndocs:\n  - name: handbook\n    path: knowledge\n    reader:\n      content:\n        - root: knowledge\n          exclude: [hidden.md]\n  - name: linked\n    path: knowledge\n    reader: reader/handbook.yaml\n  - name: invalid\n    path: knowledge\n    reader: reader/handbook.json\n",
+          "version: 1\nname: source\ndocs:\n  - name: handbook\n    path: knowledge\n    reader:\n      content:\n        - root: knowledge\n          exclude: [hidden.md]\n  - name: linked\n    path: linked\n    reader: reader/handbook.yaml\n  - name: invalid\n    path: invalid\n    reader: reader/handbook.json\n",
         );
         for (const name of ["handbook", "linked", "invalid"]) {
           yield* attachDocs(
@@ -455,13 +464,15 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
           const fs = yield* FileSystem.FileSystem;
           const path = yield* Path.Path;
           yield* fs.makeDirectory(path.join(source, "skills", "example"), { recursive: true });
+          for (const folder of ["first", "second"])
+            yield* fs.makeDirectory(path.join(source, folder));
           yield* fs.writeFileString(
             path.join(source, "skills", "example", "SKILL.md"),
             "---\nname: example\ndescription: Mixed source skill.\n---\n# Example\n",
           );
           yield* fs.writeFileString(
             path.join(source, "tack.yaml"),
-            "version: 1\nname: source\nskills:\n  - path: skills\ndocs:\n  - name: handbook\n    path: knowledge\n  - name: malformed\n    path: ../outside\n  - name: duplicate\n    path: knowledge\n  - name: duplicate\n    path: knowledge\n",
+            "version: 1\nname: source\nskills:\n  - path: skills\ndocs:\n  - name: handbook\n    path: knowledge\n  - name: malformed\n    path: ../outside\n  - name: duplicate\n    path: first\n  - name: duplicate\n    path: second\n",
           );
           const catalog = yield* resolveCatalogAt(options);
           expect(catalog.unhealthySources).toEqual([]);
@@ -632,9 +643,10 @@ it.layer(LiveTestLayer)("registered docs", (test) => {
             resource: { sourceRegistrationId: sourceId, name: "handbook" },
             sourceDirectoryPath: path.join(source, "knowledge"),
           });
+          yield* fs.makeDirectory(path.join(source, "guide"));
           yield* fs.writeFileString(
             path.join(source, "tack.yaml"),
-            "version: 1\nname: source\ndocs:\n  - name: handbook\n    path: knowledge\n  - name: guide\n    path: knowledge\n",
+            "version: 1\nname: source\ndocs:\n  - name: handbook\n    path: knowledge\n  - name: guide\n    path: guide\n",
           );
           yield* attachDocs(options, demo, { reference: "guide" });
           const unset = yield* Effect.flip(resolveDocsTarget(options, demo));

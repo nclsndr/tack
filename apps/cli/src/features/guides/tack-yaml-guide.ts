@@ -180,6 +180,8 @@ export const tackYamlGuide = (): string =>
       ...keyTable<Fields>(shape.fields, shape.described),
       "",
     ]),
+    "Two entries of any kind, docs included, may not overlap: when their paths are equal or one lies inside the other, `tack check` refuses both with `declaration-path-overlap`. Only an `exclude` on the outer folder entry that prunes the inner path ends an overlap; a docs entry takes none.",
+    "",
     "The `manage-tack-sources` skill holds the rules each entry follows: paths, patterns, overlap and the edge case of a nested source.",
     "",
     "## JSON Schema",
