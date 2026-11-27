@@ -1,8 +1,7 @@
 import { agentPrompt } from "@tackup/harness/prompts/landing";
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { demoWalkthrough } from "../../demo/demo-walkthrough.ts";
 import { Terminal } from "../terminal.tsx";
-import { closing, demo, features, getStarted, hero, questions, story } from "./content.ts";
+import { closing, docsHref, footer, getStarted, hero, questions } from "./content.ts";
 import { CliDemo } from "./demo.tsx";
 import { DemoLinksProvider } from "./demo-links.tsx";
 import { DraftingSheet } from "./drafting-sheet.tsx";
@@ -17,10 +16,9 @@ import {
   IntroFallback,
 } from "./hero-intro.tsx";
 import { InlineCode } from "./inline-code.tsx";
+import { landingMarkdown } from "./markdown.ts";
 import { Mark } from "./mark.tsx";
 import { Story } from "./story.tsx";
-
-export const docsHref = "/docs/";
 
 /** The features page, every feature by lens. */
 const featuresHref = "/features";
@@ -330,83 +328,21 @@ export function Footer() {
           <span>tack</span>
         </a>
         <p>{closing.footerLine}</p>
-        <a href={docsHref}>Docs</a>
+        <nav aria-label="Footer" className="landing-footer-links">
+          {footer.links.map((link) => (
+            <a key={link.href} href={link.href}>
+              {link.label}
+            </a>
+          ))}
+        </nav>
       </div>
     </footer>
   );
 }
 
-/** The Markdown twin of the landing page: the same copy, without layout or illustrations. */
-function LandingMarkdown() {
-  const walkthrough = demoWalkthrough.map((step) => `$ ${step.command}`).join("\n");
-  const metaphor = story.beats
-    .map((beat) => `- **${beat.title}** ${beat.text} \`${beat.proof}\``)
-    .join("\n");
-  const parts = features.parts
-    .map((part) => `- **[${part.name}](${features.more.href}#${part.id})** ${part.line}`)
-    .join("\n");
-  const answers = questions.map((item) => `- **${item.question}** ${item.answer}`).join("\n");
-  return (
-    <>
-      {`# Tack: ${hero.headline}
-
-${hero.subhead}
-
-${hero.agents}
-
-${hero.facts.join(" · ")}
-
-## ${demo.heading}
-
-${demo.agent.intro}
-
-${demo.markdown}
-
-\`\`\`sh
-${walkthrough}
-\`\`\`
-
-## ${story.heading}
-
-${story.intro}
-
-${metaphor}
-
-## ${features.heading}
-
-${features.intro}
-
-${parts}
-
-[${features.more.label}](${features.more.href})
-
-## Get started
-
-Paste this prompt into your coding agent:
-
-> ${agentPrompt}
-
-Or run the commands yourself. ${getStarted.manualIntro}
-
-\`\`\`sh
-${getStarted.commands.join("\n")}
-\`\`\`
-
-${getStarted.note} ${getStarted.teammate}
-
-## Questions
-
-${answers}
-
-Read the docs: [${docsHref}](${docsHref})
-`}
-    </>
-  );
-}
-
 /** The Tack landing page. It is always dark, whatever theme the docs use. */
 export function Landing() {
-  if (import.meta.env.SSG_MD === true) return <LandingMarkdown />;
+  if (import.meta.env.SSG_MD === true) return <>{landingMarkdown()}</>;
   return (
     <div className="tack-theme-dark landing">
       <a href="#main" className="landing-skip">

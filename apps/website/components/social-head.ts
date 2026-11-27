@@ -1,7 +1,8 @@
 /** One tag of a page's `head` frontmatter, as Rspress renders it: a tag name and its props. */
-type HeadTag =
+export type HeadTag =
   | readonly ["title", { readonly children: string }]
-  | readonly ["meta", Record<string, string>];
+  | readonly ["meta", Record<string, string>]
+  | readonly ["script", { readonly type: string; readonly children: string }];
 
 /**
  * The head tags that give a custom page its own title and description. Rspress gives a custom page

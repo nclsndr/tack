@@ -1,0 +1,81 @@
+---
+title: Share skills between Claude Code, Codex and Cursor
+description: Use one skill folder from Claude Code, Codex and Cursor, by hand with symbolic links or with Tack, and know when you need no tool at all.
+---
+
+import { Terminal } from "../../../components/terminal.tsx";
+
+export const sourceConfig = '{"version": 1, "name": "skills", "skills": [{"path": "."}]}';
+
+# Share skills between Claude Code, Codex and Cursor
+
+You keep your skills in one folder, such as `~/skills`, with one `SKILL.md` folder per skill, and
+you want Claude Code, Codex and Cursor to load them in a project. The three agents do not read the
+same folder: Claude Code reads `.claude/skills`, Codex reads `.agents/skills`, and Cursor reads
+`.cursor/skills` and also `.agents/skills`. [Agent support](../agent-support) lists every agent's
+folders.
+
+## By hand
+
+Two links reach all three agents in one repository:
+
+<Terminal
+  commands={[
+    "mkdir -p ~/code/app/.claude/skills ~/code/app/.agents/skills",
+    "ln -s ~/skills/review ~/code/app/.claude/skills/review",
+    "ln -s ~/skills/review ~/code/app/.agents/skills/review",
+  ]}
+/>
+
+An edit in `~/skills/review` reaches every agent at once, because each link points at the same
+folder. This holds for one repository on one machine. It stops when:
+
+- **You open a second project.** Each skill needs its links again, in each agent's folder.
+- **You add a Git worktree.** A new worktree has none of the links, and a committed link points to a
+  folder on your machine, which a teammate's does not have.
+- **You remove or rename a skill.** Every link to it breaks, in every project, and nothing lists
+  them.
+- **You try another agent.** Each project needs another folder of links.
+- **A teammate joins.** They rebuild the links by hand, or run your script on their paths.
+
+## With Tack
+
+Register the folder once as a source. Tack previews the `tack.yaml` it would write; `--apply`
+writes it.
+
+<Terminal
+  commands={[
+    "tack init",
+    `tack source add ~/skills --config '${sourceConfig}'`,
+    `tack source add ~/skills --config '${sourceConfig}' --apply`,
+  ]}
+/>
+
+`tack init` enables each agent whose folder it finds in your home. Enable the others, then register
+the project and link it. The first sync prints its plan and writes nothing; `--apply` writes it.
+
+<Terminal
+  commands={[
+    "tack adapter enable claude codex cursor",
+    "tack project add app",
+    "tack sync --project app",
+    "tack sync --project app --apply",
+  ]}
+/>
+
+Run `tack project add app` from inside the repository. After `git worktree add`, refresh the project
+and sync again, and the new worktree gets the same links:
+
+<Terminal
+  commands={["tack project refresh --project app --apply", "tack sync --project app --apply"]}
+/>
+
+When you remove a skill from `~/skills`, the next sync removes its links, and only the links Tack
+made. `tack status --project app` lists a link that broke. To give a teammate the same skills, see
+[Onboard a team](./team-onboarding).
+
+## When you do not need Tack
+
+With one repository, one machine and agents that all read `.agents/skills`, commit the folder to the
+repository and use no tool. [Compare](../compare) sets Tack beside a link script, a shared folder and
+the other tools.

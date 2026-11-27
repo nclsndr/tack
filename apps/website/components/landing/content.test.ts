@@ -1,8 +1,17 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { agentsFigure, intro, lenses, sharedAgents } from "../features-page/content.ts";
-import { definingSentence, features, hero, questions } from "./content.ts";
+import { existsSync } from "node:fs";
+import {
+  agentsFigure,
+  intro,
+  lenses,
+  sharedAgents,
+  sourceFigure,
+} from "../features-page/content.ts";
+import { repositoryUrl, siteUrl } from "../site.ts";
+import { definingSentence, features, footer, hero, questions } from "./content.ts";
+import { landingMarkdown } from "./markdown.ts";
 
 /** A file of the repository, read from its root. */
 const repoFile = (path: string) =>
@@ -91,5 +100,55 @@ describe("the problem the site states", () => {
       expect(text).toContain(team);
       expect(text.indexOf(alone)).toBeGreaterThan(text.indexOf(team));
     }
+  });
+});
+
+describe("the landing page's problem", () => {
+  it("is the features page's, the team's pain then one developer's, in the page and its twin", () => {
+    expect(features.problem).toBe(intro.problem);
+    expect(landingMarkdown()).toContain(intro.problem);
+  });
+});
+
+describe("the install", () => {
+  it("reads as published in the README", () => {
+    expect(folded(repoFile("README.md"))).not.toContain("not yet published");
+  });
+});
+
+describe("context, which no agent receives", () => {
+  /** The README's table of what Tack manages, from its heading to the next section. */
+  const readme = repoFile("README.md");
+  const manages = readme.slice(
+    readme.indexOf("## What Tack manages"),
+    readme.indexOf("## Install"),
+  );
+  const overview = repoFile("apps/website/docs/docs/index.mdx");
+  const sources = lenses.find((lens) => lens.id === "sources");
+
+  it("stays off the first screens: the hero, the features, the README table, the docs overview", () => {
+    for (const text of [JSON.stringify([hero, features]), manages, overview]) {
+      expect(text).not.toMatch(/context/iu);
+    }
+  });
+
+  it("is not in the source the features page draws first, nor in its first line", () => {
+    expect(sourceFigure.entries.map((entry) => entry.kind).join(" ")).not.toMatch(/context/iu);
+    expect(sources?.lines[0]).not.toMatch(/context/iu);
+  });
+});
+
+describe("the footer", () => {
+  it("links to the docs, the comparison and the repository", () => {
+    expect(footer.links).toEqual([
+      { label: "Docs", href: "/docs/" },
+      { label: "Compare", href: "/docs/compare" },
+      { label: "GitHub", href: repositoryUrl },
+    ]);
+  });
+
+  it("leads to a comparison page that exists", () => {
+    expect(existsSync(new URL("../../docs/docs/compare.mdx", import.meta.url))).toBe(true);
+    expect(siteUrl("/docs/compare")).toBe("https://tackup.dev/docs/compare");
   });
 });

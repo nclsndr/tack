@@ -289,17 +289,28 @@
 }
 
 .features-intro {
-  margin-top: 20px !important;
+  margin-top: 20px;
   max-width: 30em;
   color: var(--tack-text);
   font-size: 20px;
   line-height: 1.5;
 }
 
+.features-intro p {
+  margin: 0 !important;
+}
+
+/* The way on, after the problem: quieter, so the problem reads first. */
+.features-intro .features-intro-next {
+  margin-top: 16px !important;
+  color: var(--tack-muted);
+  font-size: 17px;
+}
+
 @media (min-width: 1024px) {
   .features-head {
     grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-    align-items: end;
+    align-items: start;
   }
 
   .features-head .landing-label {
@@ -307,7 +318,7 @@
   }
 
   .features-intro {
-    margin-top: 0 !important;
+    margin-top: 0;
   }
 }
 

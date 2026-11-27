@@ -104,8 +104,21 @@ describe("features page limits", () => {
     expect(groundRules.notYet.map((limit) => limit.title)).toEqual([
       "Deliver context.",
       "Commands for every agent.",
+      "Write MCP server definitions.",
+      "Watch an imported skill upstream.",
       "Deliver without symbolic links.",
     ]);
+  });
+
+  it("leaves finding skills to others, by design", () => {
+    expect(groundRules.limits.map((limit) => limit.title)).toContain("Find skills for you.");
+  });
+
+  it("says the same on the docs features page", () => {
+    const page = readFileSync(new URL("../../docs/docs/features.mdx", import.meta.url), "utf8");
+    for (const limit of [...groundRules.notYet, ...groundRules.limits]) {
+      expect(page).toContain(`**${limit.title}**`);
+    }
   });
 
   it("names exactly the agents that take commands, then every other one", () => {
@@ -147,6 +160,16 @@ describe("features page shared agents", () => {
         row.scope === "Project only" ? "-" : `\`~/${row.folder}\``,
         `${row.scope}${"note" in row ? `, ${row.note}` : ""}`,
       ]),
+    );
+  });
+
+  it("counts the same agents on the comparison page", () => {
+    const compare = readFileSync(new URL("../../docs/docs/compare.mdx", import.meta.url), "utf8");
+    expect(compare).toMatch(
+      new RegExp(
+        `\\| ${agentsFigure.links.length} with an adapter, ${sharedAgents.rows.length} more through the folders they fill +\\|`,
+        "u",
+      ),
     );
   });
 

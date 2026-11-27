@@ -1,7 +1,7 @@
 # @tackup/website
 
-The Tack landing page and public docs, in one [Rspress](https://rspress.rs) 2.1 site. It is a
-private workspace package: nothing here is published or deployed yet.
+The Tack landing page and public docs, in one [Rspress](https://rspress.rs) 2.1 site, served at
+https://tackup.dev. It is a private workspace package: it is deployed, never published to npm.
 
 ```sh
 bun run website:dev     # local dev server
@@ -10,21 +10,26 @@ bun run website:build   # static site in apps/website/dist
 
 ## Layout
 
-| Path                       | Content                                                                       |
-| -------------------------- | ----------------------------------------------------------------------------- |
-| `docs/index.tsx`           | The landing page, a custom TSX route without the docs chrome                  |
-| `docs/docs/*.mdx`          | The docs pages                                                                |
-| `docs/public/`             | Static files: illustrations, favicon and the Cloudflare Pages `_headers` file |
-| `components/landing/`      | Landing sections, copy (`content.ts`) and the mark                            |
-| `components/audience.tsx`  | `<Agent>` and `<Human>`                                                       |
-| `components/terminal.tsx`  | `<Terminal>`, a command and its output in a terminal frame                    |
-| `styles/tokens.css`        | Brand tokens: the only file to change for a new palette, type or corners      |
-| `functions/_middleware.ts` | The Cloudflare Pages Function for `Accept: text/markdown`                     |
+| Path                       | Content                                                                    |
+| -------------------------- | -------------------------------------------------------------------------- |
+| `docs/index.tsx`           | The landing page, a custom TSX route without the docs chrome               |
+| `docs/docs/*.mdx`          | The docs pages                                                             |
+| `docs/public/`             | Static files: illustrations, favicon, `robots.txt` and the `_headers` file |
+| `components/landing/`      | Landing sections, copy (`content.ts`), its Markdown twin and the mark      |
+| `components/site.ts`       | The site's origin and the canonical address of each page                   |
+| `components/llms-txt.ts`   | How `llms.txt` lists the pages, the landing page first                     |
+| `components/audience.tsx`  | `<Agent>` and `<Human>`                                                    |
+| `components/terminal.tsx`  | `<Terminal>`, a command and its output in a terminal frame                 |
+| `styles/tokens.css`        | Brand tokens: the only file to change for a new palette, type or corners   |
+| `functions/_middleware.ts` | The Cloudflare Pages Function for `Accept: text/markdown`                  |
 
 ## Writing docs for people and agents
 
 Every build writes `llms.txt`, `llms-full.txt` and a Markdown twin beside each HTML page, such as
-`docs/getting-started.md` beside `docs/getting-started.html`.
+`docs/getting-started.md` beside `docs/getting-started.html`. Their links are absolute, on the
+site's origin, so they still lead somewhere when an agent keeps the text without its address. The
+landing and features pages write their twins in `markdown.ts` beside their copy, with the facts their
+figures draw.
 
 - `<Human>` content appears only in the HTML page.
 - `<Agent>` content appears only in the Markdown twin and the `llms` files.
@@ -49,6 +54,13 @@ with `apps/website` as the root directory and `dist` as the output directory, so
 `functions/`.
 
 - `docs/public/_headers` serves `.md` files as `text/markdown` and sets `Vary: Accept`.
+- `docs/public/.well-known/agent-skills/index.json` lists the `set-up-tack` skill for skill
+  installers, such as `npx skills add https://tackup.dev`. The build copies the skill from
+  `skills/set-up-tack` at the repository root, the folder `npx skills add nclsndr/tack` reads, and a
+  test keeps the index's digest equal to the file's.
+- `docs/public/robots.txt` lets every crawler read every page and names the sitemap. Keep
+  Cloudflare's managed `robots.txt` and its AI crawler block off for the zone: either one would
+  replace or prepend rules that shut agents out.
 - `functions/_middleware.ts` answers a request whose `Accept` header names `text/markdown` with the
   page's Markdown twin, so `curl -H 'Accept: text/markdown' https://<site>/docs/getting-started`
   returns Markdown while browsers keep getting HTML.
